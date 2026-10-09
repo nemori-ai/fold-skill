@@ -7,6 +7,9 @@
 # shown_ids / omitted_ids / hidden_change_ids 按集合比较；shown_ids 在 diff 视图中包含撤下的 ghost。
 # render_assertions 必须由真实 renderer / browser runner 验证，不能用 JSON 存在或解析成功替代。
 # dom_matches_state 核对 state + diff + view 的呈现，包括 ghost；不把 ghost 当成当前 active 条目。
+# area_shares 是真实 DOM 几何断言：实测 A_item / A_budget = share / budget，留白为 unallocated / budget。
+# hidden_active 单独测量中性占位面积，不算留白；筛选不重新归一化剩余卡片，子层份额不计入 root。
+# 几何验收不能只读数字标签；仅允许栅格像素边界舍入误差，同预算 diff 的前后每份面积尺度须相等。
 # fault: renderer_unavailable 是运行器注入，不是 CLI 参数。
 
 budget: 64
@@ -72,11 +75,12 @@ steps:
         png_decodable: true
         text_not_clipped: true
         dom_matches_state: true
+        area_shares: {layer: root, budget: 64, items: {visa: 12, report: 6}, unallocated: 46, hidden_active: 0}
 
-  - name: 同一事件状态只推进 now，两端按同 now 比较不制造变化
+  - name: 同一事件只推进 now 并筛选签证，不制造差异也不放大卡片
     now: "2026-10-09T09:20:00+08:00"
     state:
-      overview: {output_dir: "artifacts/time-only", diff_from: 1}
+      overview: {output_dir: "artifacts/time-only", diff_from: 1, view: {items: [visa]}}
     expect:
       revision: r1
       events_appended: 0
@@ -90,8 +94,8 @@ steps:
         now: "2026-10-09T09:20:00+08:00"
         base_event_seq: 1
         base_revision: r1
-        shown_ids: [visa, report]
-        omitted_ids: [visa-bank]
+        shown_ids: [visa]
+        omitted_ids: [report, visa-bank]
         hidden_change_ids: []
       diff: []
       artifact_assertions:
@@ -102,6 +106,9 @@ steps:
         png_decodable: true
         text_not_clipped: true
         dom_matches_state: true
+        area_shares: {layer: root, budget: 64, items: {visa: 12}, unallocated: 46, hidden_active: 6}
+        hidden_active_neutral: true
+        diff_budget_unit_scale_equal: true
 
   - name: 用户留下批注，event_seq 增加但 revision 仍为 r1
     actor: user
@@ -148,6 +155,8 @@ steps:
         png_decodable: true
         text_not_clipped: true
         dom_matches_state: true
+        area_shares: {layer: root, budget: 64, items: {visa: 12, report: 6}, unallocated: 46, hidden_active: 0}
+        diff_budget_unit_scale_equal: true
 
   - name: 更新签证摘要与档位，同时把已结束的周报撤下
     now: "2026-10-09T09:40:00+08:00"
@@ -206,6 +215,9 @@ steps:
         dom_matches_state: true
         ghost_item_ids: [report]
         ghosts_distinct_from_active: true
+        ghost_outside_budget: true
+        area_shares: {layer: root, budget: 64, items: {visa: 24}, unallocated: 40, hidden_active: 0}
+        diff_budget_unit_scale_equal: true
 
   - name: 子集与字段筛选报告隐藏变化，完整 state 和 diff 仍保留全部信息
     now: "2026-10-09T09:50:00+08:00"
@@ -246,6 +258,8 @@ steps:
         text_not_clipped: true
         dom_matches_state: true
         ghost_item_ids: []
+        area_shares: {layer: root, budget: 64, items: {visa: 24}, unallocated: 40, hidden_active: 0}
+        diff_budget_unit_scale_equal: true
 
   - name: 渲染器不可用时保留 JSON，明确失败且不复用目录里的旧图
     now: "2026-10-09T09:55:00+08:00"

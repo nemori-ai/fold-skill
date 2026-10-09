@@ -29,7 +29,7 @@
 | [17-layer-budget-tree.png](17-layer-budget-tree.png) | 状态树上的逐层预算约束 | [数学模型 · 状态与预算](../../formal-model.md) |
 | [18-estimation-dependencies.png](18-estimation-dependencies.png) | 上下文、估计与取舍的依赖关系 | [数学模型 · 估计过程](../../formal-model.md) |
 | [19-ordered-event-replay.png](19-ordered-event-replay.png) | 有序事件的连续与分段重放 | [数学模型 · 确定性执行](../../formal-model.md) |
-| [20-state-overview-diff.png](20-state-overview-diff.png) | 同一份状态经内容选择形成概览与 diff，变化高亮但不回写状态 | [信息契约 · state 的视觉概览与 diff](../../information-contract.md#state-的视觉概览与-diff) |
+| [20-state-overview-diff.png](20-state-overview-diff.png) | 精简 Pinboard 中份额映射面积，前后同尺度，撤下标记不占当前预算 | [信息契约 · state 的视觉概览与 diff](../../information-contract.md#state-的视觉概览与-diff) |
 
 旧版 [05-budget-depth.png](05-budget-depth.png) 保留作修订记录，已退出正文使用。它用面积块解释预算，容易在产品介绍阶段把 Fold 的用途限定为 Pinboard；当前 05 改用抽象的信息关系，提示词见本文末尾。
 
@@ -490,6 +490,8 @@ Keep make setup, .venv/, make check, scripts/check.py, git diff --check, 本地�
 
 ## 20：把视觉概览落实为具体例子
 
+以下是初版及连线校正的生成记录；其中“卡片面积不编码份额”的构图已被本文末尾的面积修订取代。当前文件以份额决定面积，初版提示词仅保留作历史记录。
+
 生成方式：内置 image_gen，单张新图，不透明背景。此图是文档设计示意，不是 Fold CLI 已生成的业务截图；产品中的状态图仍须以真实页面渲染生成。
 
 图中数值取自 `06-state-overview.yaml`：基线 event 1/r1，当前 event 3/r2；签证 high/12 → critical/24，周报旧份额 6 撤下；当前根层预算 64、已用 24、留白 40。批注为 saved，visa-bank 子项因深度为 0 省略。唯一正文位置为信息契约的视觉概览章节。
@@ -575,4 +577,78 @@ Use case: precise-object-edit. Image 1 is the edit target. Preserve EVERY existi
 3. ADD a connector from the separate bottom-left “按 event_seq = 1 重放基线” strip into the LEFT edge of the middle “工具比较与布局” box. Route a thin charcoal elbow line through the empty vertical gutter between the source and the middle boxes, without crossing any panel or text. Arrowhead must point INTO 工具比较与布局. This supplies the baseline to the comparison.
 4. ADD a short horizontal right-pointing arrow from the RIGHT edge of the bottom-middle “HTML → DOM 截图” box into the LEFT OUTER edge of the large right overview.png panel. Arrowhead at the overview panel boundary. It must be clear that the preview is the OUTPUT of actual rendering.
 No other changes. Do not add text or new arrows. In particular do not change the large title, the current budget64 used24 blank40, event_seq1→3/r1→r2, visa12→24/high→critical, saved note, report withdrawn oldshare6, omittedvisa-bank, or bottom design-illustration label.
+```
+
+
+### 20 的份额面积修订 · 当前版本
+
+使用内置 image_gen 编辑既有配图，保持不透明背景。预算区域中，份额必须与面积对应；前后根层预算同为 64，基线签证 12、周报 6、留白 46，当前签证 24、留白 40。签证面积翻倍，详情和撤下标记移到预算区域之外，不用内容长度改变份额面积。生成配图近似表达面积关系，不作为像素级比例验收结果；产品实现须按信息契约精确布局并测量 DOM 几何。
+
+```text
+Use case: infographic-diagram. Image 1 is the illustration to revise. Preserve its warm off-white paper, dark crisp typography, restrained sage / slate / amber palette, and the same concrete Fold example. Completely redesign the composition so ACTUAL RECTANGLE AREA visibly and quantitatively encodes attention share. The previous equal-width content cards are wrong for this task.
+Output an opaque, wide 3:2 landscape image, approximately 1536x1024. Clear large Simplified Chinese. This is a DOCUMENT DESIGN ILLUSTRATION, not a real implemented screenshot. No browser chrome, fake buttons, people, devices, decorative props, cell grids or extra items.
+
+Top title, exactly:
+“份额决定面积，变化用标记说明”
+Subtitle:
+“同一根层 · 预算 64 · 前后采用同一面积尺度”
+
+MAIN COMPOSITION: TWO LARGE BUDGET RECTANGLES side by side, EXACTLY equal width and height. Their outer headers and captions must be OUTSIDE the proportional rectangle. The left is the baseline and the right is current. Each rectangle represents the full budget 64, INCLUDING real unallocated blank area. Blank area must not disappear or be just a label. Rectangles should be about 640 wide by 384 high each, if the output is 1536x1024. Use thin dividers, no wide gutters. No internal square grid.
+For an exact geometry guide, view EACH budget rectangle as coordinates 0..640 in x and 0..384 in y.
+
+LEFT header: “基线 · event 1 / r1”
+LEFT rectangle split:
+- First split at x=180: the RIGHT area x=180..640, y=0..384 is warm empty space, label “留白 46” and small “未分配”.
+- The LEFT strip x=0..180 is split at y=256.
+- TOP LEFT area x=0..180, y=0..256 is pale sage, label “签证材料”, “visa”, large “12”, small “high”.
+- BOTTOM LEFT area x=0..180, y=256..384 is pale slate blue, label “周报草稿”, “report”, and “6 · normal”.
+Thus the real areas are 12/64, 6/64, and 46/64. The visa area is exactly TWICE the report area. The entire large right blank region is genuine unallocated space.
+
+RIGHT header: “当前 · event 3 / r2”
+RIGHT rectangle split:
+- At x=240, ONE full-height vertical split.
+- LEFT area x=0..240, y=0..384 is pale sage with an inset amber outline indicating changed content, label “签证材料”, “visa”, large “24”, small “critical”, small amber tag “有变化”.
+- RIGHT area x=240..640, y=0..384 is warm empty space, label “留白 40” and small “未分配”.
+Thus the real areas are EXACTLY 24/64 and 40/64. The current visa rectangle has exactly TWICE the area of the baseline visa rectangle. Do not enlarge any rectangle to fit extra text. There is NO report card anywhere INSIDE the CURRENT budget rectangle.
+
+Between the two boards, a slim rightward arrow, not a new item. Under the boards, a prominent exact sentence:
+“签证 12 → 24，面积变为 2 倍”
+Use clear outside-the-board callouts with generous spacing beneath this sentence:
+One callout headed “visa · 内容与反馈”
+“预约已确认；仍待补银行流水。”
+“批注 +1 · saved：尚未收到处理确认”
+Another GRAY DASHED historical marker headed “report · 已撤下”
+“周报草稿已完成。旧份额 6，不计当前预算。”
+This historical marker must be fully OUTSIDE and separated from the two budget rectangles. Its gray dashed treatment is not a new allocation. No return-to-state arrows.
+
+Lower small flow, one line:
+“state JSON + 基线 → Agent 选内容 → 工具布局 → DOM 截图”
+Small note:
+“展开深度 0 · 省略 visa-bank 子项 · 两端使用同一 now”
+Footer:
+“面积表达 share；颜色、边框与标签表达其他属性”
+Bottom-right small mark:
+“Fold · 设计示意，非工具截图”
+
+Critical invariants:
+- The budget rectangles MUST match dimensions. Baseline18used+46blank=64; current24used+40blank=64.
+- Preserve visible empty areas at the specified proportions. Do not normalize active content to fill the board.
+- Text, change explanations, feedback and withdrawn markers NEVER enlarge proportional areas.
+- Parent and child budgets are independent; do not put visa-bank into these root budget rectangles.
+- Actual rectangle AREA, not just a numeric label or decorative mini bar, is the main visual channel.
+- The share change 12→24 maps to 2x AREA, not 2x width and 2x height (which would be4x area).
+- No extra numbers, false completion claims, or hidden active root items.
+
+```
+
+
+### 20 的面积分界校准
+
+在保持外框与文字的基础上，校准预算矩形内部的分界：基线左栏占 18/64，其中签证和周报按 2:1 分割；当前签证占 24/64。
+
+```text
+Use case: precise-object-edit. Image 1 is the target. Keep this entire diagram, all text and numbers, palette, typography and all outer boxes. Correct ONLY the three internal budget divider positions and fit their text inside the corrected regions. The last image's partitions are slightly too wide, so the numeric area ratios need correction.
+On the existing 1536x1024 image, the baseline outer budget rectangle runs approximately from x=38 to738 and y=197 to591. Keep it fixed. Move its internal VERTICAL divider from x≈264 to x≈235, exactly 28.125% of the full rectangle width from its left edge. Move its left-strip HORIZONTAL divider from y≈444 to y≈460, exactly two-thirds of the full rectangle height from its top. This makes visa area 12/64, report area6/64 and blank46/64. The visa area must be exactly twice report area. Keep labels inside; the baseline report text may be recentered or made slightly smaller to fit the corrected box, but never enlarge its geometry.
+Keep the current outer budget rectangle fixed at approximately x=799..1498,y=197..591. Move its internal VERTICAL divider and the right edge of the amber visa outline from x≈1088 to x≈1061, exactly37.5% of its full width from the left. The remainder is62.5% blank. Thus visa24/64 and blank40/64; the current visa has twice the area of baseline visa.
+All outer rectangles remain equal size. Preserve all labels:12,6,46,24,40,budget64; no new text. No changing the callout boxes, arrow, headings, footer, or outside historical marker. Opaque background. The intended correction is precise geometry, not creative reinterpretation.
 ```
