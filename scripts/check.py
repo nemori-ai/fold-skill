@@ -21,6 +21,8 @@ REQUIRED = (
     "docs/decisions.md",
     "docs/development.md",
     "docs/reference/design-v0.3.md",
+    "conformance/cases/01-us01-roundtrip.yaml",
+    "conformance/cases/02-us03-overflow-reject.yaml",
     "Makefile",
     "scripts/check.py",
     ".editorconfig",

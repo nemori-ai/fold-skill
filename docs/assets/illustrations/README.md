@@ -17,7 +17,7 @@
 | [05-attention-and-detail.png](05-attention-and-detail.png) | 先理解要点，再按需深入 | [产品方向 · 设计原则](../../product.md) |
 | [06-time-meaning.png](06-time-meaning.png) | 相同时间信号的不同含义 | [用户故事 · US-02](../../user-stories.md) |
 | [07-why-llm-now.png](07-why-llm-now.png) | LLM 同时改变需求与能力 | [产品方向 · 为什么做](../../product.md) |
-| [08-budget-reallocation.png](08-budget-reallocation.png) | 满额时的一次具体取舍 | [用户故事 · US-03](../../user-stories.md) |
+| [08-budget-reallocation.png](08-budget-reallocation.png) | 满额时的一次具体取舍；图中数字是早期直接申报份额的示例，现行档位派生以正文表格为准，待重绘 | [用户故事 · US-03](../../user-stories.md) |
 | [09-feedback-lifecycle.png](09-feedback-lifecycle.png) | 留言的保存、读取与落实 | [用户故事 · US-04](../../user-stories.md) |
 | [10-shared-state-conflict.png](10-shared-state-conflict.png) | 两个 Agent 的更新与冲突 | [用户故事 · US-05](../../user-stories.md) |
 | [11-incoming-vs-committed.png](11-incoming-vs-committed.png) | 输入记录与状态记录的契约边界 | [信息契约 · 三条边界](../../information-contract.md) |

@@ -1,0 +1,118 @@
+# US-01：离开半天，回来就知道下一步。
+# 一个用例 = 初始状态 + 按时间顺序的若干步 + 每步的期望结果。
+# 份额由 weight 派生（B = 64：critical 24 / high 12 / normal 6 / low 3 / trace 1）。
+# 时长投影以每步传入的 now 为准。
+
+budget: 64
+actor: assistant
+
+steps:
+  - name: 早上三件事上板
+    now: 2026-10-09T08:30:00+08:00
+    commit:
+      - {id: weekly-report, title: 周报草稿, summary: 起草中, weight: high, kind: in-progress}
+      - {id: visa-materials, title: 签证材料, summary: 核对中，等代理回复, weight: normal, kind: in-progress}
+      - {id: pr-410, title: PR 410, summary: 等待检查, weight: low, kind: in-progress}
+      - {id: pr-411, title: PR 411, summary: 等待检查, weight: low, kind: in-progress}
+      - {id: pr-412, title: PR 412, summary: 等待检查, weight: low, kind: in-progress}
+    expect:
+      accepted: true
+      revision: r1
+      used: 27
+      shares: {weekly-report: 12, visa-materials: 6, pr-410: 3, pr-411: 3, pr-412: 3}
+      rank: [weekly-report, visa-materials, pr-410, pr-411, pr-412]
+
+  - name: 中午前的整理：覆盖、合并、提升
+    now: 2026-10-09T11:30:00+08:00
+    commit:
+      - id: visa-materials
+        relation: supersedes:visa-materials
+        title: 签证材料
+        summary: 还缺银行流水；周五办理的预约待确认。展开查看材料要求。
+        weight: critical
+        kind: needs-you
+        reason: 代理确认缺材料，需要用户参与，影响 10 月 20 日出差。
+        due_at: 2026-10-12T18:00:00+08:00
+        sources:
+          - {channel: email, ref: "mail:17", quote: 还缺纸质银行流水，请在10月12日18点前送到。, observed_at: 2026-10-09T10:01:00+08:00}
+        children:
+          - {id: visa-bank, title: 银行流水, summary: 需要近 6 个月纸质流水, weight: critical, kind: needs-you}
+          - {id: visa-appt, title: 办理预约, summary: 周五时段待确认, weight: high, kind: in-progress}
+          - {id: visa-passport, title: 护照复印件, summary: 已交, weight: normal, kind: done}
+      - id: weekly-report
+        relation: supersedes:weekly-report
+        summary: 草稿已完成，收入数字有一处需要核对。
+        weight: high
+        kind: done
+      - id: pr-batch
+        relation: "merges:[pr-410, pr-411, pr-412]"
+        title: PR 进展
+        summary: 2 / 3 已合并，剩余一项等待 CI。
+        weight: normal
+        kind: in-progress
+    expect:
+      accepted: true
+      revision: r2
+      used: 42
+      shares: {visa-materials: 24, weekly-report: 12, pr-batch: 6}
+      rank: [visa-materials, weekly-report, pr-batch]
+      children:
+        visa-materials:
+          used: 42
+          shares: {visa-bank: 24, visa-appt: 12, visa-passport: 6}
+      withdrawn: []            # 被 supersede / merge 的旧条目不在当前层，历史中可查
+      events_contain:
+        - {op: supersede, item: visa-materials}
+        - {op: supersede, item: weekly-report}
+        - {op: merge, item: pr-batch, merged: [pr-410, pr-411, pr-412]}
+
+  - name: 用户中午回来留下批注
+    now: 2026-10-09T12:40:00+08:00
+    annotate:
+      item: visa-materials
+      text: 下午我去打印，周五按之前说的时间约。
+    expect:
+      annotation_id: ann-1
+      annotation_status: saved        # 已保存，尚未被 Agent 读取
+      revision: r2                    # 批注不改变层结构与份额
+
+  - name: Agent 下午开始工作，先读状态
+    now: 2026-10-09T14:00:00+08:00
+    state: {}
+    expect:
+      revision: r2
+      pending_annotations: [ann-1]
+      items:
+        visa-materials:
+          age: 5 小时 30 分钟
+          since_update: 2 小时 30 分钟
+          since_seen: never
+          until_due: 3 天 4 小时
+          until_stale: null
+
+  - name: Agent 读取批注并更新签证
+    now: 2026-10-09T14:05:00+08:00
+    commit:
+      acknowledges: [ann-1]
+      declarations:
+        - id: visa-materials
+          relation: supersedes:visa-materials
+          summary: 已约周五 10 点；等你下午打印的银行流水。
+          weight: critical
+          kind: needs-you
+          reason: 按用户批注完成预约；流水仍未补齐，事项未完成。
+    expect:
+      accepted: true
+      revision: r3
+      annotation_status: {ann-1: read}
+      annotation_bound_to: {ann-1: r3}
+      items:
+        visa-materials:
+          annotations: [ann-1]        # supersede 继承批注
+          children: [visa-bank, visa-appt, visa-passport]   # supersede 未声明 children 时保留子层
+      shares: {visa-materials: 24, weekly-report: 12, pr-batch: 6}
+      text_brief_contains:
+        - "**签证材料**"
+        - 已约周五 10 点
+        - 周报草稿
+        - 2 / 3 已合并
