@@ -26,6 +26,7 @@ REQUIRED = (
     "conformance/cases/03-batch-receipts-and-checks.yaml",
     "conformance/cases/04-patch-and-subtree.yaml",
     "conformance/cases/05-operation-boundaries.yaml",
+    "conformance/cases/06-state-overview.yaml",
     "Makefile",
     "scripts/check.py",
     ".editorconfig",

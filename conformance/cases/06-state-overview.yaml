@@ -1,0 +1,283 @@
+# state 视觉概览的设计验收材料；尚未实现 CLI、渲染器或真实浏览器运行器。
+# output_dir 相对未来运行器的隔离目录；这些路径不是本轮生成的产物。
+# expect.overview 核对 overview.json，diff_contains 核对完整 diff.json，不是 state stdout 的新字段。
+# stdout 和 state.json 必须是同一次捕获、同 now 下普通 state 返回的完整同一对象；view 只过滤概览。
+# state_unchanged 比较持久业务与批注状态，不比较随 now 变化的投影或产物文件。
+# diff / diff_contains 核对完整语义变化列表，不要求 diff.json 顶层必须是数组。
+# shown_ids / omitted_ids / hidden_change_ids 按集合比较；shown_ids 在 diff 视图中包含撤下的 ghost。
+# render_assertions 必须由真实 renderer / browser runner 验证，不能用 JSON 存在或解析成功替代。
+# dom_matches_state 核对 state + diff + view 的呈现，包括 ghost；不把 ghost 当成当前 active 条目。
+# fault: renderer_unavailable 是运行器注入，不是 CLI 参数。
+
+budget: 64
+actor: assistant
+
+steps:
+  - name: 建立两个 root 条目和一个子项
+    now: "2026-10-09T09:00:00+08:00"
+    commit:
+      batch_id: overview-initial
+      declarations:
+        - id: visa
+          title: 签证材料
+          summary: 银行流水待补齐。
+          weight: high
+          kind: needs-you
+          due_at: "2026-10-12T18:00:00+08:00"
+          children:
+            - {id: visa-bank, title: 银行流水, summary: 需要近 6 个月纸质流水。, weight: normal, kind: needs-you}
+        - {id: report, title: 周报草稿, summary: 周报草稿已完成。, weight: normal, kind: done}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r1
+      events_appended: 1
+      used: 18
+      shares: {visa: 12, report: 6}
+      rank: [visa, report]
+      children:
+        visa: {used: 6, shares: {visa-bank: 6}}
+
+  - name: 默认概览只展示 root，明确报告省略的子项
+    now: "2026-10-09T09:10:00+08:00"
+    state:
+      overview: {output_dir: "artifacts/default-overview"}
+    expect:
+      revision: r1
+      events_appended: 0
+      state_unchanged: true
+      items:
+        visa: {last_seen_at: null, since_seen: null}
+      overview:
+        status: ready
+        source_event_seq: 1
+        source_revision: r1
+        now: "2026-10-09T09:10:00+08:00"
+        base_event_seq: null
+        base_revision: null
+        view:
+          items: null
+          depth: 0
+          fields: [summary, weight, share, kind, annotations]
+          changes_only: false
+        shown_ids: [visa, report]
+        omitted_ids: [visa-bank]
+        hidden_change_ids: []
+      artifact_assertions:
+        state_json_equals_plain_state: true
+        stdout_json_equals_state_json: true
+      render_assertions:
+        images_nonempty: true
+        png_decodable: true
+        text_not_clipped: true
+        dom_matches_state: true
+
+  - name: 同一事件状态只推进 now，两端按同 now 比较不制造变化
+    now: "2026-10-09T09:20:00+08:00"
+    state:
+      overview: {output_dir: "artifacts/time-only", diff_from: 1}
+    expect:
+      revision: r1
+      events_appended: 0
+      state_unchanged: true
+      items:
+        visa: {last_seen_at: null, since_seen: null}
+      overview:
+        status: ready
+        source_event_seq: 1
+        source_revision: r1
+        now: "2026-10-09T09:20:00+08:00"
+        base_event_seq: 1
+        base_revision: r1
+        shown_ids: [visa, report]
+        omitted_ids: [visa-bank]
+        hidden_change_ids: []
+      diff: []
+      artifact_assertions:
+        state_json_equals_plain_state: true
+        stdout_json_equals_state_json: true
+      render_assertions:
+        images_nonempty: true
+        png_decodable: true
+        text_not_clipped: true
+        dom_matches_state: true
+
+  - name: 用户留下批注，event_seq 增加但 revision 仍为 r1
+    actor: user
+    now: "2026-10-09T09:25:00+08:00"
+    annotate: {batch_id: overview-note, item: visa, text: 下午我去打印，先保留材料要求。}
+    expect:
+      accepted: true
+      batch_status: committed
+      annotation_id: ann-1
+      annotation_status: saved
+      revision: r1
+      events_appended: 1
+      events_contain:
+        - {event_seq: 2, type: annotation, batch_id: overview-note, revision: r1}
+
+  - name: 以事件序号为基线，同 revision 的批注变化仍被标明
+    now: "2026-10-09T09:30:00+08:00"
+    state:
+      overview: {output_dir: "artifacts/annotation-diff", diff_from: 1}
+    expect:
+      revision: r1
+      events_appended: 0
+      state_unchanged: true
+      pending_annotations: [ann-1]
+      items:
+        visa: {annotations: [ann-1], last_seen_at: null, since_seen: null}
+      overview:
+        status: ready
+        source_event_seq: 2
+        source_revision: r1
+        now: "2026-10-09T09:30:00+08:00"
+        base_event_seq: 1
+        base_revision: r1
+        shown_ids: [visa, report]
+        omitted_ids: [visa-bank]
+        hidden_change_ids: []
+      diff_contains:
+        - {item: visa, type: annotations_changed}
+      artifact_assertions:
+        state_json_equals_plain_state: true
+        stdout_json_equals_state_json: true
+      render_assertions:
+        images_nonempty: true
+        png_decodable: true
+        text_not_clipped: true
+        dom_matches_state: true
+
+  - name: 更新签证摘要与档位，同时把已结束的周报撤下
+    now: "2026-10-09T09:40:00+08:00"
+    commit:
+      batch_id: overview-update
+      declarations:
+        - {id: visa, relation: supersedes:visa, summary: 预约已确认；仍待补银行流水。, weight: critical, kind: needs-you,
+           reason: 当前仍需用户补材料，提高关注档位。}
+        - {id: report, relation: withdraw, reason: 周报已告一段落，结果保留在历史中。}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r2
+      events_appended: 1
+      used: 24
+      shares: {visa: 24}
+      rank: [visa]
+      withdrawn: [report]
+      pending_annotations: [ann-1]
+      events_contain:
+        - {event_seq: 3, type: commit, batch_id: overview-update, revision: r2}
+
+  - name: 默认 diff 保留被撤下 root 的 ghost，不让它无声消失
+    now: "2026-10-09T09:45:00+08:00"
+    state:
+      overview: {output_dir: "artifacts/withdraw-diff", diff_from: 1}
+    expect:
+      revision: r2
+      events_appended: 0
+      state_unchanged: true
+      rank: [visa]
+      items:
+        visa: {last_seen_at: null, since_seen: null}
+      overview:
+        status: ready
+        source_event_seq: 3
+        source_revision: r2
+        now: "2026-10-09T09:45:00+08:00"
+        base_event_seq: 1
+        base_revision: r1
+        shown_ids: [visa, report]
+        omitted_ids: [visa-bank]
+        hidden_change_ids: []
+      diff_contains:
+        - {item: visa, type: updated}
+        - {item: visa, type: annotations_changed}
+        - {item: report, type: withdrawn}
+      artifact_assertions:
+        state_json_equals_plain_state: true
+        stdout_json_equals_state_json: true
+      render_assertions:
+        images_nonempty: true
+        png_decodable: true
+        text_not_clipped: true
+        dom_matches_state: true
+        ghost_item_ids: [report]
+        ghosts_distinct_from_active: true
+
+  - name: 子集与字段筛选报告隐藏变化，完整 state 和 diff 仍保留全部信息
+    now: "2026-10-09T09:50:00+08:00"
+    state:
+      overview:
+        output_dir: "artifacts/subset-overview"
+        diff_from: 1
+        view:
+          items: [visa]
+          depth: 0
+          fields: [summary, weight, share, kind]
+          changes_only: false
+    expect:
+      revision: r2
+      events_appended: 0
+      state_unchanged: true
+      items:
+        visa: {annotations: [ann-1], last_seen_at: null, since_seen: null}
+      overview:
+        status: ready
+        source_event_seq: 3
+        source_revision: r2
+        now: "2026-10-09T09:50:00+08:00"
+        base_event_seq: 1
+        base_revision: r1
+        shown_ids: [visa]
+        omitted_ids: [visa-bank, report]
+        hidden_change_ids: [visa, report]  # visa 的批注字段未画出，report 整项未画出。
+      diff_contains:
+        - {item: visa, type: annotations_changed}
+        - {item: report, type: withdrawn}
+      artifact_assertions:
+        state_json_equals_plain_state: true
+        stdout_json_equals_state_json: true
+      render_assertions:
+        images_nonempty: true
+        png_decodable: true
+        text_not_clipped: true
+        dom_matches_state: true
+        ghost_item_ids: []
+
+  - name: 渲染器不可用时保留 JSON，明确失败且不复用目录里的旧图
+    now: "2026-10-09T09:55:00+08:00"
+    state:
+      overview:
+        output_dir: "artifacts/subset-overview"
+        diff_from: 1
+        view:
+          items: [visa]
+          depth: 0
+          fields: [summary, weight, share, kind]
+          changes_only: false
+    fault: renderer_unavailable
+    expect:
+      exit_nonzero: true
+      revision: r2
+      events_appended: 0
+      state_unchanged: true
+      pending_annotations: [ann-1]
+      items:
+        visa: {last_seen_at: null, since_seen: null}
+      overview:
+        status: failed
+        error: {code: renderer_unavailable}
+        source_event_seq: 3
+        source_revision: r2
+        now: "2026-10-09T09:55:00+08:00"
+        base_event_seq: 1
+        base_revision: r1
+        images: []
+      artifact_assertions:
+        state_json_equals_plain_state: true
+        stdout_json_equals_state_json: true
+        overview_json_exists: true
+        stale_image_references: false

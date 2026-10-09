@@ -1,6 +1,6 @@
 # 工作环境与启动交付
 
-状态：本文件描述已存在的仓库工具。首切片的实现栈是 Python 标准库，见[决策记录](decisions.md)。
+状态：本文件描述已存在的仓库工具，并说明后续实现的验收要求。首切片核心 CLI 使用 Python 标准库；可选概览模块需要浏览器运行环境，见[决策记录](decisions.md)。
 
 ## 本轮环境
 
@@ -17,9 +17,11 @@ make check
 
 ![make setup 创建本地虚拟环境，make check 检查启动文件、本地链接和基础格式](assets/illustrations/15-development-workflow.png)
 
-*这些命令准备仓库工具环境并检查材料；首切片使用 Python 标准库，产品功能尚未实现。*
+*这些命令准备仓库工具环境并检查材料；首切片核心使用 Python 标准库，产品功能尚未实现。*
 
 `make setup` 使用 `python3 -m venv .venv` 创建独立环境，不联网下载依赖。已有 `.venv` 时再次运行不会清空环境。可以用 `make setup PYTHON=/path/to/python3` 指定解释器。
+
+可选状态概览的浏览器运行环境另行准备；`make setup` 不安装浏览器。未安装可视模块不影响普通 JSON 查询与核心 CLI。渲染器尚未实现，安装及调用命令随实现补入。
 
 `make check` 使用 `.venv/bin/python` 运行仓库检查，再执行 `git diff --check`。也可以不用 Make，直接运行：
 
@@ -43,6 +45,8 @@ git diff --check
 
 产品 CLI 只接收 JSON；YAML 是设计用例的表达格式。测试运行器可以读取或转换用例，不因此给产品 CLI 引入 YAML 支持。
 
+设计中的 `fold state` 可选导出同一快照对应的 JSON 与概览 PNG，也可附加差异数据。浏览器负责真实 HTML/DOM 渲染与截图，不用图像生成模型绘制业务状态；参数、产物和失败行为以[信息契约](information-contract.md)为准，模块边界见[架构](architecture.md)。
+
 ## 文件清单
 
 | 文件 | 用途 |
@@ -56,7 +60,7 @@ git diff --check
 | [skill-design.md](skill-design.md) | 何时调用、上下文视图、判断指引、CLI 动作与验证计划 |
 | [formal-model.md](formal-model.md) | 输入输出、语义估计、预算与执行的数学探索 |
 | [architecture.md](architecture.md) | 顶层设计与职责边界 |
-| [conformance/cases](../conformance/cases) | 五组一致性用例：往返、超额拒绝、批次回执与复核、补丁与子树、操作边界 |
+| [conformance/cases](../conformance/cases) | 六组一致性用例：往返、超额拒绝、批次回执与复核、补丁与子树、操作边界、状态概览 |
 | [visual-guide.md](visual-guide.md) | 按文档定位配图与对应章节的索引 |
 | [assets/illustrations](assets/illustrations) | 项目内保存的配图与生成提示词 |
 | [development.md](development.md) | 本文：环境与检查说明 |
@@ -71,16 +75,19 @@ git diff --check
 
 ## 读完以后如何继续
 
-按 [decisions.md](decisions.md) 的实施顺序推进。五组用例覆盖：
+按 [decisions.md](decisions.md) 的实施顺序推进。六组用例覆盖：
 
 - `01-us01-roundtrip.yaml`：覆盖、合并、父子事实一致与批注往返。
 - `02-us03-overflow-reject.yaml`：超额拒绝、Agent 让位与历史查询。
 - `03-batch-receipts-and-checks.yaml`：批次重试、结果查询、无变化复核和仅确认提交。
 - `04-patch-and-subtree.yaml`：补丁保留与清空、子树撤下及反馈可达、沿原 ID 逐项重新纳入。
 - `05-operation-boundaries.yaml`：条目操作的适用范围与拒绝边界。
+- `06-state-overview.yaml`：可选概览、范围选择、差异与渲染失败边界。
 
 初期运行器可调用内存核心，配合内存事件、批注与文字简报验证行为。内存用例通过只证明这一层的实现，不代表文件持久化、故障恢复或产品 CLI 已完成；首切片完成需要后续层的对应验收。
 
 故障验证可结合两种方式：用测试钩子稳定触发指定边界，再用少量真实子进程崩溃与 CLI 往返检查实际文件和进程行为。不能只用进程内异常模拟就宣称持久化恢复完成，也不必把每项核心断言都变成子进程测试。
 
-实现要求、产品目录和测试命令随首条行为实现一起补入。当前 `make check` 只检查材料，不执行产品断言；用例运行器与产品 CLI 都尚未实现。
+概览验收需要检查实际生成的 PNG 和 DOM：布局是否对应所选层级与份额，字体是否可读，长文本是否溢出，版本、范围和省略提示是否清楚，并与对应 JSON 核对。仅有 JSON 断言通过不足以证明视觉呈现正确；缺少浏览器或渲染失败时也不能把旧图片当成成功产物。
+
+实现要求、产品目录和测试命令随首条行为实现一起补入。当前 `make check` 只检查材料，不执行产品断言；用例运行器、产品 CLI 与概览渲染器都尚未实现。

@@ -2,7 +2,7 @@
 
 把多种渠道的信息转换成可共同判断的输入，由 Agent 结合上下文估计和整理，维护为一份有注意力预算的结构化状态，供界面、推送和日志等应用使用。
 
-**当前阶段：首切片设计基线已完成，产品待实现。** 首切片是 US-01 单 Agent 本地闭环：Agent 声明、注意力分配、文字简报与批注往返。文档与验收用例已经就位，产品 CLI 和可安装 skill 尚未实现。
+**当前阶段：首切片设计基线已完成，产品待实现。** 首切片是 US-01 单 Agent 本地闭环：Agent 声明、注意力分配、文字简报与批注往返，并提供可选的静态状态概览，辅助 Agent 理解 JSON。文档与验收用例已经就位，产品 CLI、概览渲染器和可安装 skill 尚未实现。
 
 人离开后再回来，是首个验收场景；Fold 同样适用于人在场时的持续整理。需要立即告知的事情先走即时渠道，再按持续关注价值纳入状态。
 
@@ -37,7 +37,7 @@ flowchart LR
 | [docs/architecture.md](docs/architecture.md) | 模块边界与持久化规范：保存、恢复和调用如何衔接 |
 | [docs/formal-model.md](docs/formal-model.md) | 用数学检查输入输出、语义估计、预算与执行的关系；可先读公式旁的解释 |
 
-准备实现时，接着读 [decisions.md](docs/decisions.md) 的范围、实施顺序和后续问题，再按 [AGENTS.md](AGENTS.md) 与[工作环境说明](docs/development.md)开始工作。[五组一致性用例](conformance/cases)提供验收材料，[配图索引](docs/visual-guide.md)帮助定位图示。
+准备实现时，接着读 [decisions.md](docs/decisions.md) 的范围、实施顺序和后续问题，再按 [AGENTS.md](AGENTS.md) 与[工作环境说明](docs/development.md)开始工作。[六组一致性用例](conformance/cases)提供验收材料，[配图索引](docs/visual-guide.md)帮助定位图示。
 
 [原始设计草案 v0.3](docs/reference/design-v0.3.md) 原样保存，供回看动机与早期设计，不是现行实现规范。故事、配图与形式模型用于解释；精确外部行为以信息契约为准，持久化以架构为准，范围及实施次序以决策记录为准。
 
@@ -51,3 +51,5 @@ make check
 ```
 
 初始化只在本地建立 `.venv`，不安装第三方依赖、不访问网络。检查覆盖启动文件、用例文件、维护中文档的本地文件链接和基础格式；它不代表产品功能已经通过测试。
+
+设计中的 `fold state` 可选导出概览与差异 PNG，由 Agent 选择关注范围，工具负责 HTML 布局与真实浏览器截图。普通 JSON 查询不依赖浏览器；可视模块的可选运行环境及验收要求见[工作环境说明](docs/development.md)，参数与产物约定见[信息契约](docs/information-contract.md)。

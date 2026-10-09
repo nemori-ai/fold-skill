@@ -280,11 +280,59 @@ rank 按 share 降序，同 share 时 needs-you 优先，再按 updated_at 新�
 ## 5. 同一输出可以有哪些消费者
 
 - **文字简报（首个消费者）：** 按 rank 排序；critical 和 high 各自成段并加粗标题；normal 每项一逻辑行；low 和 trace 折成一逻辑行尾注“另有 n 项次要事项”；有 active children 的标“▸ n 项细节”；时间用时长；只展示 active 条目，尾注给历史入口。份额和档位影响表达篇幅，只做投影，不重算份额。
+- **Agent 状态概览（首切片的可选读取方式）：** 将同一份 state JSON 按所选范围渲染成预览图，可叠加语义 diff，辅助 Agent 定位全局关系与变化。具体读取约定见下节。
 - **Pinboard 与其他 UI（后续）：** 使用稳定身份、摘要、层级与份额展示当前局面；坐标与布局稳定属于渲染器。
 - **推送消费者（后续）：** 依赖 `kind` 与 `weight` 做阈值，不用 `share`；发送、去重与送达由消费者负责。
 - **输出日志：** 按序记录每次已接受的变化，附快照 revision，供细查 Agent 当时如何调整状态。它只覆盖实际留下的输出记录，不能还原所有原始输入。
 
 首切片不另设“12 行”等总行数硬限制，也不为满足行数截断核心摘要。逻辑行指输出文本的换行分隔，终端宽度引起的视觉换行不计入；低档位折叠和历史入口是明确的展示规则。总行数预算与额外折叠策略在取得实际阅读反馈后评估，见[决策记录](decisions.md)。
+
+### state 的视觉概览与 diff
+
+视觉概览是 state 的另一种表达：在声明的范围和字段内，图上的内容与 JSON 等价，身份、数值和事实均来自同一次读取。它辅助 Agent 看清整体与变化，不产生第二份业务状态。经过选择的图片不代表完整 JSON，也不承诺从像素恢复全部字段；图中必须标明范围与省略，精确操作仍按 ID 回到 JSON 核对。
+
+```sh
+fold state --now <ts> --overview <output-dir>
+fold state --now <ts> --overview <output-dir> --view view.json --diff-from <event_seq>
+```
+
+普通 state 的 stdout JSON 结构保持不变。请求 overview 时，工具在与状态存储分离的产物目录附加生成 state.json、overview.json 和 PNG；请求 diff 时再生成 diff.json。state.json 保存与本次 stdout 相同的状态对象；overview.json 是渲染说明，不写入快照或事件。坐标、图片路径与选择配置都属于读取产物。
+
+Agent 通过 view.json 选择内容，不提供坐标、HTML、图片提示词或另写一套摘要。例如：
+
+```json
+{
+  "items": ["visa-materials", "weekly-report"],
+  "depth": 1,
+  "fields": ["summary", "weight", "share", "kind", "annotations"],
+  "changes_only": false
+}
+```
+
+| 选择项 | 含义与默认值 |
+| --- | --- |
+| items | 要查看的条目 ID；默认 null，展示当前根层 active 条目，diff 时并入基线根层旧项。显式 ID 须存在于当前或基线可见树中，空数组表示不选择条目。 |
+| depth | 从所选条目再向下展开多少层，默认 0；非负整数。子层仍用各自预算，不把子项份额计入父层。 |
+| fields | 默认 summary、weight、share、kind、annotations。还可选择 reason、sources 及已定义的时间字段；只能引用 state 读取视图中的字段，不新增判断。 |
+| changes_only | 默认 false，保留未变上下文并高亮变化；true 仅展示有变化的所选条目，必须同时指定 diff 基线。 |
+
+ID、title、status、层级归属、版本范围、图例与省略提示始终保留。各层预算和已用份额取完整层的真实值，另标所选范围，不因筛选重算。批注展示读取视图已有的内容与确认状态；字段若只含引用，图也保留引用，不猜测其内容。整份状态仍待确认的反馈若在所选范围外，也要有数量提示，避免图中不可见被误解为不存在。
+
+diff 使用 event_seq 定位基线，0 表示空初态；不能只用 revision，因为保存批注也可能改变 state 视图而不增加 revision。读取时固定当前事件位置，并从事件恢复基线；两端都用同一个 now 投影。范围之外、无法取得或晚于当前位置的基线返回 invalid_diff_base，不猜测另一份状态。
+
+先比较两端的条目业务字段、结构状态与批注，将完整端点差异写入 diff.json，再对图片应用视图选择。diff.json 记录 base_event_seq、source_event_seq、now 与 changes；每项变化含 item、type、fields 及 before/after 的 JSON 片段，不存在的一侧为 null。type 为 added、updated、withdrawn、restored、merged 或 annotations_changed，同一条目可以有多类变化。
+
+这是端点差异，不是期间全部事件的汇总。只发生 checked、阅读查询或时长流逝时，不把条目全部高亮；派生排位、自动时间与变化说明也不单独制造业务 diff。渲染位置变化不等于业务变化。
+
+默认图保留当前条目，并为基线中已撤下或合并的旧项显示旧内容标记及后继关系，注明不计入当前预算。高亮同时使用文字标签，不能只靠颜色；所选字段显示 before/after 或明确的新增、撤下标记。选择排除的条目或字段仍有变化时，图上提示未展示变化，并在说明中列出对应 ID，不能把局部图宣称为全部差异。
+
+overview.json 包含 status（ready / failed）、source_event_seq、source_revision、now、base_event_seq、base_revision、view、shown_ids、omitted_ids、hidden_change_ids 和 images。无 diff 时基线为 null；omitted_ids 说明范围、深度或变化筛选排除的条目，hidden_change_ids 也包含已展示条目中尚未展示的字段变化。图片须能关联这些说明和原始 state.json / diff.json。
+
+产物目录可以复用，但每次渲染前须使旧成功说明失效，并保存本次 state.json。返回的 images 只列本次成功生成的图片；旧 PNG 即使仍在目录中，也不能成为本次结果。未完成的截图不发布 ready 说明。
+
+工具内部完成布局与真实渲染，例如生成 HTML/CSS，再用浏览器 DOM 截图产生 PNG。不得用生成式图片重画业务状态、改写摘要或靠模型估计数值。选定内容过多时保持文字可读，明确分成多张 PNG 并在 images 全量列出，不静默裁切，也不靠无限缩小字体塞进一张图。
+
+可视读取不提交声明、不增加事件、不确认批注，也不写用户阅读时间。选择配置不合法时返回 invalid_view；浏览器不可用时返回 renderer_unavailable。请求的图未完成，CLI 返回非零退出码，overview 标为 failed 并带 error，images 为空；本次已取得的 state JSON 仍可用，不返回旧图冒充新结果。浏览器依赖与捕获流程见[架构](architecture.md#state-的可视渲染)。
 
 ## 6. 三条必须保留的边界
 

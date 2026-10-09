@@ -1,6 +1,6 @@
 # Fold：从人的一天看设计
 
-状态：首切片设计基线中的体验说明。US-01、US-03，以及 US-02 的时间投影和 US-04 的批注确认属于首切片；US-05 属于后续切片。五组一致性用例见 [conformance/cases](../conformance/cases)，范围与实施顺序见[决策记录](decisions.md)。
+状态：首切片设计基线中的体验说明。US-01、US-03，以及 US-02 的时间投影和 US-04 的批注确认属于首切片；US-05 属于后续切片。六组一致性用例见 [conformance/cases](../conformance/cases)，范围与实施顺序见[决策记录](decisions.md)。
 
 人物与数据均为虚构。涉及数字的层统一使用预算 B = 64，默认份额由档位派生：critical 24、high 12、normal 6、low 3、trace 1；需要例外时，声明同时给出 `share` 与 `reason`。
 
