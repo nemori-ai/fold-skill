@@ -25,6 +25,7 @@ REQUIRED = (
     "conformance/cases/02-us03-overflow-reject.yaml",
     "conformance/cases/03-batch-receipts-and-checks.yaml",
     "conformance/cases/04-patch-and-subtree.yaml",
+    "conformance/cases/05-operation-boundaries.yaml",
     "Makefile",
     "scripts/check.py",
     ".editorconfig",

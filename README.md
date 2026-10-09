@@ -2,7 +2,7 @@
 
 把多种渠道的信息转换成可共同判断的输入，由 Agent 结合上下文估计和整理，维护为一份有注意力预算的结构化状态，供界面、推送和日志等应用使用。
 
-**当前阶段：首切片实现要求已冻结，产品代码尚未开始。** 首切片是 US-01 单 Agent 本地闭环：Agent 自己的进度声明、五档档位派生份额、一个 Python CLI、文字简报输出、批注往返。范围与决定见 [docs/decisions.md](docs/decisions.md)。
+**当前阶段：首切片设计基线已完成，产品待实现。** 首切片是 US-01 单 Agent 本地闭环：Agent 声明、注意力分配、文字简报与批注往返。文档与验收用例已经就位，产品 CLI 和可安装 skill 尚未实现。
 
 人离开后再回来，是首个验收场景；Fold 同样适用于人在场时的持续整理。需要立即告知的事情先走即时渠道，再按持续关注价值纳入状态。
 
@@ -26,34 +26,20 @@ flowchart LR
 
 ## 从这里读起
 
-按下面的顺序，可以从产品动机和具体故事走到抽象模型，再看如何开始工作。数学稿可先跳过公式读解释。
+先理解产品与人的使用过程，再读 Agent 怎样判断和操作，最后查看精确契约与实现边界。
 
 | 文件 | 内容 |
 | --- | --- |
-| [docs/decisions.md](docs/decisions.md) | 已对齐方向、首切片决定、推迟清单 |
 | [docs/product.md](docs/product.md) | 项目动机、核心体验、术语和成功信号 |
 | [docs/user-stories.md](docs/user-stories.md) | 五个完整情境：人看到什么、Agent 怎样整理、怎样判断做对了 |
-| [docs/information-contract.md](docs/information-contract.md) | 声明字段、份额与排序规则、快照与事件结构、消费者 |
 | [docs/skill-design.md](docs/skill-design.md) | 何时调用、上下文视图、判断指引、CLI 动作与验证计划 |
-| [docs/formal-model.md](docs/formal-model.md) | 输入输出、语义估计、预算与执行的数学表达 |
-| [docs/architecture.md](docs/architecture.md) | 顶层模块、职责边界和数据如何流动 |
-| [conformance/cases](conformance/cases) | 四组一致性用例：往返、超额拒绝、批次回执与复核、补丁与子树 |
-| [docs/visual-guide.md](docs/visual-guide.md) | 按文档查找配图及所在章节 |
-| [AGENTS.md](AGENTS.md) | 在这个仓库里协作的约定 |
-| [docs/development.md](docs/development.md) | 环境初始化、检查命令和当前文件清单 |
+| [docs/information-contract.md](docs/information-contract.md) | 外部行为规范：输入输出、操作、版本、回执与呈现 |
+| [docs/architecture.md](docs/architecture.md) | 模块边界与持久化规范：保存、恢复和调用如何衔接 |
+| [docs/formal-model.md](docs/formal-model.md) | 用数学检查输入输出、语义估计、预算与执行的关系；可先读公式旁的解释 |
 
-[原始设计草案 v0.3](docs/reference/design-v0.3.md) 原样保存，供回看动机、用户故事和早期设计。其中的公式、接口、代码和安装说明不是当前实现承诺。
+准备实现时，接着读 [decisions.md](docs/decisions.md) 的范围、实施顺序和后续问题，再按 [AGENTS.md](AGENTS.md) 与[工作环境说明](docs/development.md)开始工作。[五组一致性用例](conformance/cases)提供验收材料，[配图索引](docs/visual-guide.md)帮助定位图示。
 
-## 当前工作方向
-
-- Agent 在当前状态和用户背景中估计关注价值，默认用五档档位表达比较结果；需要例外份额时同时提交 `share` 与 `reason`。
-- 脚本派生份额，整批校验预算与引用；超额只报错，不自行让位。补丁省略可选字段时保留原值，非撤下声明每次仍须提供档位与 kind；撤下子树时保留历史及尚未确认的反馈。
-- 每次写入携带 `batch_id`。同 ID、同请求重试返回 `already_committed` 与原回执，不重复执行；同 ID 的不同请求拒绝。完整批次记录是事实源，快照是可重建缓存。
-- 没有业务变化且没有新批注确认时记录 `checked`，不制造新 revision 或条目更新时间；只有新确认时增加 revision，保留条目更新时间。
-- 存储用时刻，读取用时长；行动截止与信息失效分开，到期不自动撤下。
-- 批注使用 `saved` 与 `acknowledged` 表达保存和处理确认，不推断实际是否读过。首切片未采集用户阅读，`last_seen_at` 与 `since_seen` 为 `null`。
-- 输出遵循共同结构。文字简报是首个消费者；Pinboard、推送和日志是后续应用。
-- 多 Agent 并发、Observation 接入、推送阈值等推迟到后续切片，规则已先写明。
+[原始设计草案 v0.3](docs/reference/design-v0.3.md) 原样保存，供回看动机与早期设计，不是现行实现规范。故事、配图与形式模型用于解释；精确外部行为以信息契约为准，持久化以架构为准，范围及实施次序以决策记录为准。
 
 ## 工作环境
 
@@ -65,7 +51,3 @@ make check
 ```
 
 初始化只在本地建立 `.venv`，不安装第三方依赖、不访问网络。检查覆盖启动文件、用例文件、维护中文档的本地文件链接和基础格式；它不代表产品功能已经通过测试。
-
-产品 CLI 的提交输入使用带顶层 `batch_id` 的 JSON 对象；YAML 仅用于表达设计用例。操作及结果未知时的查询约定见[工作环境说明](docs/development.md)。
-
-当前切片：US-01，见 [docs/decisions.md](docs/decisions.md)。

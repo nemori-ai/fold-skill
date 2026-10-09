@@ -130,7 +130,7 @@ steps:
       events_appended: 0
       state_unchanged: true
 
-  - name: 清空子层会撤下原子树，不能省略 reason
+  - name: 清空子层必须明确声明要撤下的直接孩子
     now: "2026-10-09T09:13:00+08:00"
     commit:
       batch_id: patch-clear-without-reason
@@ -138,11 +138,41 @@ steps:
       acknowledges: []
     expect:
       accepted: false
-      error: {field: reason}
+      error:
+        code: explicit_withdraw_required
+        parent: trip
+        omitted_children: [bank, visa-appt]
+        affected_ids: [bank, bank-print, visa-appt]
       revision: r2
       events_appended: 0
       state_unchanged: true
       pending_annotations: [ann-1]
+
+  - name: 父项已有 reason，也不能把漏列孩子当成明确撤下
+    now: "2026-10-09T09:14:00+08:00"
+    commit:
+      batch_id: patch-omitted-child-with-reason
+      declarations:
+        - id: trip
+          relation: supersedes:trip
+          weight: high
+          kind: in-progress
+          reason: 本轮强调预约进展。
+          children:
+            - {id: visa-appt, relation: supersedes:visa-appt, weight: high, kind: in-progress}
+      acknowledges: []
+    expect:
+      accepted: false
+      error:
+        code: explicit_withdraw_required
+        parent: trip
+        omitted_children: [bank]
+        affected_ids: [bank, bank-print]
+      revision: r2
+      events_appended: 0
+      state_unchanged: true
+      pending_annotations: [ann-1]
+      batch_id_recorded: false
 
   - name: 可空字段显式清空，share 取消覆盖并恢复 weight 映射
     now: "2026-10-09T09:15:00+08:00"
@@ -201,6 +231,8 @@ steps:
       declarations:
         - {id: trip, relation: supersedes:trip, weight: high, kind: in-progress, children: null, summary: null,
            reason: 本轮收起全部签证细节，原材料与批注留在历史中。}
+        - {id: bank, relation: withdraw, reason: 收起银行流水及打印要求，保留原资料和批注。}
+        - {id: visa-appt, relation: withdraw, reason: 预约细节暂离当前层。}
       acknowledges: []
     expect:
       accepted: true

@@ -1,0 +1,184 @@
+# 首切片操作边界：这些是设计验收材料，尚未执行产品运行时测试。
+# detail-of 不支持；merge 仅接收同层 active 叶子，且来源不能有历史子树。
+# 每步从真实提交的状态继续；失败不写日志、不占用 batch_id、不改变 revision。
+
+budget: 64
+actor: assistant
+
+steps:
+  - name: 建立两个无子层的方案，以及一个带子项的方案
+    now: "2026-10-09T10:00:00+08:00"
+    commit:
+      batch_id: boundaries-initial
+      declarations:
+        - id: leaf-a
+          title: 方案甲
+          summary: 甲报价 200。
+          weight: normal
+          kind: fyi
+          sources: [{channel: email, ref: "quote:a", quote: 甲报价 200。}]
+        - id: leaf-b
+          title: 方案乙
+          summary: 乙报价 220。
+          weight: normal
+          kind: fyi
+          sources: [{channel: email, ref: "quote:b", quote: 乙报价 220。}]
+        - id: parent
+          title: 方案丙
+          summary: 方案丙待确认。
+          weight: high
+          kind: in-progress
+          children:
+            - {id: child, title: 方案丙材料, summary: 收到一份说明。, weight: low, kind: fyi}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r1
+      events_appended: 1
+      used: 24
+      shares: {parent: 12, leaf-a: 6, leaf-b: 6}
+      rank: [parent, leaf-a, leaf-b]
+      children:
+        parent: {used: 3, shares: {child: 3}}
+
+  - name: 用户给方案甲留下一条批注
+    actor: user
+    now: "2026-10-09T10:01:00+08:00"
+    annotate: {batch_id: boundaries-note, item: leaf-a, text: 比较时保留两份原始报价。}
+    expect:
+      accepted: true
+      batch_status: committed
+      annotation_id: ann-1
+      annotation_status: saved
+      revision: r1
+      events_appended: 1
+
+  - name: 合并之前先确认批注，建立应被保留的首次绑定
+    now: "2026-10-09T10:02:00+08:00"
+    commit: {batch_id: boundaries-ack, declarations: [], acknowledges: [ann-1]}
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r2
+      events_appended: 1
+      annotation_status: {ann-1: acknowledged}
+      annotation_bound_to: {ann-1: r2}
+      events_contain:
+        - {event_seq: 3, type: acknowledge, batch_id: boundaries-ack, revision: r2}
+
+  - name: 即使目标存在，detail-of 仍在首切片明确拒绝
+    now: "2026-10-09T10:03:00+08:00"
+    commit:
+      batch_id: boundaries-detail-of
+      declarations:
+        - {id: extra-detail, relation: "detail-of:parent", title: 补充说明, summary: 新收到的说明。, weight: low, kind: fyi}
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {code: unsupported_relation}
+      revision: r2
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false
+
+  - name: 两个 active 叶子也不能跨层合并
+    now: "2026-10-09T10:04:00+08:00"
+    commit:
+      batch_id: boundaries-cross-layer
+      declarations:
+        - {id: cross-layer, relation: "merges:[leaf-a, child]", title: 跨层整理, summary: 将两个层的内容合并。, weight: high, kind: fyi}
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {code: merge_layer_mismatch}
+      revision: r2
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false
+
+  - name: 同层来源含 active 子层时，不支持合并
+    now: "2026-10-09T10:05:00+08:00"
+    commit:
+      batch_id: boundaries-active-subtree
+      declarations:
+        - {id: active-subtree, relation: "merges:[parent, leaf-a]", title: 方案汇总, summary: 合并两份方案。, weight: high, kind: fyi}
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {code: unsupported_merge_structure}
+      revision: r2
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false
+
+  - name: 显式撤下子项后，父项不再有 active 孩子
+    now: "2026-10-09T10:06:00+08:00"
+    commit:
+      batch_id: boundaries-withdraw-child
+      declarations:
+        - {id: child, relation: withdraw, reason: 材料暂离当前层，原内容与归属留存。}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r3
+      events_appended: 1
+      used: 24
+      withdrawn: [child]
+      items:
+        parent: {status: active, active_children: [], updated_at: "2026-10-09T10:06:00+08:00"}
+        child: {status: withdrawn}
+
+  - name: 即使 active 子层已空，来源的历史子树仍使合并不受支持
+    now: "2026-10-09T10:07:00+08:00"
+    commit:
+      batch_id: boundaries-historical-subtree
+      declarations:
+        - {id: historical-subtree, relation: "merges:[parent, leaf-a]", title: 方案汇总, summary: 合并两份方案。, weight: high, kind: fyi}
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {code: unsupported_merge_structure}
+      revision: r3
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false
+
+  - name: 合法叶子合并继承来源与批注，不重置确认状态和首次 revision
+    now: "2026-10-09T10:08:00+08:00"
+    commit:
+      batch_id: boundaries-leaf-merge
+      declarations:
+        - id: comparison
+          relation: "merges:[leaf-a, leaf-b]"
+          title: 方案比较
+          summary: 甲报价 200，乙报价 220。
+          weight: high
+          kind: fyi
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r4
+      events_appended: 1
+      events_contain:
+        - {event_seq: 5, type: commit, batch_id: boundaries-leaf-merge, revision: r4}
+      changes_contain:
+        - {op: merge, item: comparison, merged: [leaf-a, leaf-b]}
+      used: 24
+      shares: {comparison: 12, parent: 12}
+      rank: [comparison, parent]
+      pending_annotations: []
+      annotation_status: {ann-1: acknowledged}
+      annotation_bound_to: {ann-1: r2}
+      items:
+        comparison:
+          status: active
+          active_children: []
+          annotations: [ann-1]
+          sources:
+            - {channel: email, ref: "quote:a", quote: 甲报价 200。}
+            - {channel: email, ref: "quote:b", quote: 乙报价 220。}
+        leaf-a: {status: merged, merged_into: comparison}
+        leaf-b: {status: merged, merged_into: comparison}

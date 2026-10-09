@@ -1,6 +1,6 @@
 # Fold：输入与输出的共同语言
 
-状态：第 4 到第 6 节是首切片要求；第 2、3 节的 Observation 是后续切片，接入第一个非 Agent 渠道时启用。未决问题见[决策记录](decisions.md)。人物与数据均为虚构。
+状态：设计基线。第 4 到第 6 节是首切片的外部行为规范，统一定义字段、操作和回执；本地持久化方法由[架构](architecture.md#本地提交与恢复)定义。第 2、3 节的 Observation 属于后续切片。范围、实现顺序与后续问题见[决策记录](decisions.md)。人物与数据均为虚构。
 
 产品动机见[产品方向](product.md)，模块边界见[顶层架构](architecture.md)，估计与执行的数学关系见[形式模型](formal-model.md)，如何教 Agent 使用这些表达见[Skill 设计](skill-design.md)。
 
@@ -114,19 +114,30 @@ Fold 的输入可以是 Agent 自己做事产生的进展，也可以是它观�
 }
 ```
 
-`batch_id` 是本地存储范围内唯一、非空且不超过 128 字符的请求标识。actor 与 now 由命令参数提供，属于请求内容；declarations 和 acknowledges 均可省略，默认空数组。声明数组保留顺序；同一批中不能有两个声明同时改写同一个条目 ID。修改单个子项可直接按其全局 ID 提交，不必复制整棵树。
+`batch_id` 是本地存储范围内唯一、非空且不超过 128 字符的请求标识。actor 与 now 由命令参数提供并记录；now 用于首次接受时的计算，不参与已提交批次的重复判定。
+
+declarations 和 acknowledges 均可省略，默认空数组。同一批不能有两个声明同时改写同一条目 ID，包括嵌套声明。修改单个子项可直接按其全局 ID 提交，不必复制整棵树。
 
 `annotate` 同样由调用方通过 `--batch-id` 提供请求标识，actor 在首切片固定为 `user`。其批注 ID 由工具产生；重复原请求返回原批注 ID，不新建第二条批注。
 
 | 结果 | 回执与持久化含义 |
 | --- | --- |
-| 新请求完成保存 | `accepted: true`、`batch_status: committed`，返回 batch_id、event_seq、revision 和实际结果。checked 也是已保存的批次。 |
-| 已保存 ID 再次提交相同请求 | 不再执行或追加事件；`batch_status: already_committed`，回传原结果及原 revision，而非当前最新 revision。 |
-| 已保存 ID 携带不同请求 | `accepted: false`，错误 `batch_id_conflict`；此前结果仍存在，不得解释为该 ID 从未写入。 |
+| 新请求完成保存 | `accepted: true`、`batch_status: committed`，返回 batch_id、event_seq、revision、now 和实际结果。checked 也是已保存的批次。 |
+| 已保存 ID 再次提交相同操作 | `accepted: true`、`batch_status: already_committed`，返回首次接受的结果、revision 和 now；本次 events_appended 为 0，不重新执行、不刷新时间。 |
+| 已保存 ID 携带不同操作 | `accepted: false`，错误 `batch_id_conflict`，带 differing_fields 与 original_receipt。本次操作未执行，原批次的 committed 结果仍然有效。 |
 | 新请求校验不通过 | `accepted: false`，返回约束、目标和实际值；不改变状态/revision，不追加事件、不占用已提交 ID。 |
 | 未收到确定回执或写入中断 | 结果未知。以 `fold history --batch <id>` 核对，不从退出或超时推断“没有写入”。 |
 
-相同请求指解析后的命令类型、actor、now 和参数内容相同；commit 比较 JSON 内容而非文件路径，先补齐省略数组的默认值，JSON 对象键顺序不影响比较，数组顺序保留。结果未知时，重试须沿用同一 batch_id 与原请求，包括原 now。已提交后形成的新方案使用新 ID；明确收到校验拒绝后，因该 ID 未被占用，可以沿用它提交修正方案。历史未找到该 ID 后可以重试原请求，工具仍须在同一写入保护范围内再次检查重复，防止尚未结束的原调用随后落地。
+重复判定在同一存储内先按 batch_id 找到已接受记录，再比较以下内容：
+
+- 命令类型和 actor 必须相同，不能把另一位执行者的操作静默当成重试。
+- commit 比较 declarations 与 acknowledges；annotate 比较目标 item 与正文 text。只比较 declarations 不足以识别整个操作。
+- commit 比较解析后的 JSON 内容，不比较文件路径；补齐省略数组的默认值，对象键顺序不影响比较，数组顺序保留。不用当前状态展开补丁后再比较，也不把自然语言改写当成相同内容。
+- now 不参与比较。只换调用时间仍取回原结果，沿用首次接受的时间；若该 ID 从未落地，则以这次传入的 now 计算。一次新的检查或新的操作仍须生成新的 ID。
+
+冲突回执中的 differing_fields 列出不同的顶层语义字段，例如 actor、declarations 或 acknowledges。original_receipt 包含原批次的 committed 回执及实际结果，明确显示已有记录，而不是提示调用方直接换 ID 重试。
+
+结果未知时先按 batch_id 查历史，再沿用同一 ID、actor 与操作内容重试；调用时间可以更新。只有确认是另一项操作时才分配新 ID，不能为了消除冲突绕过原结果。明确收到校验拒绝时，该 ID 尚未被占用，可以沿用它提交修正方案。历史查询与重试之间的竞争由[本地提交协议](architecture.md#本地提交与恢复)中的互斥和再次核对处理。
 
 ### 声明字段
 
@@ -137,13 +148,13 @@ Fold 的输入可以是 Agent 自己做事产生的进展，也可以是它观�
 | `summary` | 最终有子层时必需且不可为空 | ≤ 60 字；父层摘要应自足。无子层时可用 null 清空。 |
 | `weight` | relation 不是 withdraw 时必填，不可 null | critical / high / normal / low / trace。 |
 | `kind` | relation 不是 withdraw 时必填，不可 null | needs-you / in-progress / done / fyi。 |
-| `relation` | 默认 new，不可 null | new / supersedes:<id> / merges:[ids] / detail-of:<id> / withdraw。 |
+| `relation` | 默认 new，不可 null | new / supersedes:<id> / merges:[ids] / withdraw；detail-of 不在首切片内。 |
 | `due_at` | 可省略或 null | ISO 时刻，行动截止；null 清空。 |
 | `stale_after` | 可省略或 null | ISO 时刻，信息失效；null 清空。 |
 | `share` | 可省略或 null | 显式覆盖须为正整数且同时给 reason；null 取消覆盖。 |
 | `reason` | 降档、改变或取消份额覆盖、撤下时必填 | 非空的人类可读说明；撤下子层或子项也适用。 |
 | `sources` | 可省略、null 或数组 | `[{channel, ref, quote?, observed_at?}]`；null 与空数组都归一为 []。 |
-| `children` | 可省略、null 或声明数组 | 同结构递归；省略保留子层，显式列表给出目标子层，null/[] 撤下原子层。 |
+| `children` | 可省略、null 或声明数组 | 同结构递归；省略保留子层，显式列表给出目标子层。移除原有子项必须同时显式 withdraw，null/[] 也遵守此规则。 |
 
 withdraw 只需 id、relation 和 reason，不必重新提供 weight、kind 等原内容。批次的 acknowledges 只能引用已保存批注；引用不存在时整批拒绝，不默默忽略错误 ID。
 
@@ -153,19 +164,35 @@ supersede 是补丁语义：除上表明确要求每次提交的字段外，省�
 
 存储以 `share_override` 记录显式覆盖，`share` 始终是可用的数值结果。supersede 省略 share 时继承原覆盖；没有覆盖则根据本次 weight 派生。`share: null` 将 share_override 置 null，并按本次 weight 重算，不能产生空份额。
 
-显式 children 列表描述目标子层：已有子项按其 ID 与 relation 更新，新子项按 new 创建，旧子项若未列入则按撤下处理，必须有相应 reason。只改一个既有子项时，优先单独 supersede 它的 ID，并省略父项 children。children:null 或 [] 意味着撤下原有全部子树，保留其资料和关系；当前父项归一为无子层。
+显式 children 列表描述目标子层：已有子项按其 ID 与 relation 更新，新子项按 new 创建。既有子项必须仍属于该父项，不能借 children 列表或嵌套 supersedes 改挂到另一层；此类移动返回 unsupported_move。只改单个既有子项时，单独 supersede 其 ID，并省略父项 children。
+
+如果目标列表遗漏原有 active 子项，本批必须另外显式 withdraw 每个被移除的直接孩子，并分别给出 reason；该撤下自动覆盖对应的整棵子树。父项上的 reason 不替代这些动作。children:null 或 [] 表示目标子层为空，同样需要明确撤下原有孩子；通过后父项归一为无子层。
+
+缺少显式撤下时，整批拒绝为 explicit_withdraw_required。错误包含 parent、尚未显式撤下的 omitted_children，以及这些子树中实际会退出展示的全部 affected_ids。提示明确说明“这些子项将被撤下，请补充 withdraw 或保留它们”，不笼统报告缺少 reason。由同一父子变更派生的结构更新不算重复声明；内核对整批最终状态校验，不能因父声明先出现就提前拒绝。
 
 withdraw 使目标及其后代退出当前展示，释放它们在各自当前层中的份额。原 ID、父子关系、内容、来源、批注和撤下原因在历史中保留，可按 ID 查询；后代的未确认批注仍进入待确认反馈视图。不能用清空 children 绕过这条留存规则。
 
 重新纳入使用 supersedes 指向原有 withdrawn ID，恢复该条目为 active，保留 created_at、资料与反馈；状态改变属于业务变化，更新 updated_at。仅恢复本批明确声明的条目，旧后代不自动恢复：省略 children 只保留当前 active 子项，历史 withdrawn 子项保持撤下。恢复子项沿用原父子归属，其最终父项必须 active，可在同一批中先恢复父项；否则返回 inactive_parent 并整批拒绝。恢复后的每层重新检查预算，恢复父子关系也计入相关条目的结构变化。
 
-merges 释放被合并条目的当前占用，新条目继承其批注，历史指向合并后的条目；不得隐式丢弃旧子层或来源。涉及子层重新组织时，声明必须明确给出目标归属，否则拒绝含糊的合并。
+首切片的嵌套通过 children 完成；detail-of 返回 unsupported_relation，不猜测它是新增细节还是移动既有条目。跨层移动属于后续切片。
+
+首切片的 merges 只支持同层 active 叶子合并：
+
+- 至少引用两个不同的既有条目，目标使用新的 ID，沿用来源条目的共同父层。
+- 来源条目均不得有当前或历史子树，目标也不得声明非空 children。有此类结构时返回 unsupported_merge_structure 及涉及的 IDs；来源不在同层时返回 merge_layer_mismatch。
+- 新条目按 merges 中的 ID 次序继承来源附件，再追加新声明的 sources；完全相同的附件只保留一份。null/[] 不删除合并继承的来源。
+- 批注按原批注 ID 继承，保留作者、正文、保存时间、确认状态和首次确认 revision。合并本身不确认批注，原始关联仍可追溯。
+- 被合并条目退出当前层，标为 merged 并记录 merged_into，历史可查；其待确认批注随新条目继续可达。对 merged 旧 ID 的写入返回 item_merged 和后继 ID，不把合并解释成可以直接恢复的 withdraw；拆分与恢复旧合并项留给后续切片。
 
 父子 kind 没有固定组合约束，父事项仍需用户参与、某个子步骤已经完成是合法状态。但同一事实的摘要应一致：上面的预约提交同时更新父项和预约子项，而不是让“已预约”与“待确认”一起成为成功用例。
 
 ### 有效变化、确认与版本
 
-先应用补丁、归一化与派生，再比较每个条目自己的业务字段：title、summary、weight、share_override、kind、期限、sources、直接子项身份/归属和活动状态。系统生成的时间、rank 和单独的 reason 改写不构成业务变化；相同内容的 supersede 不归档新版本、不刷新 updated_at。无业务变化时提交的 reason 只留在批次请求记录中，不改写条目已有 reason。仅子项内容变化不刷新父项，改变父子归属则属于相关条目的结构变化。
+先应用补丁、归一化与派生，再比较每个条目自己的业务字段：title、summary、weight、share_override、kind、期限、sources、直接子项身份/归属和活动状态。
+
+updated_at 表示条目资料或结构最近更新的时刻，不是“现实事项有了进展”的证明。只增加来源也算资料更新，会影响同份额时的排序；若摘要要声称事情推进，仍须有相应事实依据。
+
+系统生成的时间、rank 和单独的 reason 改写不构成业务变化；相同内容的 supersede 不归档新版本、不刷新 updated_at。无业务变化时提交的 reason 只留在批次请求记录中，不改写条目已有 reason。仅子项内容变化不刷新父项，改变父子归属则属于相关条目的结构变化。
 
 | 本批有效结果 | 记录 type | revision | 条目 updated_at |
 | --- | --- | --- | --- |
@@ -246,16 +273,18 @@ rank 按 share 降序，同 share 时 needs-you 优先，再按 updated_at 新�
 | weight / share | 当前层为它分配多少关注？ | 不是通用紧急性或通知许可。 |
 | rank | 先呈现哪项？ | 由确定规则派生，不单独表达判断。 |
 | kind | 用户需要做什么？ | needs-you 不等于必须立刻打断。 |
-| status | 是否在当前展示树中？ | withdrawn 不等于资料删除。 |
+| status | 是否在当前展示树中？ | active 才展示；withdrawn 或 merged 都不等于资料删除。 |
 
 身份、来源、批注和时间字段同样是结构契约的一部分。重要性与紧迫性的依据写在 reason 和 summary 中，供人和模型阅读；首切片不另设精确数值评分。
 
 ## 5. 同一输出可以有哪些消费者
 
-- **文字简报（首个消费者）：** 按 rank 排序；critical 和 high 各自成段并加粗标题；normal 单行；low 和 trace 折成一行尾注“另有 n 项次要事项”；有 children 的标“▸ n 项细节”；时间用时长；withdrawn 不显示，尾注给历史入口。预算在这里体现为行数，只做投影，不重算份额。
+- **文字简报（首个消费者）：** 按 rank 排序；critical 和 high 各自成段并加粗标题；normal 每项一逻辑行；low 和 trace 折成一逻辑行尾注“另有 n 项次要事项”；有 active children 的标“▸ n 项细节”；时间用时长；只展示 active 条目，尾注给历史入口。份额和档位影响表达篇幅，只做投影，不重算份额。
 - **Pinboard 与其他 UI（后续）：** 使用稳定身份、摘要、层级与份额展示当前局面；坐标与布局稳定属于渲染器。
 - **推送消费者（后续）：** 依赖 `kind` 与 `weight` 做阈值，不用 `share`；发送、去重与送达由消费者负责。
 - **输出日志：** 按序记录每次已接受的变化，附快照 revision，供细查 Agent 当时如何调整状态。它只覆盖实际留下的输出记录，不能还原所有原始输入。
+
+首切片不另设“12 行”等总行数硬限制，也不为满足行数截断核心摘要。逻辑行指输出文本的换行分隔，终端宽度引起的视觉换行不计入；低档位折叠和历史入口是明确的展示规则。总行数预算与额外折叠策略在取得实际阅读反馈后评估，见[决策记录](decisions.md)。
 
 ## 6. 三条必须保留的边界
 

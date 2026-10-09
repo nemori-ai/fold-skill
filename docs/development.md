@@ -37,21 +37,11 @@ git diff --check
 
 `git diff --check` 检查 Git 可见的变更格式。当前还没有产品实现；用例文件先于代码存在，产品 CLI 实现后再增加运行用例的命令。
 
-## 产品输入、记录与重试
+## 实现时使用哪份规范
 
-以下是待实现 CLI 的约定，区别于上面已经可运行的仓库命令。`commit` 只读取 JSON 对象，顶层必填 `batch_id`；`declarations` 与 `acknowledges` 均可省略，默认空数组。YAML 只用于表达一致性设计用例，不要求产品依赖 YAML 解析器。
+产品 CLI 的输入、回执与重试规则见[信息契约](information-contract.md)，调用指引见 [Skill 设计](skill-design.md)，文件写入与恢复见[架构](architecture.md)。这些能力尚待实现，不属于上面的仓库检查命令。
 
-```text
-fold commit batch.json --now <ts> --actor <name>
-fold annotate <id> "<text>" --now <ts> --batch-id <batch_id>
-fold history --batch <batch_id>
-```
-
-所有写入都带 `batch_id`，`annotate` 的 actor 固定为 `user`。新接受请求的回执为 `batch_status: committed`；已接受的同 ID、同请求重试返回 `already_committed` 与原回执及原 revision，不重复执行；同 ID 的不同请求拒绝。校验拒绝不落地；遇到超时或回执丢失，先按批次查询，不能把“未收到成功”当成“没有写入”。
-
-`.fold/events.jsonl` 为每个接受的写入保存一个含 `changes` 与回执的完整批次记录，是事实源；`.fold/snapshot.json` 是可由已落地记录重建的缓存。记录 type 为 `commit`、`acknowledge`、`checked` 或 `annotation`，都带批次身份。`event_seq` 逐条递增，revision 只在业务变化或新批注确认时递增，两者不是同一个序号。
-
-无变化复核不增加 revision 或改动条目 `updated_at`；只有新确认时增加 revision，条目更新时间仍保留。不能用批注保存或 Agent 读取推断人的阅读；首切片 `last_seen_at` 与 `since_seen` 为 `null`，表示未采集，`last_checked_at` 只反映 `checked` 记录。
+产品 CLI 只接收 JSON；YAML 是设计用例的表达格式。测试运行器可以读取或转换用例，不因此给产品 CLI 引入 YAML 支持。
 
 ## 文件清单
 
@@ -66,7 +56,7 @@ fold history --batch <batch_id>
 | [skill-design.md](skill-design.md) | 何时调用、上下文视图、判断指引、CLI 动作与验证计划 |
 | [formal-model.md](formal-model.md) | 输入输出、语义估计、预算与执行的数学探索 |
 | [architecture.md](architecture.md) | 顶层设计与职责边界 |
-| [conformance/cases](../conformance/cases) | 四组一致性用例：往返、超额拒绝、批次回执与复核、补丁与子树 |
+| [conformance/cases](../conformance/cases) | 五组一致性用例：往返、超额拒绝、批次回执与复核、补丁与子树、操作边界 |
 | [visual-guide.md](visual-guide.md) | 按文档定位配图与对应章节的索引 |
 | [assets/illustrations](assets/illustrations) | 项目内保存的配图与生成提示词 |
 | [development.md](development.md) | 本文：环境与检查说明 |
@@ -81,11 +71,16 @@ fold history --batch <batch_id>
 
 ## 读完以后如何继续
 
-按 [decisions.md](decisions.md) 实现内核、存储与文字简报中对应的行为，再运行完整用例，包含简报断言；不能在渲染器尚未实现时声称整组验收通过。四组用例依次覆盖：
+按 [decisions.md](decisions.md) 的实施顺序推进。五组用例覆盖：
 
 - `01-us01-roundtrip.yaml`：覆盖、合并、父子事实一致与批注往返。
 - `02-us03-overflow-reject.yaml`：超额拒绝、Agent 让位与历史查询。
 - `03-batch-receipts-and-checks.yaml`：批次重试、结果查询、无变化复核和仅确认提交。
 - `04-patch-and-subtree.yaml`：补丁保留与清空、子树撤下及反馈可达、沿原 ID 逐项重新纳入。
+- `05-operation-boundaries.yaml`：条目操作的适用范围与拒绝边界。
 
-实现要求、产品目录和测试命令随首条行为实现一起补入；当前 `make check` 只检查材料，不执行这些产品断言。
+初期运行器可调用内存核心，配合内存事件、批注与文字简报验证行为。内存用例通过只证明这一层的实现，不代表文件持久化、故障恢复或产品 CLI 已完成；首切片完成需要后续层的对应验收。
+
+故障验证可结合两种方式：用测试钩子稳定触发指定边界，再用少量真实子进程崩溃与 CLI 往返检查实际文件和进程行为。不能只用进程内异常模拟就宣称持久化恢复完成，也不必把每项核心断言都变成子进程测试。
+
+实现要求、产品目录和测试命令随首条行为实现一起补入。当前 `make check` 只检查材料，不执行产品断言；用例运行器与产品 CLI 都尚未实现。
