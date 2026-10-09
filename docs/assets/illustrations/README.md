@@ -29,6 +29,7 @@
 | [17-layer-budget-tree.png](17-layer-budget-tree.png) | 状态树上的逐层预算约束 | [数学模型 · 状态与预算](../../formal-model.md) |
 | [18-estimation-dependencies.png](18-estimation-dependencies.png) | 上下文、估计与取舍的依赖关系 | [数学模型 · 估计过程](../../formal-model.md) |
 | [19-ordered-event-replay.png](19-ordered-event-replay.png) | 有序事件的连续与分段重放 | [数学模型 · 确定性执行](../../formal-model.md) |
+| [20-state-overview-diff.png](20-state-overview-diff.png) | 同一份状态经内容选择形成概览与 diff，变化高亮但不回写状态 | [信息契约 · state 的视觉概览与 diff](../../information-contract.md#state-的视觉概览与-diff) |
 
 旧版 [05-budget-depth.png](05-budget-depth.png) 保留作修订记录，已退出正文使用。它用面积块解释预算，容易在产品介绍阶段把 Fold 的用途限定为 Pinboard；当前 05 改用抽象的信息关系，提示词见本文末尾。
 
@@ -485,4 +486,93 @@ Use case: text-localization. Image 1 is the edit target. Preserve the complete e
 1. Replace the bottom-right sentence “产品功能与技术栈仍待确定” with “Python 已选定，产品 CLI 尚未实现”.
 2. On the scripts/check.py checklist, replace “启动文件” with “启动与用例文件”.
 Keep make setup, .venv/, make check, scripts/check.py, git diff --check, 本地链接, 基础格式, 当前是仓库材料检查 and every other label unchanged. This figure must not claim that make check executes product conformance tests.
+```
+
+## 20：把视觉概览落实为具体例子
+
+生成方式：内置 image_gen，单张新图，不透明背景。此图是文档设计示意，不是 Fold CLI 已生成的业务截图；产品中的状态图仍须以真实页面渲染生成。
+
+图中数值取自 `06-state-overview.yaml`：基线 event 1/r1，当前 event 3/r2；签证 high/12 → critical/24，周报旧份额 6 撤下；当前根层预算 64、已用 24、留白 40。批注为 saved，visa-bank 子项因深度为 0 省略。唯一正文位置为信息契约的视觉概览章节。
+
+### 20-state-overview-diff
+
+```text
+Use case: infographic-diagram.
+Asset type: one concrete explanatory illustration for the Chinese Fold design document, beside the state overview and diff specification. This is a clearly labeled design illustration, NOT an actual screenshot of an implemented tool.
+Create a wide 3:2 landscape raster image, opaque warm off-white paper background, fine charcoal outlines, pale sage, restrained amber change highlights, muted slate for JSON and gray for withdrawn history. Match a calm editorial technical documentation style, not a glossy dashboard. Crisp highly readable Simplified Chinese and monospaced JSON, generous margins, no tiny text. No people, robots, mascots, computers, browser chrome, decorative props, cell grids, or fake controls.
+
+Top title exactly: “同一份状态，换一种方式看变化”.
+
+Three connected areas, with the right preview the largest. Left approximately 28%, middle approximately 22%, right approximately 44%, separated by whitespace and thin directional arrows.
+
+LEFT: A paper-like source panel titled “state.json · 节选” showing this EXACT valid JSON snippet with readable indentation:
+{
+  "revision": "r2",
+  "last_event_seq": 3,
+  "root": {
+    "used": 24,
+    "items": [
+      {
+        "id": "visa",
+        "weight": "critical",
+        "share": 24
+      }
+    ]
+  }
+}
+Under this panel, a separate smaller source strip titled “按 event_seq = 1 重放基线”.
+It contains exactly “r1 · visa 12 · report 6”.
+The baseline is a separate source, never a new field in current state.json.
+
+MIDDLE: The current source and baseline both feed through a clear small vertical process:
+“Agent 选择内容”
+Then three simple text chips: “根层”, “展开深度 0”, “保留未变上下文”.
+Then “工具比较与布局”
+Then “HTML → DOM 截图”.
+An arrow points from this process to the RIGHT preview. Below the process add the short note “两端使用同一 now”.
+Do not draw an arrow returning from the preview to the source. The preview cannot edit state.
+
+RIGHT: A single large clear preview surface titled “overview.png · diff 高亮”.
+Header directly beneath: “event_seq 1 → 3 · r1 → r2”.
+Budget line: “当前预算 64 · 已用 24 · 留白 40”.
+Show an amber-bordered ACTIVE item with:
+“签证材料” and a small badge “内容更新”
+“visa · active · needs-you”
+“预约已确认；仍待补银行流水。”
+“high → critical    份额 12 → 24”
+A small separated feedback area inside this SAME item:
+“批注 +1 · saved”
+“下午我去打印，先保留材料要求。”
+“尚未收到处理确认”
+The current attention share is 24; 12 is the before value. Do not imply that visa is complete or the bank statement was printed. Do not show an acknowledgement badge.
+
+Below, a visibly distinct gray historical card, not counted as an active allocation:
+“周报草稿 · report”
+“周报草稿已完成。”
+“已撤下 · 旧份额 6 · 不计当前预算”
+Use a dashed border or gray surface, AND the explicit text, so the meaning does not depend only on color. Keep it visible as a diff marker, not a deleted or missing item.
+At the bottom of the preview:
+“省略 1 项细节：visa-bank”
+Do not show that child as an extra root-budget allocation. Cards are content containers, not a proportional area chart. No additional entries or invented numbers.
+
+Across the bottom of the full illustration, concise statement:
+“同源数据，两种表达；只改变呈现，不改写 state”.
+Bottom-right small label:
+“Fold · 设计示意，非工具截图”.
+
+All sums and labels must be exact. There is one active root item visa=24 and one withdrawn historical marker report old=6. Root budget remains64, used24, blank40. One omitted child is visa-bank, not another root item. The document example corresponds to the overview conformance scenario. No language suggesting the PNG can reconstruct every JSON field, no generated new facts, and no implication that a product renderer is already implemented.
+```
+
+
+### 20 的连线校正
+
+保留全部内容，仅纠正流程连线：基线进入比较，概览图由 DOM 截图步骤输出，不从内容选择直接跳到图片。
+
+```text
+Use case: precise-object-edit. Image 1 is the edit target. Preserve EVERY existing label, number, JSON line, card, font, color, background and the entire composition exactly. Change ONLY the connector arrows to make the existing process truthful. This is a documentation diagram; opaque background.
+1. Remove the horizontal arrow that currently goes directly from the right edge of the top middle “Agent 选择内容” box into the right “overview.png” panel. There must be NO direct selection-to-preview arrow.
+2. Keep the current arrow from the state.json panel into Agent 选择内容, and keep the two vertical arrows from Agent 选择内容 down to 工具比较与布局 and then down to HTML → DOM 截图.
+3. ADD a connector from the separate bottom-left “按 event_seq = 1 重放基线” strip into the LEFT edge of the middle “工具比较与布局” box. Route a thin charcoal elbow line through the empty vertical gutter between the source and the middle boxes, without crossing any panel or text. Arrowhead must point INTO 工具比较与布局. This supplies the baseline to the comparison.
+4. ADD a short horizontal right-pointing arrow from the RIGHT edge of the bottom-middle “HTML → DOM 截图” box into the LEFT OUTER edge of the large right overview.png panel. Arrowhead at the overview panel boundary. It must be clear that the preview is the OUTPUT of actual rendering.
+No other changes. Do not add text or new arrows. In particular do not change the large title, the current budget64 used24 blank40, event_seq1→3/r1→r2, visa12→24/high→critical, saved note, report withdrawn oldshare6, omittedvisa-bank, or bottom design-illustration label.
 ```

@@ -291,6 +291,12 @@ rank 按 share 降序，同 share 时 needs-you 优先，再按 updated_at 新�
 
 视觉概览是 state 的另一种表达：在声明的范围和字段内，图上的内容与 JSON 等价，身份、数值和事实均来自同一次读取。它辅助 Agent 看清整体与变化，不产生第二份业务状态。经过选择的图片不代表完整 JSON，也不承诺从像素恢复全部字段；图中必须标明范围与省略，精确操作仍按 ID 回到 JSON 核对。
 
+![同一份 state JSON 与重放基线经内容选择和真实渲染形成概览：签证变化高亮，撤下的周报保留旧项标记](assets/illustrations/20-state-overview-diff.png)
+
+*设计示意，非已实现工具截图。图中左侧 JSON 是摘录，右侧展示所选内容；产品中的 PNG 由真实页面渲染生成。*
+
+图例沿用[概览用例](../conformance/cases/06-state-overview.yaml)：从 event 1/r1 到 event 3/r2，签证由 high（12）变为 critical（24），新增批注仍是 saved；周报的旧份额 6 已撤下，不计入当前预算。根层预算 64、已用 24、留白 40；展开深度为 0，所以省略 visa-bank 子项。两端使用同一 now，图片只改变表达，不改写状态、确认批注或记录用户阅读。
+
 ```sh
 fold state --now <ts> --overview <output-dir>
 fold state --now <ts> --overview <output-dir> --view view.json --diff-from <event_seq>
