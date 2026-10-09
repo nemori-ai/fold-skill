@@ -4,6 +4,8 @@
 
 **当前阶段：首切片实现要求已冻结，产品代码尚未开始。** 首切片是 US-01 单 Agent 本地闭环：Agent 自己的进度声明、五档档位派生份额、一个 Python CLI、文字简报输出、批注往返。范围与决定见 [docs/decisions.md](docs/decisions.md)。
 
+人离开后再回来，是首个验收场景；Fold 同样适用于人在场时的持续整理。需要立即告知的事情先走即时渠道，再按持续关注价值纳入状态。
+
 ![Fold 从多源信息出发，经 Agent 的上下文判断与约束校验，输出供多种应用使用的结构化状态](docs/assets/illustrations/01-fold-overview.png)
 
 同一流程也可以直接读作：
@@ -35,7 +37,7 @@ flowchart LR
 | [docs/skill-design.md](docs/skill-design.md) | 何时调用、上下文视图、判断指引、CLI 动作与验证计划 |
 | [docs/formal-model.md](docs/formal-model.md) | 输入输出、语义估计、预算与执行的数学表达 |
 | [docs/architecture.md](docs/architecture.md) | 顶层模块、职责边界和数据如何流动 |
-| [conformance/cases](conformance/cases) | US-01 与 US-03 的一致性用例，先于代码 |
+| [conformance/cases](conformance/cases) | 四组一致性用例：往返、超额拒绝、批次回执与复核、补丁与子树 |
 | [docs/visual-guide.md](docs/visual-guide.md) | 按文档查找配图及所在章节 |
 | [AGENTS.md](AGENTS.md) | 在这个仓库里协作的约定 |
 | [docs/development.md](docs/development.md) | 环境初始化、检查命令和当前文件清单 |
@@ -44,10 +46,12 @@ flowchart LR
 
 ## 当前工作方向
 
-- Agent 在当前状态和用户背景中估计关注价值，用五档档位表达比较结果，决定覆盖、合并、嵌套或撤下。
-- 脚本按固定映射派生份额，整批校验预算与引用，原子写入，保留 actor 与 reason。超额只报错，不自行让位。
+- Agent 在当前状态和用户背景中估计关注价值，默认用五档档位表达比较结果；需要例外份额时同时提交 `share` 与 `reason`。
+- 脚本派生份额，整批校验预算与引用；超额只报错，不自行让位。补丁省略可选字段时保留原值，非撤下声明每次仍须提供档位与 kind；撤下子树时保留历史及尚未确认的反馈。
+- 每次写入携带 `batch_id`。同 ID、同请求重试返回 `already_committed` 与原回执，不重复执行；同 ID 的不同请求拒绝。完整批次记录是事实源，快照是可重建缓存。
+- 没有业务变化且没有新批注确认时记录 `checked`，不制造新 revision 或条目更新时间；只有新确认时增加 revision，保留条目更新时间。
 - 存储用时刻，读取用时长；行动截止与信息失效分开，到期不自动撤下。
-- 批注保存与已读分开；已读只在 Agent 带 `acknowledges` 的一次实际提交里产生。
+- 批注使用 `saved` 与 `acknowledged` 表达保存和处理确认，不推断实际是否读过。首切片未采集用户阅读，`last_seen_at` 与 `since_seen` 为 `null`。
 - 输出遵循共同结构。文字简报是首个消费者；Pinboard、推送和日志是后续应用。
 - 多 Agent 并发、Observation 接入、推送阈值等推迟到后续切片，规则已先写明。
 
@@ -61,5 +65,7 @@ make check
 ```
 
 初始化只在本地建立 `.venv`，不安装第三方依赖、不访问网络。检查覆盖启动文件、用例文件、维护中文档的本地文件链接和基础格式；它不代表产品功能已经通过测试。
+
+产品 CLI 的提交输入使用带顶层 `batch_id` 的 JSON 对象；YAML 仅用于表达设计用例。操作及结果未知时的查询约定见[工作环境说明](docs/development.md)。
 
 当前切片：US-01，见 [docs/decisions.md](docs/decisions.md)。

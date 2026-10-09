@@ -1,26 +1,40 @@
 # US-03：板满了，更重要的事又来了。
-# 验证：超额整批拒绝且状态不变；Agent 自行让位后的第二次提交通过；撤下保留原因与历史。
+# 从真实初始提交建立状态与历史；校验拒绝不占用 batch_id。
+# events_appended 计 JSONL 批次记录；changes_contain 匹配该批次内部变化。
 
 budget: 64
 actor: assistant
 
-given:
-  revision: r5
-  items:
-    - {id: weekly-report, title: 周报草稿, summary: 起草中，已写到风险一节, weight: critical, kind: in-progress}   # 24
-    - {id: pr-batch, title: PR 进展, summary: 1 / 3 已合并, weight: high, kind: in-progress}                      # 12
-    - {id: flight-watch, title: 机票监控, summary: 当前最低 2380，报价有效至今晚 18 点, weight: high, kind: fyi}    # 12
-    - {id: utility-bill, title: 水电账单, summary: 今天 18 点前支付, weight: normal, kind: needs-you}              # 6
-    - {id: reading, title: 阅读推荐, summary: 一篇关于排期的文章, weight: normal, kind: fyi}                       # 6
-    - {id: calendar, title: 明早例会, summary: 9 点，15 分钟, weight: low, kind: fyi}                              # 3
-    - {id: filter, title: 邮件过滤, summary: 已清理 40 封, weight: trace, kind: done}                              # 1
-  used: 64
-
 steps:
-  - name: 只加签证，不调整其他项
-    now: 2026-10-09T09:15:00+08:00
+  - name: 建立满额状态及可查询的初始历史
+    now: "2026-10-09T09:00:00+08:00"
     commit:
-      - {id: visa-materials, title: 签证材料, summary: 还缺银行流水，需要你参与, weight: critical, kind: needs-you}
+      batch_id: us03-initial
+      declarations:
+        - {id: weekly-report, title: 周报草稿, summary: 起草中，已写到风险一节, weight: critical, kind: in-progress}
+        - {id: pr-batch, title: PR 进展, summary: 1 / 3 已合并, weight: high, kind: in-progress}
+        - {id: flight-watch, title: 机票监控, summary: 当前最低 2380，报价有效至今晚 18 点, weight: high, kind: fyi}
+        - {id: utility-bill, title: 水电账单, summary: 今天 18 点前支付, weight: normal, kind: needs-you}
+        - {id: reading, title: 阅读推荐, summary: 一篇关于排期的文章, weight: normal, kind: fyi}
+        - {id: calendar, title: 明早例会, summary: 9 点，15 分钟, weight: low, kind: fyi}
+        - {id: filter, title: 邮件过滤, summary: 已清理 40 封, weight: trace, kind: done}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r1
+      used: 64
+      shares: {weekly-report: 24, pr-batch: 12, flight-watch: 12, utility-bill: 6, reading: 6, calendar: 3, filter: 1}
+      rank: [weekly-report, flight-watch, pr-batch, utility-bill, reading, calendar, filter]
+      events_appended: 1
+
+  - name: 只加签证，不调整其他项
+    now: "2026-10-09T09:15:00+08:00"
+    commit:
+      batch_id: us03-add-visa
+      declarations:
+        - {id: visa-materials, title: 签证材料, summary: 还缺银行流水，需要你参与, weight: critical, kind: needs-you}
+      acknowledges: []
     expect:
       accepted: false
       error:
@@ -30,25 +44,33 @@ steps:
         declared: 88
         over: 24
         shares: {visa-materials: 24, weekly-report: 24, pr-batch: 12, flight-watch: 12, utility-bill: 6, reading: 6, calendar: 3, filter: 1}
-      revision: r5                 # 未写入
-      events_appended: 0           # 拒绝不进入已接受事件流
+      revision: r1
+      events_appended: 0
       state_unchanged: true
+      batch_id_recorded: false
 
-  - name: Agent 自行让位后重新提交
-    now: 2026-10-09T09:16:00+08:00
+  - name: Agent 自行让位，沿用未被拒绝请求占用的 ID
+    now: "2026-10-09T09:16:00+08:00"
     commit:
-      - {id: visa-materials, title: 签证材料, summary: 还缺银行流水，需要你参与；影响 10 月 20 日出差, weight: critical, kind: needs-you}
-      - {id: weekly-report, relation: supersedes:weekly-report, summary: 起草中，已写到风险一节, weight: high, kind: in-progress,
-         reason: 为签证让位；进度可缩短表达。}
-      - {id: pr-batch, relation: supersedes:pr-batch, weight: normal, kind: in-progress,
-         reason: 相关进展可合并说明。}
-      - {id: flight-watch, relation: supersedes:flight-watch, weight: normal, kind: fyi,
-         reason: 保留当前结论，比较细节可展开。}
-      - {id: reading, relation: withdraw,
-         reason: 暂离当前层，为需要参与的事项腾出关注；内容仍可查。}
+      batch_id: us03-add-visa
+      declarations:
+        - {id: visa-materials, title: 签证材料, summary: 还缺银行流水，需要你参与；影响 10 月 20 日出差, weight: critical, kind: needs-you}
+        - {id: weekly-report, relation: supersedes:weekly-report, summary: 起草中，已写到风险一节, weight: high, kind: in-progress,
+           reason: 为签证让位；进度可缩短表达。}
+        - {id: pr-batch, relation: supersedes:pr-batch, weight: normal, kind: in-progress,
+           reason: 相关进展可合并说明。}
+        - {id: flight-watch, relation: supersedes:flight-watch, weight: normal, kind: fyi,
+           reason: 保留当前结论，比较细节可展开。}
+        - {id: reading, relation: withdraw,
+           reason: 暂离当前层，为需要参与的事项腾出关注；内容仍可查。}
+      acknowledges: []
     expect:
       accepted: true
-      revision: r6
+      batch_status: committed
+      revision: r2
+      events_appended: 1
+      events_contain:
+        - {type: commit, batch_id: us03-add-visa, actor: assistant, revision: r2}
       used: 58
       shares: {visa-materials: 24, weekly-report: 12, utility-bill: 6, flight-watch: 6, pr-batch: 6, calendar: 3, filter: 1}
       # 同为 6 份：utility-bill 为 needs-you 优先；flight-watch 与 pr-batch 同批更新，按 id 字典序。
@@ -58,21 +80,34 @@ steps:
         reading:
           status: withdrawn
           reason: 暂离当前层，为需要参与的事项腾出关注；内容仍可查。
-      events_contain:
-        - {op: place, item: visa-materials, actor: assistant}
+        flight-watch:
+          title: 机票监控
+          summary: 当前最低 2380，报价有效至今晚 18 点
+          kind: fyi
+      changes_contain:
+        - {op: place, item: visa-materials}
         - {op: supersede, item: weekly-report, from: 24, to: 12, reason_contains: 让位}
-        - {op: withdraw, item: reading, actor: assistant, reason_contains: 腾出关注}
+        - {op: withdraw, item: reading, reason_contains: 腾出关注}
       text_brief_contains:
         - "**签证材料**"
         - 水电账单
       text_brief_not_contains:
         - 阅读推荐
 
-  - name: 用户补充背景后的历史查询
-    now: 2026-10-09T20:00:00+08:00
+  - name: 查询撤下条目的完整历史
+    now: "2026-10-09T20:00:00+08:00"
     history: {item: reading}
     expect:
       events:
-        - {op: place, revision: r5}
-        - {op: withdraw, revision: r6, actor: assistant, reason_contains: 腾出关注}
+        - type: commit
+          batch_id: us03-initial
+          actor: assistant
+          revision: r1
+          changes_contain: [{op: place, item: reading}]
+        - type: commit
+          batch_id: us03-add-visa
+          actor: assistant
+          revision: r2
+          changes_contain: [{op: withdraw, item: reading, reason_contains: 腾出关注}]
       summary_at_withdraw: 一篇关于排期的文章
+      events_appended: 0

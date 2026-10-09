@@ -1,6 +1,6 @@
 # 配图来源与生成说明
 
-这些图用于帮助新人理解 Fold，均为设计示意，不是已实现产品的截图或冻结的协议。
+这些图用于帮助新人理解 Fold，均为设计示意，不是已实现产品的截图；精确协议以对应文档及其适用切片为准。
 
 生成方式：内置 image_gen 工具。每张图单独生成，采用统一的纸张、线条与配色；最终图片随仓库保存，文档不依赖生成工具的缓存路径。
 
@@ -17,13 +17,13 @@
 | [05-attention-and-detail.png](05-attention-and-detail.png) | 先理解要点，再按需深入 | [产品方向 · 设计原则](../../product.md) |
 | [06-time-meaning.png](06-time-meaning.png) | 相同时间信号的不同含义 | [用户故事 · US-02](../../user-stories.md) |
 | [07-why-llm-now.png](07-why-llm-now.png) | LLM 同时改变需求与能力 | [产品方向 · 为什么做](../../product.md) |
-| [08-budget-reallocation.png](08-budget-reallocation.png) | 满额时的一次具体取舍；图中数字是早期直接申报份额的示例，现行档位派生以正文表格为准，待重绘 | [用户故事 · US-03](../../user-stories.md) |
-| [09-feedback-lifecycle.png](09-feedback-lifecycle.png) | 留言的保存、读取与落实 | [用户故事 · US-04](../../user-stories.md) |
+| [08-budget-reallocation.png](08-budget-reallocation.png) | 五档映射下的满额取舍：64，加签证为 88 被拒，重整为 58、留白 6 | [用户故事 · US-03](../../user-stories.md) |
+| [09-feedback-lifecycle.png](09-feedback-lifecycle.png) | 批注保存与处理确认，以及独立的外部行动结果 | [用户故事 · US-04](../../user-stories.md) |
 | [10-shared-state-conflict.png](10-shared-state-conflict.png) | 两个 Agent 的更新与冲突 | [用户故事 · US-05](../../user-stories.md) |
 | [11-incoming-vs-committed.png](11-incoming-vs-committed.png) | 输入记录与状态记录的契约边界 | [信息契约 · 三条边界](../../information-contract.md) |
 | [12-consistency-comparisons.png](12-consistency-comparisons.png) | 两类一致性的对照评估 | [Skill 设计 · 一致性](../../skill-design.md) |
 | [13-module-boundaries.png](13-module-boundaries.png) | 模块分工与执行责任 | [顶层架构 · 职责边界](../../architecture.md) |
-| [14-design-status.png](14-design-status.png) | 不同设计材料的效力 | [决策记录 · 已明确方向](../../decisions.md) |
+| [14-design-status.png](14-design-status.png) | 首切片要求、后续切片与历史参考的不同效力 | [决策记录 · 已对齐的方向](../../decisions.md) |
 | [15-development-workflow.png](15-development-workflow.png) | 本地命令与检查范围 | [工作环境 · 当前环境](../../development.md) |
 | [16-two-agent-guides.png](16-two-agent-guides.png) | 开发约定与产品 Skill 的角色区别 | [AGENTS · 协作入口](../../../AGENTS.md) |
 | [17-layer-budget-tree.png](17-layer-budget-tree.png) | 状态树上的逐层预算约束 | [数学模型 · 状态与预算](../../formal-model.md) |
@@ -418,5 +418,71 @@ Bottom right, small standard caption: “概念示意 · Fold”.
 This is an abstract explanatory editorial drawing, not a flowchart of software architecture. No squares, rectangles, grids, tiles, cards, boards, tables, treemaps, panels, screens, windows, phone frames, cursor, buttons, UI controls, dashboards, paper stacks, people, robots, desks, books, cups, plants, buildings, landscapes, decorative background objects, budgets, numerals, percentages, formulas, proportional areas, completion checkmarks, or source-to-output funnels. Do not reuse any of the old words about visa, report, PR, budget 64, 16, 8, or blank 32. Do not imply lossless reconstruction, retrieval of all original information, or an automatic importantness algorithm. Render only the exact text specified above. Quiet, restrained, generous whitespace; concept first, no concrete product metaphor. Opaque background.
 ```
 
+## 首切片审阅后的同步修订（08、09、14、15）
 
+本轮使用内置 image_gen 编辑对应原图，保持不透明背景。08 已按五档映射重绘，替换旧的直接份额示例；09 改为讨论材料场景，并分开 saved、实际读取、acknowledged 与外部行动；14 标明首切片与后续切片的效力；15 同步已选 Python 和尚未实现产品 CLI 的现状。前文提示词保留为生成历史，本节记录当前四张文件的完整编辑提示词。
 
+### 08-budget-reallocation · 当前修订
+
+```text
+Use case: infographic-diagram. Image 1 is the edit target. Redraw its comparison to match the revised US-03 story exactly, preserving the warm paper, sage/amber/slate palette, readable Chinese typography and calm explanatory style. Opaque 3:2 landscape.
+Title “预算满了，由 Agent 决定取舍”.
+Use three spacious columns. Left column header “整理前：已用 64”, with exactly seven readable rows:
+“周报 · critical · 24”
+“PR · high · 12”
+“机票 · high · 12”
+“账单 · normal · 6”
+“阅读 · normal · 6”
+“例会 · low · 3”
+“过滤 · trace · 1”
+These sum to 64. Rows are labels, not proportional area rectangles.
+Center upper part shows a simple amber proposal “只加签证 24”, then “64 + 24 = 88”, then a clearly rejected stamp-like statement “整批拒绝，状态不变”. Do not connect this rejected result as a saved state. Center lower part shows “Agent 重新取舍” and a rightward arrow to the right column. Small explanatory note: “脚本不自动降档或驱逐”.
+Right column header “整理后：已用 58”, with exactly seven readable rows in this order:
+“签证 · critical · 24”
+“周报 · high · 12”
+“账单 · normal · 6”
+“机票 · normal · 6”
+“PR · normal · 6”
+“例会 · low · 3”
+“过滤 · trace · 1”
+Below these rows: “预算 64 · 留白 6”.
+A separate small note “阅读已撤下，内容与原因可查”.
+Footer “本例按五档映射派生份额，取舍由 Agent 判断”.
+Remove every old 16, 8, 4, right-side total64 and 12+4+4+4 equation. No extra numerical allocations. Keep the labels and sums exact. No hypothetical product screenshot, no cell grids, no completed visa mark. Bottom corner “Fold · 文档配图”.
+```
+
+### 09-feedback-lifecycle · 当前修订
+
+```text
+Use case: infographic-diagram. Image 1 is the edit target. Replace its visa example with the US-04 discussion-material feedback example, and update the feedback semantics from read to acknowledged. Preserve the warm paper, soft sage/slate/amber and clean wide 3:2 diagram style. Opaque background.
+Title exactly “保存与处理确认，分别记录”.
+Top row three panels, arrows left to right:
+1 header “批注已保存 · saved”. A readable user note “周五前请保持显眼”. Under it “尚未收到处理确认”.
+2 header “Agent 读取并整理”. Show the SAME user note next to a simple document “讨论材料”. Below this panel state “读取本身不改变批注状态”.
+3 header “提交成功 · acknowledged”. Show a maintained summary “继续保留讨论摘要”. Below it “确认绑定本次 revision”.
+The arrow into panel3 must be labeled “commit + acknowledges”. It means confirmation is persisted with a successful submission, not automatically when read.
+A separate lower conditional branch begins from panel2, labelled “如果还包含外部行动”. The branch shows user request “也请把材料发给参会者”, then “执行发送”, then “取得实际结果”, then “才能报告已发送”. These are successive steps on one line; keep labels concise and readable. Do not show that submission alone sends anything.
+Footer exact “处理确认不代表外部行动已完成”.
+Remove all visa/passport/bank statement/reservation text and the old read-status title. Never state that saved proves nobody has read the note. There is no read status: the two persisted statuses displayed are saved and acknowledged. Keep enough whitespace, no microscopic text, no fake fields beyond the specified labels. Bottom corner “Fold · 文档配图”.
+```
+
+### 14-design-status · 当前修订
+
+```text
+Use case: text-localization. Image 1 is the edit target. Keep its three-column paper-card composition, color palette, type sizes and historical folder illustration. Update the text to reflect an agreed first slice, with later work still deferred. Opaque background.
+Top title replace with “按切片理解设计要求”.
+Left column heading replace with “首切片要求”. Its three cards become “单 Agent 本地”, “固定动作契约”, “文字简报”. Its lower line becomes “按一致性用例实现”.
+Middle column heading replace with “后续切片”. Its three cards become “多 Agent 协作”, “推送阈值”, “用户阅读记录”. Its lower line becomes “按接入场景继续收敛”.
+Right column heading remains “历史参考”. Preserve “设计草案 v0.3”, “保留原始背景”, “旧规则需重新讨论”, and “不是当前默认要求”.
+Bottom slogan replace with “首切片范围与未决问题，统一见决策记录”.
+Remove old statements that fields, submission format or technology stack are undecided for the first slice. Preserve all other visual styling and the “Fold · 文档配图” mark. No additional text.
+```
+
+### 15-development-workflow · 当前修订
+
+```text
+Use case: text-localization. Image 1 is the edit target. Preserve the complete existing development workflow, arrows, folders, commands, paper palette and typography. Keep the background opaque. Make only these two text edits:
+1. Replace the bottom-right sentence “产品功能与技术栈仍待确定” with “Python 已选定，产品 CLI 尚未实现”.
+2. On the scripts/check.py checklist, replace “启动文件” with “启动与用例文件”.
+Keep make setup, .venv/, make check, scripts/check.py, git diff --check, 本地链接, 基础格式, 当前是仓库材料检查 and every other label unchanged. This figure must not claim that make check executes product conformance tests.
+```

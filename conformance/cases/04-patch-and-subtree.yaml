@@ -1,0 +1,402 @@
+# 补丁与子树：先构造真实条目和批注，再验证省略、显式清空与撤下留存。
+# items 按全局 ID 核对保留记录；withdrawn、pending_annotations 按集合核对。
+# active_children 核对仍在展示的孩子，不限定空 children 的序列化形式。
+# 只改单个已有子项时用其全局 ID supersede；不是用 children 列表做递归补丁。
+
+budget: 64
+actor: assistant
+
+steps:
+  - name: 建立带显式份额、来源、时间及多层细节的两个事项
+    now: "2026-10-09T09:00:00+08:00"
+    commit:
+      batch_id: patch-initial
+      declarations:
+        - id: trip
+          title: 出行安排
+          summary: 行程已计划，签证材料仍待补齐。
+          weight: high
+          share: 20
+          reason: 本轮临时增加出行事项的表达空间。
+          kind: in-progress
+          due_at: "2026-10-12T18:00:00+08:00"
+          stale_after: "2026-10-13T18:00:00+08:00"
+          sources: [{channel: email, ref: "mail:17"}]
+          children:
+            - id: bank
+              title: 银行流水
+              summary: 需要纸质流水，请准备打印。
+              weight: critical
+              kind: needs-you
+              children:
+                - id: bank-print
+                  title: 打印要求
+                  summary: 纸质流水需本人提交。
+                  weight: normal
+                  kind: needs-you
+                  sources: [{channel: email, ref: "mail:18", quote: 纸质流水需本人提交。}]
+            - {id: visa-appt, title: 办理预约, summary: 预约待确认。, weight: high, kind: in-progress}
+        - id: tickets
+          title: 机票比较
+          summary: 候选航班待比较。
+          weight: normal
+          kind: in-progress
+          children:
+            - {id: flight, title: 候选航班, summary: 当前报价 2380。, weight: low, kind: fyi,
+               sources: [{channel: monitor, ref: "quote:1"}]}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r1
+      events_appended: 1
+      used: 26
+      shares: {trip: 20, tickets: 6}
+      rank: [trip, tickets]
+      children:
+        trip: {used: 36, shares: {bank: 24, visa-appt: 12}}
+        bank: {used: 6, shares: {bank-print: 6}}
+        tickets: {used: 3, shares: {flight: 3}}
+      items:
+        trip: {share_override: 20}
+
+  - name: 用户在最深子项上留下尚未确认的批注
+    actor: user
+    now: "2026-10-09T09:05:00+08:00"
+    annotate: {batch_id: patch-print-note, item: bank-print, text: 下午我去打印，请保留原要求。}
+    expect:
+      accepted: true
+      batch_status: committed
+      annotation_id: ann-1
+      annotation_status: saved
+      revision: r1
+      events_appended: 1
+
+  - name: 只改父摘要，所有未声明的业务字段与子项身份保留
+    now: "2026-10-09T09:10:00+08:00"
+    commit:
+      batch_id: patch-summary
+      declarations:
+        - {id: trip, relation: supersedes:trip, weight: high, kind: in-progress, summary: 已确认行程；签证材料仍待补齐。}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r2
+      events_appended: 1
+      used: 26
+      pending_annotations: [ann-1]
+      items:
+        trip:
+          title: 出行安排
+          weight: high
+          kind: in-progress
+          share: 20
+          share_override: 20
+          due_at: "2026-10-12T18:00:00+08:00"
+          stale_after: "2026-10-13T18:00:00+08:00"
+          sources: [{channel: email, ref: "mail:17"}]
+          children: [bank, visa-appt]
+          created_at: "2026-10-09T09:00:00+08:00"
+          updated_at: "2026-10-09T09:10:00+08:00"
+        bank-print:
+          annotations: [ann-1]
+          updated_at: "2026-10-09T09:00:00+08:00"
+
+  - name: 必填身份或分类字段不能借 null 清空，以 title 为例
+    now: "2026-10-09T09:11:00+08:00"
+    commit:
+      batch_id: patch-null-title
+      declarations: [{id: trip, relation: supersedes:trip, weight: high, kind: in-progress, title: null}]
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {field: title}
+      revision: r2
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false
+
+  - name: 最终仍有子层时，不能清空父摘要
+    now: "2026-10-09T09:12:00+08:00"
+    commit:
+      batch_id: patch-null-summary
+      declarations: [{id: trip, relation: supersedes:trip, weight: high, kind: in-progress, summary: null}]
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {field: summary}
+      revision: r2
+      events_appended: 0
+      state_unchanged: true
+
+  - name: 清空子层会撤下原子树，不能省略 reason
+    now: "2026-10-09T09:13:00+08:00"
+    commit:
+      batch_id: patch-clear-without-reason
+      declarations: [{id: trip, relation: supersedes:trip, weight: high, kind: in-progress, children: []}]
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {field: reason}
+      revision: r2
+      events_appended: 0
+      state_unchanged: true
+      pending_annotations: [ann-1]
+
+  - name: 可空字段显式清空，share 取消覆盖并恢复 weight 映射
+    now: "2026-10-09T09:15:00+08:00"
+    commit:
+      batch_id: patch-clear-fields
+      declarations:
+        - {id: trip, relation: supersedes:trip, weight: high, kind: in-progress, due_at: null, stale_after: null, sources: null, share: null,
+           reason: 暂无新的截止与来源要求，份额恢复档位默认值。}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r3
+      events_appended: 1
+      used: 18
+      shares: {trip: 12, tickets: 6}
+      rank: [trip, tickets]
+      items:
+        trip:
+          title: 出行安排
+          summary: 已确认行程；签证材料仍待补齐。
+          weight: high
+          kind: in-progress
+          share: 12
+          share_override: null
+          due_at: null
+          stale_after: null
+          sources: []
+          children: [bank, visa-appt]
+          updated_at: "2026-10-09T09:15:00+08:00"
+
+  - name: 只更新子项内容，不把父项伪装成刚有进展
+    now: "2026-10-09T09:20:00+08:00"
+    commit:
+      batch_id: patch-child-content
+      declarations:
+        - {id: bank, relation: supersedes:bank, weight: critical, kind: needs-you, summary: 流水要求已确认；仍待打印。}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r4
+      events_appended: 1
+      items:
+        trip: {updated_at: "2026-10-09T09:15:00+08:00", children: [bank, visa-appt]}
+        bank:
+          summary: 流水要求已确认；仍待打印。
+          updated_at: "2026-10-09T09:20:00+08:00"
+          children: [bank-print]
+        bank-print: {updated_at: "2026-10-09T09:00:00+08:00", annotations: [ann-1]}
+
+  - name: 明确清空子层，同时清空不再需要的摘要
+    now: "2026-10-09T09:25:00+08:00"
+    commit:
+      batch_id: patch-clear-subtree
+      declarations:
+        - {id: trip, relation: supersedes:trip, weight: high, kind: in-progress, children: null, summary: null,
+           reason: 本轮收起全部签证细节，原材料与批注留在历史中。}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r5
+      events_appended: 1
+      used: 18
+      withdrawn: [bank, bank-print, visa-appt]
+      pending_annotations: [ann-1]
+      items:
+        trip: {status: active, summary: null, active_children: [], updated_at: "2026-10-09T09:25:00+08:00"}
+        bank-print:
+          status: withdrawn
+          summary: 纸质流水需本人提交。
+          sources: [{channel: email, ref: "mail:18", quote: 纸质流水需本人提交。}]
+          annotations: [ann-1]
+      annotation_status: {ann-1: saved}
+
+  - name: 已清空的子层再写空列表不产生新的业务变化
+    now: "2026-10-09T09:26:00+08:00"
+    commit:
+      batch_id: patch-empty-children
+      declarations:
+        - {id: trip, relation: supersedes:trip, weight: high, kind: in-progress, children: [], reason: 确认子层继续收起。}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r5
+      events_appended: 1
+      state_unchanged: true
+      events_contain:
+        - {type: checked, batch_id: patch-empty-children, revision: r5, changes: []}
+      items:
+        trip: {active_children: [], updated_at: "2026-10-09T09:25:00+08:00"}
+
+  - name: 以撤下的孙项 ID 查询时仍能找回来源、关系和未确认批注
+    now: "2026-10-09T09:27:00+08:00"
+    history: {item: bank-print}
+    expect:
+      events_contain:
+        - {type: commit, batch_id: patch-initial, revision: r1}
+        - {type: annotation, batch_id: patch-print-note, revision: r1}
+        - {type: commit, batch_id: patch-clear-subtree, revision: r5}
+      parent_at_withdraw: bank
+      summary_at_withdraw: 纸质流水需本人提交。
+      sources_at_withdraw: [{channel: email, ref: "mail:18", quote: 纸质流水需本人提交。}]
+      annotations: [ann-1]
+      annotation_status: {ann-1: saved}
+      events_appended: 0
+
+  - name: 另一棵子树也收到一条尚未确认的批注
+    actor: user
+    now: "2026-10-09T09:30:00+08:00"
+    annotate: {batch_id: patch-flight-note, item: flight, text: 这条报价我还要比较。}
+    expect:
+      accepted: true
+      batch_status: committed
+      annotation_id: ann-2
+      annotation_status: saved
+      revision: r5
+      events_appended: 1
+
+  - name: withdraw 不需 weight 或 kind，直接撤下整棵子树
+    now: "2026-10-09T09:35:00+08:00"
+    commit:
+      batch_id: patch-withdraw-tree
+      declarations:
+        - {id: tickets, relation: withdraw, reason: 候选航班暂离当前层，报价和用户批注保留待后续比较。}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r6
+      events_appended: 1
+      used: 12
+      shares: {trip: 12}
+      rank: [trip]
+      withdrawn: [bank, bank-print, visa-appt, tickets, flight]
+      pending_annotations: [ann-1, ann-2]
+      items:
+        tickets: {status: withdrawn, title: 机票比较}
+        flight:
+          status: withdrawn
+          sources: [{channel: monitor, ref: "quote:1"}]
+          annotations: [ann-2]
+      annotation_status: {ann-1: saved, ann-2: saved}
+
+  - name: 当前视图不展示撤下子树，但未确认反馈仍交给 Agent
+    now: "2026-10-09T09:40:00+08:00"
+    state: {}
+    expect:
+      revision: r6
+      rank: [trip]
+      pending_annotations: [ann-1, ann-2]
+      pending_annotation_items: {ann-1: bank-print, ann-2: flight}
+      events_appended: 0
+
+  - name: 直接撤下的后代也能按原 ID 查询
+    now: "2026-10-09T09:41:00+08:00"
+    history: {item: flight}
+    expect:
+      events_contain:
+        - {type: commit, batch_id: patch-initial, revision: r1}
+        - {type: annotation, batch_id: patch-flight-note, revision: r5}
+        - {type: commit, batch_id: patch-withdraw-tree, revision: r6}
+      parent_at_withdraw: tickets
+      summary_at_withdraw: 当前报价 2380。
+      sources_at_withdraw: [{channel: monitor, ref: "quote:1"}]
+      annotations: [ann-2]
+      annotation_status: {ann-2: saved}
+      events_appended: 0
+
+  - name: 父项仍被撤下时，不能绕过它直接恢复孩子
+    now: "2026-10-09T09:42:00+08:00"
+    commit:
+      batch_id: patch-restore-child-before-parent
+      declarations:
+        - {id: flight, relation: supersedes:flight, weight: low, kind: fyi, reason: 恢复这条候选报价供比较。}
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {code: inactive_parent, item: flight, parent: tickets}
+      revision: r6
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false
+      pending_annotations: [ann-1, ann-2]
+
+  - name: 恢复父项的原 ID，不自动恢复历史中的孩子
+    now: "2026-10-09T09:43:00+08:00"
+    commit:
+      batch_id: patch-restore-parent
+      declarations:
+        - {id: tickets, relation: supersedes:tickets, weight: normal, kind: in-progress, reason: 重新纳入机票比较，报价子项稍后逐项确认。}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r7
+      events_appended: 1
+      events_contain:
+        - {event_seq: 10, type: commit, batch_id: patch-restore-parent, revision: r7}
+      used: 18
+      shares: {trip: 12, tickets: 6}
+      rank: [trip, tickets]
+      withdrawn: [bank, bank-print, visa-appt, flight]
+      pending_annotations: [ann-1, ann-2]
+      items:
+        tickets:
+          status: active
+          title: 机票比较
+          summary: 候选航班待比较。
+          created_at: "2026-10-09T09:00:00+08:00"
+          updated_at: "2026-10-09T09:43:00+08:00"
+          children: null
+          active_children: []
+        flight:
+          status: withdrawn
+          sources: [{channel: monitor, ref: "quote:1"}]
+          annotations: [ann-2]
+
+  - name: 明确恢复孩子，沿用原父子归属并在原子层计算预算
+    now: "2026-10-09T09:44:00+08:00"
+    commit:
+      batch_id: patch-restore-child
+      declarations:
+        - {id: flight, relation: supersedes:flight, weight: low, kind: fyi, reason: 恢复这条候选报价供比较。}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r8
+      events_appended: 1
+      events_contain:
+        - {event_seq: 11, type: commit, batch_id: patch-restore-child, revision: r8}
+      used: 18
+      shares: {trip: 12, tickets: 6}
+      rank: [trip, tickets]
+      children:
+        tickets: {used: 3, shares: {flight: 3}}
+      withdrawn: [bank, bank-print, visa-appt]
+      pending_annotations: [ann-1, ann-2]
+      annotation_status: {ann-1: saved, ann-2: saved}
+      items:
+        trip: {updated_at: "2026-10-09T09:25:00+08:00"}
+        tickets:
+          status: active
+          children: [flight]
+          updated_at: "2026-10-09T09:44:00+08:00"  # 直接子项恢复属于父项结构变化。
+        flight:
+          status: active
+          title: 候选航班
+          summary: 当前报价 2380。
+          created_at: "2026-10-09T09:00:00+08:00"
+          updated_at: "2026-10-09T09:44:00+08:00"
+          share: 3
+          sources: [{channel: monitor, ref: "quote:1"}]
+          annotations: [ann-2]

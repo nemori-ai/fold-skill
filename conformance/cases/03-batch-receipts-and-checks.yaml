@@ -1,0 +1,227 @@
+# 批次回执与检查：checked / acknowledge / commit 都落一条完整批次记录。
+# event_seq 计所有落地记录；revision 只随业务变化或新批注确认增加。
+# 相同请求重试须沿用原 actor、now 和载荷，因此步骤执行顺序不等于 now 递增。
+# state_unchanged 指业务状态与批注状态，不包括日志及快照缓存的记录游标。
+# fault / restart / receipt_received / snapshot_revision 是未来运行器的故障断言，非 CLI 参数或回执字段。
+
+budget: 64
+actor: assistant
+
+steps:
+  - name: 建立一个有明确更新时间的条目
+    now: "2026-10-09T09:00:00+08:00"
+    commit:
+      batch_id: receipts-initial
+      declarations:
+        - {id: draft, title: 周报草稿, summary: 起草中, weight: high, kind: in-progress}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r1
+      events_appended: 1
+      used: 12
+      rank: [draft]
+      events_contain:
+        - {event_seq: 1, type: commit, batch_id: receipts-initial, revision: r1}
+
+  - name: 空声明空确认也留下运行结束的检查记录
+    now: "2026-10-09T09:05:00+08:00"
+    commit: {batch_id: receipts-checked, declarations: [], acknowledges: []}
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r1
+      events_appended: 1
+      state_unchanged: true
+      items:
+        draft: {updated_at: "2026-10-09T09:00:00+08:00", share: 12, rank: 1}
+      events_contain:
+        - {event_seq: 2, type: checked, batch_id: receipts-checked, actor: assistant, now: "2026-10-09T09:05:00+08:00", revision: r1, changes: []}
+
+  - name: checked 的相同请求重试不再写记录
+    now: "2026-10-09T09:05:00+08:00"
+    commit: {batch_id: receipts-checked, declarations: [], acknowledges: []}
+    expect:
+      batch_status: already_committed
+      revision: r1
+      events_appended: 0
+      state_unchanged: true
+
+  - name: 同内容 supersede 与新的说明不制造进展
+    now: "2026-10-09T09:06:00+08:00"
+    commit:
+      batch_id: receipts-same-content
+      declarations:
+        - {id: draft, relation: supersedes:draft, title: 周报草稿, summary: 起草中, weight: high, kind: in-progress,
+           reason: 运行结束，确认仍在起草。}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r1
+      events_appended: 1
+      state_unchanged: true
+      items:
+        draft: {updated_at: "2026-10-09T09:00:00+08:00", share: 12, rank: 1}
+      events_contain:
+        - {event_seq: 3, type: checked, batch_id: receipts-same-content, revision: r1, changes: []}
+
+  - name: 用户保存批注，不增加展示 revision
+    actor: user
+    now: "2026-10-09T09:10:00+08:00"
+    annotate: {batch_id: receipts-note, item: draft, text: 继续按这个方向写。}
+    expect:
+      accepted: true
+      batch_status: committed
+      annotation_id: ann-1
+      annotation_status: saved
+      revision: r1
+      events_appended: 1
+      events_contain:
+        - {event_seq: 4, type: annotation, batch_id: receipts-note, actor: user, revision: r1}
+
+  - name: annotate 重试返回同一批注，不生成第二份留言
+    actor: user
+    now: "2026-10-09T09:10:00+08:00"
+    annotate: {batch_id: receipts-note, item: draft, text: 继续按这个方向写。}
+    expect:
+      batch_status: already_committed
+      annotation_id: ann-1
+      revision: r1
+      events_appended: 0
+      state_unchanged: true
+      pending_annotations: [ann-1]
+
+  - name: 只确认新批注，增加 revision 但不刷新条目更新时间
+    now: "2026-10-09T09:15:00+08:00"
+    commit: {batch_id: receipts-ack, declarations: [], acknowledges: [ann-1]}
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r2
+      events_appended: 1
+      annotation_status: {ann-1: acknowledged}
+      annotation_bound_to: {ann-1: r2}
+      pending_annotations: []
+      items:
+        draft: {updated_at: "2026-10-09T09:00:00+08:00", share: 12, rank: 1}
+      events_contain:
+        - {event_seq: 5, type: acknowledge, batch_id: receipts-ack, actor: assistant, revision: r2}
+
+  - name: ack-only 的相同批次重试返回原确认结果
+    now: "2026-10-09T09:15:00+08:00"
+    commit: {batch_id: receipts-ack, declarations: [], acknowledges: [ann-1]}
+    expect:
+      batch_status: already_committed
+      revision: r2
+      events_appended: 0
+      state_unchanged: true
+      annotation_bound_to: {ann-1: r2}
+
+  - name: 新批次重复确认旧批注只记 checked，保留首次确认位置
+    now: "2026-10-09T09:16:00+08:00"
+    commit: {batch_id: receipts-repeat-ack, declarations: [], acknowledges: [ann-1]}
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r2
+      events_appended: 1
+      state_unchanged: true
+      annotation_status: {ann-1: acknowledged}
+      annotation_bound_to: {ann-1: r2}
+      items:
+        draft: {updated_at: "2026-10-09T09:00:00+08:00"}
+      events_contain:
+        - {event_seq: 6, type: checked, batch_id: receipts-repeat-ack, revision: r2, changes: []}
+
+  - name: 完整批次记录已 fsync，进程在更新快照和回执前停止
+    now: "2026-10-09T09:20:00+08:00"
+    commit:
+      batch_id: receipts-lost-reply
+      declarations:
+        - {id: draft, relation: supersedes:draft, summary: 草稿已完成，等待核对。, weight: high, kind: done}
+      acknowledges: []
+    fault: after_event_fsync_before_snapshot_and_receipt
+    expect:
+      receipt_received: false         # 不把调用方未收到回执写成 accepted:false 或未写入。
+      events_appended: 1
+      snapshot_revision: r2          # 缓存尚旧，提交事实已在日志中。
+      events_contain:
+        - {event_seq: 7, type: commit, batch_id: receipts-lost-reply, revision: r3}
+
+  - name: 新进程按 batch_id 查询丢失的回执并恢复快照
+    restart: true
+    now: "2026-10-09T09:21:00+08:00"
+    history: {batch: receipts-lost-reply}
+    expect:
+      events:
+        - {event_seq: 7, type: commit, batch_id: receipts-lost-reply, actor: assistant, now: "2026-10-09T09:20:00+08:00", revision: r3}
+      receipt: {batch_status: committed, revision: r3}
+      snapshot_revision: r3
+      events_appended: 0
+
+  - name: state 使用已恢复的状态，不回退到旧快照
+    now: "2026-10-09T09:21:30+08:00"
+    state: {}
+    expect:
+      revision: r3
+      events_appended: 0
+      pending_annotations: []
+      items:
+        draft:
+          summary: 草稿已完成，等待核对。
+          kind: done
+          updated_at: "2026-10-09T09:20:00+08:00"
+          annotations: [ann-1]
+
+  - name: 重发原请求只取回原 revision，不追加第二次完成事件
+    now: "2026-10-09T09:20:00+08:00"
+    commit:
+      batch_id: receipts-lost-reply
+      declarations:
+        - {id: draft, relation: supersedes:draft, summary: 草稿已完成，等待核对。, weight: high, kind: done}
+      acknowledges: []
+    expect:
+      batch_status: already_committed
+      revision: r3
+      events_appended: 0
+      state_unchanged: true
+
+  - name: 已提交的同一 batch_id 不能承载不同内容
+    now: "2026-10-09T09:20:00+08:00"
+    commit:
+      batch_id: receipts-lost-reply
+      declarations:
+        - {id: draft, relation: supersedes:draft, summary: 已发给所有同事。, weight: high, kind: done}
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {code: batch_id_conflict}
+      revision: r3
+      events_appended: 0
+      state_unchanged: true
+
+  - name: 仅更改 now 也不是同一个完整请求
+    now: "2026-10-09T09:22:00+08:00"
+    commit:
+      batch_id: receipts-lost-reply
+      declarations:
+        - {id: draft, relation: supersedes:draft, summary: 草稿已完成，等待核对。, weight: high, kind: done}
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {code: batch_id_conflict}
+      revision: r3
+      events_appended: 0
+      state_unchanged: true
+
+  - name: 最新状态推进后，旧 checked 仍能按批次查到原回执
+    now: "2026-10-09T09:23:00+08:00"
+    history: {batch: receipts-checked}
+    expect:
+      events:
+        - {event_seq: 2, type: checked, batch_id: receipts-checked, revision: r1, changes: []}
+      receipt: {batch_status: committed, revision: r1}
+      snapshot_revision: r3
+      events_appended: 0

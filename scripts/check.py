@@ -23,6 +23,8 @@ REQUIRED = (
     "docs/reference/design-v0.3.md",
     "conformance/cases/01-us01-roundtrip.yaml",
     "conformance/cases/02-us03-overflow-reject.yaml",
+    "conformance/cases/03-batch-receipts-and-checks.yaml",
+    "conformance/cases/04-patch-and-subtree.yaml",
     "Makefile",
     "scripts/check.py",
     ".editorconfig",
