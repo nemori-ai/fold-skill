@@ -58,6 +58,8 @@ make check
 
 ## 文档与原型体验站
 
+在线体验：[vibecoding.icu](https://vibecoding.icu/)。首页提供三个真实原型预览，点击图片进入同一时刻的对应视图；顶部菜单可直接选择 A、B、C 或原版。
+
 体验站使用 VitePress 构建文档导航、中文搜索、公式和流程图，并在 `/prototype/` 提供完整原型。原始 Markdown 和原型代码仍是内容源；构建时生成站点文件。
 
 使用 Node.js 22+，在仓库根目录执行：

@@ -67,6 +67,14 @@ button, h1, h2, h3, p, dd, code { overflow-wrap: anywhere; }
 .header-actions button { background: transparent; border-color: transparent; font-size: 12px; }
 .header-actions button:hover { background: var(--panel); border-color: var(--line); }
 .header-actions button[aria-expanded="true"] { color: var(--green); background: var(--selected); }
+.prototype-versions { display:flex; align-items:center; gap:4px; font-size:12px; white-space:nowrap; }
+.prototype-versions a,.prototype-versions>span { display:inline-flex; align-items:center; min-height:44px; padding:8px; text-decoration:none; border-radius:5px; }
+.prototype-versions>span { color:var(--muted); }
+.prototype-versions a:hover { background:var(--selected); }
+@media(max-width:1100px) {
+  .masthead { flex-wrap:wrap; gap:0 12px; }
+  .prototype-versions { order:3; flex-basis:100%; border-top:1px solid var(--line); justify-content:center; }
+}
 
 .story-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 20px 28px 21px; }
 .story-heading { min-width: 0; }

@@ -129,6 +129,10 @@ function syncURL() {
   if(selected.type==='item')p.set('item',selected.id);
   if(comparing)p.set('base',String(baseIndex));
   history.replaceState(null,'',`${location.pathname}?${p}`);
+  document.querySelectorAll('[data-prototype-variant]').forEach(link=>{
+    const target=new URLSearchParams(p);target.set('variant',link.dataset.prototypeVariant);
+    link.href=`./?${target}`;
+  });
 }
 function render(transition=null) {
   const oldState=currentState, oldBase=baseState;

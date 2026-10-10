@@ -41,6 +41,8 @@ git diff --check
 
 ## 体验站构建与发布
 
+线上主域名为 [vibecoding.icu](https://vibecoding.icu/)，由 `wrangler.jsonc` 的 Custom Domain 配置绑定到同一个 Worker，Cloudflare 管理 DNS 与 HTTPS 证书。
+
 体验站是独立的静态文档与交互实验，使用 Node.js 22+。VitePress 提供导航和中文本地搜索；Mermaid 与 MathJax 分别呈现文档已有的流程图和公式。依赖版本由 `package-lock.json` 固定，不改变首切片核心 CLI 使用 Python 标准库的决定。
 
 ```sh

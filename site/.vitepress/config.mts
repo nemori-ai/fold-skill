@@ -64,7 +64,12 @@ export default defineConfig({
     nav: [
       { text: '概览', link: '/overview' },
       { text: '产品文档', link: '/docs/product', activeMatch: '^/docs/' },
-      { text: '原型体验', link: '/prototype/', target: '_self' },
+      { text: '原型体验', items: [
+        { text: 'A · 空间排布', link: '/prototype/?variant=a&frame=0', target: '_self' },
+        { text: 'B · 时间展开', link: '/prototype/?variant=b&frame=0', target: '_self' },
+        { text: 'C · 流动形态', link: '/prototype/?variant=c&frame=0', target: '_self' },
+        { text: '原版 · 完整工作台', link: '/prototype/', target: '_self' },
+      ] },
       { text: '原型说明', link: '/prototype-notes/README', activeMatch: '^/prototype-notes/' },
     ],
     sidebar: [
