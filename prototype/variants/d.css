@@ -17,7 +17,13 @@
 .d-rail-signal { margin: 0; font-size: 12px; color: var(--ink-3); }
 .d-rail-steps { display: flex; align-items: center; gap: 8px; margin: 14px 0 10px; }
 .d-rail-steps button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); font-size: 18px; color: var(--ink); cursor: pointer; }
-.d-rail-range { flex: 1; accent-color: var(--ink); }
+.d-track { position: relative; flex: 1; height: 34px; cursor: pointer; touch-action: none; outline: none; border-radius: 8px; }
+.d-track:focus-visible { box-shadow: 0 0 0 2px var(--ink); }
+.d-track-line { position: absolute; left: 0; right: 0; top: 16px; height: 2px; border-radius: 1px; background: #d8d4ca; }
+.d-track-ticks i { position: absolute; top: 13px; width: 2px; height: 8px; margin-left: -1px; border-radius: 1px; background: #cbc6bb; }
+.d-track-ticks i.is-day { top: 9px; height: 16px; background: #b4afa4; }
+.d-track-ticks i.is-past { background: var(--ink-2); }
+.d-track-thumb { position: absolute; top: 7px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; background: var(--card); box-shadow: 0 0 0 2px var(--ink), 0 2px 6px #0003; transition: left .18s; pointer-events: none; }
 .d-rail-narrative { margin: 0 0 16px; font-size: 12.5px; }
 .d-rail-block { border-top: 1px solid var(--line); padding: 12px 0 4px; }
 .d-rail-block h2 { margin: 0 0 8px; font-size: 12px; color: var(--ink); font-weight: 700; }
@@ -26,7 +32,16 @@
 .d-surface-toggle button[aria-checked="true"] { background: var(--card); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px #0001; }
 .d-surface-policy { margin: 8px 0 4px; font-size: 12px; }
 .d-base { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink); }
-.d-base select { flex: 1; padding: 5px 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); font: inherit; }
+.d-base-btn { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); font: inherit; font-size: 12.5px; color: var(--ink); cursor: pointer; text-align: left; }
+.d-base-btn span { font-size: 10px; color: var(--ink-3); }
+.d-base-menu { margin-top: 6px; max-height: 260px; overflow: auto; background: var(--card); border-radius: 12px; box-shadow: 0 10px 30px -10px #0004, 0 0 0 1px var(--line); padding: 4px; scrollbar-width: thin; }
+.d-base-menu button { display: block; width: 100%; text-align: left; border: 0; background: none; border-radius: 8px; padding: 7px 9px; font: inherit; cursor: pointer; color: var(--ink); }
+.d-base-menu button:hover, .d-base-menu button:focus-visible { background: #f2efe8; outline: none; }
+.d-base-menu button[aria-selected="true"] { background: var(--ink); color: #fff; }
+.d-base-menu button[aria-selected="true"] small, .d-base-menu button[aria-selected="true"] em { color: #fffc; }
+.d-base-menu span { font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.d-base-menu em { font-style: normal; font-size: 11px; color: var(--red); margin-left: 6px; }
+.d-base-menu small { display: block; font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .d-small { font-size: 11.5px; color: var(--ink-3); margin: 6px 0; line-height: 1.5; }
 .d-legend ol { margin: 0; padding-left: 18px; font-size: 12px; }
 .d-legend li { margin-bottom: 6px; }
@@ -47,16 +62,18 @@
 
 .d-head { padding: 6px 4px 10px; }
 .d-head-main { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.d-date { font-size: 30px; font-weight: 800; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
-.d-date span { font-size: 17px; font-weight: 600; margin-left: 8px; color: var(--ink-2); }
+.d-date { font-size: 13px; font-weight: 600; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.d-headline { margin: 4px 0 2px; font-size: 30px; line-height: 1.2; font-weight: 800; letter-spacing: -.01em; }
+.d-headline:empty { display: none; }
 .d-snoozed { border: 1px solid var(--line); background: var(--card); border-radius: 99px; padding: 6px 11px; font-size: 12px; color: var(--ink); cursor: pointer; white-space: nowrap; }
-.d-head-sub { display: flex; align-items: center; gap: 10px; margin-top: 4px; font-size: 12px; color: var(--ink-3); }
-.d-surface-chip { border: 0; background: #e9e6de; border-radius: 99px; padding: 3px 10px; font-size: 12px; color: var(--ink-2); cursor: pointer; }
+.d-head-sub { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 12.5px; color: var(--ink-3); }
+.d-surface-chip { border: 0; background: none; padding: 0; font: inherit; color: var(--ink-3); cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.d-surface-chip::before { content: "· "; text-decoration: none; display: inline-block; margin-right: 2px; }
 .d-signal { margin: 8px 0 0; padding: 7px 10px; font-size: 11.5px; color: var(--ink-2); background: #eceae3; border-radius: 10px; line-height: 1.45; }
 
 /* ---- cards: height follows share ---- */
-.d-cards { position: relative; z-index: 0; display: flex; flex-direction: column; gap: 6px; }
-.d-card { position: relative; min-height: var(--h); box-sizing: border-box; background: var(--card); border-radius: 18px; padding: 12px 14px; box-shadow: 0 1px 0 #00000008, 0 4px 14px -8px #0002; cursor: pointer; display: flex; flex-direction: column; outline: none; transition: opacity .25s, filter .25s; }
+.d-cards { position: relative; z-index: 0; display: flex; flex-direction: column; gap: 8px; }
+.d-card { position: relative; min-height: var(--h); box-sizing: border-box; background: var(--card); border-radius: 20px; padding: 14px 16px; box-shadow: 0 1px 0 #00000008, 0 6px 18px -10px #0003; cursor: pointer; display: flex; flex-direction: column; outline: none; transition: opacity .25s, filter .25s; }
 .d-card:focus-visible { box-shadow: 0 0 0 2px var(--ink); }
 .d-card h3 { margin: 0; font-size: 16px; line-height: 1.35; font-weight: 700; }
 .d-card.is-xl { padding: 16px 16px 14px; }
@@ -108,8 +125,23 @@
 .d-btn.is-line { background: transparent; color: var(--red); border: 1.5px solid var(--red); }
 .d-btn small { font-size: 11px; font-weight: 600; opacity: .85; margin-left: 6px; padding-left: 6px; border-left: 1px solid #fff7; }
 .d-input { flex: 1; display: flex; align-items: center; gap: 8px; margin: 0; }
-.d-input span { font-weight: 700; font-size: 16px; }
-.d-input input { flex: 1; min-width: 0; height: 36px; border: 1px solid #d9d5cc; border-radius: 10px; padding: 0 10px; font: inherit; font-size: 16px; font-weight: 700; background: #fff; }
+.d-amount { flex: 1; min-width: 0; height: 38px; display: flex; align-items: center; gap: 6px; border: 0; border-radius: 12px; padding: 0 12px; background: #f2efe8; font: inherit; color: var(--ink); cursor: pointer; text-align: left; }
+.d-amount span { font-weight: 700; font-size: 15px; color: var(--ink-2); }
+.d-amount b { flex: 1; font-size: 19px; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.d-amount i { font-style: normal; font-size: 13px; color: var(--ink-3); }
+.d-write { text-align: left; padding: 0 14px; }
+.d-keypad-value { text-align: center; font-size: 22px; font-weight: 600; color: var(--ink-2); margin: 10px 0 12px; }
+.d-keypad-value b { font-size: 40px; color: var(--ink); margin-left: 4px; font-variant-numeric: tabular-nums; }
+.d-keypad-chips, .d-suggest { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 12px; }
+.d-keypad-chips button, .d-suggest button { border: 1.5px solid var(--red); color: var(--red); background: none; border-radius: 99px; padding: 6px 14px; font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.d-suggest { justify-content: flex-start; margin-top: 12px; }
+.d-keypad-keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.d-keypad-keys button { height: 48px; border: 0; border-radius: 12px; background: #f2efe8; font: inherit; font-size: 21px; font-weight: 600; color: var(--ink); cursor: pointer; }
+.d-keypad-keys button:active { background: #e4e0d6; }
+.d-keypad-done { width: 100%; margin-top: 12px; min-height: 46px; }
+.d-composer { display: flex; align-items: flex-end; gap: 8px; margin-top: 4px; padding: 6px 6px 6px 14px; border-radius: 20px; background: #f2efe8; }
+.d-composer textarea { flex: 1; border: 0; background: none; resize: none; font: inherit; font-size: 15px; line-height: 1.45; padding: 6px 0; outline: none; color: var(--ink); }
+.d-send { width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: 50%; background: var(--red); color: #fff; font-size: 17px; font-weight: 700; cursor: pointer; }
 .d-input .d-btn { flex: 0 0 auto; }
 .d-snooze { flex: 0 0 auto; border: 0; background: none; color: var(--ink-3); font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; padding: 0 2px; }
 .d-snooze span { font-size: 12px; }
@@ -224,7 +256,7 @@
   .d-rail-time { margin: 0; min-width: 0; }
   .d-rail-title { font-size: 13px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .d-rail-steps { margin: 0; }
-  .d-rail-range { display: none; }
+  .d-track { display: none; }
   .d-rail-steps button { width: 30px; height: 30px; }
   .d-device { width: auto; height: auto; }
   .d-phone { width: auto; height: calc(100svh - 58px - 112px); min-height: 480px; transform: none; border-radius: 0; padding: 0; background: none; box-shadow: none; }
@@ -236,3 +268,34 @@
 }
 @media (prefers-reduced-motion: reduce) { .d-detail, .d-sheet { animation: none; } }
 .d-earlier summary { font-size: 12px; color: var(--ink-3); cursor: pointer; margin-bottom: 8px; }
+
+/* ---- calm home: three zones ---- */
+.d-kicker { margin: 0; font-size: 12px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
+.d-card h3 { margin: 4px 0 4px; }
+.d-card.is-xl h3 { font-size: 24px; margin: 6px 0 6px; }
+.d-card.is-l h3 { font-size: 19px; white-space: normal; }
+.d-card.is-m h3 { font-size: 15.5px; margin: 1px 0 0; }
+.d-card.is-m { padding: 0 14px; }
+.d-context { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.d-context b { color: var(--ink); font-weight: 700; }
+.d-card.is-l .d-context { -webkit-line-clamp: 1; }
+.d-quote { margin: 10px 0 0; padding: 0 0 0 10px; border-left: 2px solid var(--line); font-size: 12.5px; line-height: 1.5; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.d-quote cite { font-style: normal; color: var(--ink-3); margin-left: 6px; }
+.d-dot { flex-shrink: 0; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--ink); margin-right: 6px; vertical-align: 3px; }
+.d-kicker .d-dot { margin-right: 0; vertical-align: 0; }
+.d-banner { color: var(--ink-2); font-weight: 500; }
+.d-zone-head { display: flex; justify-content: space-between; align-items: baseline; margin: 22px 4px 4px; font-size: 12px; color: var(--ink-3); letter-spacing: .02em; }
+.d-link.is-quiet { color: var(--ink-3); text-decoration: underline dotted; text-underline-offset: 3px; }
+.d-lines { list-style: none; margin: 0; padding: 0; }
+.d-line { min-height: var(--h); box-sizing: border-box; padding: 10px 4px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; justify-content: center; cursor: pointer; outline: none; touch-action: pan-y; transition: transform .2s, opacity .2s; }
+.d-line:focus-visible { box-shadow: inset 0 0 0 2px var(--ink); border-radius: 8px; }
+.d-line-head { display: flex; align-items: baseline; gap: 10px; }
+.d-line h3 { flex: 1; min-width: 0; margin: 0; font-size: 15px; font-weight: 600; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.d-line.is-big h3 { font-size: 17px; font-weight: 700; white-space: normal; }
+.d-line .d-context { margin-top: 3px; }
+.d-line.is-read h3, .d-line.is-read .d-context { color: var(--ink-3); }
+.d-status { flex-shrink: 0; font-size: 12px; color: var(--ink-3); }
+.d-known { margin-top: 0; }
+.d-stack-top { box-shadow: 0 0 0 1px var(--line); }
+.d-swipe-hint { font-size: 12px; color: var(--ink-3); }
+.d-peek { color: var(--ink-3); box-shadow: 0 0 0 1px var(--line); }

@@ -27,29 +27,32 @@ export function mount(host, model) {
   let s = model.snapshot(), surface = new URLSearchParams(location.search).get('surface') === 'inbox' ? 'inbox' : 'focus';
   let stackOpen = false, sheet = null, disposed = false, lastIndex = s.index;
   const local = new Map(); // versionKey -> { meaning, label, value, at }
+  const drafts = new Map(); // item:action -> amount being edited
   const detailStack = [];
 
   host.innerHTML = `<div class="d-stage">
     <aside class="d-rail" aria-label="回放与读法">
       <div class="d-rail-brand">Fold <span>手机首页</span></div>
       <div class="d-rail-time"><span class="d-rail-date"></span><h1 class="d-rail-title"></h1><p class="d-rail-signal"></p></div>
-      <div class="d-rail-steps"><button data-d="prev" aria-label="上一轮">‹</button><input class="d-rail-range" type="range" min="0" step="1" aria-label="选择整理时刻"><button data-d="next" aria-label="下一轮">›</button></div>
+      <div class="d-rail-steps"><button data-d="prev" aria-label="上一轮">‹</button><div class="d-track" role="slider" tabindex="0" aria-label="选择整理时刻"><span class="d-track-line"></span><span class="d-track-ticks"></span><span class="d-track-thumb"></span></div><button data-d="next" aria-label="下一轮">›</button></div>
       <p class="d-rail-narrative"></p>
       <section class="d-rail-block"><h2>这块屏幕的用途</h2><div class="d-surface-toggle" role="radiogroup" aria-label="业务用途">${surfaces.map(x => `<button role="radio" data-surface="${x.id}">${esc(x.label)}</button>`).join('')}</div><p class="d-surface-policy"></p></section>
-      <section class="d-rail-block"><h2>比较起点</h2><label class="d-base">上次看到 <select class="d-base-select" aria-label="比较起点"></select></label><p class="d-small">首切片不记录查看，这里由你指定；产品需要新增查看记录才能自动给出。</p></section>
+      <section class="d-rail-block"><h2>比较起点</h2><div class="d-base"><span>上次看到</span><button class="d-base-btn" data-d="base" aria-haspopup="listbox" aria-expanded="false"></button></div><div class="d-base-menu" role="listbox" aria-label="比较起点" hidden></div><p class="d-small">首切片不记录查看，这里由你指定；产品需要新增查看记录才能自动给出。</p></section>
       <section class="d-rail-block d-legend"><h2>读法</h2><ol>
-        <li><b>高度 = 份额</b>一份约一行，满屏约 64 份。</li>
-        <li><b>按钮 = 期待</b><span class="d-chip-demo is-fill">选项</span>决定 <span class="d-chip-demo">¥ 输入</span>提供 <span class="d-chip-demo">我已处理</span>去做；没有按钮就是只需知道。</li>
-        <li><b>纸边 = 子项</b>卡片下的薄边是这件事的内部厚度。</li>
-        <li><b>错开的一叠 = 只需知道</b>最多露 4 张，其余记作 +x，不参与批量签收。</li>
+        <li><b>先看大字</b>顶部一句话说有几件等你回应。</li>
+        <li><b>白卡 = 等你回应</b>只有登记了反馈路径的事才是卡片。大字是要你回答的问题，按钮形态说明怎么答：<span class="d-chip-demo is-fill">选项</span>决定、<span class="d-chip-demo">¥ 金额</span>提供、<span class="d-chip-demo">我已处理</span>去做。</li>
+        <li><b>纸面上的行 = 进行中与结果</b>没有按钮、没有颜色，左滑表示知道了。</li>
+        <li><b>高度 = 份额</b>一份约一行；黑点表示自比较起点以来有变化。</li>
+        <li><b>小事叠在一起</b>最多露 4 张，其余记作 +x，不参与批量签收。</li>
       </ol></section>
       <p class="d-small">在这里点按的反馈只留在本页演示，不写回状态。故事里真实发生的回复与按钮，标为 ↩。<button class="d-link" data-d="reset">清除本页反馈</button></p>
     </aside>
     <div class="d-device"><div class="d-phone"><div class="d-screen" tabindex="-1">
       <div class="d-statusbar"><span class="d-status-time"></span><span class="d-island"></span><span class="d-status-icons" aria-hidden="true">●●● ◗ ▭</span></div>
       <div class="d-scroll">
-        <header class="d-head"><div class="d-head-main"><div class="d-date"></div><button class="d-snoozed" data-d="snoozed" hidden></button></div><div class="d-head-sub"><button class="d-surface-chip" data-d="surface"></button><span class="d-since"></span></div><p class="d-signal" hidden></p></header>
-        <main class="d-cards" aria-label="此刻的关注"></main>
+        <header class="d-head"><div class="d-head-main"><div class="d-date"></div><button class="d-snoozed" data-d="snoozed" hidden></button></div><h1 class="d-headline"></h1><p class="d-head-sub"><span class="d-since"></span><button class="d-surface-chip" data-d="surface"></button></p><p class="d-signal" hidden></p></header>
+        <main class="d-cards" aria-label="等你回应"></main>
+        <section class="d-rows" aria-label="进行中与结果"></section>
         <section class="d-known" aria-label="只需知道"></section>
         <div class="d-blank" aria-hidden="true"></div>
         <div class="d-read-shelf"></div>
@@ -121,7 +124,9 @@ export function mount(host, model) {
       if (action.meaning === 'input') {
         if (action.input.type === 'photo') return `<button class="d-btn is-line" data-act="${esc(item.id)}:${action.id}">📷 ${esc(action.label)}</button>`;
         const money = action.input.type === 'money';
-        return `<form class="d-input" data-input="${esc(item.id)}:${action.id}">${money ? '<span>¥</span>' : ''}<input name="v" ${money ? 'inputmode="numeric"' : ''} aria-label="${esc(action.label)}" value="${money ? esc(String(action.input.prefill ?? '')) : ''}" placeholder="${esc(action.input.placeholder || action.label)}"><button class="d-btn is-fill">${esc(action.input.submit || '提交')}</button></form>`;
+        const key = `${item.id}:${action.id}`;
+        if (money) { const value = drafts.get(key) ?? action.input.prefill ?? 0; return `<div class="d-input"><button class="d-amount" data-keypad="${esc(key)}" aria-label="修改${esc(action.label)}"><span>¥</span><b>${Number(value).toLocaleString('zh-CN')}</b><i aria-hidden="true">✎</i></button><button class="d-btn is-fill" data-amount="${esc(key)}">${esc(action.input.submit || '确认')}</button></div>`; }
+        return `<button class="d-btn is-line d-write" data-compose="${esc(key)}">✎ ${esc(action.label)}</button>`;
       }
       const fill = action.recommended || (ask.actions.length === 1 && action.meaning === 'act');
       return `<button class="d-btn ${fill ? 'is-fill' : 'is-line'}" data-act="${esc(item.id)}:${action.id}">${esc(action.label)}${action.recommended ? '<small>推荐</small>' : ''}</button>`;
@@ -130,40 +135,52 @@ export function mount(host, model) {
   }
   const snoozeButton = item => `<button class="d-snooze" data-snooze="${esc(item.id)}" aria-label="稍后提醒">◷<span>稍后</span></button>`;
 
-  // ---------- cards ----------
-  function cardHTML(item, marks) {
-    const share = item.share, size = share >= 24 ? 'xl' : share >= 12 ? 'l' : share >= 6 ? 'm' : 's';
-    const f = fbFor(item), exp = expectation(item), reminder = storyReminder(item), wokeF = woke(item);
-    const kids = item.children?.items || [];
-    const edges = kids.length ? `<span class="d-edges" style="--n:${Math.min(3, kids.length)}" aria-hidden="true"></span>` : '';
-    const due = dueText(item);
-    const story = feedbackTrail(s, item.id).filter(t => t.frameIndex === s.index && t.links.length).at(-1);
-    const banner = reminder ? `<p class="d-banner">◷ 你${formatDate(reminder.reminder.requested_at)} ${clock(reminder.reminder.requested_at)} 让我 ${clock(reminder.at)} 提醒 · 已按现在的情况重看</p>`
-      : wokeF ? `<p class="d-banner">◷ 你 ${clock(wokeF.at)} 让我此时提醒 · ${Date.parse(item.updated_at) > wokeF.at ? '期间有更新' : '期间没有新变化'}</p>`
-      : story ? `<p class="d-banner is-story">↩ 回应你 ${clock(story.event.at)} 的${story.links[0].via === 'button' ? '选择' : '回复'}</p>` : '';
-    const meta = [exp !== 'know' ? `<span class="d-exp">${meaningLabel[exp]}</span>` : `<span>${kindLabel[item.kind]}</span>`, due && `<span class="${item.due_at && Date.parse(item.due_at) < s.cursor ? 'is-late' : ''}">${esc(due)}</span>`, kids.length && `<span>内含 ${kids.length} 件</span>`].filter(Boolean).join('<i>·</i>');
-    const evidence = size === 'xl' && item.sources?.length ? (() => { const src = [...item.sources].reverse().find(x => x.author !== '林苒') || item.sources.at(-1); return `<blockquote class="d-evidence"><span class="d-avatar is-sm" style="--tone:${colorFor(item, s.state)}">${esc((src.author || '·').slice(0, 1))}</span><span><b>${esc(src.author)}</b>${esc(src.quote)}</span></blockquote>`; })() : '';
-    const calm = f?.meaning === 'ack' ? ' is-calm' : '';
-    const body = size === 'm' || size === 's'
-      ? `<div class="d-row">${avatarHTML(item, s.state, 'is-sm')}<div class="d-row-text"><h3>${esc(item.title)}${marks}</h3><p class="d-meta">${meta}</p></div>${controlsHTML(item, { compact: true })}</div>`
-      : `<div class="d-card-top">${avatarHTML(item, s.state)}<p class="d-meta">${meta}</p>${marks}</div><h3>${esc(item.title)}</h3>${size === 'xl' || !currentAsk(s, item.id) ? `<p class="d-summary">${esc(item.summary)}</p>` : ''}${evidence}${controlsHTML(item)}`;
-    return `<article class="d-card is-${size} is-${item.kind}${calm}${banner ? ' has-banner' : ''}" data-id="${esc(item.id)}" style="--h:${share * UNIT}px" tabindex="0" aria-label="${esc(item.title)}，${share} 份">${banner}${body}${edges}</article>`;
+  // ---------- home: three zones, one question each ----------
+  // 1. 等你回应: only outputs with a registered feedback path get a card.
+  // 2. 进行中与结果: plain rows on the page, no controls, no colour.
+  // 3. 小事: a quiet stack; then the fold band.
+  const dot = (item, map) => changeMark(item, map) ? '<i class="d-dot" title="自比较起点以来有变化"></i>' : '';
+  function deadline(item) {
+    if (!item.due_at || item.kind === 'done') return item.until_stale != null && item.until_stale < 0 ? '资料待复核' : '';
+    const ms = Date.parse(item.due_at) - s.cursor;
+    return ms < 0 ? `<b>已过 ${relative(ms).slice(3)}</b>` : `${formatDate(item.due_at)} ${clock(item.due_at)} 前`;
   }
-
-  function knownHTML(items, marks) {
+  function bannerOf(item) {
+    const reminder = storyReminder(item), wokeF = woke(item);
+    const story = feedbackTrail(s, item.id).filter(t => t.frameIndex === s.index && t.links.length).at(-1);
+    if (reminder) return `◷ 你${formatDate(reminder.reminder.requested_at)} ${clock(reminder.reminder.requested_at)} 让我 ${clock(reminder.at)} 提醒，已按现在的情况重看`;
+    if (wokeF) return `◷ 你 ${clock(wokeF.at)} 让我此时提醒 · ${Date.parse(item.updated_at) > wokeF.at ? '期间有更新' : '期间没有新变化'}`;
+    if (story) return `↩ 回应你 ${clock(story.event.at)} 的${story.links[0].via === 'button' ? '选择' : '回复'}`;
+    return '';
+  }
+  function askCardHTML(item, map) {
+    const ask = currentAsk(s, item.id), share = item.share, size = share >= 24 ? 'xl' : share >= 12 ? 'l' : 'm';
+    const banner = bannerOf(item), due = deadline(item);
+    const context = [esc(item.summary), due].filter(Boolean).join(' · ');
+    const quote = size === 'xl' && item.sources?.length ? (() => { const src = [...item.sources].reverse().find(x => x.author !== '林苒') || item.sources.at(-1); return `<blockquote class="d-quote">“${esc(src.quote)}”<cite>${esc(src.author)}</cite></blockquote>`; })() : '';
+    const headline = ask?.prompt || item.title;
+    const kicker = headline.replace(/[？?]$/, '') === item.title ? '' : `<p class="d-kicker">${dot(item, map)}${esc(item.title)}</p>`;
+    if (size === 'm') return `<article class="d-card is-m" data-id="${esc(item.id)}" style="--h:${Math.max(share, 6) * UNIT}px" tabindex="0" aria-label="${esc(headline)}">${banner ? `<p class="d-banner">${banner}</p>` : ''}<div class="d-row"><div class="d-row-text">${kicker}<h3>${kicker ? '' : dot(item, map)}${esc(headline)}</h3></div>${controlsHTML(item, { compact: true })}</div></article>`;
+    return `<article class="d-card is-${size}" data-id="${esc(item.id)}" style="--h:${share * UNIT}px" tabindex="0" aria-label="${esc(headline)}">${banner ? `<p class="d-banner">${banner}</p>` : ''}${kicker}<h3>${kicker ? '' : dot(item, map)}${esc(headline)}</h3><p class="d-context">${context}</p>${quote}${controlsHTML(item)}</article>`;
+  }
+  const statusWord = item => ({ 'in-progress': '进行中', done: '已完成', fyi: '知会', 'needs-you': '等你' })[item.kind];
+  function rowHTML(item, map) {
+    const f = fbFor(item), big = item.share >= 12, banner = bannerOf(item);
+    return `<li class="d-line${big ? ' is-big' : ''}${f?.meaning === 'ack' ? ' is-read' : ''}" data-id="${esc(item.id)}" data-swipe="${esc(item.id)}" style="--h:${item.share * UNIT}px" tabindex="0">${banner ? `<p class="d-banner">${banner}</p>` : ''}<div class="d-line-head"><h3>${dot(item, map)}${esc(item.title)}</h3><span class="d-status">${f?.meaning === 'ack' ? '✓ 已知道' : statusWord(item)}</span></div>${big ? `<p class="d-context">${esc(item.summary)}${deadline(item) ? ` · ${deadline(item)}` : ''}</p>` : ''}</li>`;
+  }
+  function knownHTML(items, map) {
     if (!items.length) return '';
     const ordered = [...items].sort((a, b) => Number(Boolean(fbFor(a))) - Number(Boolean(fbFor(b))) || a.rank - b.rank);
-    const unread = ordered.filter(item => !fbFor(item));
     const visible = ordered.slice(0, STACK_PEEKS), extra = ordered.length - visible.length;
     const visibleUnread = visible.filter(item => !fbFor(item));
     if (stackOpen) {
-      return `<div class="d-known-head"><span>只需知道 · ${items.length}</span><button class="d-link" data-d="stack">收起</button></div><ul class="d-known-list">${ordered.map(item => `<li class="${fbFor(item) ? 'is-done' : ''}" data-id="${esc(item.id)}">${avatarHTML(item, s.state, 'is-sm')}<span class="d-known-title">${esc(item.title)}${marks.get(item.id) || ''}</span>${fbFor(item) ? '<span class="d-tick">✓</span>' : `<button class="d-quiet" data-ack="${esc(item.id)}">知道了</button>`}</li>`).join('')}</ul>${unread.length > 1 ? `<button class="d-ack-all" data-ack-many="${esc(unread.map(i => i.id).join(','))}">这 ${unread.length} 件都知道了</button>` : ''}`;
+      return `<div class="d-zone-head"><span>小事 · ${items.length}</span><button class="d-link" data-d="stack">收起</button></div><ul class="d-known-list">${ordered.map(item => `<li class="${fbFor(item) ? 'is-done' : ''}" data-id="${esc(item.id)}"><span class="d-known-title">${dot(item, map)}${esc(item.title)}</span>${fbFor(item) ? '<span class="d-tick">✓</span>' : `<button class="d-quiet" data-ack="${esc(item.id)}">知道了</button>`}</li>`).join('')}</ul>`;
     }
     const [top, ...rest] = visible;
-    return `<div class="d-known-head"><span>只需知道 · ${items.length}</span>${visibleUnread.length > 1 ? `<button class="d-link" data-ack-many="${esc(visibleUnread.map(i => i.id).join(','))}">露出的 ${visibleUnread.length} 件都知道了</button>` : ''}</div>
+    return `<div class="d-zone-head"><span>小事 · ${items.length}</span>${visibleUnread.length > 1 ? `<button class="d-link is-quiet" data-ack-many="${esc(visibleUnread.map(i => i.id).join(','))}">露出的 ${visibleUnread.length} 件都知道了</button>` : ''}</div>
       <div class="d-stack" data-d="stack" style="--peeks:${rest.length}">
-        <div class="d-stack-top${fbFor(top) ? ' is-done' : ''}" data-swipe="${esc(top.id)}" data-id="${esc(top.id)}">${avatarHTML(top, s.state)}<span class="d-known-title">${esc(top.title)}${marks.get(top.id) || ''}</span>${fbFor(top) ? '<span class="d-tick">✓</span>' : `<button class="d-quiet" data-ack="${esc(top.id)}">← 知道了</button>`}</div>
-        ${rest.map((item, i) => `<div class="d-peek${fbFor(item) ? ' is-done' : ''}" style="--i:${i + 1}">${avatarHTML(item, s.state, 'is-xs')}<span>${esc(scenario.categories[item.id]?.label || item.title.slice(0, 6))}</span></div>`).join('')}
+        <div class="d-stack-top${fbFor(top) ? ' is-done' : ''}" data-swipe="${esc(top.id)}" data-id="${esc(top.id)}"><span class="d-known-title">${dot(top, map)}${esc(top.title)}</span>${fbFor(top) ? '<span class="d-tick">✓</span>' : '<span class="d-swipe-hint">← 知道了</span>'}</div>
+        ${rest.map((item, i) => `<div class="d-peek${fbFor(item) ? ' is-done' : ''}" style="--i:${i + 1}"><span>${esc(item.title.slice(0, 12))}</span></div>`).join('')}
         ${extra > 0 ? `<span class="d-plus" title="没露出的事项不参与批量签收">+${extra}</span>` : ''}
       </div>`;
   }
@@ -171,22 +188,28 @@ export function mount(host, model) {
   // ---------- render ----------
   function render() {
     if (disposed) return;
-    const flip = new Map([...host.querySelectorAll('.d-card[data-id]')].map(el => [el.dataset.id, el.getBoundingClientRect().top]));
+    const flip = new Map([...host.querySelectorAll('.d-card[data-id], .d-line[data-id]')].map(el => [el.dataset.id, el.getBoundingClientRect().top]));
     const map = changes();
     const items = [...(s.state.root.items || [])].sort((a, b) => a.rank - b.rank);
     const snoozed = new Set(snoozedItems().map(x => x.item.id));
-    const readOut = [], known = [], cards = [];
+    const readOut = [], known = [], asks = [], rows = [];
     for (const item of items) {
       if (snoozed.has(item.id)) continue;
       const f = fbFor(item);
       if (surface === 'inbox' && f?.meaning === 'ack') { readOut.push(item); continue; }
-      // A reminder you asked for comes back as its own row, whatever its share.
       const recalled = storyReminder(item) || woke(item);
-      if (item.share <= 3 && !currentAsk(s, item.id) && item.kind !== 'needs-you' && !recalled) known.push(item); else cards.push(item);
+      if (currentAsk(s, item.id)) asks.push(item);
+      else if (item.share <= 3 && !recalled) known.push(item);
+      else rows.push(item);
     }
-    const marks = new Map(items.map(item => [item.id, changeMark(item, map)]));
-    $('.d-cards').innerHTML = cards.length ? cards.map(item => cardHTML(item, marks.get(item.id))).join('') : `<div class="d-empty"><p>这里还空着</p><span>${s.frame.phase === 'initial' ? '还没有收到第一条需要记住的消息。' : '当前没有占位的事项。'}</span></div>`;
-    $('.d-known').innerHTML = knownHTML(known, marks);
+    const answered = asks.filter(item => { const f = fbFor(item); return f && f.meaning !== 'ack'; }).length;
+    const waiting = asks.length - answered;
+    $('.d-cards').innerHTML = asks.length ? asks.map(item => askCardHTML(item, map)).join('') : '';
+    const unreadRows = rows.filter(item => !fbFor(item));
+    $('.d-rows').innerHTML = rows.length ? `<div class="d-zone-head"><span>进行中与结果 · ${rows.length}</span>${unreadRows.length > 1 ? `<button class="d-link is-quiet" data-ack-many="${esc(unreadRows.map(i => i.id).join(','))}">这些都知道了</button>` : ''}</div><ul class="d-lines">${rows.map(item => rowHTML(item, map)).join('')}</ul>` : '';
+    $('.d-known').innerHTML = knownHTML(known, map);
+    if (!items.length) $('.d-cards').innerHTML = `<div class="d-empty"><p>这里还空着</p><span>${s.frame.phase === 'initial' ? '还没有收到第一条需要记住的消息。' : '当前没有占位的事项。'}</span></div>`;
+    $('.d-headline').innerHTML = !items.length ? '' : waiting ? `${waiting} 件等你回应` : asks.length ? '都回应了，等 Agent 整理' : '没有要你回应的事';
     const blank = s.state.root.budget - s.state.root.used;
     $('.d-blank').style.height = `${blank * UNIT}px`;
     $('.d-blank').dataset.label = blank > 0 ? `还空着 ${blank} 份` : '';
@@ -194,13 +217,13 @@ export function mount(host, model) {
 
     const at = new Date(s.cursor);
     $('.d-status-time').textContent = clock(at);
-    $('.d-date').innerHTML = `${esc(day.format(at))}<span>${esc(weekday.format(at))}</span>`;
+    $('.d-date').textContent = `${day.format(at)} ${weekday.format(at)} · ${clock(at)}`;
     const sz = snoozedItems();
     $('.d-snoozed').hidden = !sz.length;
     $('.d-snoozed').innerHTML = sz.length ? `◷ ${clock(Math.min(...sz.map(x => x.f.until)))} 再提醒 ${sz.length} 件` : '';
-    $('.d-surface-chip').textContent = `${surfaces.find(x => x.id === surface).label} ▾`;
+    $('.d-surface-chip').textContent = surfaces.find(x => x.id === surface).label;
     const changed = (s.diff.changes || []).length;
-    $('.d-since').textContent = s.index === s.baseIndex ? '起点' : `自 ${formatDate(s.frames[s.baseIndex].at)} ${clock(s.frames[s.baseIndex].at)} · ${changed ? `${changed} 处变化` : '没有变化'}`;
+    $('.d-since').textContent = s.index === s.baseIndex ? '起点' : `自 ${formatDate(s.frames[s.baseIndex].at)} ${clock(s.frames[s.baseIndex].at)} 以来 ${changed ? `${changed} 处变化` : '没有变化'}`;
     const signal = s.frame.signal;
     const sig = $('.d-signal');
     sig.hidden = !(signal && signal.type === 'review');
@@ -218,15 +241,16 @@ export function mount(host, model) {
     $('.d-rail-title').textContent = s.frame.title;
     $('.d-rail-narrative').textContent = s.frame.narrative;
     $('.d-rail-signal').textContent = signal ? (signal.type === 'review' ? `调用原因：${signal.reason}，窗口内 0 条事件` : `调用原因：${signal.reason || `收到 ${signal.received} 条输入`}`) : '初始状态';
-    const range = $('.d-rail-range'); range.max = s.frames.length - 1; range.value = s.index;
+    renderTrack();
     host.querySelectorAll('[data-surface]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.surface === surface)));
     $('.d-surface-policy').textContent = surfaces.find(x => x.id === surface).policy;
-    const base = $('.d-base-select');
-    base.innerHTML = s.frames.slice(0, s.index + 1).map((f, i) => `<option value="${i}" ${i === s.baseIndex ? 'selected' : ''}>${formatDate(f.at)} ${clock(f.at)}${i === s.index - 1 ? '（上一轮）' : ''}</option>`).join('');
+    const baseFrame = s.frames[s.baseIndex];
+    $('.d-base-btn').innerHTML = `${s.baseIndex === s.index - 1 ? '上一轮 · ' : ''}${formatDate(baseFrame.at)} ${clock(baseFrame.at)}<span aria-hidden="true">▾</span>`;
+    if (!$('.d-base-menu').hidden) renderBaseMenu();
 
     renderDetail();
     // FLIP: same items glide to their new place
-    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) host.querySelectorAll('.d-card[data-id]').forEach(el => {
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) host.querySelectorAll('.d-card[data-id], .d-line[data-id]').forEach(el => {
       const before = flip.get(el.dataset.id); if (before == null) { el.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.3,.7,.2,1)' }); return; }
       const dy = before - el.getBoundingClientRect().top;
       if (Math.abs(dy) > 1) el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.42,0,.28,1)' });
@@ -257,7 +281,7 @@ export function mount(host, model) {
       <div class="d-detail-body">
         <p class="d-meta">${ask ? `<span class="d-exp">${meaningLabel[ask.expects[0]]}</span>` : `<span>${kindLabel[item.kind]}</span>`}${dueText(item) ? `<i>·</i><span>${esc(dueText(item))}</span>` : ''}</p>
         <h2>${esc(item.title)}</h2>
-        ${ask?.prompt ? `<p class="d-prompt">${esc(ask.prompt)}</p>` : ''}
+        ${ask?.prompt && ask.prompt.replace(/[？?]$/, '') !== item.title ? `<p class="d-prompt">${esc(ask.prompt)}</p>` : ''}
         <p class="d-detail-summary">${esc(item.summary)}</p>
         ${item.reason ? `<section><h4>为什么是这个分量</h4><p>${esc(item.reason)}</p></section>` : ''}
         ${item.sources?.length ? `<section><h4>依据</h4>${item.sources.map(src => { const e = src.ref?.startsWith('event:') ? findEvent(src.ref.slice(6)) : null; const pub = e?.publicSourceId && scenario.publicSources.find(p => p.id === e.publicSourceId); return `<article class="d-source"><span class="d-avatar is-sm" style="--tone:${colorFor(item, s.state)}">${esc((src.author || '·').slice(0, 1))}</span><div><small>${esc(src.author || '')} · ${esc(src.channel)} · ${e ? `${formatDate(e.at)} ${clock(e.at)}` : ''}</small><p>${esc(src.quote)}</p>${pub ? `<a href="${esc(pub.url)}" target="_blank" rel="noreferrer">${esc(pub.title)} ↗</a>` : ''}</div></article>`; }).join('')}</section>` : ''}
@@ -267,6 +291,33 @@ export function mount(host, model) {
         <button class="d-link d-json" data-lab-inspect="state">核对完整状态 JSON ↗</button>
       </div>
       <div class="d-detail-actions">${controlsHTML(item, { inDetail: true })}</div>`;
+  }
+
+  // ---------- rail controls (no native widgets) ----------
+  function renderTrack() {
+    const n = s.frames.length - 1, pos = i => `${(i / n) * 100}%`;
+    let lastDay = '';
+    $('.d-track-ticks').innerHTML = s.frames.map((f, i) => { const d = formatDate(f.at); const first = d !== lastDay; lastDay = d; return `<i class="${first ? 'is-day' : ''}${i <= s.index ? ' is-past' : ''}" style="left:${pos(i)}"></i>`; }).join('');
+    $('.d-track-thumb').style.left = pos(s.index);
+    track.setAttribute('aria-valuemin', '1'); track.setAttribute('aria-valuemax', String(n + 1)); track.setAttribute('aria-valuenow', String(s.index + 1));
+    track.setAttribute('aria-valuetext', `${formatDate(s.frame.at)} ${clock(s.frame.at)} ${s.frame.title}`);
+  }
+  function renderBaseMenu() {
+    $('.d-base-menu').innerHTML = s.frames.slice(0, s.index + 1).map((f, i) => ({ f, i })).reverse().map(({ f, i }) => `<button role="option" aria-selected="${i === s.baseIndex}" data-base="${i}"><span>${formatDate(f.at)} ${clock(f.at)}${i === s.index - 1 ? '<em>上一轮</em>' : i === s.index ? '<em>此刻</em>' : ''}</span><small>${esc(f.title)}</small></button>`).join('');
+  }
+  function toggleBaseMenu(open = $('.d-base-menu').hidden) {
+    const menu = $('.d-base-menu'); menu.hidden = !open; $('.d-base-btn').setAttribute('aria-expanded', String(open));
+    if (open) { renderBaseMenu(); menu.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' }); }
+  }
+  function keypadSheet(key) {
+    const [id, aid] = key.split(':'), item = findAny(id), action = currentAsk(s, id).actions.find(a => a.id === aid);
+    const value = String(drafts.get(key) ?? action.input.prefill ?? '');
+    openSheet(`<h3>${esc(action.label)}</h3><p class="d-small">${esc(item.title)}</p><div class="d-keypad" data-key="${esc(key)}"><div class="d-keypad-value">¥<b>${value ? Number(value).toLocaleString('zh-CN') : '0'}</b></div>${action.input.suggestions?.length ? `<div class="d-keypad-chips">${action.input.suggestions.map(v => `<button data-pad-set="${v}">${Number(v).toLocaleString('zh-CN')}</button>`).join('')}</div>` : ''}<div class="d-keypad-keys">${['1','2','3','4','5','6','7','8','9','00','0','⌫'].map(k => `<button data-pad="${k}">${k}</button>`).join('')}</div><button class="d-btn is-fill d-keypad-done" data-amount="${esc(key)}">${esc(action.input.submit || '确认')} ¥${value ? Number(value).toLocaleString('zh-CN') : '0'}</button></div>`);
+  }
+  function composeSheet(key) {
+    const [id, aid] = key.split(':'), item = findAny(id), action = currentAsk(s, id).actions.find(a => a.id === aid);
+    openSheet(`<h3>${esc(action.label)}</h3><p class="d-small">${esc(currentAsk(s, id).prompt || item.title)}</p>${action.input.suggestions?.length ? `<div class="d-suggest">${action.input.suggestions.map(v => `<button data-compose-pick="${esc(key)}" data-text="${esc(v)}">${esc(v)}</button>`).join('')}</div>` : ''}<div class="d-composer"><textarea rows="2" placeholder="${esc(action.input.placeholder || '写一句')}" aria-label="${esc(action.label)}"></textarea><button class="d-send" data-compose-send="${esc(key)}" aria-label="提交">↑</button></div>`);
+    setTimeout(() => $('.d-composer textarea')?.focus(), 250);
   }
 
   // ---------- sheets ----------
@@ -301,7 +352,7 @@ export function mount(host, model) {
     void chip;
   }
   host.addEventListener('click', event => {
-    const t = event.target.closest('button, [data-d], .d-card, .d-known-list li, .d-sheet-backdrop');
+    const t = event.target.closest('button, [data-d], .d-card, .d-line, .d-known-list li, .d-sheet-backdrop');
     if (!t) return;
     const d = t.dataset;
     if (t.classList.contains('d-sheet-backdrop')) return closeSheet();
@@ -312,6 +363,16 @@ export function mount(host, model) {
     if (d.snooze) { snoozeSheet(findAny(d.snooze)); return; }
     if (d.snoozeAt) { const [id, at] = d.snoozeAt.split(':'); closeSheet(); flyToChip(id); give(findAny(id), { meaning: 'snooze', label: '稍后提醒', id: 'snooze', until: Number(at) }); if (s.selectedId === id) model.select(null); return; }
     if (d.openActions) { actionsSheet(findAny(d.openActions)); return; }
+    if (d.keypad) { keypadSheet(d.keypad); return; }
+    if (d.pad || d.padSet) {
+      const key = t.closest('.d-keypad').dataset.key, current = String(drafts.get(key) ?? currentAsk(s, key.split(':')[0]).actions.find(a => a.id === key.split(':')[1]).input.prefill ?? '');
+      const next = d.padSet ?? (d.pad === '⌫' ? current.slice(0, -1) : (current === '0' ? '' : current) + d.pad).slice(0, 9);
+      drafts.set(key, next === '' ? 0 : Number(next)); keypadSheet(key); return;
+    }
+    if (d.amount) { const [id, aid] = d.amount.split(':'); const action = currentAsk(s, id).actions.find(a => a.id === aid); const v = drafts.get(d.amount) ?? action.input.prefill ?? 0; closeSheet(); give(findAny(id), action, `¥${Number(v).toLocaleString('zh-CN')}`); return; }
+    if (d.compose) { composeSheet(d.compose); return; }
+    if (d.composePick || d.composeSend) { const key = d.composePick || d.composeSend; const text = d.composePick ? d.text : $('.d-composer textarea').value.trim(); if (!text) { $('.d-composer textarea').focus(); return; } const [id, aid] = key.split(':'); closeSheet(); give(findAny(id), currentAsk(s, id).actions.find(a => a.id === aid), text); return; }
+    if (d.base) { toggleBaseMenu(false); model.setBase(Number(d.base)); return; }
     if (d.open) { closeSheet(); if (s.selectedId) detailStack.push(s.selectedId); model.select(d.open); return; }
     if (d.surface) { surface = d.surface; render(); return; }
     if (d.labInspect) return; // handled by the lab shell
@@ -321,32 +382,34 @@ export function mount(host, model) {
       case 'surface': surface = surface === 'focus' ? 'inbox' : 'focus'; render(); toast(`切到「${surfaces.find(x => x.id === surface).label}」：${surface === 'inbox' ? '已阅即不再占位' : '已阅后仍按份额保留'}`); return;
       case 'stack': if (!event.target.closest('button')) { stackOpen = !stackOpen; render(); } return;
       case 'fold': foldSheet(); return;
+      case 'base': toggleBaseMenu(); return;
       case 'back': model.select(detailStack.pop() || null); return;
       case 'reset': local.clear(); render(); toast('已清除本页反馈'); return;
       case 'snoozed': openSheet(`<h3>稍后提醒</h3><ul class="d-fold-list">${snoozedItems().map(({ item, f }) => `<li><small>${clock(f.until)} 再提醒 · 你 ${clock(f.at)} 设定</small><p>${esc(item.title)}</p><button class="d-link" data-undo="${esc(item.id)}">现在就看</button></li>`).join('')}</ul><p class="d-small">往后切换整理时刻，到点后它会回到原位，并注明期间是否有更新。</p>`); return;
     }
-    if (t.classList.contains('d-card') || t.matches('.d-known-list li')) { detailStack.length = 0; model.select(t.dataset.id); }
-  });
-  host.addEventListener('submit', event => {
-    const form = event.target.closest('[data-input]'); if (!form) return;
-    event.preventDefault();
-    const [id, aid] = form.dataset.input.split(':');
-    const action = currentAsk(s, id).actions.find(a => a.id === aid);
-    const raw = form.elements.v.value.trim(); if (!raw) { form.elements.v.focus(); return; }
-    closeSheet(); give(findAny(id), action, action.input.type === 'money' ? `¥${Number(raw.replace(/[^\d.]/g, '')).toLocaleString('zh-CN')}` : raw);
+    if (t.classList.contains('d-card') || t.classList.contains('d-line') || t.matches('.d-known-list li')) { detailStack.length = 0; model.select(t.dataset.id); }
   });
   host.addEventListener('keydown', event => {
-    if (event.key === 'Enter' && event.target.matches('.d-card')) { detailStack.length = 0; model.select(event.target.dataset.id); }
+    if (event.key === 'Enter' && event.target.matches('.d-card, .d-line')) { detailStack.length = 0; model.select(event.target.dataset.id); }
     if (event.key === 'Escape' && sheet) { event.stopPropagation(); closeSheet(); }
+    if (event.key === 'Escape' && !$('.d-base-menu').hidden) { event.stopPropagation(); toggleBaseMenu(false); $('.d-base-btn').focus(); }
   }, true);
   // swipe the top of the stack to acknowledge it
   let drag = null;
   host.addEventListener('pointerdown', event => { const el = event.target.closest('[data-swipe]'); if (!el || event.target.closest('button')) return; drag = { el, x: event.clientX, id: el.dataset.swipe }; el.setPointerCapture(event.pointerId); });
   host.addEventListener('pointermove', event => { if (!drag) return; const dx = Math.min(0, event.clientX - drag.x); drag.dx = dx; drag.el.style.transform = `translateX(${dx}px)`; drag.el.style.opacity = String(1 + dx / 260); });
-  host.addEventListener('pointerup', () => { if (!drag) return; const { el, dx = 0, id } = drag; drag = null; if (dx < -80) { give(findAny(id), { meaning: 'ack', label: '已阅', id: 'ack' }); } else { el.style.transform = ''; el.style.opacity = ''; if (Math.abs(dx) < 4) { stackOpen = true; render(); } } });
-  $('.d-rail-range').addEventListener('input', event => model.goFrame(Number(event.target.value)));
-  $('.d-base-select').addEventListener('change', event => model.setBase(Number(event.target.value)));
+  host.addEventListener('pointerup', () => { if (!drag) return; const { el, dx = 0, id } = drag; drag = null; if (dx < -80) { give(findAny(id), { meaning: 'ack', label: '已阅', id: 'ack' }); } else { el.style.transform = ''; el.style.opacity = ''; if (Math.abs(dx) < 4 && el.classList.contains('d-stack-top')) { stackOpen = true; render(); } } });
+  // timeline: every整理时刻 is a tick; drag or click to move
+  const track = $('.d-track');
+  const frameAt = x => { const r = track.getBoundingClientRect(); return Math.round(Math.min(1, Math.max(0, (x - r.left) / r.width)) * (s.frames.length - 1)); };
+  let scrubbing = false;
+  track.addEventListener('pointerdown', event => { scrubbing = true; track.setPointerCapture(event.pointerId); model.goFrame(frameAt(event.clientX)); });
+  track.addEventListener('pointermove', event => { if (scrubbing) { const i = frameAt(event.clientX); if (i !== s.index) model.goFrame(i); } });
+  track.addEventListener('pointerup', () => { scrubbing = false; });
+  track.addEventListener('keydown', event => { if (event.key === 'Home') { event.preventDefault(); model.goFrame(0); } if (event.key === 'End') { event.preventDefault(); model.goFrame(s.frames.length - 1); } });
   $('.d-sheet-backdrop').addEventListener('click', closeSheet);
+  const outside = event => { if (!$('.d-base-menu').hidden && !event.target.closest('.d-base-menu, .d-base-btn')) toggleBaseMenu(false); };
+  document.addEventListener('pointerdown', outside);
 
   function fit() {
     const device = $('.d-device');
@@ -361,5 +424,5 @@ export function mount(host, model) {
     lastIndex = next.index;
     render();
   });
-  return () => { disposed = true; unsubscribe(); removeEventListener('resize', fit); };
+  return () => { disposed = true; unsubscribe(); removeEventListener('resize', fit); document.removeEventListener('pointerdown', outside); };
 }

@@ -499,9 +499,9 @@ const act = (id, label) => ({ id, meaning: 'act', label });
 const input = (id, label, field) => ({ id, meaning: 'input', label, input: field });
 const ask = (expects, prompt, actions) => ({ expects, prompt, actions, handler: 'assistant:next-batch' });
 const asks = {
-  'cold-01': { launch: ask(['decide', 'input'], '这版导出先做哪些？', [input('scope', '写下必需范围', { type: 'text', placeholder: '例如：固定模板导出' })]) },
+  'cold-01': { launch: ask(['decide', 'input'], '这版导出先做哪些？', [input('scope', '写下必需范围', { type: 'text', placeholder: '例如：固定模板导出', suggestions: ['只做固定模板导出', '固定模板，暂不支持编辑'] })]) },
   'cold-02': {
-    launch: ask(['decide', 'input'], '这版导出先做哪些？', [input('scope', '写下必需范围', { type: 'text', placeholder: '例如：固定模板导出' })]),
+    launch: ask(['decide', 'input'], '这版导出先做哪些？', [input('scope', '写下必需范围', { type: 'text', placeholder: '例如：固定模板导出', suggestions: ['只做固定模板导出', '固定模板，暂不支持编辑'] })]),
     family: ask(['decide'], '周末哪天陪妈妈？', [choice('sat', '周六'), choice('sun', '周日')]),
   },
   f01: {
@@ -524,7 +524,7 @@ const asks = {
   f07: { hiring: ask(['act'], '面谈前写好小团队的设计职责', [act('brief-ready', '职责已写好')]) },
   f09: {
     home: ask(['decide'], '谁来等维修师傅？', [choice('neighbour', '请邻居代开门'), choice('self', '我晚上在家')]),
-    'home-visit': ask(['input'], '给物业一个可上门的时段', [input('slot', '可上门时段', { type: 'text', placeholder: '例如：周五 14:00 后' })]),
+    'home-visit': ask(['input'], '给物业一个可上门的时段', [input('slot', '可上门时段', { type: 'text', placeholder: '例如：周五 14:00 后', suggestions: ['今天 18:00 后', '周五 14:00 后'] })]),
   },
   f10: { hiring: ask(['act'], '面谈前写好小团队的设计职责', [act('brief-ready', '职责已写好')]) },
   f11: {
@@ -538,7 +538,7 @@ const asks = {
   },
   f15: { family: ask(['act'], '周日 11 点见妈妈', [act('met', '已见到妈妈')]) },
   f16: {
-    home: ask(['decide'], '明早谁来开门？', [choice('neighbour', '请邻居代开门'), choice('self', '我自己在家')]),
+    home: ask(['decide'], '周日早上谁来开门？', [choice('neighbour', '请邻居代开门'), choice('self', '我自己在家')]),
     'home-visit': ask(['act'], '确认邻居能否代开门', [act('neighbour-ok', '邻居已答应')]),
   },
   f18: { 'home-photo': ask(['input'], '今晚拍一张修后的墙角', [input('photo', '拍一张', { type: 'photo' })]) },
@@ -547,7 +547,7 @@ const asks = {
     hiring: ask(['decide'], '苏禾改约周四 19:30', [choice('ok', '周四可以'), choice('other', '另约时间')]),
   },
   f20: {
-    expenses: ask(['input'], '定本月 API 上限', [input('limit', '本月上限', { type: 'money', unit: '元', prefill: 5000, submit: '确认' })]),
+    expenses: ask(['input'], '定本月 API 上限', [input('limit', '本月上限', { type: 'money', unit: '元', prefill: 5000, suggestions: [5000, 5200, 6400], submit: '确认' })]),
     'cost-limit': ask(['decide'], '财务建议 5000 元', [choice('approve', '批准 5000'), choice('other', '另定上限')]),
     hiring: ask(['decide'], '苏禾改约周四 19:30', [choice('ok', '周四可以'), choice('other', '另约时间')]),
   },
