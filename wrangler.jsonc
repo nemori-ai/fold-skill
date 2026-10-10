@@ -3,7 +3,7 @@
   "name": "fold-experience",
   "compatibility_date": "2026-10-10",
   "workers_dev": true,
-  "routes": [{ "pattern": "vibecoding.icu", "custom_domain": true }],
+  "routes": [{ "pattern": "fold.vibecoding.icu", "custom_domain": true }],
   "assets": {
     "directory": "./dist",
     "html_handling": "auto-trailing-slash",
