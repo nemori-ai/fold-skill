@@ -33,6 +33,7 @@ flowchart LR
 | 文件 | 内容 |
 | --- | --- |
 | [docs/product.md](docs/product.md) | 项目动机、核心体验、术语和成功信号 |
+| [docs/domain-model.md](docs/domain-model.md) | 事件、反馈与时间信号的基础形式，以及业务策略怎样影响处理决定 |
 | [docs/user-stories.md](docs/user-stories.md) | 五个完整情境：人看到什么、Agent 怎样整理、怎样判断做对了 |
 | [docs/skill-design.md](docs/skill-design.md) | 何时调用、上下文视图、判断指引、CLI 动作与验证计划 |
 | [docs/information-contract.md](docs/information-contract.md) | 外部行为规范：输入输出、操作、版本、回执与呈现 |

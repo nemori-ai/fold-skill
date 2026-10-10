@@ -80,6 +80,7 @@ export default defineConfig({
         { text: 'Skill 设计', link: '/docs/skill-design' },
       ] },
       { text: '协议与模型', items: [
+        { text: '领域模型', link: '/docs/domain-model' },
         { text: '信息契约', link: '/docs/information-contract' },
         { text: '架构与持久化', link: '/docs/architecture' },
         { text: '形式模型', link: '/docs/formal-model' },

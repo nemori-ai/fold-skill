@@ -74,6 +74,7 @@ npm run site:preview
 | [AGENTS.md](../AGENTS.md) | 仓库开发协作约定 |
 | [decisions.md](decisions.md) | 已对齐方向、首切片决定、推迟清单 |
 | [product.md](product.md) | 从原稿和讨论提炼的产品定义 |
+| [domain-model.md](domain-model.md) | 事件、反馈、时间输入的基础形式与业务策略的边界 |
 | [user-stories.md](user-stories.md) | 五个具体使用情境、呈现示例与成功观察 |
 | [information-contract.md](information-contract.md) | 声明字段、份额与排序规则、快照与事件结构 |
 | [skill-design.md](skill-design.md) | 何时调用、上下文视图、判断指引、CLI 动作与验证计划 |
