@@ -1,4 +1,4 @@
-import { escapeHTML as esc, formatDate, formatTime, kindLabel, getItem, getLayer, colorFor, detailHTML } from './shared.mjs?v=direct-titles-1';
+import { escapeHTML as esc, formatDate, formatTime, kindLabel, getItem, getLayer, colorFor, detailHTML } from './shared.mjs?v=feedback-loop-1';
 import { layoutPapers } from './a-layout.mjs';
 import { createBoardMotion } from '../motion.mjs';
 

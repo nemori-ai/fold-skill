@@ -1,5 +1,5 @@
-import { scenario } from '../scenario.mjs?v=direct-titles-1';
-import { replayScenario, projectState, getItem, diffStates } from '../engine.mjs?v=direct-titles-1';
+import { scenario } from '../scenario.mjs?v=feedback-loop-1';
+import { replayScenario, projectState, getItem, diffStates } from '../engine.mjs?v=feedback-loop-1';
 
 // All three visual experiments read the same replay. Only their encoding differs.
 export { scenario, getItem };
@@ -120,4 +120,31 @@ export function createModel(onChange=()=>{}) {
     dispose(){stop();disposed=true;subscribers.clear();},
   };
   current=build();return model;
+}
+
+// Host-side feedback records (docs/domain-model.md). An ask answers for one output
+// version; a rewrite without a new ask means no feedback path is registered for it.
+const askRegistries = (() => {
+  const registry = new Map();
+  return scenario.frames.map((frame, index) => {
+    const state = projectState(records[index].snapshot, frame.at);
+    for (const [id, value] of Object.entries(frame.asks || {})) {
+      registry.set(id, { ...value, version: getItem(state, id)?.updated_at, frameIndex: index });
+    }
+    return new Map(registry);
+  });
+})();
+export function currentAsk(s, id) {
+  const entry = askRegistries[s.index]?.get(id), item = getItem(s.state, id);
+  return entry && item && entry.version === item.updated_at ? entry : null;
+}
+export function feedbackTrail(s, id) {
+  const trail = [];
+  scenario.frames.slice(0, s.index + 1).forEach((frame, frameIndex) => {
+    for (const event of frame.events) {
+      const links = (event.feedback || []).filter(link => link.target === id);
+      if (links.length || event.reminder?.target === id) trail.push({ event, links, frameIndex });
+    }
+  });
+  return trail;
 }

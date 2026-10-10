@@ -1,5 +1,5 @@
 import { makeSurface } from './c-surface.mjs?v=liquid-calm-1';
-import { escapeHTML as esc, formatDate, formatTime, kindLabel, allItems, colorFor, detailHTML, inputHTML } from './shared.mjs?v=direct-titles-1';
+import { escapeHTML as esc, formatDate, formatTime, kindLabel, allItems, colorFor, detailHTML, inputHTML } from './shared.mjs?v=feedback-loop-1';
 
 // A visual reading experiment. The liquid surface never writes to Fold state.
 // Volume is a perceptual cue; the separate budget strip is the exact measure.

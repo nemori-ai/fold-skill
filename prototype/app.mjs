@@ -1,5 +1,5 @@
-import { scenario } from './scenario.mjs?v=direct-titles-1';
-import { replayScenario, projectState, getItem, diffStates, layoutTreemap } from './engine.mjs?v=direct-titles-1';
+import { scenario } from './scenario.mjs?v=feedback-loop-1';
+import { replayScenario, projectState, getItem, diffStates, layoutTreemap } from './engine.mjs?v=feedback-loop-1';
 import { createBoardMotion } from './motion.mjs';
 
 // Throwaway interaction prototype: authored Agent decisions, deterministic replay,

@@ -244,8 +244,10 @@ frame(17, '21:30', '厨房换接头后再渗水，回访开门人待定', 'weeke
   update('home-visit', 'high', 'needs-you', { title: '厨房回访待邻居确认代开门', summary: '物业承诺明早回访；邻居是否代开门待确认。', sources: s(1, 2), due_at: stamp(18, '09:00') }),
 ]);
 
-frame(18, '08:00', '维修与出行无新输入，检查后状态不变', 'weekend',
-  '没有新输入。日历往前走了，维修与出行都更近，场馆资料也显示待复核；这些时间变化本身不改写重要性、摘要或业务更新时间。', [], []);
+frame(18, '08:00', '无新输入：东馆开放时间待出发前复核', 'weekend',
+  '每日整理时没有新输入。维修与出行都更近，重要性不变；但东馆资料已过复核时间，没有新观测就不能继续写成“已核对”，改为最后已知的开放时间，出发前再确认。', [], [
+  update('family-route', 'normal', 'done', { title: '东馆开放时间待出发前复核', summary: '最后核对于13日：常规10:00—18:00开放；今天出发前再确认。', reason: '资料已过复核时间且没有新观测，保留旧依据并标明待核实。' }),
+]);
 
 frame(18, '17:20', '陪妈妈参观东馆已完成，厨房返修后待观察', 'weekend',
   '保留这次兑现的家庭约定作为完成成果。家里找到第二处松动接头，先观察到明天；不因为今天修了两次就把它直接宣布结束。', [
@@ -396,6 +398,7 @@ frame(23, '09:40', '远川拟下周再加两店，扩展范围待决定', 'secon
   update('family-date', 'high', 'done', { title: '已约周六中午到妈妈家吃面', summary: '林苒已答应周六中午去吃面，早上另有招聘电话。', sources: s(2) }),
   update('launch', 'normal', 'done', { reason: '五店开放已被持续使用确认，当前关注转向是否扩大试用。' }),
   update('handoff-owner', 'normal', 'done', { title: '客服已查看并补发失败导出', summary: '客服已按安排查看并主动补发一次失败导出。', reason: '已有实际接手与执行证据。', sources: s(1) }),
+  update('hiring', 'low', 'in-progress', { title: '苏禾周六早上通话，已回复', summary: '按你要的早上提醒处理：通话放周六早上，中午去妈妈家。', reason: '到点提醒后用户作了回复，原等待已变为约好的通话。', sources: s(2) }),
 ]);
 
 frame(23, '18:20', '重复任务观察期内未再出现，事故已结单', 'second-week',
@@ -487,6 +490,132 @@ const coldFrames = [
 ];
 frames.unshift(...coldFrames);
 
+// Feedback loop and time signals, following docs/domain-model.md. These are host-side
+// records around the replay: they never enter Fold state or change any declaration.
+// An ask belongs to one output version (the item's updated_at when registered); when
+// the Agent rewrites the item without a new ask, the host has not registered one.
+const choice = (id, label, extra = {}) => ({ id, meaning: 'decide', label, ...extra });
+const act = (id, label) => ({ id, meaning: 'act', label });
+const input = (id, label, field) => ({ id, meaning: 'input', label, input: field });
+const ask = (expects, prompt, actions) => ({ expects, prompt, actions, handler: 'assistant:next-batch' });
+const asks = {
+  'cold-01': { launch: ask(['decide', 'input'], '这版导出先做哪些？', [input('scope', '写下必需范围', { type: 'text', placeholder: '例如：固定模板导出' })]) },
+  'cold-02': {
+    launch: ask(['decide', 'input'], '这版导出先做哪些？', [input('scope', '写下必需范围', { type: 'text', placeholder: '例如：固定模板导出' })]),
+    family: ask(['decide'], '周末哪天陪妈妈？', [choice('sat', '周六'), choice('sun', '周日')]),
+  },
+  f01: {
+    launch: ask(['decide'], '导出模板是否允许编辑？', [choice('fixed', '固定模板'), choice('editable', '允许编辑')]),
+    'launch-scope': ask(['decide'], '导出模板是否允许编辑？', [choice('fixed', '固定模板'), choice('editable', '允许编辑')]),
+    'invoice-mail': ask(['decide'], '先核对构成，还是直接定预算？', [choice('check-first', '先核费用构成'), choice('set-now', '直接定预算')]),
+    family: ask(['decide'], '周六什么时候见妈妈？', [choice('morning', '周六上午'), choice('afternoon', '周六下午')]),
+    'family-date': ask(['decide'], '周六什么时候见妈妈？', [choice('morning', '上午'), choice('afternoon', '下午')]),
+    hiring: ask(['act'], '面谈前写好小团队的设计职责', [act('brief-ready', '职责已写好')]),
+  },
+  f04: {
+    expenses: ask(['decide'], '先核对构成，还是直接定预算？', [choice('check-first', '先核费用构成'), choice('set-now', '直接定预算')]),
+    family: ask(['decide'], '要不要先锁住周六上午？', [choice('lock', '锁定周六上午', { recommended: true }), choice('later', '再商量')]),
+  },
+  f05: {
+    pilot: ask(['decide'], '今天对远川怎样表态？', [choice('hold', '守住两店范围', { recommended: true }), choice('promise', '答应总库存')]),
+    'pilot-data': ask(['act'], '请许宁确认可售与剩余的含义', [act('asked', '已发给许宁')]),
+    'pilot-promise': ask(['decide'], '总库存需求先怎么回？', [choice('not-yet', '先别答应', { recommended: true }), choice('accept', '答应')]),
+  },
+  f07: { hiring: ask(['act'], '面谈前写好小团队的设计职责', [act('brief-ready', '职责已写好')]) },
+  f09: {
+    home: ask(['decide'], '谁来等维修师傅？', [choice('neighbour', '请邻居代开门'), choice('self', '我晚上在家')]),
+    'home-visit': ask(['input'], '给物业一个可上门的时段', [input('slot', '可上门时段', { type: 'text', placeholder: '例如：周五 14:00 后' })]),
+  },
+  f10: { hiring: ask(['act'], '面谈前写好小团队的设计职责', [act('brief-ready', '职责已写好')]) },
+  f11: {
+    launch: ask(['decide'], '明早按什么条件开放？', [choice('gate', '验证通过再开', { recommended: true }), choice('as-planned', '按原计划')]),
+    family: ask(['decide'], '周六 11 点见妈妈，可以吗？', [choice('ok', '就周六 11 点'), choice('change', '改时间')]),
+  },
+  f12: {
+    pilot: ask(['decide'], '暂存口径未知，演示怎么讲？', [choice('blank', '演示时留空', { recommended: true }), choice('as-is', '按现有口径展示')]),
+    'pilot-data': ask(['act'], '请店长解释暂存列', [act('asked', '已问店长')]),
+    launch: ask(['decide'], '这次开放给谁？', [choice('two-stores', '只开远川两店', { recommended: true }), choice('ten-percent', '按 10% 老用户')]),
+  },
+  f15: { family: ask(['act'], '周日 11 点见妈妈', [act('met', '已见到妈妈')]) },
+  f16: {
+    home: ask(['decide'], '明早谁来开门？', [choice('neighbour', '请邻居代开门'), choice('self', '我自己在家')]),
+    'home-visit': ask(['act'], '确认邻居能否代开门', [act('neighbour-ok', '邻居已答应')]),
+  },
+  f18: { 'home-photo': ask(['input'], '今晚拍一张修后的墙角', [input('photo', '拍一张', { type: 'photo' })]) },
+  f19: {
+    launch: ask(['decide'], '周三演示前，开放范围怎么定？', [choice('keep', '只给远川'), choice('widen', '扩大开放')]),
+    hiring: ask(['decide'], '苏禾改约周四 19:30', [choice('ok', '周四可以'), choice('other', '另约时间')]),
+  },
+  f20: {
+    expenses: ask(['input'], '定本月 API 上限', [input('limit', '本月上限', { type: 'money', unit: '元', prefill: 5000, submit: '确认' })]),
+    'cost-limit': ask(['decide'], '财务建议 5000 元', [choice('approve', '批准 5000'), choice('other', '另定上限')]),
+    hiring: ask(['decide'], '苏禾改约周四 19:30', [choice('ok', '周四可以'), choice('other', '另约时间')]),
+  },
+  f22: {
+    pilot: ask(['decide'], '暂存列要不要先隐藏？', [choice('hide', '先隐藏暂存列', { recommended: true }), choice('explain', '保留并加说明')]),
+    'pilot-data': ask(['act'], '和店长对齐暂存的真实含义', [act('aligned', '已对齐')]),
+    'pilot-promise': ask(['act'], '周三演示换用新口径', [act('updated', '已换新截图')]),
+  },
+  f25: { launch: ask(['decide'], '今天是否加开三店？', [choice('add-three', '加开三店'), choice('hold', '保持两店')]) },
+  f28: {
+    reading: ask(['act'], '和许宁对齐失败导出的人工处理', [act('aligned', '已和许宁对齐')]),
+    'handoff-promise': ask(['decide'], '对客户承诺怎样的处理窗口？', [choice('twice-daily', '每天查看两次', { recommended: true }), choice('instant', '即时响应')]),
+  },
+  f29: { hiring: ask(['decide'], '苏禾提议周六 10 点', [choice('ok', '周六 10 点可以'), choice('call-morning', '改成早上通话')]) },
+  f30: {
+    pilot: ask(['decide'], '下周是否再加两店？', [choice('add-two', '再加两店'), choice('hold', '暂不加')]),
+    family: ask(['act'], '周六中午去妈妈家吃面', [act('went', '已去吃面')]),
+  },
+  f33: { hiring: ask(['decide', 'act'], '周一带一个真实删掉的需求去谈', [act('example-ready', '例子已备好')]) },
+  f34: {
+    pilot: ask(['decide'], '下周是否再加两店？', [choice('add-two', '再加两店'), choice('hold', '暂不加')]),
+    hiring: ask(['act'], '周一谈合作前，准备暂存列这个取舍', [act('example-ready', '例子已备好')]),
+  },
+};
+
+// Story replies and button presses that answer an earlier ask. Replies stay as the
+// original messages; the link only says which registered output they respond to.
+const feedbackLinks = {
+  'f05-e02': [{ target: 'launch-scope', action: 'fixed', meaning: 'decide', via: 'reply' }, { target: 'expenses', action: 'check-first', meaning: 'decide', via: 'reply' }],
+  'f07-e03': [{ target: 'pilot-data', action: 'asked', meaning: 'act', via: 'reply' }],
+  'f11-e03': [{ target: 'family', action: 'lock', meaning: 'decide', via: 'reply' }],
+  'f15-e01': [{ target: 'family', action: 'change', meaning: 'decide', via: 'reply', value: '改到周日 11 点' }],
+  'f18-e01': [{ target: 'family', action: 'met', meaning: 'act', via: 'reply' }],
+  'f21-e01': [{ target: 'home-photo', action: 'photo', meaning: 'input', via: 'reply' }],
+  'f24-e02': [{ target: 'expenses', action: 'limit', meaning: 'input', via: 'reply', value: 5200 }],
+  'f26-e01': [{ target: 'launch', action: 'add-three', meaning: 'decide', via: 'reply' }],
+  'f30-e02': [{ target: 'hiring', action: 'call-morning', meaning: 'decide', via: 'reply' }],
+  'f32-e02': [{ target: 'home', action: 'ack', meaning: 'ack', via: 'reply' }],
+  'f33-e02': [{ target: 'family', action: 'went', meaning: 'act', via: 'reply' }],
+};
+// Feedback given through registered controls. Event times sit inside each frame's window.
+const controlEvents = {
+  f14: [{ id: 'f14-e04', channel: '反馈', from: '林苒', at: stamp(16, '21:02'), text: '对「导出v0.8仅远川两店已开放」点了「收下」。', disposition: 'used', why: '明确的已阅反馈；它说明林苒看到了成果，不表示发布要被删除。', relatedIds: ['launch'], feedback: [{ target: 'launch', action: 'ack', meaning: 'ack', via: 'button' }] }],
+  f24: [{ id: 'f24-e04', channel: '反馈', from: '林苒', at: stamp(20, '15:06'), text: '对「远川库存误读，暂存列隐藏待定」选择了「先隐藏暂存列」。', disposition: 'used', why: '登记过的决定按钮，直接回应原问题。', relatedIds: ['pilot'], feedback: [{ target: 'pilot', action: 'hide', meaning: 'decide', via: 'button' }] }],
+  f30: [
+    { id: 'f30-e04', channel: '反馈', from: '林苒', at: stamp(22, '18:52'), text: '对「苏禾提议周六10点面谈」选择「明早 09:30 再提醒」。', disposition: 'used', why: '延后提醒：不是已阅，也不改变原截止时间。', relatedIds: ['hiring'], feedback: [{ target: 'hiring', action: 'snooze', meaning: 'snooze', via: 'button', until: stamp(23, '09:30') }] },
+    { id: 'f30-e05', channel: '定时提醒', from: '宿主', at: stamp(23, '09:30'), text: '你昨晚 18:52 让我此时再提醒：苏禾提议周六10点面谈，尚未回复。', disposition: 'used', why: '到点输入关联原反馈；要按现在的事实重新判断，不沿用昨晚的结论。', relatedIds: ['hiring'], reminder: { feedback: 'f30-e04', target: 'hiring', requested_at: stamp(22, '18:52') } },
+  ],
+};
+// What the host told the Agent when it was invoked; most rounds are ordinary event batches.
+const signals = {
+  f17: { type: 'review', reason: '每日 08:00 整理', received: 0, coverage: '家人消息、物业与团队群连接正常' },
+  f27: { type: 'review', reason: '每日 08:00 整理', received: 0, coverage: '客户邮件、团队群与监控连接正常' },
+  f30: { type: 'events', reason: '新消息与一条到点提醒', reminders: ['f30-e05'] },
+};
+frames.forEach((current, index) => {
+  for (const event of controlEvents[current.id] || []) current.events.push(event);
+  current.events.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  for (const event of current.events) if (feedbackLinks[event.id]) event.feedback = feedbackLinks[event.id];
+  if (asks[current.id]) current.asks = asks[current.id];
+  if (index === 0) return;
+  current.signal = { type: 'events', received: current.events.length, ...signals[current.id],
+    window: { from: frames[index - 1].at, to: current.at } };
+});
+const reminderSource = frames.find(f => f.id === 'f30').events.find(e => e.id === 'f30-e05');
+frames.find(f => f.id === 'f30').batch.declarations.find(d => d.id === 'hiring').sources.push(
+  { channel: reminderSource.channel, author: reminderSource.from, ref: `event:${reminderSource.id}`, quote: reminderSource.text, observed_at: stamp(23, '09:40') });
+
 export const scenario = {
   id: 'shanghai-two-weeks',
   title: '林苒的事项回放',
@@ -518,6 +647,14 @@ export const scenario = {
     { id: 'second-week', title: '10月19—23日 · 库存口径、五店开放与API预算' },
     { id: 'closing', title: '10月24—25日 · 设计师合作条件与下周扩店' },
   ],
+  // Host conventions for every output, and the business uses a view can declare.
+  feedback: {
+    defaults: [{ id: 'ack', meaning: 'ack', label: '已阅' }, { id: 'snooze', meaning: 'snooze', label: '稍后提醒' }],
+    surfaces: [
+      { id: 'focus', label: '近期重点', policy: '关注事项的持续影响：已阅只说明你知道了，事项仍按 Agent 的份额保留。' },
+      { id: 'inbox', label: '通知中心', policy: '关注尚未告知的内容：已阅后这一条不再占位，事项本身仍在状态里。' },
+    ],
+  },
   frames,
 };
 

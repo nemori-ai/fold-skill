@@ -1,7 +1,7 @@
 import {
   escapeHTML as esc, formatDate, formatTime, kindLabel,
   getItem, getLayer, colorFor, detailHTML,
-} from './shared.mjs?v=direct-titles-1';
+} from './shared.mjs?v=feedback-loop-1';
 import { stableOrder, layoutSection, bandPath, labelPositions } from './b-layout.mjs?v=bc-refinement-2';
 import { createTimeMotion } from './b-motion.mjs?v=bc-refinement-2';
 

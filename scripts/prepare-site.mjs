@@ -19,7 +19,7 @@ const prototypeEntries = new Set(['index.html', 'app.mjs', 'engine.mjs', 'scenar
 const mediaExtensions = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.avif', '.woff', '.woff2']);
 const pages = new Map([['README.md', 'overview.md'], ['AGENTS.md', 'agents.md'], ['site/index.md', 'index.md']]);
 const assets = new Map();
-for (const variant of ['a', 'b', 'c']) assets.set(`site/previews/${variant}.jpg`, `previews/${variant}.jpg`);
+for (const variant of ['a', 'b', 'c', 'd']) assets.set(`site/previews/${variant}.jpg`, `previews/${variant}.jpg`);
 
 async function walk(directory) {
   const entries = await readdir(path.join(root, directory), { withFileTypes: true });
