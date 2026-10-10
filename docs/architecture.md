@@ -49,6 +49,8 @@ flowchart LR
 
 预算不足时，内核返回具体错误，Agent 重新估计与整理。批注保存后为 `saved`，只有 Agent 在成功的 commit 中 `acknowledges` 才成为 `acknowledged`；两者分别表达尚未收到处理确认与已确认，不推断实际阅读或行动结果。Fold 不自带调度服务，Agent 何时再次运行由宿主决定。
 
+宿主的零事件 tick、周期回顾和健康检查可以把时间窗口、唤醒原因及观测情况交给 Agent，作为本轮判断的上下文。Agent 按[时间流逝指引](skill-design.md#理解时间流逝信号)复核旧状态，再沿用现有声明与提交路径；这些宿主机制不进入 Fold 内核，也不要求先实现后续 Observation 管道。
+
 ## 共享的数据契约边界
 
 不同输入渠道共享一种规范信息源表达，不同消费者共享预定义的状态与变化结构；输入、声明和输出不必采用同一个 schema。字段定义见[信息契约](information-contract.md)。
