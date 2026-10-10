@@ -22,8 +22,15 @@ const prototypes = [
   {
     id: 'c',
     name: '流动形态',
-    description: '通过液滴形变感知关注的变化。体量辅助比较，预算带保留准确数值。',
-    previewAlt: '流动形态原型的真实界面：不同颜色与体量的液滴承载事项，下方显示准确的预算份额。',
+    description: '每件事是一滴液体，面积随份额变大变小；换帧时液滴流动，只有明确合并的事项融为一滴。',
+    previewAlt: '流动形态原型的真实界面：大小不一的半透明液滴按份额排布，大滴内写着份额与标题，小滴旁有标签，朱红细环标出等你回应的液滴，下方是 64 格预算带。',
+  },
+  {
+    id: 'd',
+    name: '手机首页',
+    frame: 24,
+    description: '打开手机的第一眼。卡片高度表达份额，按钮形态表达需要你做什么，可以就地回应。',
+    previewAlt: '手机首页原型的真实界面：手机屏幕上按份额排列卡片，最重要的卡片带两个决定按钮，下方是预填金额的输入卡片。',
   },
 ]
 </script>
@@ -42,7 +49,7 @@ const prototypes = [
     <section class="fold-prototypes" aria-labelledby="fold-prototypes-title">
       <div class="fold-gallery-heading">
         <div>
-          <h2 id="fold-prototypes-title">同一份状态，三种表达</h2>
+          <h2 id="fold-prototypes-title">同一份状态，四种表达</h2>
           <p>同一时刻的真实界面预览</p>
         </div>
         <nav class="fold-gallery-nav" aria-label="定位原型预览">
@@ -54,7 +61,7 @@ const prototypes = [
 
       <ul class="fold-prototype-gallery">
         <li v-for="prototype in prototypes" :id="`preview-${prototype.id}`" :key="prototype.id">
-          <a class="fold-preview-link" :href="`/prototype/?variant=${prototype.id}&frame=9`" target="_self">
+          <a class="fold-preview-link" :href="`/prototype/?variant=${prototype.id}&frame=${prototype.frame ?? 9}`" target="_self">
             <div class="fold-preview-heading">
               <div class="fold-preview-title">
                 <span class="fold-prototype-letter">{{ prototype.id.toUpperCase() }}</span>
@@ -77,7 +84,7 @@ const prototypes = [
         </li>
       </ul>
 
-      <p class="fold-demo-note">点击预览进入对应时刻，可播放、回退或从头查看 37 个时间节点。三版共用同一份故事与状态。人物、私人消息与情境均为演示创作，Agent 判断已编排，未接入真实账户或运行中的 Agent。</p>
+      <p class="fold-demo-note">点击预览进入对应时刻，可播放、回退或从头查看 37 个时间节点。四版共用同一份故事与状态。人物、私人消息与情境均为演示创作，Agent 判断已编排，未接入真实账户或运行中的 Agent。</p>
     </section>
 
     <section class="fold-documents" aria-labelledby="fold-documents-title">

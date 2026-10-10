@@ -1,311 +1,685 @@
-import { makeSurface } from './c-surface.mjs?v=liquid-calm-1';
-import { escapeHTML as esc, formatDate, formatTime, kindLabel, allItems, colorFor, detailHTML, inputHTML } from './shared.mjs?v=direct-titles-1';
+import { escapeHTML as esc, formatDate, formatTime, kindLabel, allItems, getItem, currentAsk, feedbackTrail, findEvent, scenario, colorFor } from './shared.mjs?v=feedback-loop-1';
+import { createRenderer, solveLayout, MAX_DROPS } from './c-field.mjs?v=drops-2';
 
-// A visual reading experiment. The liquid surface never writes to Fold state.
-// Volume is a perceptual cue; the separate budget strip is the exact measure.
-const LIMIT = 24;
-const BRIDGE_LIMIT = 8;
+// C · 流动形态。Each item is one drop whose area is its share of this layer's
+// 64. Drops keep their place across frames, grow and shrink with their share,
+// and only an explicit merged_into lets two drops flow together into one
+// (replaying backwards pulls them apart along the same path). A 64-cell
+// budget strip carries the exact numbers, including what is unallocated.
+// The field only renders while something moves; at rest the canvas is still.
+const BUDGET = 64;
+const DURATION = 1300;
+const ZOOM = 3.2;
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const lerp = (a, b, t) => a + (b - a) * t;
-const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-const icon = name => ({play:'<path d="m7 4 10 6-10 6Z"/>',pause:'<path d="M6 4h3v12H6zm6 0h3v12h-3z"/>',left:'<path d="m12 4-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.5"/>',right:'<path d="m8 4 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.5"/>'}[name] || '');
-const svg = name => `<svg viewBox="0 0 20 20" aria-hidden="true">${icon(name)}</svg>`;
+const smooth = (a, b, t) => { const x = clamp((t - a) / (b - a), 0, 1); return x * x * (3 - 2 * x); };
+const inOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const outCubic = t => 1 - Math.pow(1 - t, 3);
+const inCubic = t => t * t * t;
+const outBack = t => { const c = 1.25; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+const clock = value => `${formatDate(value)} ${formatTime(value)}`;
+const expectLabel = { decide: '决定', input: '提供', act: '去做' };
+const askTag = ask => `等你${ask.expects.map(e => expectLabel[e] || e).join('、')}`;
+const viaLabel = { reply: '回复', button: '按钮' };
+const dispositionLabel = { used: '采用', duplicate: '重复', noise: '噪音', deferred: '暂缓' };
+const hash = id => [...String(id)].reduce((n, c) => (n * 31 + c.charCodeAt(0)) >>> 0, 7);
+const hexRGB = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+const cssRGB = c => `rgb(${c.map(v => Math.round(clamp(v, 0, 1) * 255)).join(' ')})`;
 
-function mergeLinks(before,after) {
-  if(!before||!after)return [];
-  const edges=new Map();
-  for(const [source,target,reverse] of [[before,after,false],[after,before,true]]) {
-    const targetItems=new Map(allItems(target).map(i=>[i.id,i]));
-    for(const item of allItems(source).filter(i=>i.status==='active')) {
-      let node=targetItems.get(item.id);const seen=new Set();
-      while(node?.merged_into&&!seen.has(node.id)) {
-        seen.add(node.id);node=targetItems.get(node.merged_into);
-        if(node?.status==='active'){const edge=reverse?{from:node.id,to:item.id}:{from:item.id,to:node.id};edges.set(`${edge.from}:${edge.to}`,edge);break;}
-      }
-    }
+function rootOf(state, item) {
+  let node = item; const seen = new Set();
+  while (node?.parent_id && !seen.has(node.id)) { seen.add(node.id); node = getItem(state, node.parent_id) || node; if (seen.has(node.id)) break; }
+  return node || item;
+}
+// Category colour, stable per root item; children vary lightness inside it.
+// The shared palette is nudged a little richer so the drops read as gel.
+function dropColor(state, item, nested) {
+  let [r, g, b] = hexRGB(colorFor(item, state));
+  const mean = (r + g + b) / 3; [r, g, b] = [r, g, b].map(v => clamp(mean + (v - mean) * 1.22, 0, 1));
+  if (nested) {
+    const step = [-.07, .06, -.02, .1, -.11, .03][hash(item.id) % 6];
+    [r, g, b] = [r, g, b].map(v => step > 0 ? v + (1 - v) * step * 1.4 : v * (1 + step));
   }
-  return [...edges.values()];
+  return [r, g, b];
 }
 
-function layout(items,width,height,memory) {
-  const count=items.length;
-  if(!count)return [];
-  const load=items.reduce((sum,item)=>sum+item.share,0)/64;
-  // A wide sheet lets a drop stretch sideways. The load changes how closely
-  // the group fills its space; the budget strip remains the exact encoding.
-  const layoutWidth=Math.min(width,height*2.3),stretch=width/layoutWidth;
-  const padding=12,gap=7+12*(1-load);
-  const coefficient=Math.sqrt(layoutWidth*height*(.50+.18*load)/Math.PI);
-  const bodies=items.map((item,index)=>{
-    const remembered=memory.get(item.id),angle=index*2.39996-1.9;
-    const spread=count===1?0:Math.sqrt((index+.5)/count);
-    return {id:item.id,item,r:coefficient*Math.sqrt(item.share/64),stretch,
-      x:remembered?remembered.x*layoutWidth:layoutWidth*.5+Math.cos(angle)*layoutWidth*.26*spread,
-      y:remembered?remembered.y*height:height*.49+Math.sin(angle)*height*.25*spread};
+// ---------- domain readings (host-side records, display only) ----------
+function priorAsk(s, target, before = s.index) {
+  for (let i = Math.min(before, s.frames.length - 1); i >= 0; i--) { const ask = s.frames[i].asks?.[target]; if (ask) return ask; }
+  return null;
+}
+function feedbackText(s, link, frameIndex) {
+  const ask = priorAsk(s, link.target, frameIndex - 1) || priorAsk(s, link.target, frameIndex);
+  const action = ask?.actions?.find(a => a.id === link.action);
+  if (link.meaning === 'ack') return '已阅';
+  if (link.meaning === 'snooze') return `稍后再提醒${link.until ? `（${formatTime(link.until)}）` : ''}`;
+  const verb = { decide: '决定', input: '提供', act: '报告已做' }[link.meaning] || link.meaning;
+  const value = link.value !== undefined ? `${link.value}${action?.input?.unit || ''}` : action?.label;
+  return value ? `${verb}「${value}」` : verb;
+}
+// The visible drop stands for a target: itself, what it merged into, or its
+// ancestor in this layer. Only explicit links are followed.
+function locate(s, id) {
+  const ids = new Set(s.layer.items.map(i => i.id)); let node = getItem(s.state, id); const seen = new Set();
+  while (node && !seen.has(node.id)) {
+    if (ids.has(node.id)) return { id: node.id, direct: node.id === id };
+    seen.add(node.id); node = node.merged_into ? getItem(s.state, node.merged_into) : node.parent_id ? getItem(s.state, node.parent_id) : null;
+  }
+  return null;
+}
+function annotate(s) {
+  const notes = new Map(s.layer.items.map(item => {
+    const nested = allItems({ root: item.children || { items: [] } }).filter(c => c.status === 'active' && currentAsk(s, c.id));
+    return [item.id, { ask: currentAsk(s, item.id), nested: nested.length, feedback: [], reminder: null, adjusted: false }];
+  }));
+  const links = [];
+  s.frame.events.forEach((event, index) => {
+    for (const link of event.feedback || []) { const at = locate(s, link.target); links.push({ index, event, link, at }); if (at) notes.get(at.id).feedback.push({ event, link }); }
+    if (event.reminder) { const at = locate(s, event.reminder.target); links.push({ index, event, reminder: event.reminder, at }); if (at) notes.get(at.id).reminder = event; }
   });
-  for(let attempt=0;attempt<10;attempt++) {
-    for(let pass=0;pass<240;pass++) {
-      const attraction=.013*(1-load);
-      for(const body of bodies){body.x+=(layoutWidth/2-body.x)*attraction;body.y+=(height/2-body.y)*attraction;}
-      for(let i=0;i<count;i++)for(let j=i+1;j<count;j++) {
-        const a=bodies[i],b=bodies[j];let dx=b.x-a.x,dy=b.y-a.y;
-        let distance=Math.hypot(dx,dy);
-        if(distance<.01){dx=Math.cos(i+j);dy=Math.sin(i+j);distance=1;}
-        const overlap=(a.r+b.r)*1.11+gap-distance;
-        if(overlap>0){const amount=overlap*.8;const total=a.r*a.r+b.r*b.r;const aw=b.r*b.r/total,bw=1-aw;a.x-=dx/distance*amount*aw;a.y-=dy/distance*amount*aw;b.x+=dx/distance*amount*bw;b.y+=dy/distance*amount*bw;}
-      }
-      for(const body of bodies){body.x=clamp(body.x,padding+body.r*1.10,layoutWidth-padding-body.r*1.10);body.y=clamp(body.y,padding+body.r*1.06,height-padding-body.r*1.06);}
-    }
-    const collision=bodies.some((a,i)=>bodies.slice(i+1).some(b=>Math.hypot(a.x-b.x,a.y-b.y)<(a.r+b.r)*1.10+gap-2));
-    if(!collision)break;
-    bodies.forEach(b=>b.r*=.966);
-  }
-  for(const body of bodies){body.x*=stretch;memory.set(body.id,{x:body.x/width,y:body.y/height});}
-  return bodies;
+  if (s.frame.signal?.type === 'review') for (const change of s.frameDiff?.changes || []) { const at = locate(s, change.item); if (at) notes.get(at.id).adjusted = true; }
+  return { notes, links };
 }
+function getLayerIds(s) {
+  const prevLayer = s.layerId ? getItem(s.previousState, s.layerId)?.children : s.previousState.root;
+  const ids = (prevLayer?.items || []).map(i => i.id);
+  for (const item of allItems(s.state)) if ((item.parent_id || null) === (s.layerId || null)) ids.push(item.id);
+  return ids;
+}
+const activeItems = s => [...s.layer.items].filter(i => i.status !== 'withdrawn' && i.status !== 'merged').sort((a, b) => a.rank - b.rank);
 
-export function mount(host,model) {
+export function mount(host, model) {
   host.classList.add('variant-c');
-  host.innerHTML=`<div class="c-shell">
-    <header class="c-header"><a class="c-brand" href="./"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M5 5C10 1 22 3 24 10c2 7-3 16-11 15C5 24 0 11 5 5Z" fill="currentColor"/><path d="M9 6c5-2 10 0 11 3" fill="none" stroke="currentColor" stroke-width="2" opacity=".3"/></svg><span>Fold</span></a><span class="c-header-caption">事项回放</span><div class="c-header-actions"><button type="button" data-c-action="inputs">本轮输入 <span class="c-input-count"></span></button><button type="button" data-lab-inspect="state">完整状态 ↗</button></div></header>
-    <section class="c-intro"><div class="c-date"></div><div class="c-title-row"><h1 class="c-title"></h1><span class="c-revision"></span></div><p class="c-narrative"></p></section>
-    <section class="c-stage"><div class="c-scene-column"><nav class="c-path" aria-label="当前层级"></nav><div class="c-scene" aria-label="事项份额概览"><canvas class="c-canvas" aria-hidden="true"></canvas><svg class="c-leaders" aria-hidden="true"></svg><div class="c-labels"></div><div class="c-empty" hidden><span class="c-empty-mark" aria-hidden="true">·</span><h2>暂无事项</h2><p>当前尚未纳入任何事项。</p><button type="button" data-c-action="next">查看下一次整理 →</button></div><div class="c-fallback" hidden></div></div><div class="c-scene-caption"><span class="c-render-note">体量辅助比较，准确份额见下方。</span><button type="button" class="c-feedback" data-c-action="feedback" hidden></button></div></div><aside class="c-reading" aria-label="阅读事项" hidden><div class="c-reading-top"><span class="c-reading-kind">事项详情</span><button type="button" data-c-action="close" aria-label="关闭详情">×</button></div><div class="c-reading-content"></div></aside></section>
-    <section class="c-footer"><div class="c-budget-heading"><span class="c-budget-title">当前层份额</span><span class="c-budget-values"></span></div><div class="c-budget-track" aria-label="准确份额分配"></div><div class="c-transport"><div class="c-playback"><button type="button" data-c-action="prev" aria-label="上一帧">${svg('left')}</button><button type="button" class="c-play" data-c-action="play" aria-label="播放回放">${svg('play')}<span>播放</span></button><button type="button" data-c-action="next" aria-label="下一帧">${svg('right')}</button></div><div class="c-time-current"></div><div class="c-range-wrap"><input class="c-range" type="range" min="0" max="36" step="1" value="0" aria-label="选择回放帧"><div class="c-range-labels"><span>10月12日</span><span>10月25日</span></div></div><span class="c-frame-count"></span></div><details class="c-all-items"><summary>全部事项 <span class="c-total"></span></summary><div class="c-item-list"></div></details></section>
+  host.innerHTML = `<div class="c-shell">
+    <header class="c-top">
+      <div class="c-brand"><b>Fold</b><span>流动形态</span></div>
+      <div class="c-time" aria-label="回放时刻">
+        <div class="c-steps"><button type="button" class="c-icon" data-c="prev" aria-label="上一次整理"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12 5-5 5 5 5"/></svg></button><button type="button" class="c-play" data-c="play" aria-label="播放回放"></button><button type="button" class="c-icon" data-c="next" aria-label="下一次整理"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m8 5 5 5-5 5"/></svg></button></div>
+        <div class="c-when"><b class="c-when-date"></b><small class="c-when-count"></small></div>
+        <div class="c-track" role="slider" tabindex="0" aria-label="选择整理时刻"><div class="c-track-rail"></div><div class="c-track-ticks"></div><div class="c-track-days" aria-hidden="true"></div><div class="c-track-thumb"></div></div>
+      </div>
+      <button type="button" class="c-state" data-lab-inspect="state">完整状态 ↗</button>
+    </header>
+    <main class="c-main">
+      <section class="c-field-col" aria-label="当前层的注意力分配">
+        <div class="c-lede"><h1 class="c-headline"></h1><p class="c-frame-title"></p><p class="c-signal" aria-live="polite"></p></div>
+        <nav class="c-path" aria-label="当前层级"></nav>
+        <div class="c-stage"><canvas class="c-canvas" aria-hidden="true"></canvas><div class="c-empty" hidden></div><div class="c-labels" role="group" aria-label="本层事项，按优先级排列"></div></div>
+        <div class="c-budget"><div class="c-budget-cells" role="img"></div><p class="c-budget-text"></p></div>
+        <p class="c-legend"><span><i class="c-key-drop"></i>液滴面积 ∝ 份额，精确份数见 64 格</span><span><i class="c-key-ring"></i>朱红环 = 登记了回应路径</span><span><i class="c-key-ring is-dashed"></i>虚线 = 在子项里</span><span>↩ 本轮你的回应 · ◷ 到点提醒</span><span><i class="c-key-merge"></i>只有明确合并才融为一滴</span></p>
+      </section>
+      <aside class="c-read" aria-label="阅读区"><div class="c-read-inner"></div></aside>
+    </main>
   </div>`;
-  const q=selector=>host.querySelector(selector);
-  const sceneElement=q('.c-scene'),canvas=q('.c-canvas'),labelLayer=q('.c-labels'),leaderLayer=q('.c-leaders');
-  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-  let snapshot=model.snapshot(),surface=null,failed=false,disposed=false,visible=true,width=1,height=1;
-  let bodies=[],flight=null,raf=0,hoverId=null,mode='item',lastGeometryKey='',resizeFrame=0;
-  let lastDraw=0,materialTime=0,labelsDirty=true;
-  const memories=new Map(),labels=new Map(),ghostLabels=new Map();
-  try{surface=makeSurface(canvas,LIMIT,BRIDGE_LIMIT);}catch(error){failed=true;console.info('Fold liquid view uses its readable fallback:',error.message);}
+  const $ = selector => host.querySelector(selector);
+  const stage = $('.c-stage'), canvas = $('.c-canvas'), labelLayer = $('.c-labels'), read = $('.c-read-inner'), track = $('.c-track');
+  const renderer = createRenderer(canvas);
+  stage.dataset.renderer = renderer.kind;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  let s = model.snapshot(), prev = null, disposed = false, hoverId = null, notes = annotate(s);
+  let geo = null, settled = [], flight = null, raf = 0, lastDrops = [], layoutKey = '', preparedScale = 1, settledScale = 1;
+  const labels = new Map();      // id -> { el, pin, mode, side, off:{x,y}, w, h, opacity, ... }
+  const lights = new Map();      // id -> current inner light
+  const placeCache = new Map();  // layer -> Map(id -> {fx, fy, side})
 
-  function memoryFor(id){const key=id||'root';if(!memories.has(key))memories.set(key,new Map());return memories.get(key);}
-  function sample(now=performance.now()) {
-    if(!flight)return bodies;
-    const raw=clamp((now-flight.start)/flight.duration,0,1),t=ease(raw);
-    return flight.parts.map(part=>{
-      const radius=lerp(part.from.r,part.to.r,t);
-      const dx=part.from.x-part.to.x,dy=part.from.y-part.to.y,distance=Math.hypot(dx,dy);
-      const velocity=raw<.5?12*raw*raw:12*(1-raw)*(1-raw);
-      const lag=Math.min(radius*.38,distance*.075*velocity);
-      const strain=(part.to.r-part.from.r)/Math.max(part.to.r,part.from.r,1)*Math.sin(Math.PI*raw);
-      return{id:part.id,item:part.item,color:part.color,
-        x:lerp(part.from.x,part.to.x,t),y:lerp(part.from.y,part.to.y,t),r:radius,
-        flowX:dx/Math.max(distance,1)*lag,flowY:dy/Math.max(distance,1)*lag,strain,
-        stretch:lerp(part.from.stretch||1,part.to.stretch||1,t),opacity:lerp(part.from.opacity,part.to.opacity,t)};
-    });
+  // ---------- geometry ----------
+  const baseHeight = w => w < 560 ? Math.round(clamp(w * 1.62, 460, 700)) : Math.round(clamp(innerHeight - 360, 400, 720));
+  function measure() {
+    const w = stage.clientWidth || 600, narrow = w < 560;
+    // On a phone the field is taller than the drops need: the extra height is
+    // room for labels beside small drops, not larger drops.
+    const h = baseHeight(w);
+    const sizing = narrow ? w * clamp(w * 1.32, 440, 580) : w * h;
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    stage.style.height = `${h}px`;
+    geo = { w, h, baseH: h, narrow, dpr, cx: w / 2, cy: h * .47, perShare: (narrow ? .22 : .27) * sizing / BUDGET, labelW: narrow ? 138 : 212 };
+    renderer.resize(w, h, dpr);
+    canvas.style.width = `${w}px`; canvas.style.height = `${h}px`;
   }
-  function requestDraw(){if(!raf&&!disposed&&visible&&!document.hidden)raf=requestAnimationFrame(draw);}
-  function draw(now) {
-    raf=0;if(disposed||!visible||document.hidden)return;
-    const moving=surface&&!failed&&!reduced.matches&&(bodies.length||flight);
-    // The material has its own clock: 30 fps, paused offscreen/when hidden.
-    // Reading labels are updated only for a real layout transition.
-    if(moving&&lastDraw&&now-lastDraw<1000/30-1){requestDraw();return;}
-    const delta=lastDraw?Math.min((now-lastDraw)/1000,.05):0;
-    lastDraw=now;if(!reduced.matches)materialTime+=delta;
-    const visual=sample(now);let t=1,bridges=[];
-    if(flight){t=clamp((now-flight.start)/flight.duration,0,1);const map=new Map(visual.map(b=>[b.id,b]));bridges=flight.links.map(link=>{const a=map.get(link.from),b=map.get(link.to);if(!a||!b)return null;return{a,b,width:Math.min(a.r,b.r)*.34*Math.sin(Math.PI*t),color:b.color};}).filter(Boolean);}
-    if(surface&&!failed)surface.draw(visual,bridges,snapshot.selectedId,hoverId,materialTime,{reducedMotion:reduced.matches});
-    if(flight||labelsDirty){positionLabels(visual);labelsDirty=false;}
-    if(flight&&t>=1){bodies=flight.targets;flight=null;clearGhostLabels();positionLabels(bodies);}
-    if(flight||moving)requestDraw();
+  const radiusOf = (share, scale = 1) => Math.sqrt(Math.max(0, share) * geo.perShare / Math.PI) * scale;
+
+  // ---------- labels ----------
+  function labelHTML(item, note, inside) {
+    const prevItem = s.index > 0 && getItem(s.previousState, item.id);
+    const joined = !prevItem && s.index > 0 && allItems(s.state).some(x => x.merged_into === item.id && getItem(s.previousState, x.id)?.status === 'active');
+    const delta = prevItem && prevItem.status === 'active' && prevItem.share !== item.share ? `<span class="c-l-delta">原 ${prevItem.share}</span>` : joined ? '<span class="c-l-delta is-new">汇合</span>' : !prevItem && s.index > 0 ? '<span class="c-l-delta is-new">新</span>' : '';
+    const same = (a, b) => { const n = v => String(v || '').replace(/[\s，。？?！!：:、“”"]/g, ''); return n(a) === n(b); };
+    const ask = note.ask ? `<span class="c-l-ask">${askTag(note.ask)}${same(note.ask.prompt, item.title) ? '' : ` · ${esc(note.ask.prompt)}`}</span>` : '';
+    const meta = [
+      note.ask || inside ? '' : esc(kindLabel[item.kind] || item.kind),
+      note.nested && !note.ask ? `<span class="c-l-nested">子项 ${note.nested} 件等你</span>` : '',
+      item.children?.items.length ? `<span class="c-l-dive">内含 ${item.children.items.length} 件 ›</span>` : '',
+      note.feedback.length ? `<span class="c-l-signal">↩ 本轮你${viaLabel[note.feedback[0].link.via] || '回应'}了</span>` : '',
+      note.reminder ? '<span class="c-l-signal">◷ 到点提醒</span>' : '',
+      note.adjusted ? '<span class="c-l-signal">按时间重看</span>' : '',
+    ].filter(Boolean).join('<i aria-hidden="true">·</i>');
+    return `<span class="c-l-share">${item.share}</span><span class="c-l-body"><span class="c-l-title">${esc(item.title)}${delta}</span>${ask}${meta ? `<span class="c-l-meta">${meta}</span>` : ''}</span>`;
   }
-  function positionLabels(visual) {
-    const byId=new Map(visual.map(b=>[b.id,b]));const placed=[];const paths=[];
-    const active=snapshot.layer.items.map(item=>byId.get(item.id)).filter(Boolean).sort((a,b)=>b.r-a.r);
-    const mobileLabels=innerWidth<760,metrics=new Map();
-    for(const b of active){
-      const entry=labels.get(b.id);if(!entry)continue;
-      const small=b.r<42,compact=b.r<76,labelWidth=small?118:clamp(b.r*1.7*(b.stretch||1),100,228);
-      entry.el.classList.toggle('is-small',small);entry.el.classList.toggle('is-compact',compact);
-      entry.el.style.width=`${labelWidth}px`;
-      metrics.set(b.id,{small,compact,labelWidth});
-    }
-    for(const b of active) {
-      const entry=labels.get(b.id);if(!entry)continue;
-      const {small,compact,labelWidth}=metrics.get(b.id);
-      const labelHeight=mobileLabels?entry.el.getBoundingClientRect().height:small?44:compact?58:86;
-      let x=b.x,y=b.y;
-      if(small){const outward=b.x<width*.5?-1:1;x+=outward*(b.r*(b.stretch||1)+37);y+=b.y<height*.5?-12:13;}
-      x=clamp(x,labelWidth/2+8,width-labelWidth/2-8);y=clamp(y,labelHeight/2+8,height-labelHeight/2-8);
-      if(small&&mobileLabels){
-        // Find the nearest gap between the actual text boxes. Longer titles
-        // must not inherit the old, fixed 44px collision estimate.
-        const preferred={x,y},minX=labelWidth/2+8,maxX=width-labelWidth/2-8,minY=labelHeight/2+8,maxY=height-labelHeight/2-8;
-        const xs=[x,b.x,minX,maxX,...placed.flatMap(r=>[r.x-(r.w+labelWidth)/2-7,r.x+(r.w+labelWidth)/2+7])];
-        const ys=[y,b.y,minY,maxY,...placed.flatMap(r=>[r.y-(r.h+labelHeight)/2-7,r.y+(r.h+labelHeight)/2+7])];
-        const crossesText=(candidate,r)=>{
-          let first=0,last=1;
-          for(const [start,end,low,high] of [[b.x,candidate.x,r.x-r.w/2-3,r.x+r.w/2+3],[b.y,candidate.y,r.y-r.h/2-3,r.y+r.h/2+3]]){
-            const delta=end-start;
-            if(Math.abs(delta)<.001){if(start<low||start>high)return false;continue;}
-            const a=(low-start)/delta,z=(high-start)/delta;
-            first=Math.max(first,Math.min(a,z));last=Math.min(last,Math.max(a,z));
-            if(first>last)return false;
-          }
-          return true;
-        };
-        let best=null;
-        for(const cx of xs)for(const cy of ys){
-          const candidate={x:clamp(cx,minX,maxX),y:clamp(cy,minY,maxY)};
-          if(placed.some(r=>Math.abs(candidate.x-r.x)<(labelWidth+r.w)/2+6&&Math.abs(candidate.y-r.y)<(labelHeight+r.h)/2+6))continue;
-          const score=(candidate.x-preferred.x)**2+(candidate.y-preferred.y)**2+placed.filter(r=>crossesText(candidate,r)).length*width*height;
-          if(!best||score<best.score)best={...candidate,score};
-        }
-        if(best){x=best.x;y=best.y;}
-      }else if(small)for(let pass=0;pass<12;pass++){
-        const overlap=placed.find(r=>Math.abs(x-r.x)<(labelWidth+r.w)/2+5&&Math.abs(y-r.y)<(labelHeight+r.h)/2+4);
-        if(!overlap)break;
-        y=clamp(y+(y<overlap.y?-1:1)*10,labelHeight/2+8,height-labelHeight/2-8);
-        if(pass>7)x=clamp(x+(x<width/2?-1:1)*10,labelWidth/2+8,width-labelWidth/2-8);
+  function labelSpeech(item, note) {
+    return [item.title, `${item.share} 份`, note.ask ? `${askTag(note.ask)}：${note.ask.prompt}` : (kindLabel[item.kind] || ''), note.nested && !note.ask ? `子项中 ${note.nested} 件等你回应` : '', note.feedback.length ? '本轮输入中有你对它的回应' : '', note.reminder ? '本轮有到点提醒' : '', item.children?.items.length ? `内含 ${item.children.items.length} 件，进入它的 64 份` : '查看详情'].filter(Boolean).join('，');
+  }
+  // Fill each label and decide whether it fits inside its drop.
+  function prepareLabels(items, scale) {
+    preparedScale = scale;
+    const sig = `${s.index}|${s.layerId}|${geo.w}|${scale.toFixed(3)}`;
+    for (const item of items) {
+      const note = notes.notes.get(item.id);
+      let entry = labels.get(item.id);
+      if (!entry) {
+        const el = document.createElement('button'); el.type = 'button'; el.className = 'c-label'; el.dataset.id = item.id; el.style.opacity = '0';
+        const pin = document.createElement('span'); pin.className = 'c-pin'; pin.setAttribute('aria-hidden', 'true'); pin.style.opacity = '0';
+        labelLayer.append(el); labelLayer.append(pin);
+        entry = { el, pin, opacity: 0, fresh: true, sig: '', x: null, y: null };
+        labels.set(item.id, entry);
       }
-      placed.push({x,y,w:labelWidth,h:labelHeight});
-      entry.el.style.transform=`translate3d(${x}px,${y}px,0) translate(-50%,-50%)`;
-      entry.el.style.opacity=String(clamp(b.opacity,0,1));
-      if(small&&b.opacity>.2){const dx=x-b.x,dy=y-b.y,d=Math.max(1,Math.hypot(dx,dy));const startX=b.x+dx/d*b.r*.75,startY=b.y+dy/d*b.r*.75;paths.push(`<path d="M${startX.toFixed(1)},${startY.toFixed(1)} L${x.toFixed(1)},${y.toFixed(1)}"/>`);}
+      entry.leaving = false; entry.el.inert = false; entry.el.removeAttribute('aria-hidden');
+      const r = radiusOf(item.share, scale), key = `${sig}|${item.title}|${item.share}|${note.ask?.prompt}|${note.nested}|${note.feedback.length}|${!!note.reminder}|${note.adjusted}`;
+      if (entry.sig !== key) {
+        entry.sig = key;
+        // Try inside first: a centred block inscribed in the drop.
+        let inside = false;
+        if (r >= (geo.narrow ? 52 : 58)) {
+          entry.el.className = 'c-label is-inside'; entry.el.innerHTML = labelHTML(item, note, true);
+          entry.el.style.width = `${Math.round(r * 1.56)}px`; entry.el.style.maxWidth = '';
+          inside = entry.el.offsetHeight <= r * 1.22;
+        }
+        if (!inside) { entry.el.className = 'c-label is-outside'; entry.el.innerHTML = labelHTML(item, note, false); entry.el.style.width = ''; entry.el.style.maxWidth = `${geo.labelW}px`; }
+        entry.mode = inside ? 'inside' : 'outside';
+        entry.w = entry.el.offsetWidth; entry.h = entry.el.offsetHeight;
+        entry.pin.innerHTML = [note.feedback.length ? '↩' : '', note.reminder ? '◷' : ''].filter(Boolean).join('');
+      }
+      entry.el.classList.toggle('is-selected', s.selectedId === item.id);
+      entry.el.classList.toggle('is-hover', hoverId === item.id);
+      entry.el.setAttribute('aria-pressed', String(s.selectedId === item.id));
+      entry.el.setAttribute('aria-label', labelSpeech(item, note));
     }
-    leaderLayer.innerHTML=paths.join('');
-    const progress=flight?clamp((performance.now()-flight.start)/flight.duration,0,1):1;
-    for(const [id,el] of ghostLabels){
-      const body=byId.get(id);
-      if(!body){el.remove();ghostLabels.delete(id);continue;}
-      const small=body.r<42,compact=body.r<76;
-      el.classList.toggle('is-small',small);el.classList.toggle('is-compact',compact);
-      el.style.width=`${small?118:clamp(body.r*1.7*(body.stretch||1),100,228)}px`;
-      el.style.transform=`translate3d(${body.x}px,${body.y}px,0) translate(-50%,-50%)`;
-      el.style.opacity=String(clamp((.88-progress)/.32,0,1));
+    // DOM order equals rank, so Tab walks the drops by priority.
+    for (const item of items) { const e = labels.get(item.id); labelLayer.append(e.el, e.pin); }
+  }
+
+  // ---------- target layout ----------
+  function layerKeyOf(x) { return x.layerId || 'root'; }
+  function targetDrops(type, old) {
+    const items = activeItems(s), nested = Boolean(s.layerId), cache = placeCache.get(layerKeyOf(s)) || new Map();
+    const oldMap = new Map(old.map(d => [d.id, d]));
+    let best = null;
+    // Prefer full-size drops: a phone first grows the field taller, then both
+    // shrink the drops a little if labels still cannot sit clear.
+    const attempts = geo.narrow ? [[1, 1], [1, 1.14], [1, 1.28], [.92, 1.28], [.84, 1.28], [.76, 1.28]] : [[1, 1], [.92, 1], [.84, 1], [.76, 1]];
+    for (const [scale, grow] of attempts) {
+      const H = Math.round(geo.baseH * grow);
+      prepareLabels(items, scale);
+      const nodes = items.map(item => {
+        const r = radiusOf(item.share, scale), e = labels.get(item.id), c = cache.get(item.id);
+        const note = notes.notes.get(item.id), ringed = Boolean(note?.ask || note?.nested);
+        const node = { id: item.id, r: r + (ringed ? 7 : 0), share: item.share, label: { w: e.w, h: e.h, inside: e.mode === 'inside' } };
+        if (c) { node.prev = { x: c.fx * geo.w, y: Math.min(c.y, H - r) }; node.side = c.side; }
+        else if (type === 'frame') {
+          // Seed merges where their sources were, splits where the merged drop was.
+          const sources = old.filter(d => getItem(s.state, d.id)?.merged_into === item.id);
+          const host = prev && oldMap.get(getItem(prev.state, item.id)?.merged_into || getItem(s.state, item.id)?.merged_into);
+          if (sources.length) { const m = sources.reduce((n, d) => n + d.r * d.r, 0) || 1; node.seed = { x: sources.reduce((n, d) => n + d.x * d.r * d.r, 0) / m, y: sources.reduce((n, d) => n + d.y * d.r * d.r, 0) / m }; }
+          else if (host) { const a = (hash(item.id) % 360) * Math.PI / 180; node.seed = { x: host.x + Math.cos(a) * host.r * .6, y: host.y + Math.sin(a) * host.r * .6 }; }
+        }
+        return node;
+      });
+      const solved = solveLayout(nodes, { w: geo.w, h: H }, { gap: geo.narrow ? 12 : 18, margin: geo.narrow ? 8 : 14, labelGap: geo.narrow ? 10 : 13, centerY: .47 });
+      if (!best || solved.overflow < best.solved.overflow * .6) best = { solved, scale, nodes, H };
+      if (solved.overflow < 40) { best = { solved, scale, nodes, H }; break; }
+    }
+    if (best.H !== geo.h) { geo.h = best.H; geo.cy = best.H * .47; stage.style.height = `${best.H}px`; renderer.resize(geo.w, geo.h, geo.dpr); canvas.style.height = `${best.H}px`; }
+    if (preparedScale !== best.scale) prepareLabels(items, best.scale);
+    settledScale = best.scale;
+    const next = new Map();
+    const drops = items.map(item => {
+      const p = best.solved.positions.get(item.id), note = notes.notes.get(item.id);
+      next.set(item.id, { fx: p.x / geo.w, y: p.y, side: p.side });
+      return { id: item.id, item, x: p.x, y: p.y, r: radiusOf(item.share, best.scale), color: dropColor(s.state, item, nested), ring: note?.ask ? 1 : note?.nested ? 1 : 0, dashed: !note?.ask && Boolean(note?.nested), side: p.side, alpha: 1 };
+    });
+    placeCache.set(layerKeyOf(s), next);
+    return drops;
+  }
+  const settledSide = id => settled.find(d => d.id === id)?.side;
+  const applySide = (e, d) => { for (const side of ['right', 'left', 'top', 'bottom']) e.el.classList.toggle(`side-${side}`, e.mode === 'outside' && d.side === side); };
+  // Where a label sits relative to its drop centre.
+  function labelOffset(d, e, side = d.side) {
+    const g = geo.narrow ? 10 : 13, r = d.r + (d.ring ? 7 : 0);
+    if (e.mode === 'inside') return { x: -e.w / 2, y: -e.h / 2 };
+    if (side === 'right') return { x: r + g, y: -e.h / 2 };
+    if (side === 'left') return { x: -r - g - e.w, y: -e.h / 2 };
+    if (side === 'bottom') return { x: -e.w / 2, y: r + g * .7 };
+    return { x: -e.w / 2, y: -r - g * .7 - e.h };
+  }
+
+  // ---------- transitions ----------
+  function buildFlight(type, anchorId, old, target) {
+    const tracks = [], groupK = {}, oMap = new Map(old.filter(d => (d.alpha ?? 1) > .01).map(d => [d.id, d])), tMap = new Map(target.map(d => [d.id, d]));
+    const add = (id, item, from, to, t0, t1, opt = {}) => tracks.push({ id, item, from: { ring: 0, alpha: 1, ...from }, to: { ring: 0, alpha: 1, ...to }, t0, t1, ...opt });
+    const { cx, cy } = geo;
+    if (type === 'dive' || type === 'rise') {
+      if (type === 'dive') {
+        const P = oMap.get(anchorId) || { x: cx, y: cy, r: 40, color: target[0]?.color || [.8, .8, .8] };
+        for (const d of oMap.values()) {
+          if (d.id === anchorId) add(`out:${d.id}`, d.item, d, { ...d, x: cx, y: cy, r: d.r * ZOOM, alpha: 0, ring: 0 }, 0, .82, { ease: inOut, fade: [.28, .82] });
+          else add(`out:${d.id}`, d.item, d, { ...d, x: cx + (d.x - P.x) * ZOOM, y: cy + (d.y - P.y) * ZOOM, r: d.r * ZOOM, alpha: 0 }, 0, .7, { ease: inCubic, fade: [0, .45] });
+        }
+        for (const b of target) add(b.id, b.item, { ...b, x: cx + (b.x - cx) * .6, y: cy + (b.y - cy) * .6, r: 0, alpha: 0, color: P.color }, b, .36, 1, { grow: true, ease: outCubic });
+      } else {
+        const A = tMap.get(anchorId) || { x: cx, y: cy, r: 40 };
+        for (const d of oMap.values()) add(`out:${d.id}`, d.item, d, { ...d, x: cx + (d.x - cx) * .25, y: cy + (d.y - cy) * .25, r: 0, alpha: 0, ring: 0 }, 0, .45, { ease: inCubic });
+        for (const b of target) {
+          if (b.id === anchorId) add(b.id, b.item, { ...b, x: cx, y: cy, r: b.r * ZOOM, alpha: 0, ring: 0 }, b, .12, 1, { ease: inOut, fade: [.12, .5] });
+          else add(b.id, b.item, { ...b, x: cx + (b.x - A.x) * ZOOM, y: cy + (b.y - A.y) * ZOOM, r: b.r * ZOOM, alpha: 0 }, b, .25, 1, { ease: outCubic, fade: [.25, .7] });
+        }
+      }
+      return { tracks, groupK };
+    }
+    const consumed = new Set();
+    for (const b of target) {
+      const from = oMap.get(b.id);
+      if (from) { add(b.id, b.item, from, b, .04, .94, { ease: inOut, resize: true }); consumed.add(b.id); continue; }
+      // Explicit merge: drops whose record now says merged_into this one flow together.
+      const sources = [...oMap.values()].filter(d => !tMap.has(d.id) && getItem(s.state, d.id)?.merged_into === b.id);
+      if (sources.length) {
+        const key = `m:${b.id}`, kmax = Math.min(...sources.map(d => d.r), b.r) * .95;
+        for (const d of sources) { add(d.id, d.item, d, { ...b, ring: 0, alpha: 1 }, 0, .82, { ease: inOut, group: key, hideAfter: .82, tint: [.25, .8] }); consumed.add(d.id); }
+        groupK[key] = t => kmax * smooth(0, .22, t) * (1 - smooth(.6, .82, t));
+        add(b.id, b.item, { ...b, alpha: 0, ring: 0 }, b, .82, 1, { ease: outCubic, showAt: .82 });
+        continue;
+      }
+      // Replaying backwards across a merge: the merged drop pulls apart again.
+      const hostId = prev && getItem(prev.state, b.id)?.merged_into, H = hostId && oMap.get(hostId);
+      if (H && !tMap.has(hostId)) {
+        const key = `s:${hostId}`, siblings = target.filter(x => getItem(prev.state, x.id)?.merged_into === hostId), kmax = Math.min(...siblings.map(x => x.r), H.r) * .95;
+        add(b.id, b.item, { ...H, ring: 0, alpha: 1, color: H.color }, b, .06, .96, { ease: inOut, group: key, tint: [.15, .7] });
+        groupK[key] = t => kmax * smooth(.06, .16, t) * (1 - smooth(.3, .8, t));
+        consumed.add(hostId);
+        continue;
+      }
+      // New: a drop falls in and settles with a little give.
+      add(b.id, b.item, { ...b, y: b.y - Math.max(60, b.r * 1.6), r: 0, alpha: 0, ring: 0 }, b, .38, 1, { grow: true, ease: outCubic });
+    }
+    for (const d of oMap.values()) {
+      if (tMap.has(d.id) || consumed.has(d.id)) continue;
+      // Withdrawn: shrinks and fades where it stood.
+      add(`out:${d.id}`, d.item, d, { ...d, y: d.y + 16, r: 0, alpha: 0, ring: 0 }, 0, .5, { ease: inCubic });
+    }
+    routeAround(tracks);
+    return { tracks, groupK };
+  }
+  // Travelling drops bend around the others instead of passing through them:
+  // the largest keep straight paths, each next one picks the bend (none, or
+  // either side) that overlaps least with paths already chosen.
+  function routeAround(tracks) {
+    const pathAt = (tr, t, ctrl = tr.ctrl) => {
+      const u = clamp((t - tr.t0) / (tr.t1 - tr.t0), 0, 1), e = (tr.ease || inOut)(u), f = tr.from, g = tr.to;
+      const x = ctrl ? (1 - e) * (1 - e) * f.x + 2 * (1 - e) * e * ctrl.x + e * e * g.x : lerp(f.x, g.x, e);
+      const y = ctrl ? (1 - e) * (1 - e) * f.y + 2 * (1 - e) * e * ctrl.y + e * e * g.y : lerp(f.y, g.y, e);
+      const r = tr.grow ? g.r * clamp(u, 0, 1) : lerp(f.r, g.r, e);
+      return { x, y, r, alpha: lerp(f.alpha, g.alpha, e) };
+    };
+    const samples = [.15, .25, .35, .45, .55, .65, .75, .85];
+    const fixed = [];
+    const ordered = [...tracks].sort((a, b) => Math.max(b.from.r, b.to.r) - Math.max(a.from.r, a.to.r));
+    for (const tr of ordered) {
+      const dx = tr.to.x - tr.from.x, dy = tr.to.y - tr.from.y, len = Math.hypot(dx, dy);
+      const options = [null];
+      if (len > 24 && !tr.grow && !tr.id.startsWith('out:')) for (const k of [.35, -.35, .7, -.7, 1.05, -1.05]) options.push({ x: (tr.from.x + tr.to.x) / 2 - dy * k, y: (tr.from.y + tr.to.y) / 2 + dx * k });
+      let best = null;
+      for (const ctrl of options) {
+        let cost = ctrl ? len * .03 * (options.indexOf(ctrl) + 1) : 0;
+        for (const t of samples) {
+          const a = pathAt(tr, t, ctrl); if (a.alpha < .1) continue;
+          for (const other of fixed) {
+            if (tr.group && other.group === tr.group) continue;
+            const b = pathAt(other, t); if (b.alpha < .1) continue;
+            const o = a.r + b.r + 6 - Math.hypot(a.x - b.x, a.y - b.y);
+            if (o > 0) cost += o * Math.min(a.r, b.r) * 2;
+          }
+          // keep inside the stage
+          cost += Math.max(0, a.r - a.x, a.x + a.r - geo.w, a.r - a.y, a.y + a.r - geo.h) * 40;
+        }
+        if (!best || cost < best.cost - 1) best = { ctrl, cost };
+      }
+      tr.ctrl = best.ctrl; fixed.push(tr);
     }
   }
-  function clearGhostLabels(){for(const el of ghostLabels.values())el.remove();ghostLabels.clear();}
-  function syncLabels(s,meta) {
-    labelsDirty=true;
-    const ids=new Set(s.layer.items.map(i=>i.id));
-    for(const [id,entry] of labels)if(!ids.has(id)){
-      if(meta.type==='frame'&&!reduced.matches&&!failed){
-        entry.el.classList.add('is-ghost');entry.el.setAttribute('aria-hidden','true');entry.el.inert=true;entry.el.removeAttribute('data-c-select');
-        ghostLabels.get(id)?.remove();ghostLabels.set(id,entry.el);
-      }else entry.el.remove();
-      labels.delete(id);
-    }
-    for(const id of ids){ghostLabels.get(id)?.remove();ghostLabels.delete(id);}
-    for(const item of s.layer.items){let entry=labels.get(item.id);if(!entry){const el=document.createElement('button');el.type='button';el.className='c-label';el.dataset.cSelect=item.id;labelLayer.append(el);entry={el,signature:''};labels.set(item.id,entry);}
-      const signature=`${item.title}|${item.share}|${item.kind}|${item.children?.items.length||0}`;
-      if(signature!==entry.signature){entry.el.innerHTML=`<span class="c-label-kind">${esc(kindLabel[item.kind]||item.kind)}</span><strong>${esc(item.title)}</strong><span class="c-label-meta"><span>${item.share}<small> / ${s.layer.budget}</small></span>${item.children?.items.length?`<span class="c-label-children">${item.children.items.length} 个子项</span>`:''}</span>`;entry.signature=signature;}
-      entry.el.classList.toggle('is-selected',s.selectedId===item.id);entry.el.setAttribute('aria-pressed',String(s.selectedId===item.id));entry.el.setAttribute('aria-label',`${item.title}，${kindLabel[item.kind]||item.kind}，份额 ${item.share}，查看详情`);
-    }
+  function sampleTrack(tr, t) {
+    const u = clamp((t - tr.t0) / (tr.t1 - tr.t0), 0, 1), e = (tr.ease || inOut)(u), f = tr.from, g = tr.to;
+    let r;
+    if (tr.grow) r = g.r * Math.max(0, outBack(u));
+    else if (tr.resize && Math.abs(g.r - f.r) > .5) { const base = Math.sqrt(Math.max(0, lerp(f.r * f.r, g.r * g.r, e))); r = base + (g.r - f.r) * .12 * Math.sin(Math.PI * clamp((u - .5) / .5, 0, 1)); }
+    else r = lerp(f.r, g.r, e);
+    let alpha = tr.fade ? lerp(f.alpha, g.alpha, smooth(tr.fade[0], tr.fade[1], t)) : tr.grow ? lerp(f.alpha, g.alpha, smooth(0, .25, u)) : lerp(f.alpha, g.alpha, e);
+    if (tr.showAt != null) alpha = t >= tr.showAt ? 1 : 0;
+    if (tr.hideAfter != null && t >= tr.hideAfter) alpha = 0;
+    const ct = tr.tint ? smooth(tr.tint[0], tr.tint[1], t) : e;
+    const c = tr.ctrl, x = c ? (1 - e) * (1 - e) * f.x + 2 * (1 - e) * e * c.x + e * e * g.x : lerp(f.x, g.x, e), y = c ? (1 - e) * (1 - e) * f.y + 2 * (1 - e) * e * c.y + e * e * g.y : lerp(f.y, g.y, e);
+    return { id: tr.id, item: tr.item, group: tr.group, x, y, r: Math.max(0, r), alpha, ring: lerp(f.ring, g.ring, e) * alpha, dashed: g.dashed ?? f.dashed, color: f.color.map((v, i) => lerp(v, g.color[i], ct)) };
   }
-  function arrange(s,meta={type:'resize'}) {
-    const nextWidth=sceneElement.clientWidth,nextHeight=sceneElement.clientHeight;
-    if(nextWidth<1||nextHeight<1)return;
-    const oldVisual=sample(),oldMap=new Map(oldVisual.map(b=>[b.id,b]));
-    const sizeChanged=nextWidth!==width||nextHeight!==height;
-    width=nextWidth;height=nextHeight;
-    if(sizeChanged){surface?.resize(width,height);leaderLayer.setAttribute('viewBox',`0 0 ${width} ${height}`);}
-    const key=`${s.layerId||'root'}:${width}:${height}:${s.layer.items.map(i=>`${i.id}:${i.share}`).join('|')}`;
-    if(key===lastGeometryKey&&meta.type!=='dive'&&meta.type!=='rise'){requestDraw();return;}
-    lastGeometryKey=key;
-    const memory=memoryFor(s.layerId);
-    const links=meta.type==='frame'&&meta.previous?.layerId===s.layerId?mergeLinks(meta.previous.state,s.state):[];
-    for(const item of s.layer.items)if(!memory.has(item.id)) {
-      const sourceIds=links.filter(l=>l.to===item.id).map(l=>oldMap.get(l.from)).filter(Boolean);
-      if(sourceIds.length){const total=sourceIds.reduce((n,b)=>n+b.r*b.r,0);memory.set(item.id,{x:sourceIds.reduce((n,b)=>n+b.x*b.r*b.r,0)/total/width,y:sourceIds.reduce((n,b)=>n+b.y*b.r*b.r,0)/total/height});}
-    }
-    const targets=layout(s.layer.items,width,height,memory).map(b=>({...b,color:colorFor(b.item,s.state),opacity:1}));
-    if(failed||reduced.matches||meta.type==='init'){bodies=targets;flight=null;clearGhostLabels();requestDraw();return;}
-    const nextMap=new Map(targets.map(b=>[b.id,b])),parts=[];
-    const anchor=oldMap.get(meta.anchorId),newAnchor=nextMap.get(meta.anchorId);
-    for(const target of targets){let from=oldMap.get(target.id);
-      if(meta.type==='dive'&&anchor)from={...target,x:anchor.x+(target.x-width/2)*.06,y:anchor.y+(target.y-height/2)*.06,r:target.r*.13,opacity:0};
-      else if(meta.type==='rise'&&newAnchor)from={...target,x:width/2+(target.x-newAnchor.x)*1.8,y:height/2+(target.y-newAnchor.y)*1.8,r:target.r*1.6,opacity:0};
-      else if(!from){const sources=links.filter(l=>l.to===target.id).map(l=>oldMap.get(l.from)).filter(Boolean);from=sources.length?{...target,x:sources.reduce((n,b)=>n+b.x,0)/sources.length,y:sources.reduce((n,b)=>n+b.y,0)/sources.length,r:target.r*.28,opacity:0}:{...target,y:target.y+10,r:target.r*.22,opacity:0};}
-      parts.push({id:target.id,item:target.item,color:target.color,from,to:target});
-    }
-    for(const old of oldVisual)if(!nextMap.has(old.id)){
-      let to={...old,r:old.r*.16,opacity:0};
-      const target=nextMap.get(links.find(l=>l.from===old.id)?.to);
-      if(target)to={...to,x:target.x,y:target.y};
-      else if(meta.type==='dive'){to={...to,x:width/2+(old.x-(anchor?.x||width/2))*2.7,y:height/2+(old.y-(anchor?.y||height/2))*2.7};if(old.id===meta.anchorId)to={...to,x:width/2,y:height/2,r:Math.max(width,height)*.65};}
-      else if(meta.type==='rise'&&newAnchor)to={...to,x:newAnchor.x,y:newAnchor.y,r:old.r*.12};
-      parts.push({id:old.id,item:old.item,color:old.color,from:old,to});
-    }
-    flight={parts:parts.slice(0,LIMIT),targets,links,start:performance.now(),duration:meta.type==='resize'?420:meta.type==='dive'||meta.type==='rise'?1900:1700};
-    requestDraw();
+  function sampleFlight(t) {
+    const dt = 16 / flight.duration;
+    return flight.tracks.map(tr => {
+      const d = sampleTrack(tr, t), p = sampleTrack(tr, Math.max(0, t - dt));
+      // Motion stretches the drop a little along its path (area preserved).
+      const vx = (d.x - p.x) / 16, vy = (d.y - p.y) / 16, sp = Math.hypot(vx, vy), k = Math.min(.2, sp * .22);
+      if (sp > .02) { d.sx = vx / sp * k; d.sy = vy / sp * k; }
+      return d;
+    }).filter(d => d.r > .2 && d.alpha > .003);
   }
-  function renderReading(s) {
-    const reading=q('.c-reading'),content=q('.c-reading-content');
-    const show=mode!=='item'||Boolean(s.selectedItem);reading.hidden=!show;q('.c-stage').classList.toggle('has-reading',show);
-    if(!show)return;
-    const signature=mode==='item'?`${s.selectedId}:${s.state.event_seq}:${s.now}`:`${mode}:${s.state.event_seq}:${s.index}`;
-    if(content.dataset.signature===signature)return;
-    content.dataset.signature=signature;
-    if(mode==='inputs'){q('.c-reading-kind').textContent='原始输入';content.innerHTML=`<h2>本轮输入</h2><p class="c-reading-intro">本轮收到 ${s.frame.events.length} 条原始输入。</p>${inputHTML(s)}`;}
-    else if(mode==='feedback'){q('.c-reading-kind').textContent='反馈状态';const pending=(s.state.annotations||[]).filter(a=>a.status==='saved');content.innerHTML=`<h2>待确认反馈</h2>${pending.length?pending.map(a=>`<blockquote><p>${esc(a.text)}</p><footer>${esc(a.author||'用户')}</footer><button type="button" data-c-select="${esc(a.item||a.item_id)}">查看对应事项 ↗</button></blockquote>`).join(''):'<p>暂无待确认反馈。</p>'}`;}
-    else{q('.c-reading-kind').textContent='事项详情';content.innerHTML=detailHTML(s,s.selectedId);}
-  }
-  function render(s,meta) {
-    snapshot=s;
-    if(meta.type==='select')mode='item';
-    if(meta.type==='dive')mode='item';
-    q('.c-date').textContent=`${formatDate(s.now)} · ${formatTime(s.now)}`;
-    q('.c-title').textContent=s.frame.title;q('.c-narrative').textContent=s.frame.narrative;
-    q('.c-revision').textContent=`${s.state.revision} · ${s.index+1}/${s.frames.length}`;
-    q('.c-input-count').textContent=s.frame.events.length||'';
-    q('.c-path').innerHTML=`${s.layerId?'<button type="button" data-c-action="rise" aria-label="返回上一层">↑</button>':''}<button type="button" data-c-action="root" ${!s.layerId?'aria-current="page"':''}>全部事项</button>${s.path.map((item,i)=>`<span aria-hidden="true">/</span><button type="button" data-c-dive="${esc(item.id)}" ${i===s.path.length-1?'aria-current="page"':''}>${esc(item.title)}</button>`).join('')}`;
-    const pending=(s.state.annotations||[]).filter(a=>a.status==='saved');q('.c-feedback').hidden=!pending.length;q('.c-feedback').textContent=`${pending.length} 条待确认反馈 ↗`;
-    q('.c-budget-title').textContent=s.layerId?'子层份额（独立预算）':'当前层份额';
-    q('.c-budget-values').innerHTML=`<strong>${s.layer.used}</strong><span> / ${s.layer.budget}</span><span class="c-budget-space">未分配 ${s.layer.budget-s.layer.used} 份</span>`;
-    q('.c-budget-track').innerHTML=s.layer.items.map(item=>`<button type="button" data-c-select="${esc(item.id)}" style="width:${item.share/s.layer.budget*100}%;--item-color:${colorFor(item,s.state)}" aria-label="${esc(item.title)}，${item.share}份" title="${esc(item.title)} · ${item.share}份"></button>`).join('')+`<span class="c-budget-unused" style="width:${(s.layer.budget-s.layer.used)/s.layer.budget*100}%" aria-label="未分配${s.layer.budget-s.layer.used}份"></span>`;
-    q('.c-time-current').textContent=`${formatDate(s.now)} ${formatTime(s.now)}`;q('.c-frame-count').textContent=`${String(s.index+1).padStart(2,'0')} / ${s.frames.length}`;
-    const range=q('.c-range');range.max=String(s.frames.length-1);range.value=String(s.index);range.style.setProperty('--progress',`${s.index/(s.frames.length-1)*100}%`);range.setAttribute('aria-valuetext',`${formatDate(s.now)} ${formatTime(s.now)}，${s.frame.title}`);
-    q('.c-play').innerHTML=`${svg(s.playing?'pause':'play')}<span>${s.playing?'暂停':'播放'}</span>`;q('.c-play').setAttribute('aria-label',s.playing?'暂停回放':'播放回放');
-    q('[data-c-action="prev"]').disabled=s.index===0;q('.c-playback [data-c-action="next"]').disabled=s.index===s.frames.length-1;
-    q('.c-empty').hidden=s.layer.items.length>0;q('.c-total').textContent=`${s.layer.items.length} 项`;
-    q('.c-item-list').innerHTML=s.layer.items.map(item=>`<button type="button" data-c-select="${esc(item.id)}"><span style="--item-color:${colorFor(item,s.state)}"></span><strong>${esc(item.title)}</strong><span>${item.share} 份</span></button>`).join('');
-    q('.c-all-items').hidden=!s.layer.items.length;
-    renderReading(s);syncLabels(s,meta);
-    if(s.layer.items.length>LIMIT){failed=true;}
-    renderFallback(s);arrange(s,meta);
-    if(meta.type==='dive'||meta.type==='rise'){
-      q('.c-path button:last-child')?.focus({preventScroll:true});
-      if(innerWidth<760)q('.c-scene-column').scrollIntoView({block:'start',behavior:'instant'});
+
+  // ---------- label motion ----------
+  function planLabels(type, target) {
+    const swap = type === 'dive' || type === 'rise' || type === 'init' || type === 'resize';
+    const tMap = new Map(target.map(d => [d.id, d]));
+    for (const [id, e] of labels) {
+      const d = tMap.get(id);
+      if (!d) { e.leaving = true; e.el.inert = true; e.el.setAttribute('aria-hidden', 'true'); e.plan = { fromOp: e.opacity, mode: 'out', x: e.x, y: e.y }; continue; }
+      const off = labelOffset(d, e), to = { x: d.x + off.x, y: d.y + off.y };
+      const glide = !swap && !e.fresh && e.x != null && e.prevMode === e.mode && Math.hypot(to.x - e.x, to.y - e.y) < (geo.narrow ? 110 : 170);
+      e.plan = { fromOp: swap && type !== 'init' ? 0 : e.opacity, mode: type === 'init' || type === 'resize' ? 'snap' : glide ? 'glide' : 'fade', from: { x: e.x ?? to.x, y: e.y ?? to.y }, to, fromOff: e.off || off, toOff: off };
+      if (swap && type !== 'init' && type !== 'resize') { e.opacity = 0; e.plan.fromOp = 0; }
+      e.off = off; e.prevMode = e.mode; e.fresh = false;
+      applySide(e, d);
     }
   }
-  function renderFallback(s) {
-    q('.c-fallback').hidden=!failed;canvas.hidden=failed;labelLayer.hidden=failed;leaderLayer.hidden=failed;
-    if(!failed)return;
-    q('.c-render-note').textContent='液体视图不可用，已显示事项列表；份额与完整状态仍可查看。';
-    q('.c-fallback').innerHTML=s.layer.items.map(item=>`<button type="button" data-c-select="${esc(item.id)}" aria-pressed="${s.selectedId===item.id}" style="--item-color:${colorFor(item,s.state)}"><span>${kindLabel[item.kind]||esc(item.kind)} · ${item.share} / ${s.layer.budget}${s.selectedId===item.id?' · 当前查看':''}</span><strong>${esc(item.title)}</strong><p>${esc(item.summary)}</p></button>`).join('');
+  function placeLabels(t, drops) {
+    const dMap = new Map(drops.map(d => [d.id, d]));
+    for (const [id, e] of labels) {
+      const pl = e.plan; if (!pl) continue;
+      let x, y, op;
+      if (pl.mode === 'out') { x = pl.x; y = pl.y; op = pl.fromOp * (1 - smooth(0, .2, t)); }
+      else if (pl.mode === 'snap' || t >= 1) { x = pl.to.x; y = pl.to.y; op = 1; }
+      else if (pl.mode === 'glide') {
+        const d = dMap.get(id), et = inOut(clamp((t - .04) / .9, 0, 1));
+        x = d ? d.x + lerp(pl.fromOff.x, pl.toOff.x, et) : lerp(pl.from.x, pl.to.x, et); y = d ? d.y + lerp(pl.fromOff.y, pl.toOff.y, et) : lerp(pl.from.y, pl.to.y, et);
+        op = lerp(pl.fromOp, 1, smooth(.6, 1, t));
+      } else {
+        // Labels that travel far fade out, then reappear beside the settled drop.
+        if (t < .5) { x = pl.from.x; y = pl.from.y; op = pl.fromOp * (1 - smooth(0, .18, t)); }
+        else { x = pl.to.x; y = pl.to.y; op = smooth(.74, .98, t); }
+      }
+      e.x = x; e.y = y; e.opacity = op;
+      e.el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`;
+      e.el.style.opacity = op.toFixed(3);
+      // Marks for this round's reply / reminder ride on the drop's rim.
+      const d = dMap.get(id);
+      if (d && e.pin.textContent) { const a = e.mode === 'outside' && settledSide(id) === 'right' ? -Math.PI * .75 : -Math.PI / 4; e.pin.style.transform = `translate3d(${(d.x + Math.cos(a) * d.r).toFixed(1)}px,${(d.y + Math.sin(a) * d.r).toFixed(1)}px,0) translate(-50%,-50%)`; e.pin.style.opacity = (pl.mode === 'out' ? 0 : Math.min(op, d.alpha)).toFixed(3); }
+      else e.pin.style.opacity = '0';
+      if (pl.mode === 'out' && t >= 1) { e.el.remove(); e.pin.remove(); labels.delete(id); }
+    }
   }
-  function onClick(event) {
-    const button=event.target.closest('button');if(!button||!host.contains(button))return;
-    if(button.dataset.cSelect){mode='item';model.select(button.dataset.cSelect);showReading();return;}
-    if(button.dataset.cDive){model.dive(button.dataset.cDive);return;}
-    switch(button.dataset.cAction){case'prev':model.goFrame(snapshot.index-1);break;case'next':model.goFrame(snapshot.index+1);break;case'play':model.togglePlay();break;case'rise':model.rise();break;case'root':model.goRoot();break;case'close':{const id=snapshot.selectedId;mode='item';model.select(null);labels.get(id)?.el.focus({preventScroll:true});if(innerWidth<760)q('.c-scene-column').scrollIntoView({block:'start',behavior:'instant'});break;}case'inputs':model.pause();mode=mode==='inputs'?'item':'inputs';renderReading(snapshot);arrange(snapshot,{type:'resize'});showReading();break;case'feedback':model.pause();mode='feedback';renderReading(snapshot);arrange(snapshot,{type:'resize'});showReading();break;}
+
+  // ---------- render loop: runs only while something changes ----------
+  let lastTick = 0;
+  function frame(now) {
+    raf = 0; if (disposed) return;
+    let busy = false, drops, groupK = {};
+    if (flight) {
+      const t = flight.frozen ?? clamp((now - flight.start) / flight.duration, 0, 1);
+      drops = sampleFlight(t);
+      for (const [key, fn] of Object.entries(flight.groupK)) groupK[key] = fn(t);
+      placeLabels(t, drops);
+      if (t >= 1) { flight = null; drops = settled; placeLabels(1, settled); }
+      else busy = flight.frozen == null;
+    } else drops = settled;
+    // Selection and hover: light rises from inside the drop.
+    const dt = Math.min(64, now - (lastTick || now)); lastTick = now;
+    for (const d of drops) {
+      const id = d.id.replace(/^out:/, ''), want = s.selectedId === id ? 1 : hoverId === id ? .42 : 0;
+      let cur = lights.get(id) ?? want;
+      if (Math.abs(want - cur) > .004) { cur += (want - cur) * Math.min(1, dt / 70); busy = true; } else cur = want;
+      lights.set(id, cur); d.light = cur;
+    }
+    renderer.render(drops, groupK);
+    lastDrops = drops;
+    if (busy) raf = requestAnimationFrame(frame); else lastTick = 0;
   }
-  function showReading(){if(q('.c-reading').hidden)return;if(innerWidth<760)q('.c-reading').scrollIntoView({block:'start',behavior:'instant'});const heading=q('.c-reading h2');heading?.setAttribute('tabindex','-1');heading?.focus({preventScroll:true});}
-  function hit(event) {const rect=canvas.getBoundingClientRect(),x=event.clientX-rect.left,y=event.clientY-rect.top;return sample().filter(b=>b.opacity>.5&&snapshot.layer.items.some(i=>i.id===b.id)).find(b=>Math.hypot((x-b.x)/(1.06*(b.stretch||1)),(y-b.y)/.95)<b.r)?.id||null;}
-  function onPointerMove(event){const id=hit(event);if(id!==hoverId){hoverId=id;canvas.style.cursor=id?'pointer':'default';requestDraw();}}
-  function onPointerLeave(){hoverId=null;canvas.style.cursor='default';requestDraw();}
-  function onCanvasClick(event){const id=hit(event);if(id){mode='item';model.select(id);showReading();}}
-  function onRange(event){model.goFrame(Number(event.target.value));}
-  function onPreference(){if(reduced.matches&&flight){bodies=flight.targets;flight=null;clearGhostLabels();labelsDirty=true;}lastDraw=0;requestDraw();}
-  function onVisibility(){lastDraw=0;if(document.hidden){cancelAnimationFrame(raf);raf=0;}else requestDraw();}
-  function onContextLost(event){event.preventDefault();failed=true;cancelAnimationFrame(raf);raf=0;renderFallback(snapshot);}
-  function onFocus(event){const label=event.target.closest('[data-c-select]');if(label){hoverId=label.dataset.cSelect;requestDraw();}}
-  function onFocusOut(event){
-    const previous=event.target.closest('[data-c-select]');
-    if(!previous||hoverId!==previous.dataset.cSelect)return;
-    const next=event.relatedTarget?.closest?.('[data-c-select]');
-    hoverId=next&&host.contains(next)?next.dataset.cSelect:null;requestDraw();
+  const kick = () => { if (!raf && !disposed) raf = requestAnimationFrame(frame); };
+
+  function transition(type, anchorId) {
+    notes = annotate(s);
+    const old = lastDrops.map(d => ({ ...d, id: d.id.replace(/^out:/, '') })).filter((d, i, list) => list.findIndex(x => x.id === d.id) === i);
+    const target = targetDrops(type, old);
+    planLabels(type, target);
+    settled = target;
+    const instant = type === 'init' || type === 'resize' || reduced.matches || document.hidden;
+    if (instant) { flight = null; placeLabels(1, settled); cancelAnimationFrame(raf); raf = 0; frame(performance.now()); }
+    else { const built = buildFlight(type, anchorId, old, target); flight = { ...built, start: performance.now(), duration: type === 'dive' || type === 'rise' ? 1150 : Object.keys(built.groupK).length ? DURATION * 1.3 : DURATION }; kick(); }
+    stage.classList.toggle('is-nested', Boolean(s.layerId));
+    const owner = s.layerId && getItem(s.state, s.layerId);
+    stage.style.setProperty('--c-tint', owner ? cssRGB(dropColor(s.state, owner, false)) : 'transparent');
+    const empty = $('.c-empty'); empty.hidden = target.length > 0;
+    empty.textContent = s.layerId ? '这一层还空着，64 份都未分配' : '还没有收到输入，64 份都未分配';
+    renderBudget(target);
   }
-  host.addEventListener('click',onClick);host.addEventListener('focusin',onFocus);host.addEventListener('focusout',onFocusOut);q('.c-range').addEventListener('input',onRange);
-  sceneElement.addEventListener('pointermove',onPointerMove);sceneElement.addEventListener('pointerleave',onPointerLeave);canvas.addEventListener('click',onCanvasClick);canvas.addEventListener('webglcontextlost',onContextLost);
-  reduced.addEventListener('change',onPreference);document.addEventListener('visibilitychange',onVisibility);
-  const observer=new ResizeObserver(()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{if(!disposed&&snapshot)arrange(snapshot,{type:'resize'});});});observer.observe(sceneElement);
-  const intersection=new IntersectionObserver(entries=>{visible=entries[0]?.isIntersecting!==false;lastDraw=0;if(visible)requestDraw();else{cancelAnimationFrame(raf);raf=0;}});intersection.observe(sceneElement);
-  const unsubscribe=model.subscribe(render);
-  return()=>{disposed=true;unsubscribe();cancelAnimationFrame(raf);cancelAnimationFrame(resizeFrame);observer.disconnect();intersection.disconnect();host.removeEventListener('click',onClick);host.removeEventListener('focusin',onFocus);host.removeEventListener('focusout',onFocusOut);q('.c-range')?.removeEventListener('input',onRange);sceneElement.removeEventListener('pointermove',onPointerMove);sceneElement.removeEventListener('pointerleave',onPointerLeave);canvas.removeEventListener('click',onCanvasClick);canvas.removeEventListener('webglcontextlost',onContextLost);reduced.removeEventListener('change',onPreference);document.removeEventListener('visibilitychange',onVisibility);surface?.dispose();};
+  function refreshStatic() {
+    notes = annotate(s);
+    const items = activeItems(s), before = new Map([...labels].map(([id, e]) => [id, `${e.mode}|${e.h}|${e.w}`]));
+    prepareLabels(items, settledScale);
+    // A label that changed shape needs the layout solved again.
+    if (items.some(item => { const e = labels.get(item.id); return before.get(item.id) !== `${e.mode}|${e.h}|${e.w}`; })) { transition('frame'); return; }
+    for (const d of settled) { const e = labels.get(d.id); if (e) { const off = labelOffset(d, e); e.off = off; e.plan = { mode: 'snap', to: { x: d.x + off.x, y: d.y + off.y } }; applySide(e, d); } }
+    placeLabels(1, settled); renderBudget(settled); kick();
+  }
+  const geometryKey = x => `${x.layerId || 'root'}|${x.layer.items.map(i => `${i.id}:${i.share}:${i.rank}:${i.status}`).join(',')}`;
+
+  // ---------- budget strip: the exact 64 ----------
+  function renderBudget(drops) {
+    const used = drops.reduce((n, d) => n + d.item.share, 0), free = BUDGET - used;
+    const cells = [];
+    for (const d of drops) for (let i = 0; i < d.item.share; i++) cells.push(`<i data-id="${esc(d.id)}" class="${i === 0 ? 'is-first' : ''}${s.selectedId === d.id ? ' is-sel' : ''}${hoverId === d.id ? ' is-hover' : ''}" style="--cell:${cssRGB(d.color)}"></i>`);
+    for (let i = 0; i < free; i++) cells.push(`<i class="is-free${i === 0 ? ' is-first' : ''}"></i>`);
+    const box = $('.c-budget-cells'); box.innerHTML = cells.join('');
+    const owner = s.layerId && getItem(s.state, s.layerId);
+    box.setAttribute('aria-label', `${owner ? `「${owner.title}」自己的 64 份` : '本层 64 份'}：${drops.map(d => `${d.item.title} ${d.item.share} 份`).join('，')}${free ? `，未分配 ${free} 份` : ''}`);
+    $('.c-budget-text').innerHTML = `<span>${owner ? '这一层独立 64 份' : '本层 64 份'} · 已分配 <b>${used}</b></span><span class="${free ? 'is-free' : ''}">${free ? `未分配 <b>${free}</b> 份，是真实留白` : '64 份已全部分配'}</span>`;
+  }
+
+  // ---------- header, lede, track ----------
+  function renderTop() {
+    const f = s.frame, n = s.frames.length;
+    $('.c-when-date').textContent = clock(s.cursor);
+    $('.c-when-count').textContent = `第 ${s.index + 1} / ${n} 次整理`;
+    $('.c-play').innerHTML = s.playing ? '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6.5 5h2.5v10H6.5zm4.5 0h2.5v10H11z" class="is-fill"/></svg><span>暂停</span>' : '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4.5 8.5 5.5L7 15.5Z" class="is-fill"/></svg><span>播放</span>';
+    $('.c-play').setAttribute('aria-label', s.playing ? '暂停回放' : '播放回放');
+    host.querySelector('[data-c="prev"]').disabled = s.index === 0;
+    host.querySelector('[data-c="next"]').disabled = s.index === n - 1;
+    const pos = i => `${(i / (n - 1)) * 100}%`;
+    let lastDay = ''; const days = [];
+    $('.c-track-ticks').innerHTML = s.frames.map((frame, i) => {
+      const d = formatDate(frame.at), first = d !== lastDay; lastDay = d;
+      if (first) days.push(`<span style="left:${pos(i)}">${new Date(frame.at).toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai', day: 'numeric' }).replace('日', '')}</span>`);
+      return `<i class="${first ? 'is-day' : ''}${frame.signal?.type === 'review' ? ' is-review' : ''}${i <= s.index ? ' is-past' : ''}" style="left:${pos(i)}"></i>`;
+    }).join('');
+    $('.c-track-days').innerHTML = days.join('');
+    $('.c-track-thumb').style.left = pos(s.index);
+    track.setAttribute('aria-valuemin', '1'); track.setAttribute('aria-valuemax', String(n)); track.setAttribute('aria-valuenow', String(s.index + 1));
+    track.setAttribute('aria-valuetext', `${clock(f.at)}，${f.title}`);
+    const items = s.layer.items, asks = items.filter(i => notes.notes.get(i.id)?.ask), nested = items.filter(i => !notes.notes.get(i.id)?.ask && notes.notes.get(i.id)?.nested);
+    const owner = s.layerId && getItem(s.state, s.layerId);
+    $('.c-headline').innerHTML = !items.length ? (s.layerId ? '这一层还空着' : '还空着，没有需要记住的事') : asks.length ? `<em>${asks.length} 件</em>等你回应${nested.length ? `<small>，另有 ${nested.length} 件的子项里有</small>` : ''}` : nested.length ? `没有直接等你的事<small>，${nested.length} 件的子项里有</small>` : '没有等你回应的事';
+    $('.c-frame-title').textContent = owner ? `「${owner.title}」自己的 64 份 · ${f.title}` : f.title;
+    $('.c-signal').innerHTML = signalHTML();
+    const path = s.path || [];
+    $('.c-path').hidden = !s.layerId;
+    $('.c-path').innerHTML = s.layerId ? `<button type="button" class="c-back" data-c="rise"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12 5-5 5 5 5"/></svg>返回${path.length > 1 ? '上一层' : '全部事项'}<kbd>Esc</kbd></button><span class="c-crumbs"><button type="button" data-c="root">全部 64 份</button>${path.map((p, i) => `<i aria-hidden="true">›</i>${i === path.length - 1 ? `<b>${esc(p.title)} · 独立 64 份</b>` : `<span>${esc(p.title)}</span>`}`).join('')}</span>` : '';
+  }
+  function sameShares() {
+    if (!s.index) return true;
+    const a = s.previousState.root.items.map(i => `${i.id}:${i.share}`).sort().join(), b = s.state.root.items.map(i => `${i.id}:${i.share}`).sort().join();
+    return a === b;
+  }
+  function signalHTML() {
+    const signal = s.frame.signal;
+    if (!signal) return '<span class="c-sig-kind">初始状态</span>还没有收到输入，64 份全部空着。';
+    if (signal.type === 'review') {
+      const changes = (s.frameDiff?.changes || []).length, checked = s.records[s.index]?.receipt?.type === 'checked' || !changes;
+      return `<span class="c-sig-kind is-review">零事件整理</span>${esc(signal.reason)}：${formatTime(signal.window.from)} 起收到 0 条；${esc(signal.coverage)}。<b>${checked ? '检查后不改' : `按时间重看，更新 ${changes} 项`}</b>${sameShares() ? '，份额未变，液滴不动。' : '。'}`;
+    }
+    const events = s.frame.events, fb = events.filter(e => e.feedback?.length).length, rem = events.filter(e => e.reminder).length;
+    const extra = [fb ? `↩ ${fb} 条是你的回应` : '', rem ? `◷ ${rem} 条到点提醒` : ''].filter(Boolean).join('，');
+    return `<span class="c-sig-kind">本轮输入</span><button type="button" class="c-sig-open" data-c="overview">${events.length} 条${extra ? `，${extra}` : ''}</button>${s.records[s.index]?.receipt?.type === 'checked' ? '<b>检查后不改</b>' : ''}`;
+  }
+
+  // ---------- reading pane ----------
+  function sourceHTML(src) {
+    const e = src.ref?.startsWith('event:') ? findEvent(src.ref.slice(6)) : null;
+    const pub = e?.publicSourceId && scenario.publicSources?.find(p => p.id === e.publicSourceId);
+    return `<blockquote class="c-quote"><p>${esc(src.quote || src.content || e?.text || src.ref)}</p><footer>${esc(src.author || e?.from || '')} · ${esc(src.channel || '')}${e ? ` · ${clock(e.at)}` : ''}${pub ? ` · <a href="${esc(pub.url)}" target="_blank" rel="noreferrer">${esc(pub.title)} ↗</a>` : ''}</footer></blockquote>`;
+  }
+  function loopHTML(item) {
+    const ask = currentAsk(s, item.id), trail = feedbackTrail(s, item.id);
+    if (!ask && !trail.length && item.kind !== 'needs-you') return '';
+    const askBlock = ask ? `<div class="c-ask"><span class="c-ask-tag">${askTag(ask)}</span><p class="c-ask-prompt">${esc(ask.prompt)}</p><div class="c-ask-actions" aria-label="登记的回应方式">${ask.actions.map(a => `<span class="c-ask-action${a.recommended ? ' is-rec' : ''}" aria-disabled="true">${a.meaning === 'input' ? '✎ ' : ''}${esc(a.label || a.id)}${a.recommended ? '<small>推荐</small>' : ''}</span>`).join('')}<span class="c-ask-action is-snooze" aria-disabled="true">◷ 稍后</span></div><p class="c-note">回应方式只作展示，这里不能提交；回应交给下一次整理。就地回应见 D。</p></div>`
+      : `<p class="c-note">${item.kind === 'needs-you' ? '当前版本没有登记回应方式；Agent 改写后没有重新登记，就没有可回传的路径。' : '当前版本没有登记回应方式，只需知道。'}</p>`;
+    const rows = trail.slice().reverse().map(({ event, links, frameIndex }) => {
+      const what = event.reminder ? `◷ 到点提醒 · ${formatTime(event.reminder.requested_at)} 时约定` : links.map(link => `↩ ${viaLabel[link.via] || link.via} · ${esc(feedbackText(s, link, frameIndex))}`).join('；');
+      return `<li${frameIndex === s.index ? ' class="is-now"' : ''}><time>${clock(event.at || s.frames[frameIndex].at)}${frameIndex === s.index ? '<b>本轮</b>' : ''}</time><p class="c-trail-what">${what}</p><p class="c-trail-text">${esc(event.text)}</p></li>`;
+    }).join('');
+    return `<section><h3>反馈回路</h3>${askBlock}${rows ? `<ol class="c-trail">${rows}</ol>` : ''}</section>`;
+  }
+  function detailHTML(item, asOwner) {
+    const parent = item.parent_id && getItem(s.state, item.parent_id);
+    const category = scenario.categories?.[rootOf(s.state, item).id]?.label;
+    const anns = (s.state.annotations || []).filter(a => a.item === item.id || a.item_id === item.id || item.annotations?.includes(a.id));
+    const children = [...(item.children?.items || [])].sort((a, b) => a.rank - b.rank);
+    const swatch = `<i class="c-swatch" style="--cell:${cssRGB(dropColor(s.state, item, Boolean(item.parent_id)))}" aria-hidden="true"></i>`;
+    const head = asOwner ? `<p class="c-read-kicker">你在它的 64 份里 · 已分配 ${item.children?.used ?? 0}</p>` : `<button type="button" class="c-read-back" data-c="overview">‹ 本轮概览</button>`;
+    return `${head}<p class="c-read-meta"><span>${swatch}${esc([category, parent ? `属于「${parent.title}」` : '', kindLabel[item.kind]].filter(Boolean).join(' · '))}</span><span class="c-read-share">${item.share} / 64</span></p>
+      <h2>${esc(item.title)}</h2>
+      <p class="c-read-summary">${esc(item.summary)}</p>
+      ${item.merged_into ? `<p class="c-note">已合并到 <button type="button" class="c-inline" data-select="${esc(item.merged_into)}">${esc(getItem(s.state, item.merged_into)?.title || item.merged_into)}</button></p>` : ''}
+      ${loopHTML(item)}
+      ${item.reason ? `<section><h3>为什么是这个分量</h3><p>${esc(item.reason)}</p></section>` : ''}
+      ${item.sources?.length ? `<section><h3>依据原文</h3>${item.sources.map(sourceHTML).join('')}</section>` : ''}
+      ${anns.length ? `<section><h3>批注</h3>${anns.map(a => `<blockquote class="c-quote"><p>${esc(a.text)}</p><footer>${esc(a.author || '用户')} · ${a.status === 'acknowledged' ? 'Agent 已纳入整理' : '已保存，等待处理确认'}</footer></blockquote>`).join('')}</section>` : ''}
+      ${children.length && !asOwner ? `<section><h3>内含 ${children.length} 件 · 独立 64 份</h3><ul class="c-children">${children.map(c => `<li><span>${currentAsk(s, c.id) ? '<i class="c-dot-ask" aria-label="等你回应"></i>' : ''}${esc(c.title)}</span><small>${c.share} 份</small></li>`).join('')}</ul><button type="button" class="c-cta" data-dive="${esc(item.id)}">进入它的 64 份 →</button></section>` : ''}
+      <button type="button" class="c-json" data-lab-inspect="state">核对完整状态 JSON ↗</button>`;
+  }
+  function overviewHTML() {
+    const f = s.frame, events = f.events, signal = f.signal;
+    if (!signal) return `<p class="c-read-kicker">本轮概览</p><h2>${esc(f.title)}</h2><p class="c-read-summary">${esc(f.narrative)}</p><p class="c-note">画面从空开始：没有输入，就没有份额被分配，64 格全是留白。</p>`;
+    const allChanges = (s.frameDiff?.changes || []).filter(c => c.type !== 'annotations_changed');
+    const layerIds = new Set([...s.layer.items.map(i => i.id), ...getLayerIds(s)]);
+    const changes = allChanges.filter(c => layerIds.has(c.item)), nestedChanges = allChanges.length - changes.length;
+    const name = id => esc(getItem(s.state, id)?.title || getItem(s.previousState, id)?.title || id);
+    const groups = { added: [], withdrawn: [], merged: [], updated: [] };
+    for (const c of changes) (groups[c.type] || groups.updated).push(c);
+    const mergedInto = new Map();
+    for (const c of groups.merged) { const into = getItem(s.state, c.item)?.merged_into; if (into) mergedInto.set(into, [...(mergedInto.get(into) || []), c.item]); }
+    const fresh = groups.added.filter(c => !mergedInto.has(c.item));
+    const changeRows = [
+      fresh.length ? `<li><b>滴入</b>${fresh.map(c => name(c.item)).join('、')}</li>` : '',
+      [...mergedInto].map(([into, from]) => `<li><b>融合</b>${from.map(name).join(' + ')} → ${name(into)}</li>`).join(''),
+      groups.withdrawn.length ? `<li><b>撤下</b>${groups.withdrawn.map(c => name(c.item)).join('、')}</li>` : '',
+      groups.updated.length ? (() => { const moved = groups.updated.filter(c => c.fields.includes('share')); return `<li><b>调整</b>${groups.updated.length} 项${moved.length ? `，其中 ${moved.length} 项份额变化：${moved.slice(0, 4).map(c => `${name(c.item)} ${c.before.share}→${c.after.share}`).join('；')}${moved.length > 4 ? ' 等' : ''}` : '，内容更新，份额未变'}</li>`; })() : '',
+      nestedChanges ? `<li><b>子项</b>另有 ${nestedChanges} 处变化，进入对应事项查看</li>` : '',
+    ].filter(Boolean).join('');
+    const review = signal.type === 'review' ? (() => {
+      const checked = s.records[s.index]?.receipt?.type === 'checked' || !changes.length;
+      return `<section class="c-review"><h3>零事件整理</h3><dl><div><dt>调用原因</dt><dd>${esc(signal.reason)}</dd></div><div><dt>窗口</dt><dd>${clock(signal.window.from)} — ${clock(signal.window.to)}，收到 0 条</dd></div><div><dt>覆盖</dt><dd>${esc(signal.coverage)}</dd></div><div><dt>结果</dt><dd>${checked ? '检查后不改' : `按时间重看，更新了 ${changes.map(c => `「${name(c.item)}」`).join('、')}`}${sameShares() ? '；份额未变，液滴保持不动' : ''}</dd></div></dl><p class="c-note">没有收到消息不等于现实没有变化；这次整理只说明窗口内没有输入。</p></section>`;
+    })() : '';
+    const inputs = events.length ? `<section><h3>本轮输入 · ${events.length} 条</h3><ol class="c-inputs">${events.map((e, i) => {
+      const linked = notes.links.filter(l => l.index === i);
+      const linkRows = linked.map(l => {
+        const title = l.at ? getItem(s.state, l.at.id)?.title : '';
+        const what = l.reminder ? `◷ 到点提醒：你 ${clock(l.reminder.requested_at)} 让我此刻再提起` : `↩ ${viaLabel[l.link.via] || l.link.via}回应「${esc(priorAsk(s, l.link.target, s.index - 1)?.prompt || getItem(s.state, l.link.target)?.title || '')}」：${esc(feedbackText(s, l.link, s.index))}`;
+        return `<div class="c-input-link"><span>${what}</span>${l.at ? `<button type="button" data-select="${esc(l.at.id)}" data-locate="${esc(l.at.id)}">定位到「${esc(title)}」${l.at.direct ? '' : '（所在事项）'}</button>` : '<span class="c-note">对应事项不在当前层</span>'}</div>`;
+      }).join('');
+      return `<li class="${linked.length ? 'is-linked' : ''}${e.disposition !== 'used' ? ' is-quiet' : ''}"><div class="c-input-head"><span>${esc(e.channel)} · ${esc(e.from)} · ${formatTime(e.at)}</span><b>${dispositionLabel[e.disposition] || e.disposition}</b></div><p>${esc(e.text)}</p>${e.why ? `<small>${esc(e.why)}</small>` : ''}${linkRows}</li>`;
+    }).join('')}</ol><button type="button" class="c-json" data-lab-inspect="inputs">原始输入 ↗</button> <button type="button" class="c-json" data-lab-inspect="batch">声明与回执 ↗</button></section>` : '';
+    return `<p class="c-read-kicker">本轮概览 · ${clock(f.at)}</p><h2>${esc(f.title)}</h2><p class="c-read-summary">${esc(f.narrative)}</p>${review}${changeRows ? `<section><h3>本轮变化</h3><ul class="c-changes">${changeRows}</ul></section>` : ''}${inputs}`;
+  }
+  function renderRead() {
+    const item = s.selectedId && (getItem(s.state, s.selectedId) || getItem(s.baseState, s.selectedId));
+    const owner = !item && s.layerId && getItem(s.state, s.layerId);
+    const sig = `${s.index}|${s.cursor}|${s.layerId}|${s.selectedId}`;
+    if (read.dataset.sig === sig) return;
+    read.dataset.sig = sig;
+    read.innerHTML = item ? detailHTML(item, false) : owner ? detailHTML(owner, true) : overviewHTML();
+  }
+
+  // ---------- events ----------
+  function choose(id, fromPointer) {
+    const item = getItem(s.state, id); if (!item) return;
+    if (item.children?.items?.length) model.dive(id);
+    else model.select(s.selectedId === id ? null : id);
+    if (fromPointer && geo.narrow) requestAnimationFrame(() => $('.c-read').scrollIntoView({ behavior: reduced.matches ? 'auto' : 'smooth', block: 'start' }));
+  }
+  function hitTest(event) {
+    const r = canvas.getBoundingClientRect(), x = event.clientX - r.left, y = event.clientY - r.top;
+    let best = null;
+    for (const d of flight ? lastDrops : settled) {
+      if (d.id.startsWith('out:') || (d.alpha ?? 1) < .5) continue;
+      if (Math.hypot(x - d.x, y - d.y) <= d.r + 3 && (!best || d.r < best.r)) best = d;
+    }
+    return best?.id || null;
+  }
+  host.addEventListener('click', event => {
+    const t = event.target.closest('button');
+    if (!t) {
+      if (event.target === canvas || event.target.closest('.c-stage')) { const id = hitTest(event); if (id) choose(id, true); else model.select(null); return; }
+      const cell = event.target.closest('.c-budget-cells i[data-id]'); if (cell) choose(cell.dataset.id, true);
+      return;
+    }
+    if (t.dataset.labInspect) return; // the lab shell opens the inspector
+    if (t.classList.contains('c-label')) { choose(t.dataset.id, event.detail > 0); return; }
+    if (t.dataset.select) { model.select(t.dataset.select); return; }
+    if (t.dataset.dive) { model.dive(t.dataset.dive); return; }
+    switch (t.dataset.c) {
+      case 'prev': model.goFrame(s.index - 1); break;
+      case 'next': model.goFrame(s.index + 1); break;
+      case 'play': model.togglePlay(); break;
+      case 'rise': model.rise(); break;
+      case 'root': model.goRoot(); break;
+      case 'overview': model.select(null); break;
+    }
+  });
+  const hover = id => {
+    if (hoverId === id) return; hoverId = id;
+    for (const [key, e] of labels) e.el.classList.toggle('is-hover', key === id);
+    host.querySelectorAll('.c-budget-cells i[data-id]').forEach(el => el.classList.toggle('is-hover', el.dataset.id === id));
+    canvas.style.cursor = id ? 'pointer' : '';
+    kick();
+  };
+  canvas.addEventListener('pointermove', event => { if (event.pointerType === 'mouse') hover(hitTest(event)); });
+  host.addEventListener('pointerover', event => { const t = event.target.closest('.c-label, [data-locate], .c-budget-cells i[data-id]'); if (t) hover(t.dataset.locate || t.dataset.id || null); else if (event.target !== canvas) hover(null); });
+  host.addEventListener('focusin', event => { const t = event.target.closest('.c-label, [data-locate]'); if (t) hover(t.dataset.locate || t.dataset.id); });
+  host.addEventListener('focusout', () => hover(null));
+  stage.addEventListener('pointerleave', () => hover(null));
+  // The scrubber: drag or click to a整理时刻; arrows are the shell's ←/→.
+  const frameAt = x => { const r = track.getBoundingClientRect(); return Math.round(clamp((x - r.left) / r.width, 0, 1) * (s.frames.length - 1)); };
+  let scrubbing = false;
+  track.addEventListener('pointerdown', event => { scrubbing = true; track.setPointerCapture(event.pointerId); const i = frameAt(event.clientX); if (i !== s.index) model.goFrame(i); });
+  track.addEventListener('pointermove', event => { if (!scrubbing) return; const i = frameAt(event.clientX); if (i !== s.index) model.goFrame(i); });
+  track.addEventListener('pointerup', () => { scrubbing = false; });
+  track.addEventListener('keydown', event => {
+    const map = { Home: 0, End: s.frames.length - 1, PageUp: s.index - 5, PageDown: s.index + 5, ArrowUp: s.index + 1, ArrowDown: s.index - 1 };
+    if (event.key in map) { event.preventDefault(); model.goFrame(map[event.key]); }
+  });
+
+  let resizeFrame = 0;
+  const onResize = () => { cancelAnimationFrame(resizeFrame); resizeFrame = requestAnimationFrame(() => { const w = stage.clientWidth; if (geo && w === geo.w && baseHeight(w) === geo.baseH) return; measure(); for (const e of labels.values()) e.sig = ''; transition('resize'); }); };
+  const observer = new ResizeObserver(onResize); observer.observe(stage.parentElement);
+  addEventListener('resize', onResize);
+
+  measure();
+  const unsubscribe = model.subscribe((next, info) => {
+    prev = s; s = next;
+    const key = geometryKey(s), changed = key !== layoutKey;
+    notes = annotate(s);
+    renderTop();
+    if (info.type === 'init') { layoutKey = key; transition('init'); }
+    else if (changed || info.type === 'dive' || info.type === 'rise') {
+      layoutKey = key;
+      const layerMoved = (prev?.layerId || null) !== (s.layerId || null);
+      const type = info.type === 'dive' || info.type === 'rise' ? info.type : layerMoved ? (s.layerId ? 'dive' : 'rise') : 'frame';
+      transition(type, info.anchorId || (type === 'rise' ? prev?.layerId : s.layerId));
+    } else refreshStatic();
+    renderRead();
+  });
+  // For review tooling: time one full-canvas draw, GPU included.
+  host.__cField = { renderer, measure() { const t0 = performance.now(); renderer.render(lastDrops.length ? lastDrops : settled, {}); renderer.finish(); return performance.now() - t0; }, get drops() { return lastDrops; }, MAX_DROPS, freeze(t) { if (flight) { flight.frozen = t; kick(); } return Boolean(flight); } };
+  return () => { disposed = true; cancelAnimationFrame(raf); cancelAnimationFrame(resizeFrame); observer.disconnect(); removeEventListener('resize', onResize); unsubscribe(); renderer.dispose(); };
 }
