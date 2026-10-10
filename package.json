@@ -1,0 +1,22 @@
+{
+  "name": "fold-experience",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "site:prepare": "node scripts/prepare-site.mjs",
+    "site:dev": "npm run site:prepare && vitepress dev site --host 127.0.0.1 --port 4174",
+    "site:build": "npm run site:prepare && vitepress build site",
+    "site:preview": "wrangler dev --local --ip 127.0.0.1 --port 4174",
+    "deploy": "npm run site:build && wrangler deploy"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "markdown-it-mathjax3": "4.3.2",
+    "mermaid": "12.1.0",
+    "vitepress": "1.6.4",
+    "vue": "3.5.43",
+    "wrangler": "4.149.0"
+  }
+}

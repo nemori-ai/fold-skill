@@ -6,3 +6,9 @@ __pycache__/
 .env
 .env.*
 !.env.example
+node_modules/
+dist/
+.wrangler/
+site/.generated/
+site/.vitepress/cache/
+.impeccable/

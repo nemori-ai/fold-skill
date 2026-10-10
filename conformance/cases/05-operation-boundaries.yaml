@@ -182,3 +182,88 @@ steps:
             - {channel: email, ref: "quote:b", quote: 乙报价 220。}
         leaf-a: {status: merged, merged_into: comparison}
         leaf-b: {status: merged, merged_into: comparison}
+
+  - name: 标题超过二十四个 Unicode 字符时整批拒绝
+    now: "2026-10-09T10:09:00+08:00"
+    commit:
+      batch_id: boundaries-title-length
+      declarations:
+        - id: payment
+          title: 方案报价与实施日期均已确认但付款节点仍待双方核对。
+          summary: 已确认报价与实施日期，双方尚未核对付款节点。
+          weight: trace
+          kind: in-progress
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {code: invalid_field, field: title}
+      revision: r4
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false
+
+  - name: 去掉句号后恰好二十四个字符，拒绝过的批次可修正后提交
+    now: "2026-10-09T10:10:00+08:00"
+    commit:
+      batch_id: boundaries-title-length
+      declarations:
+        - id: payment
+          title: 方案报价与实施日期均已确认但付款节点仍待双方核对
+          summary: 已确认报价与实施日期，双方尚未核对付款节点。
+          weight: trace
+          kind: in-progress
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r5
+      events_appended: 1
+      used: 25
+      items:
+        payment:
+          title: 方案报价与实施日期均已确认但付款节点仍待双方核对
+          created_at: "2026-10-09T10:10:00+08:00"
+          updated_at: "2026-10-09T10:10:00+08:00"
+
+  - name: 补充摘要时省略 title，保留已接受的二十四字标题
+    now: "2026-10-09T10:11:00+08:00"
+    commit:
+      batch_id: boundaries-title-inherit
+      declarations:
+        - id: payment
+          relation: supersedes:payment
+          weight: trace
+          kind: in-progress
+          summary: 双方约定明天继续核对付款节点，报价与实施日期维持不变。
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r6
+      events_appended: 1
+      items:
+        payment:
+          title: 方案报价与实施日期均已确认但付款节点仍待双方核对
+          summary: 双方约定明天继续核对付款节点，报价与实施日期维持不变。
+          created_at: "2026-10-09T10:10:00+08:00"
+          updated_at: "2026-10-09T10:11:00+08:00"
+
+  - name: 复核省略标题及摘要，不制造新的内容或更新时间
+    now: "2026-10-09T10:12:00+08:00"
+    commit:
+      batch_id: boundaries-title-checked
+      declarations:
+        - {id: payment, relation: supersedes:payment, weight: trace, kind: in-progress}
+      acknowledges: []
+    expect:
+      accepted: true
+      batch_status: committed
+      revision: r6
+      events_appended: 1
+      state_unchanged: true
+      events_contain:
+        - {type: checked, batch_id: boundaries-title-checked, revision: r6, changes: []}
+      items:
+        payment:
+          title: 方案报价与实施日期均已确认但付款节点仍待双方核对
+          updated_at: "2026-10-09T10:11:00+08:00"

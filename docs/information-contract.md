@@ -144,7 +144,7 @@ declarations 和 acknowledges 均可省略，默认空数组。同一批不能�
 | 字段 | 输入要求 | 取值与效果 |
 | --- | --- | --- |
 | `id` | 必填，不可 null | `[a-z0-9-]{1,64}`；全存储范围唯一，同一事项生命周期内不变。 |
-| `title` | 新建时必填，不可 null | 非空，≤ 12 字；supersede 省略时保留。 |
+| `title` | 新建时必填，不可 null | 非空，≤ 24 个 Unicode 字符（按码点计数）。直述具体对象与当前关键事实、结果或待决事项，避免悬念与比喻；关键事实或决策状态改变使原标题过时时同步更新，不因份额调整或无变化复核而机械改写。supersede 省略时保留。 |
 | `summary` | 最终有子层时必需且不可为空 | ≤ 60 字；父层摘要应自足。无子层时可用 null 清空。 |
 | `weight` | relation 不是 withdraw 时必填，不可 null | critical / high / normal / low / trace。 |
 | `kind` | relation 不是 withdraw 时必填，不可 null | needs-you / in-progress / done / fyi。 |

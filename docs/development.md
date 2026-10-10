@@ -4,7 +4,7 @@
 
 ## 本轮环境
 
-使用 Python 标准库完成仓库辅助工作，不安装第三方依赖。Python 3.11+、Git 和 Make 足以运行当前命令。
+仓库基础检查使用 Python 标准库，不安装第三方依赖；Python 3.11+、Git 和 Make 足以运行下述 `make setup`、`make check` 和本地原型命令。文档与原型体验站另有 Node.js 构建入口，见下文。
 
 首次初始化时，本机 `python3 --version` 为 `Python 3.14.6`。其他机器使用自己的兼容 Python 即可；没有把本机路径写入项目配置。
 
@@ -38,6 +38,23 @@ git diff --check
 历史草案位于 `docs/reference/`，按原件保留，不参与维护中文档的链接和格式检查。
 
 `git diff --check` 检查 Git 可见的变更格式。当前还没有产品实现；用例文件先于代码存在，产品 CLI 实现后再增加运行用例的命令。
+
+## 体验站构建与发布
+
+体验站是独立的静态文档与交互实验，使用 Node.js 22+。VitePress 提供导航和中文本地搜索；Mermaid 与 MathJax 分别呈现文档已有的流程图和公式。依赖版本由 `package-lock.json` 固定，不改变首切片核心 CLI 使用 Python 标准库的决定。
+
+```sh
+npm ci
+npm run site:dev
+npm run site:build
+npm run site:preview
+```
+
+本地站点默认在 `http://127.0.0.1:4174`。`scripts/prepare-site.mjs` 从仓库文档和原型源码生成 `site/.generated/`，随后 VitePress 输出 `dist/`。修改原始文档后，重新运行上述开发或构建命令同步内容；不要直接编辑生成目录。`make prototype` 仍可单独在 4173 端口运行原型。
+
+`npm run deploy` 先重新构建，再通过已登录的 Wrangler 发布 `dist/`。`wrangler.jsonc` 只配置静态资源托管，不配置数据库、生产业务 API 或真实账户接入。原型的私人消息与 Agent 判断仍为演示编排。
+
+发布前运行 `make check` 和 `npm run site:build`，并核对文档链接、公式、流程图、搜索及原型交互。站点构建成功不等于产品 CLI 的持久化与完整验收已经完成。
 
 ## 实现时使用哪份规范
 

@@ -1,0 +1,68 @@
+/* The switcher is a review tool. Each experiment owns the whole reading layout. */
+:root { color-scheme:light; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans CJK SC",sans-serif; background:oklch(.975 .007 95); color:oklch(.28 .025 155); }
+* { box-sizing:border-box; }
+body { margin:0; }
+button,input,select,textarea { font:inherit; }
+button,a,select { -webkit-tap-highlight-color:transparent; }
+button { cursor:pointer; }
+button:disabled { cursor:default; opacity:.45; }
+[hidden] { display:none!important; }
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible { outline:2px solid oklch(.48 .08 150); outline-offset:4px; }
+button { color:inherit; }
+.lab-skip { position:fixed; top:-80px; z-index:200; left:20px; padding:12px; background:oklch(.99 .005 95); }
+.lab-skip:focus { top:10px; }
+#variant-host { min-height:100dvh; padding-bottom:100px; outline:none; }
+.lab-loading { min-height:70vh; display:grid; place-content:center; text-align:center; padding:30px; color:oklch(.48 .02 150); }
+.lab-switcher { position:fixed; z-index:90; bottom:18px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:8px; max-width:calc(100vw - 28px); padding:8px 12px; border-radius:16px; background:oklch(.24 .026 155); color:oklch(.96 .008 95); box-shadow:0 10px 30px oklch(.2 .02 150 / .13); font-size:12px; }
+.lab-mark { font-size:13px; font-weight:700; letter-spacing:.02em; display:flex; flex-direction:column; gap:4px; margin:0 12px 0 4px; white-space:nowrap; }
+.lab-mark small { font-weight:400; color:oklch(.76 .018 150); font-size:12px; }
+.lab-options { display:flex; gap:4px; }
+.lab-switcher button { border:0; background:transparent; color:inherit; border-radius:9px; min-height:42px; padding:8px 12px; white-space:nowrap; flex-shrink:0; }
+.lab-options button { display:flex; align-items:center; gap:8px; white-space:nowrap; }
+.lab-options button b { font-size:12px; color:oklch(.76 .018 150); }
+.lab-options button[aria-pressed="true"] { background:oklch(.95 .015 100); color:oklch(.25 .03 150); }
+.lab-options button[aria-pressed="true"] b { color:inherit; }
+.lab-switcher button:hover { background:oklch(.34 .027 155); }
+.lab-options button[aria-pressed="true"]:hover { background:oklch(.99 .005 95); }
+.lab-arrow { font-size:23px!important; padding:2px 8px!important; }
+.lab-utilities { display:flex; align-items:center; gap:2px; margin-left:10px; padding-left:12px; border-left:1px solid oklch(.45 .03 150); }
+.lab-utilities select { width:125px; border:0; border-radius:7px; background:oklch(.31 .025 155); color:inherit; padding:8px; font-size:12px; }
+.lab-utilities a { color:inherit; text-decoration:none; white-space:nowrap; padding:8px; }
+.lab-inspector { position:fixed; z-index:110; top:0; right:0; bottom:0; width:min(560px,100vw); background:oklch(.987 .006 95); color:oklch(.28 .02 150); padding:24px; overflow:auto; box-shadow:-12px 0 50px oklch(.2 .02 150 / .13); }
+.lab-inspector-top { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.lab-inspector h2 { font-size:20px; margin:0; }
+.lab-inspector button,.lab-about>button { border:0; background:transparent; padding:9px 12px; border-radius:6px; min-height:38px; }
+.lab-inspector-top button,.lab-about>button { font-size:26px; }
+.lab-inspector-tabs { display:flex; flex-wrap:wrap; gap:3px; padding:18px 0; }
+.lab-inspector-tabs button { font-size:12px; }
+.lab-inspector-tabs button.is-active { background:oklch(.9 .025 140); }
+.lab-inspector pre { white-space:pre-wrap; overflow-wrap:anywhere; font:12px/1.7 ui-monospace,monospace; margin:0; padding:18px; background:oklch(.95 .006 95); border-radius:9px; }
+.lab-about { position:fixed; z-index:105; bottom:98px; left:50%; transform:translateX(-50%); width:min(580px,calc(100vw - 28px)); max-height:75vh; overflow:auto; padding:28px 32px; background:oklch(.987 .007 95); box-shadow:0 12px 60px oklch(.2 .02 150 / .18); border-radius:14px; }
+.lab-about>button { float:right; margin:-15px -15px 0 0; }
+.lab-eyebrow { font-size:12px; color:oklch(.49 .025 150); }
+.lab-about h2 { font-size:23px; margin:14px 0; }
+.lab-about p,.lab-about li { font-size:14px; line-height:1.9; }
+.lab-about ul { padding-left:20px; }
+.lab-about .lab-small { font-size:12px; color:oklch(.48 .02 150); }
+.shared-detail { font-size:14px; line-height:1.8; }
+.shared-detail h2 { font-size:23px; line-height:1.45; margin:8px 0 18px; }
+.shared-detail h3 { font-size:13px; margin:0 0 10px; font-weight:600; }
+.shared-detail section { padding:20px 0; border-top:1px solid oklch(.85 .01 100); }
+.shared-kicker { font-size:12px; color:oklch(.48 .025 150); }
+.shared-summary { font-size:16px; }
+.shared-detail pre { white-space:pre-wrap; overflow-wrap:anywhere; font-size:12px; line-height:1.7; }
+.shared-children { display:grid; gap:8px; }
+.shared-children button { display:flex; justify-content:space-between; gap:12px; text-align:left; padding:10px 0; background:transparent; border:0; }
+.shared-children small { white-space:nowrap; color:oklch(.48 .02 150); font-size:12px; }
+.shared-detail .shared-link { background:transparent; border:0; padding:8px 0; text-decoration:underline; text-underline-offset:4px; }
+.shared-detail blockquote { margin:14px 0; padding:15px; background:oklch(.94 .012 100); border-radius:8px; }
+.shared-detail blockquote footer,.shared-source small { color:oklch(.48 .02 150); font-size:12px; }
+.shared-source { margin-bottom:16px; }
+.shared-source p { margin:5px 0; }
+.shared-detail a { color:inherit; }
+.shared-input { padding:18px 0; border-top:1px solid oklch(.86 .015 140); font-size:14px; line-height:1.8; }
+.shared-input>div { display:flex; justify-content:space-between; gap:15px; color:oklch(.47 .025 150); font-size:12px; }
+.shared-input>small { font-size:12px; color:oklch(.48 .02 150); }
+@media(max-width:900px){.lab-mark{display:none}.lab-utilities{margin-left:3px;padding-left:7px}.lab-utilities select{width:110px}}
+@media(max-width:640px){#variant-host{padding-bottom:128px}.lab-switcher{bottom:10px;gap:2px;padding:6px;flex-wrap:wrap;justify-content:center;width:calc(100vw - 20px);border-radius:12px}.lab-options{flex:1;justify-content:center}.lab-options button{padding:8px 9px;gap:6px;font-size:12px}.lab-utilities{border:0;padding:0;margin:0;justify-content:center;width:100%}.lab-utilities button,.lab-utilities a{min-height:32px;padding:5px 9px}.lab-utilities select{width:142px;padding:6px}.lab-about{bottom:118px;padding:24px}.lab-inspector{padding:20px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
