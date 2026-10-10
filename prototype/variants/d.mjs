@@ -42,7 +42,7 @@ export function mount(host, model) {
         <li><b>先看大字</b>顶部一句话说有几件等你回应。</li>
         <li><b>白卡 = 等你回应</b>只有登记了反馈路径的事才是卡片。大字是要你回答的问题，按钮形态说明怎么答：<span class="d-chip-demo is-fill">选项</span>决定、<span class="d-chip-demo">¥ 金额</span>提供、<span class="d-chip-demo">我已处理</span>去做。</li>
         <li><b>纸面上的行 = 进行中与结果</b>没有按钮、没有颜色，左滑表示知道了。</li>
-        <li><b>高度 = 份额</b>一份约一行；黑点表示自比较起点以来有变化。</li>
+        <li><b>先后与字号 = 份额</b>份额越大越靠前、字越大；24 份带依据原文，6 份只留一行。空余份额写在底部折叠带里。黑点表示自比较起点以来有变化。</li>
         <li><b>小事叠在一起</b>最多露 4 张，其余记作 +x，不参与批量签收。</li>
       </ol></section>
       <p class="d-small">在这里点按的反馈只留在本页演示，不写回状态。故事里真实发生的回复与按钮，标为 ↩。<button class="d-link" data-d="reset">清除本页反馈</button></p>
@@ -50,12 +50,11 @@ export function mount(host, model) {
     <div class="d-device"><div class="d-phone"><div class="d-screen" tabindex="-1">
       <div class="d-statusbar"><span class="d-status-time"></span><span class="d-island"></span><span class="d-status-icons" aria-hidden="true">●●● ◗ ▭</span></div>
       <div class="d-scroll">
-        <header class="d-head"><div class="d-head-main"><div class="d-date"></div><button class="d-snoozed" data-d="snoozed" hidden></button></div><h1 class="d-headline"></h1><p class="d-head-sub"><span class="d-since"></span><button class="d-surface-chip" data-d="surface"></button></p><p class="d-signal" hidden></p></header>
+        <header class="d-head"><div class="d-head-main"><div class="d-date"></div><span class="d-head-tools"><button class="d-snoozed" data-d="snoozed" hidden></button><button class="d-log-btn" data-d="log" aria-label="我的操作记录">记录</button></span></div><h1 class="d-headline"></h1><p class="d-head-sub"><span class="d-since"></span><button class="d-surface-chip" data-d="surface"></button></p><p class="d-signal" hidden></p></header>
         <main class="d-cards" aria-label="等你回应"></main>
         <section class="d-rows" aria-label="进行中与结果"></section>
         <section class="d-known" aria-label="只需知道"></section>
         <div class="d-blank" aria-hidden="true"></div>
-        <div class="d-read-shelf"></div>
       </div>
       <button class="d-fold" data-d="fold" aria-label="查看被折叠的输入与历史"><span class="d-fold-tex" aria-hidden="true"></span><span class="d-fold-text"></span><span class="d-fold-more"></span></button>
       <section class="d-detail" aria-label="事项详情" hidden></section>
@@ -69,7 +68,7 @@ export function mount(host, model) {
   // ---------- feedback (local only) ----------
   const fbFor = item => { const f = local.get(versionKey(item)); return f && f.at <= s.cursor ? f : null; };
   function give(item, action, value) {
-    const f = { meaning: action.meaning, label: action.label, id: action.id, value, at: s.cursor, until: action.until };
+    const f = { meaning: action.meaning, label: action.label, id: action.id, value, at: s.cursor, until: action.until, itemId: item.id, title: item.title };
     local.set(versionKey(item), f);
     const verb = { decide: () => `已选择「${action.label}」`, input: () => `已提交「${value ?? action.label}」`, act: () => `已报告「${action.label}」`, ack: () => '已阅', snooze: () => `${clock(action.until)} 再提醒` }[action.meaning]();
     toast(`${verb} · 交给 Agent 下一轮整理`);
@@ -211,9 +210,7 @@ export function mount(host, model) {
     if (!items.length) $('.d-cards').innerHTML = `<div class="d-empty"><p>这里还空着</p><span>${s.frame.phase === 'initial' ? '还没有收到第一条需要记住的消息。' : '当前没有占位的事项。'}</span></div>`;
     $('.d-headline').innerHTML = !items.length ? '' : waiting ? `${waiting} 件等你回应` : asks.length ? '都回应了，等 Agent 整理' : '没有要你回应的事';
     const blank = s.state.root.budget - s.state.root.used;
-    $('.d-blank').style.height = `${blank * UNIT}px`;
-    $('.d-blank').dataset.label = blank > 0 ? `还空着 ${blank} 份` : '';
-    $('.d-read-shelf').innerHTML = readOut.length ? `<p>通知中心里已阅 ${readOut.length} 条，已不占位：${readOut.map(item => `<button class="d-link" data-undo="${esc(item.id)}">${esc(item.title.slice(0, 10))}</button>`).join('、')}</p>` : '';
+    $('.d-blank').hidden = true;
 
     const at = new Date(s.cursor);
     $('.d-status-time').textContent = clock(at);
@@ -233,7 +230,7 @@ export function mount(host, model) {
     const total = s.frames.slice(0, s.index + 1).reduce((n, f) => n + f.events.length, 0);
     const kinds = s.frame.events.reduce((m, e) => (m[e.disposition] = (m[e.disposition] || 0) + 1, m), {});
     const gone = (s.state.historical || []).length;
-    $('.d-fold-text').innerHTML = `<b>累计 ${total} 条输入 → 现在 ${items.length} 件</b><small>本轮 ${s.frame.events.length} 条${kinds.noise ? ` · 噪音 ${kinds.noise}` : ''}${kinds.duplicate ? ` · 重复 ${kinds.duplicate}` : ''}${gone ? ` · 撤下或合并 ${gone}` : ''}</small>`;
+    $('.d-fold-text').innerHTML = `<b>累计 ${total} 条输入 → 现在 ${items.length} 件</b><small>本轮 ${s.frame.events.length} 条${kinds.noise ? ` · 噪音 ${kinds.noise}` : ''}${kinds.duplicate ? ` · 重复 ${kinds.duplicate}` : ''}${gone ? ` · 撤下或合并 ${gone}` : ''}${blank > 0 ? ` · 空余 ${blank} 份` : ''}</small>`;
     $('.d-fold-more').textContent = '›';
 
     // rail
@@ -334,6 +331,14 @@ export function mount(host, model) {
     const hist = s.state.historical || [];
     openSheet(`<h3>折在下面的</h3><p class="d-small">本轮 ${s.frame.events.length} 条输入，全部保留；份额只给值得关注的事项。</p><ul class="d-fold-list">${s.frame.events.map(e => `<li><small>${esc(e.channel)} · ${esc(e.from)} · ${clock(e.at)}<b>${labels[e.disposition] || e.disposition}</b></small><p>${esc(e.text)}</p></li>`).join('') || '<li><p>这一轮没有新输入。</p></li>'}</ul>${hist.length ? `<h4>已撤下或合并 ${hist.length} 件</h4><ul class="d-fold-list">${hist.map(h => `<li><small>${h.status === 'merged' ? '已合并' : '已撤下'}</small><p>${esc(h.title)}</p></li>`).join('')}</ul>` : ''}<div class="d-sheet-links"><button data-lab-inspect="inputs">原始输入 ↗</button><button data-lab-inspect="batch">声明与回执 ↗</button><button data-lab-inspect="diff">变化对比 ↗</button></div>`);
   }
+  // Everything you answered, newest first: this page's local feedback plus the story's own.
+  function logSheet() {
+    const verb = f => f.meaning === 'ack' ? '已阅' : f.meaning === 'decide' ? `选了「${f.label}」` : f.meaning === 'input' ? `提交「${f.value ?? f.label}」` : f.meaning === 'act' ? `报告「${f.label}」` : `${clock(f.until)} 再提醒`;
+    const entries = [...local.entries()].filter(([, f]) => f.at <= s.cursor).map(([key, f]) => ({ at: f.at, title: f.title, text: verb(f), id: f.itemId, live: getItem(s.state, f.itemId)?.updated_at === key.split('|')[1], local: true }));
+    s.frames.slice(0, s.index + 1).forEach(frame => frame.events.forEach(e => (e.feedback || []).forEach(link => entries.push({ at: Date.parse(e.at), title: getItem(s.state, link.target)?.title || link.target, text: e.via === 'button' || link.via === 'button' ? e.text.replace(/^对「[^」]*」/, '') : `回复：${e.text}`, id: link.target, story: true }))));
+    entries.sort((a, b) => b.at - a.at);
+    openSheet(`<h3>我的操作记录</h3><p class="d-small">你对各件事的回应，按时间倒序。本页点按的只留在演示里，故事中真实发生的标 ↩。</p><ul class="d-fold-list d-log">${entries.map(e => `<li><small>${formatDate(e.at)} ${clock(e.at)}${e.story ? ' · ↩ 故事' : e.live ? ' · 本页' : ' · 本页（事项已更新）'}</small><p><b>${esc(e.title)}</b>${esc(e.text)}</p>${e.local && e.live ? `<button class="d-link" data-undo="${esc(e.id)}">撤回</button>` : ''}${getItem(s.state, e.id) ? `<button class="d-link is-quiet" data-open="${esc(e.id)}">看这件事</button>` : ''}</li>`).join('') || '<li><p>还没有回应过任何事。</p></li>'}</ul>`);
+  }
   function actionsSheet(item) { openSheet(`<h3>${esc(item.title)}</h3>${currentAsk(s, item.id)?.prompt ? `<p class="d-small">${esc(currentAsk(s, item.id).prompt)}</p>` : ''}${controlsHTML(item, { inDetail: true })}<button class="d-link" data-open="${esc(item.id)}">看详情 ›</button>`); }
 
   let toastTimer = null;
@@ -358,8 +363,8 @@ export function mount(host, model) {
     if (t.classList.contains('d-sheet-backdrop')) return closeSheet();
     if (d.act) { const [id, aid] = d.act.split(':'); const item = findAny(id); const action = currentAsk(s, id).actions.find(a => a.id === aid); closeSheet(); give(item, action, action.meaning === 'input' ? '1 张照片' : undefined); return; }
     if (d.ack) { closeSheet(); give(findAny(d.ack), { meaning: 'ack', label: '已阅', id: 'ack' }); return; }
-    if (d.ackMany) { for (const id of d.ackMany.split(',')) local.set(versionKey(findAny(id)), { meaning: 'ack', label: '已阅', id: 'ack', at: s.cursor }); toast(`已阅 ${d.ackMany.split(',').length} 件 · 每件各记一条`); render(); return; }
-    if (d.undo) { undo(findAny(d.undo)); return; }
+    if (d.ackMany) { for (const id of d.ackMany.split(',')) { const it = findAny(id); local.set(versionKey(it), { meaning: 'ack', label: '已阅', id: 'ack', at: s.cursor, itemId: it.id, title: it.title }); } toast(`已阅 ${d.ackMany.split(',').length} 件 · 每件各记一条`); render(); return; }
+    if (d.undo) { closeSheet(); undo(findAny(d.undo)); return; }
     if (d.snooze) { snoozeSheet(findAny(d.snooze)); return; }
     if (d.snoozeAt) { const [id, at] = d.snoozeAt.split(':'); closeSheet(); flyToChip(id); give(findAny(id), { meaning: 'snooze', label: '稍后提醒', id: 'snooze', until: Number(at) }); if (s.selectedId === id) model.select(null); return; }
     if (d.openActions) { actionsSheet(findAny(d.openActions)); return; }
@@ -385,6 +390,7 @@ export function mount(host, model) {
       case 'base': toggleBaseMenu(); return;
       case 'back': model.select(detailStack.pop() || null); return;
       case 'reset': local.clear(); render(); toast('已清除本页反馈'); return;
+      case 'log': logSheet(); return;
       case 'snoozed': openSheet(`<h3>稍后提醒</h3><ul class="d-fold-list">${snoozedItems().map(({ item, f }) => `<li><small>${clock(f.until)} 再提醒 · 你 ${clock(f.at)} 设定</small><p>${esc(item.title)}</p><button class="d-link" data-undo="${esc(item.id)}">现在就看</button></li>`).join('')}</ul><p class="d-small">往后切换整理时刻，到点后它会回到原位，并注明期间是否有更新。</p>`); return;
     }
     if (t.classList.contains('d-card') || t.classList.contains('d-line') || t.matches('.d-known-list li')) { detailStack.length = 0; model.select(t.dataset.id); }
