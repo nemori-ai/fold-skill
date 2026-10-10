@@ -314,3 +314,17 @@
 .d-cards { gap: 6px; }
 .d-blank[hidden] { display: none; }
 @media (max-width: 480px) { .d-phone { height: calc(100svh - 44px - 66px); } }
+
+/* On a real phone the page itself scrolls; no scroll box inside the page. */
+@media (max-width: 760px) {
+  .d-rail { position: sticky; top: 0; z-index: 12; background: var(--paper); }
+  .d-phone, .d-phone { height: auto !important; min-height: 0; }
+  .d-screen { height: auto; overflow: visible; }
+  .d-scroll { overflow: visible; flex: none; padding-bottom: 8px; }
+  .d-fold { position: sticky; bottom: 118px; z-index: 11; box-shadow: 0 -6px 16px -10px #0003; }
+  .d-detail { position: fixed; z-index: 95; padding-bottom: 0; }
+  .d-sheet-backdrop { position: fixed; z-index: 96; }
+  .d-sheet { position: fixed; z-index: 97; }
+  .d-toast { position: fixed; top: 52px; z-index: 98; }
+}
+@media (max-width: 480px) { .d-fold { bottom: 72px; } }
