@@ -85,3 +85,8 @@ export function labelPositions(items, height, { heights, gap: requestedGap = 4 }
   for (let i = ys.length - 2; i >= 0; i -= 1) ys[i] = Math.min(ys[i], ys[i + 1] - distance);
   return new Map(items.map((item, index) => [item.id, ys[index]]));
 }
+
+// The middle line of one band across several nodes, for marks that stay on that item.
+export function centerPath(points) {
+  return edge(points.map(point => ({ ...point, y: point.y + point.height / 2, height: 0 })));
+}

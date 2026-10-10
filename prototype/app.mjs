@@ -1,6 +1,7 @@
 import { scenario } from './scenario.mjs?v=feedback-loop-1';
 import { replayScenario, projectState, getItem, diffStates, layoutTreemap } from './engine.mjs?v=feedback-loop-1';
 import { createBoardMotion } from './motion.mjs';
+import { currentAsk, feedbackTrail } from './variants/shared.mjs?v=feedback-loop-1';
 
 // Throwaway interaction prototype: authored Agent decisions, deterministic replay,
 // no live model, account access, or persistence. One focused time-machine view.
@@ -26,10 +27,32 @@ let currentState, baseState, currentDiff;
 const boardMotion=createBoardMotion({duration:1400});
 let lastTransition=null, slowMotion=false, panelAnimations=[];
 let boardSizes='';
+let speed=1;
 const kinds = {'needs-you':'需要你','in-progress':'进行中',done:'已完成',fyi:'知会'};
 const weights = {critical:'关键',high:'高',normal:'常规',low:'低',trace:'微量'};
 const statuses = {active:'当前关注',withdrawn:'已撤下',merged:'已合并'};
 const verdicts = {used:'采用',duplicate:'重复',noise:'噪音',deferred:'暂缓'};
+// Host-side feedback records (docs/domain-model.md): what an output asks of the user,
+// and which later messages or button presses answered it. Display only; nothing writes back.
+const expectNames = {decide:'决定',input:'提供',act:'去做',ack:'已阅',snooze:'稍后提醒'};
+const viaNames = {button:'按钮回应',reply:'回复'};
+const askOf = (state,index,id) => currentAsk({index,state},id);
+const askLabel = ask => `待你${ask.expects.map(x=>expectNames[x]||x).join('、')}`;
+function askedBefore(index,target) {for(let i=index-1;i>=0;i--){const ask=frames[i].asks?.[target];if(ask)return ask;}return null;}
+function feedbackText(link,index) {
+  const ask=askedBefore(index,link.target);
+  const action=ask?.actions.find(a=>a.id===link.action)||scenario.feedback?.defaults?.find(a=>a.id===link.action);
+  const value=link.value!=null?`：${link.value}${action?.input?.unit||''}`:'';
+  const until=link.until?`，到 ${shortDate(link.until)} ${shortTime(link.until)}`:'';
+  const name=expectNames[link.meaning]||'回应', label=action?.label||link.action;
+  return {prompt:link.meaning==='ack'||link.meaning==='snooze'?null:ask?.prompt, text:`${label===name?name:`${name}「${label}」`}${value}${until}`};
+}
+const itemLink = id => {const item=getItem(currentState,id);return item?`<button class="loop-target" data-item="${escape(id)}">${escape(item.title)}</button>`:`<span class="loop-target">${escape(id)}</span>`;};
+function loopLines(e,index) {
+  const lines=(e.feedback||[]).map(link=>{const t=feedbackText(link,index);return `<div class="event-loop"><span class="loop-tag">↩ ${viaNames[link.via]||'回应'}</span><span class="loop-body">${itemLink(link.target)}<span class="loop-action">${escape(t.text)}</span>${t.prompt?`<span class="loop-prompt">原问题：${escape(t.prompt)}</span>`:''}</span></div>`;});
+  if(e.reminder)lines.push(`<div class="event-loop is-reminder"><span class="loop-tag">到点提醒</span><span class="loop-body">${itemLink(e.reminder.target)}<span class="loop-action">兑现 ${shortDate(e.reminder.requested_at)} ${shortTime(e.reminder.requested_at)} 约定的稍后提醒，需按现在的事实重看</span></span></div>`);
+  return lines.join('');
+}
 const changeNames = {added:'新增',updated:'更新',withdrawn:'撤下',restored:'重新纳入',merged:'合并',annotations_changed:'反馈'};
 const fieldNames = {summary:'摘要',weight:'档位',share:'份额',share_override:'显式份额',kind:'类型',title:'标题',reason:'原因',sources:'来源',children:'子项',status:'状态',due_at:'截止时间',stale_after:'参考有效期',annotations:'反馈',parent_id:'所属层',merged_into:'合并至'};
 const dateFmt = new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',month:'2-digit',day:'2-digit',weekday:'short'});
@@ -158,14 +181,16 @@ function render(transition=null) {
   $('revision-tag').textContent=`${currentState.revision} / e${currentState.event_seq}`;
   $('agent-note').textContent=f.narrative;
   document.querySelector('.note-label').textContent=f.phase==='initial'?'初始状态':'本轮整理依据';
-  $('board-hint').textContent=f.phase==='initial'?'暂无关注事项':'点击查看详情 · 有子项可进入下一层';
+  $('legend-changed-label').textContent=comparing?'与基线相比有变化':'本轮有变化';
+  $('board-legend').hidden=f.phase==='initial';
+  renderSignal();
   const coldStart=frames[0].phase==='initial'&&frameIndex<=3;
   $('cold-start-progress').hidden=!coldStart;
   $('cold-start-progress').innerHTML=coldStart?['暂无事项','导出范围待定','陪妈妈约定','工作事项'].map((label,i)=>`${i?'<span aria-hidden="true">→</span>':''}<button data-frame="${i}" ${i===frameIndex?'aria-current="step"':''}>${label}</button>`).join(''):'';
   const layer=visibleLayer(currentState);
-  $('layer-title').textContent=layerId ? `${getItem(currentState,layerId)?.title || '历史条目'} · 子层` : '全部关注事项';
-  $('budget-label').innerHTML=`已用 <strong>${layer.used}</strong> / ${layer.budget} <span>· 留白 ${layer.budget-layer.used}</span>`;
-  $('breadcrumbs').innerHTML=breadcrumbs();
+  $('layer-title').textContent=layerId ? '子层 · 独立 64 份预算' : '全部关注事项';
+  $('budget-label').innerHTML=`已用 <strong>${layer.used}</strong> / ${layer.budget}<span> · 留白 ${layer.budget-layer.used}</span>`;
+  $('breadcrumbs').innerHTML=layerId?breadcrumbs():'';
   $('compare-controls').hidden=!comparing;
   $('base-column').hidden=!comparing;
   $('current-label').hidden=!comparing;
@@ -174,8 +199,11 @@ function render(transition=null) {
   $('compare-button').setAttribute('aria-pressed',String(comparing));
   $('base-label').textContent=`基线 · ${shortDate(frames[baseIndex].at)} ${shortTime(frames[baseIndex].at)}`;
   $('current-label').textContent=`当前 · ${shortDate(cursor)} ${shortTime(cursor)}`;
-  $('base-select').innerHTML=frames.slice(0,frameIndex+1).map((f,i)=>`<option value="${i}" ${i===baseIndex?'selected':''}>${escape(frameLabel(f,i))}</option>`).join('');
-  $('target-select').innerHTML=frames.map((f,i)=>`<option value="${i}" ${i===frameIndex?'selected':''}>${escape(frameLabel(f,i))}</option>`).join('');
+  if(comparing) {
+    const option=(f,i)=>({value:i,meta:`${String(i+1).padStart(2,'0')} · ${shortDate(f.at)} ${shortTime(f.at)}`,title:f.title});
+    basePicker.set(frames.slice(0,frameIndex+1).map(option),baseIndex);
+    targetPicker.set(frames.map(option),frameIndex);
+  } else {basePicker.close(false);targetPicker.close(false);}
   renderEvents();renderBoards();renderInspector();renderTimeline();renderDiffSummary();syncURL();
   $('batch-button').disabled=!f.batch;
   $('batch-button').title=f.batch?`${r.receipt.type} · ${f.batch.batch_id}`:'暂无提交记录';
@@ -191,6 +219,25 @@ function render(transition=null) {
   }
   updateMotionControls();
 }
+function windowText(w) {
+  const sameDay=shortDate(w.from)===shortDate(w.to);
+  return `${shortDate(w.from)} ${shortTime(w.from)} – ${sameDay?'':`${shortDate(w.to)} `}${shortTime(w.to)}`;
+}
+// Why the Agent was invoked. A zero-event review states its window and coverage, and
+// whether time alone changed a judgement (commit) or the board was only checked.
+function renderSignal() {
+  const f=frames[frameIndex], signal=f.signal, el=$('signal-note');
+  const show=signal&&(signal.type==='review'||signal.reason);
+  el.hidden=!show;
+  if(!show){el.innerHTML='';return;}
+  const r=records[frameIndex], n=r.diff.changes.length;
+  if(signal.type==='review') {
+    const result=r.receipt.type==='checked'?'检查后不变：状态保持，不制造进展':`按时间重看，调整 ${n} 项`;
+    el.innerHTML=`<span class="signal-kind">零输入 · ${escape(signal.reason)}</span><span class="signal-facts">窗口 ${windowText(signal.window)} · 收到 ${signal.received} 条 · ${escape(signal.coverage||'')}</span><strong class="signal-result ${r.receipt.type==='checked'?'':'is-adjusted'}">${result}</strong>`;
+  } else {
+    el.innerHTML=`<span class="signal-kind">${escape(signal.reason)}</span><span class="signal-facts">窗口 ${windowText(signal.window)} · 收到 ${signal.received} 条</span>`;
+  }
+}
 function breadcrumbs() {
   const nodes=[]; let item=layerId?getItem(currentState,layerId):null; const seen=new Set();
   while(item&&!seen.has(item.id)){seen.add(item.id);nodes.unshift(item);item=item.parent_id?getItem(currentState,item.parent_id):null;}
@@ -202,7 +249,14 @@ function renderEvents() {
   $('event-count').textContent=`${events.length} 条`;
   $('event-count').title=initial?'尚未进行过整理':`最近整理：${shortDate(frames[frameIndex].at)} ${shortTime(frames[frameIndex].at)}`;
   const shown=eventFilter==='used'?events.filter(e=>e.disposition==='used'):events;
-  $('event-list').innerHTML=shown.length?shown.map(e=>`<article class="event-item ${selected.type==='event'&&selected.id===e.id?'is-selected':''}" data-verdict="${e.disposition}"><button class="event-open" data-event="${escape(e.id)}"><span class="event-meta"><span class="channel-tag">${escape(e.channel)}</span><span>${escape(e.from)}</span><time>${shortTime(e.at||frames[frameIndex].at)}</time></span><span class="event-text">${escape(e.text)}</span><span class="event-verdict"><span class="verdict-tag">${verdicts[e.disposition]||e.disposition}</span><span>${escape(e.why)}</span></span></button>${e.relatedIds?.length?`<div class="event-links">${e.relatedIds.map(id=>getItem(currentState,id)?button(id,escape(getItem(currentState,id).title)): '').join('')}</div>`:''}</article>`).join(''):`<div class="empty-detail">${events.length?'本轮暂无被采用的输入。':'本轮暂无原始输入。'}</div>`;
+    const signal=frames[frameIndex].signal;
+  const emptyText=events.length?'本轮暂无被采用的输入。':signal?.type==='review'?`<h3>这个窗口没有新输入</h3><p>${windowText(signal.window)} 未收到消息。${escape(signal.coverage||'')}。</p><p>没收到消息不代表现实没有变化；Agent 按当前时间重看了已有事项。</p>`:'本轮暂无原始输入。';
+  $('event-list').innerHTML=shown.length?shown.map(e=>{
+    const targets=new Set([...(e.feedback||[]).map(l=>l.target),e.reminder?.target].filter(Boolean));
+    const related=(e.relatedIds||[]).filter(id=>!targets.has(id)&&getItem(currentState,id));
+    const kind=e.reminder?'is-reminder':e.feedback?.length?'is-feedback':'';
+    return `<article class="event-item ${kind} ${selected.type==='event'&&selected.id===e.id?'is-selected':''}" data-verdict="${e.disposition}"><button class="event-open" data-event="${escape(e.id)}"><span class="event-meta"><span class="channel-tag">${escape(e.channel)}</span><span class="event-from">${escape(e.from)}</span><time>${shortTime(e.at||frames[frameIndex].at)}</time></span><span class="event-text">${escape(e.text)}</span><span class="event-verdict"><span class="verdict-tag">${verdicts[e.disposition]||e.disposition}</span><span>${escape(e.why)}</span></span></button>${loopLines(e,frameIndex)}${related.length?`<div class="event-links">${related.map(id=>button(id,escape(getItem(currentState,id).title))).join('')}</div>`:''}</article>`;
+  }).join(''):`<div class="empty-detail">${emptyText}</div>`;
   for(const name of ['all','used']){$(`${name}-events`).classList.toggle('is-active',eventFilter===name);$(`${name}-events`).setAttribute('aria-pressed',String(eventFilter===name));}
   if(initial)$('event-list').innerHTML='<div class="initial-input"><span class="empty-input-mark" aria-hidden="true">↘</span><h3>暂无原始输入</h3><p>当前尚未发生整理。点击播放或前进，查看首批输入。</p></div>';
 }
@@ -219,9 +273,6 @@ function renderBoards() {
   } else {$('current-board').style.height='';$('base-board').style.height='';}
   drawBoard($('current-board'),currentState,false);
   if(comparing)drawBoard($('base-board'),baseState,true);
-  const items=visibleLayer(currentState).items||[];
-  $('compact-items').hidden=items.length===0;
-  $('compact-items').innerHTML=items.map((item,i)=>`<button class="item-key ${selected.id===item.id?'is-selected':''}" data-item="${escape(item.id)}"><span class="item-dot" data-color="${colorFor(item,currentState)}"></span><span>${escape(item.title)}</span><span class="mono">${item.share}</span>${item.children?.items?.length?`<span class="sub-count">↳ ${item.children.items.length}</span>`:''}</button>`).join('');
   if(focusBoard&&focusId)focusBoard.querySelector(`[data-${focusField}="${CSS.escape(focusId)}"]`)?.focus({preventScroll:true});
   boardSizes=currentBoardSizes();
 }
@@ -230,16 +281,40 @@ function drawBoard(el,state,isBase) {
   if(!w||!h)return;
   const layouts=layoutTreemap(layer.items,layer.budget,w,h);
   const changes=new Map((comparing?currentDiff.changes:records[frameIndex].diff.changes).map(c=>[c.item,c]));
+  const index=isBase?baseIndex:frameIndex;
   el.innerHTML=layouts.map(rect=>{
     const style=`left:${rect.x}px;top:${rect.y}px;width:${rect.width}px;height:${rect.height}px`;
     if(rect.isBlank) {
       const initial=state.event_seq===0&&!layerId;
-      return `<div class="pin-tile is-blank ${initial?'is-initial':''} ${(rect.width<120||rect.height<75)?'is-small':''}" style="${style}" data-share="${rect.share}"><div>${initial?`<span class="empty-board-label">暂无事项</span><strong>64 <small>份未分配</small></strong><p>收到输入并完成整理后，相关事项显示在这里。</p>${!isBase&&!comparing?'<button class="cold-start-button" data-frame="1">查看首批输入 <span aria-hidden="true">→</span></button>':''}`:`<span class="blank-label">未分配</span><strong>${rect.share}</strong><small>份可分配</small>`}</div></div>`;
+      return `<div class="pin-tile is-blank ${initial?'is-initial':''} ${(rect.width<120||rect.height<75)?'is-small':''}" style="${style}" data-share="${rect.share}"><div>${initial?`<span class="empty-board-label">暂无事项</span><strong>64 <small>份未分配</small></strong><p>收到输入并完成整理后，相关事项显示在这里。</p>${!isBase&&!comparing?'<button class="cold-start-button" data-frame="1">查看首批输入 <span aria-hidden="true">→</span></button>':''}`:`<span class="blank-label">未分配</span><strong>${rect.share}</strong><small>份留白</small>`}</div></div>`;
     }
-    const item=getItem(state,rect.id); const small=rect.width<145||rect.height<128, tiny=rect.width<90||rect.height<64;
+    const item=getItem(state,rect.id), ask=askOf(state,index,item.id);
+    const tiny=rect.height<58, narrow=!tiny&&rect.width<104, small=!tiny&&!narrow&&(rect.width<150||rect.height<128);
     const changed=(comparing||frameIndex>0)&&changes.has(item.id), n=item.children?.items?.length||0;
-    return `<div class="pin-tile ${small?'is-small':''} ${tiny?'is-tiny':''} ${selected.type==='item'&&selected.id===item.id?'is-selected':''} ${changed?'is-changed':''}" data-id="${escape(item.id)}" data-color="${colorFor(item,state)}" data-share="${item.share}" style="${style}"><button class="tile-button" data-item="${escape(item.id)}" ${isBase?'data-origin="base"':''} aria-label="${escape(item.title)}，份额 ${item.share}，${kinds[item.kind]||item.kind}${n?`，${n} 个子项`:''}"><span class="tile-top"><span class="tile-kind">${kinds[item.kind]||escape(item.kind)}</span><span class="tile-share">${item.share}<small> / ${layer.budget}</small></span></span><h3>${escape(item.title)}</h3><p class="tile-summary">${escape(item.summary)}</p><span class="tile-footer"><span class="tile-id">${changed?`<span class="change-label">${changeNames[changes.get(item.id).type]||'变化'}</span>`:escape(categoryLabel(item,state))}</span>${n?`<span class="children-hint">${n} 个子项</span>`:''}</span></button>${n?`<button class="dive-button" data-dive="${escape(item.id)}" ${isBase?'data-origin="base"':''} aria-label="进入${escape(item.title)}子层" title="进入子层">↗</button>`:''}</div>`;
+    const kind=kinds[item.kind]||escape(item.kind);
+    const label=ask?`<span class="tile-ask">${askLabel(ask)}</span>${item.kind!=='needs-you'?`<span class="tile-kind-after">· ${kind}</span>`:''}`:`<span class="tile-kind">${kind}</span>`;
+    const aria=`${item.title}，份额 ${item.share}，${kind}${ask?`，${askLabel(ask)}：${ask.prompt}`:''}${changed?`，${changeNames[changes.get(item.id).type]||'变化'}`:''}${n?`，${n} 个子项`:''}`;
+    return `<div class="pin-tile ${small?'is-small':''} ${narrow?'is-narrow':''} ${tiny?'is-tiny':''} ${ask?'has-ask':''} ${selected.type==='item'&&selected.id===item.id?'is-selected':''} ${changed?'is-changed':''} ${n?'has-children':''}" data-id="${escape(item.id)}" data-color="${colorFor(item,state)}" data-share="${item.share}" style="${style}"><button class="tile-button" data-item="${escape(item.id)}" ${isBase?'data-origin="base"':''} aria-label="${escape(aria)}"><span class="tile-top"><span class="tile-label">${label}</span><span class="tile-share">${item.share}<small> 份</small></span></span><h3>${escape(item.title)}</h3>${ask?`<p class="tile-prompt">${escape(ask.prompt)}</p>`:''}<p class="tile-summary">${escape(item.summary)}</p>${changed||n?`<span class="tile-footer">${changed?`<span class="change-label">${changeNames[changes.get(item.id).type]||'变化'}</span>`:'<span></span>'}</span>`:''}</button>${n?`<button class="dive-button" data-dive="${escape(item.id)}" ${isBase?'data-origin="base"':''} aria-label="进入${escape(item.title)}子层，${n} 个子项" title="进入子层">${n} 子项 <span aria-hidden="true">↗</span></button>`:''}</div>`;
   }).join('');
+  el.querySelectorAll('.pin-tile:not(.is-blank)').forEach(fitTile);
+}
+// Never leave half-cut lines: drop the summary first, then the prompt, then clamp the title.
+function fitTile(tile) {
+  const box=tile.querySelector('.tile-button');
+  if(tile.offsetWidth<34||tile.offsetHeight<22){tile.classList.add('is-sliver');return;}
+  const label=box.querySelector('.tile-label');
+  if(label&&label.scrollWidth>label.clientWidth+1)tile.classList.add('compact-label');
+  const over=()=>box.scrollHeight>box.clientHeight+1;
+  if(!over())return;
+  const clamp=(el,min)=>{
+    const lines=Math.max(1,Math.round(el.clientHeight/parseFloat(getComputedStyle(el).lineHeight)));
+    for(let n=lines-1;n>=min&&over();n--){el.style.display='-webkit-box';el.style.webkitBoxOrient='vertical';el.style.webkitLineClamp=String(n);el.style.overflow='hidden';}
+  };
+  const summary=box.querySelector('.tile-summary'), prompt=box.querySelector('.tile-prompt'), title=box.querySelector('h3');
+  if(summary){clamp(summary,1);if(over())summary.remove();}
+  if(prompt&&over()){clamp(prompt,1);if(over())prompt.remove();}
+  if(title&&over())clamp(title,1);
+  if(over()){box.querySelector('.tile-footer')?.remove();tile.classList.add('no-dive');}
 }
 function renderDiffSummary() {
   $('diff-summary').hidden=!comparing;
@@ -253,6 +328,26 @@ function scalarChanges(change) {
   const fields=(change.fields||[]).filter(f=>['weight','share','kind','status','due_at','stale_after','merged_into'].includes(f));
   return fields.length?`<dl class="change-facts">${fields.map(f=>`<div><dt>${fieldNames[f]}</dt><dd><span>${escape(format(f,change.before?.[f]))}</span><span aria-hidden="true"> → </span><strong>${escape(format(f,change.after?.[f]))}</strong></dd></div>`).join('')}</dl>`:'';
 }
+// The loop for one item: what this output version asks, and the answers so far.
+function feedbackSection(item,state,index) {
+  const ask=askOf(state,index,item.id), trail=feedbackTrail({index},item.id);
+  if(!ask&&!trail.length&&item.kind!=='needs-you')return '';
+  const defaults=(scenario.feedback?.defaults||[]).map(a=>a.label).join('、');
+  let body='';
+  if(ask) {
+    const registered=frames[ask.frameIndex];
+    body+=`<div class="ask-card"><span class="ask-expects">${askLabel(ask)}</span><p class="ask-prompt">${escape(ask.prompt)}</p><div class="ask-actions"><span>登记的回应</span>${ask.actions.map(a=>`<span class="ask-action">${escape(a.label)}${a.recommended?'<small>建议</small>':''}</span>`).join('')}</div><small class="ask-meta">${shortDate(registered.at)} ${shortTime(registered.at)} 随这一版登记 · 另有宿主默认的${defaults} · 回应交给 Agent 下一轮整理</small></div>`;
+  } else if(item.kind==='needs-you') {
+    body+='<p class="ask-missing">这一版没有登记回应路径：Agent 改写了内容但未重新登记，回应无法从这里回传。</p>';
+  }
+  if(trail.length) body+=`<ol class="loop-trail">${trail.map(({event,links,frameIndex:fi})=>{
+    const lines=links.map(link=>feedbackText(link,fi).text);
+    if(event.reminder)lines.push('到点提醒：需要按现在的事实重新判断');
+    return `<li><time>${shortDate(event.at)} ${shortTime(event.at)}</time><div><strong>${escape(lines.join('；'))}</strong><span>${escape(event.reminder?'宿主定时输入':links.map(l=>viaNames[l.via]||'回应').join('、'))} · ${escape(event.from)}</span></div><button class="text-button" data-event="${escape(event.id)}">原消息 ↗</button></li>`;
+  }).join('')}</ol>`;
+  body+='<p class="loop-note">这里只读：查看与点击不会写回状态，也不记作已阅。</p>';
+  return section(trail.length?`反馈回路 · ${trail.length} 次回应`:'反馈回路',body);
+}
 function findEvent(id) {for(const f of frames){const e=f.events.find(e=>e.id===id);if(e)return e;}return null;}
 function renderInspector() {
   let title,eyebrow,content,obj;
@@ -261,7 +356,9 @@ function renderInspector() {
     const item=getItem(state,selected.id);
     title=item.title;eyebrow=`${categoryLabel(item,state)} · ${item.id}`;obj=item;
     const anns=annotationsFor(item,state),children=item.children?.items||[];
-    content=`<div class="detail-status"><span class="kind-badge">${kinds[item.kind]||escape(item.kind)}</span><span>${statuses[item.status]||item.status}</span>${selected.origin==='base'?'<span>基线内容</span>':''}</div><p class="detail-summary">${escape(item.summary)}</p><div class="stat-pair"><div><span>关注份额</span><strong>${item.share}<small> / 64</small></strong></div><div><span>权重</span><strong class="weight-value">${weights[item.weight]||item.weight}<small>${item.weight}</small></strong></div></div>`;
+    const index=selected.origin==='base'?baseIndex:frameIndex, ask=askOf(state,index,item.id);
+    content=`<div class="detail-status"><span class="kind-badge">${kinds[item.kind]||escape(item.kind)}</span>${ask?`<span class="tile-ask">${askLabel(ask)}</span>`:''}<span>${statuses[item.status]||item.status}</span>${selected.origin==='base'?'<span>基线内容</span>':''}</div><p class="detail-summary">${escape(item.summary)}</p><div class="stat-pair"><div><span>关注份额</span><strong>${item.share}<small> / 64</small></strong></div><div><span>权重</span><strong class="weight-value">${weights[item.weight]||item.weight}<small>${item.weight}</small></strong></div></div>`;
+    content+=feedbackSection(item,state,index);
     if(item.reason)content+=section('关注原因',`<p>${escape(item.reason)}</p>`);
     if(item.merged_into)content+=section('已合并到',button(item.merged_into,escape(getItem(currentState,item.merged_into)?.title||item.merged_into)));
     if(children.length)content+=section(`子事项 · ${children.length}`,`<div class="children-list">${children.map(c=>`<div class="child-row">${button(c.id,`<span>${escape(c.title)}</span><small>${kinds[c.kind]||c.kind} · ${c.share} 份</small>`)}${c.children?.items?.length?`<button data-dive="${escape(c.id)}" aria-label="进入${escape(c.title)}子层">↗</button>`:''}</div>`).join('')}</div><button class="text-button" data-dive="${escape(item.id)}">查看子事项概览 ↗</button>`);
@@ -285,14 +382,17 @@ function renderInspector() {
     title='状态差异';eyebrow=`${baseState.revision} → ${currentState.revision}`;obj=currentDiff;
     content=`<p class="detail-summary">${currentDiff.changes.length} 项语义变化。位置、经过时间和派生排序不单独制造差异。</p>${currentDiff.changes.map(c=>section(`${changeNames[c.type]} · ${getItem(currentState,c.item)?.title||getItem(baseState,c.item)?.title||c.item}`,`<p>${(c.fields||[]).map(f=>fieldNames[f]||f).join('、')}</p>${button(c.item,'查看事项 ↗')}`)).join('')}`;
   } else {
-    title='当前完整状态';eyebrow=`第 ${frameIndex+1} 帧 · ${currentState.revision}`;obj=currentState;
+    const walk=(layer,out=[])=>{for(const i of layer?.items||[]){out.push(i);walk(i.children,out);}return out;};
+    const waiting=walk(currentState.root).map(i=>({item:i,ask:askOf(currentState,frameIndex,i.id)})).filter(x=>x.ask);
+    title=`${currentState.root.items.length} 项关注，${waiting.length} 项等你回应`;eyebrow=`此刻完整状态 · ${currentState.revision}`;obj=currentState;
     const pending=(currentState.annotations||[]).filter(a=>a.status!=='acknowledged');
-    content=`<p class="detail-summary">${escape(frames[frameIndex].narrative)}</p><div class="stat-pair"><div><span>当前关注</span><strong>${currentState.root.items.length}<small> 项</small></strong></div><div><span>根层留白</span><strong>${currentState.root.budget-currentState.root.used}<small> / ${currentState.root.budget}</small></strong></div></div>${section('查看说明','<p>左侧是本轮原始输入，中间是整理后的事项状态。点击事项查看依据；点击子层按钮查看子事项。</p><p>拖动下方时间轴回到任何时刻，或比较前后两个状态。</p>')}`;
+    content=`<div class="stat-pair"><div><span>当前关注</span><strong>${currentState.root.items.length}<small> 项</small></strong></div><div><span>根层留白</span><strong>${currentState.root.budget-currentState.root.used}<small> / ${currentState.root.budget}</small></strong></div></div>`;
+    if(waiting.length)content+=section(`登记了回应路径 · ${waiting.length}`,`<div class="ask-list">${waiting.map(({item,ask})=>`<button class="ask-row" data-item="${escape(item.id)}"><span class="ask-expects">${askLabel(ask)}</span><strong>${escape(ask.prompt)}</strong><small>${escape(item.title)}${item.parent_id?' · 子项':''}</small></button>`).join('')}</div>`);
     if(pending.length)content+=section(`待确认的用户反馈 · ${pending.length}`,pending.map(a=>`<div class="annotation-item"><p>${escape(a.text)}</p>${button(a.item||a.item_id,'查看关联事项 ↗')}</div>`).join(''));
     if(currentState.root.items.length)content+=section('全部顶层事项',currentState.root.items.map(i=>`<div class="child-row">${button(i.id,`<span>${escape(i.title)}</span><small>${kinds[i.kind]} · ${i.share} 份</small>`)}</div>`).join(''));
     const historical=currentState.historical||[];
     if(historical.length)content+=section(`历史事项 · ${historical.length}`,`<details><summary>已撤下与已合并事项</summary>${historical.map(i=>`<div class="child-row">${button(i.id,`<span>${escape(i.title)}</span><small>${statuses[i.status]}</small>`)}</div>`).join('')}</details>`);
-    content+='<p class="detail-note">概览只辅助定位，完整 state 才是核对依据。切到「原始 JSON」查看此刻的全部读取视图。</p>';
+    content+='<p class="detail-note">概览只辅助定位；切到「原始 JSON」核对此刻完整 state。</p>';
     if(frames[frameIndex].phase==='initial') {
       title='初始状态：暂无事项';eyebrow='初始状态 · r0 / e0';
       content='<p class="detail-summary">暂无事项、来源或用户反馈，尚未发生提交。</p>'+section('当前计数','<dl class="detail-times"><div><dt>当前条目</dt><dd>0 项</dd></div><div><dt>已分配份额</dt><dd>0 / 64</dd></div><div><dt>事件记录</dt><dd>0 条</dd></div></dl>')+section('查看后续输入','<p>点击「查看首批输入」或播放，逐步查看消息与整理结果。</p><p>每次整理后，可查看事项、份额、子层和原始依据。</p>')+'<p class="detail-note">切到原始 JSON，可以核对当前初始状态。</p>';
@@ -301,6 +401,7 @@ function renderInspector() {
   inspectedJSON=obj;
   $('inspector-title').textContent=title;
   $('inspector-eyebrow').textContent=eyebrow;
+  $('close-detail').hidden=selected.type==='state';
   $('detail-tab').classList.toggle('is-active',detailMode==='detail');$('json-tab').classList.toggle('is-active',detailMode==='json');
   $('detail-tab').setAttribute('aria-selected',String(detailMode==='detail'));$('json-tab').setAttribute('aria-selected',String(detailMode==='json'));
   $('detail-tab').tabIndex=detailMode==='detail'?0:-1;$('json-tab').tabIndex=detailMode==='json'?0:-1;
@@ -311,21 +412,133 @@ function highlightJSON(obj) {
   return escape(json(obj)).replace(/(&quot;(?:[^&]|&(?!quot;))*?&quot;)(\s*:)?|\b(true|false|null)\b|(-?\b\d+(?:\.\d+)?\b)/g,(m,str,key,literal,num)=>str?`<span class="${key?'json-key':'json-string'}">${str}</span>${key||''}`:literal?`<span class="json-literal">${literal}</span>`:`<span class="json-number">${num}</span>`);
 }
 function renderTimeline() {
-  $('time-slider').value=cursor;$('time-slider').style.setProperty('--progress',`${100*(cursor-start)/(end-start)}%`);
+  const slider=$('time-slider');
+  slider.style.setProperty('--progress',`${100*(cursor-start)/(end-start)}%`);
+  slider.setAttribute('aria-valuemin',String(start));slider.setAttribute('aria-valuemax',String(end));slider.setAttribute('aria-valuenow',String(cursor));
   $('cursor-date').textContent=shortDate(cursor);$('cursor-time').textContent=shortTime(cursor);
-  $('time-slider').setAttribute('aria-valuetext',`${shortDate(cursor)} ${shortTime(cursor)}，${frames[frameIndex].title}`);
+  slider.setAttribute('aria-valuetext',`${shortDate(cursor)} ${shortTime(cursor)}，第 ${frameIndex+1} 帧，${frames[frameIndex].title}`);
   $('between-note').textContent=frames[frameIndex].phase==='initial'?'初始状态：暂无事项':cursor>stamps[frameIndex]+60000?'无新整理，状态保持不变':'';
   $('frame-count').textContent=`${String(frameIndex+1).padStart(2,'0')} / ${frames.length}`;
   $('previous-frame').disabled=frameIndex===0;$('next-frame').disabled=frameIndex===frames.length-1;
-  document.querySelectorAll('.timeline-marker').forEach(b=>{b.classList.toggle('is-current',Number(b.dataset.frame)===frameIndex);b.classList.toggle('is-past',Number(b.dataset.frame)<frameIndex);});
+  document.querySelectorAll('.timeline-marker').forEach(b=>{b.classList.toggle('is-current',Number(b.dataset.index)===frameIndex);b.classList.toggle('is-past',Number(b.dataset.index)<frameIndex);});
   document.querySelectorAll('.chapter-button').forEach(b=>b.classList.toggle('is-active',b.dataset.chapter===frames[frameIndex].chapter));
+}
+// Drawn controls replace native select / range. Each keeps its ARIA role and keys,
+// and stops propagation so the page-level ←/→/Esc shortcuts do not fire twice.
+function createPicker(host,{label,onChange}) {
+  host.innerHTML=`<button type="button" class="picker-button" aria-haspopup="listbox" aria-expanded="false"><span class="picker-meta"></span><span class="picker-title"></span><span class="picker-caret" aria-hidden="true"></span></button><div class="picker-list" role="listbox" tabindex="-1" aria-label="${escape(label)}" hidden></div>`;
+  const trigger=host.querySelector('button'), list=host.querySelector('[role="listbox"]');
+  trigger.setAttribute('aria-label',label);
+  let options=[], value=0, active=0;
+  const optionId=v=>`${host.id}-option-${v}`;
+  const draw=()=>{
+    list.innerHTML=options.map((o,i)=>`<div role="option" id="${optionId(o.value)}" data-value="${o.value}" aria-selected="${o.value===value}" class="${i===active?'is-active':''}"><span class="option-meta">${escape(o.meta)}</span><span class="option-title">${escape(o.title)}</span></div>`).join('');
+    if(options[active])list.setAttribute('aria-activedescendant',optionId(options[active].value));
+  };
+  const reveal=()=>list.querySelector('.is-active')?.scrollIntoView({block:'nearest'});
+  const isOpen=()=>!list.hidden;
+  function open() {
+    active=Math.max(0,options.findIndex(o=>o.value===value));draw();
+    list.hidden=false;trigger.setAttribute('aria-expanded','true');list.focus({preventScroll:true});reveal();
+  }
+  function close(focus=true) {
+    if(!isOpen())return;
+    list.hidden=true;trigger.setAttribute('aria-expanded','false');if(focus)trigger.focus({preventScroll:true});
+  }
+  function choose(i) {const o=options[i];close();if(o&&o.value!==value)onChange(o.value);}
+  trigger.addEventListener('click',()=>isOpen()?close():open());
+  trigger.addEventListener('keydown',e=>{
+    if(['ArrowDown','ArrowUp','Enter',' '].includes(e.key)){e.preventDefault();e.stopPropagation();open();}
+  });
+  list.addEventListener('keydown',e=>{
+    const step={ArrowDown:1,ArrowUp:-1,PageDown:8,PageUp:-8}[e.key];
+    if(step!=null)active=Math.max(0,Math.min(options.length-1,active+step));
+    else if(e.key==='Home')active=0;
+    else if(e.key==='End')active=options.length-1;
+    else if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();choose(active);return;}
+    else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();return;}
+    else if(e.key==='Tab'){close(false);return;}
+    else {if(['ArrowLeft','ArrowRight'].includes(e.key))e.stopPropagation();return;}
+    e.preventDefault();e.stopPropagation();draw();reveal();
+  });
+  list.addEventListener('click',e=>{const el=e.target.closest('[role="option"]');if(el)choose(options.findIndex(o=>String(o.value)===el.dataset.value));});
+  list.addEventListener('pointermove',e=>{const el=e.target.closest('[role="option"]');if(!el)return;const i=options.findIndex(o=>String(o.value)===el.dataset.value);if(i!==active){active=i;list.querySelectorAll('.is-active').forEach(x=>x.classList.remove('is-active'));el.classList.add('is-active');list.setAttribute('aria-activedescendant',el.id);}});
+  document.addEventListener('pointerdown',e=>{if(isOpen()&&!host.contains(e.target))close(false);});
+  return {
+    set(next,v) {
+      options=next;value=v;const o=options.find(x=>x.value===v);
+      host.querySelector('.picker-meta').textContent=o?.meta||'';host.querySelector('.picker-title').textContent=o?.title||'';
+      trigger.title=o?`${o.meta} · ${o.title}`:'';
+      if(isOpen()){active=Math.min(active,options.length-1);draw();}
+    },
+    close,
+  };
+}
+const basePicker=createPicker($('base-picker'),{label:'对比基线时刻',onChange:v=>{pause();baseIndex=v;render({kind:'frame'});}});
+const targetPicker=createPicker($('target-picker'),{label:'对比当前时刻',onChange:v=>goFrame(v)});
+function setupSpeed() {
+  const group=$('playback-speed'), radios=[...group.querySelectorAll('[role="radio"]')];
+  const apply=(value,focus)=>{
+    speed=value;
+    radios.forEach(r=>{const on=Number(r.dataset.speed)===value;r.setAttribute('aria-checked',String(on));r.tabIndex=on?0:-1;if(on&&focus)r.focus();});
+    if(timer){pause();play();}
+  };
+  group.addEventListener('click',e=>{const r=e.target.closest('[role="radio"]');if(r)apply(Number(r.dataset.speed),false);});
+  group.addEventListener('keydown',e=>{
+    const step={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];
+    if(step==null)return;
+    e.preventDefault();e.stopPropagation();
+    const i=radios.findIndex(r=>Number(r.dataset.speed)===speed);
+    apply(Number(radios[(i+step+radios.length)%radios.length].dataset.speed),true);
+  });
+}
+function setupScrubber() {
+  const slider=$('time-slider'), rail=slider.querySelector('.slider-rail'), hover=$('slider-hover');
+  let dragging=false;
+  const timeAt=x=>{
+    const r=rail.getBoundingClientRect(), p=Math.max(0,Math.min(1,(x-r.left)/r.width));
+    const t=Math.round((start+p*(end-start))/60000)*60000;
+    const near=stamps.reduce((best,s)=>Math.abs(s-t)<Math.abs(best-t)?s:best,stamps[0]);
+    return Math.abs(near-t)/(end-start)*r.width<=7?near:Math.max(start,Math.min(end,t));
+  };
+  const showHover=x=>{
+    const t=timeAt(x), i=stamps.indexOf(t), r=rail.getBoundingClientRect();
+    hover.textContent=i>=0?`${String(i+1).padStart(2,'0')} · ${shortDate(t)} ${shortTime(t)} · ${frames[i].title}`:`${shortDate(t)} ${shortTime(t)} · 无新整理`;
+    hover.hidden=false;
+    const half=hover.offsetWidth/2, left=Math.max(half,Math.min(r.width-half,(t-start)/(end-start)*r.width));
+    hover.style.left=`${left}px`;
+  };
+  slider.addEventListener('pointerdown',e=>{
+    if(e.button!==0)return;
+    e.preventDefault();dragging=true;slider.setPointerCapture(e.pointerId);slider.focus({preventScroll:true});
+    pause();setCursor(timeAt(e.clientX));showHover(e.clientX);
+  });
+  slider.addEventListener('pointermove',e=>{
+    if(dragging){const t=timeAt(e.clientX);if(t!==cursor)setCursor(t);}
+    if(e.pointerType!=='touch'||dragging)showHover(e.clientX);
+  });
+  const stop=()=>{dragging=false;};
+  slider.addEventListener('pointerup',stop);slider.addEventListener('pointercancel',stop);
+  slider.addEventListener('pointerleave',()=>{if(!dragging)hover.hidden=true;});
+  slider.addEventListener('lostpointercapture',()=>{dragging=false;hover.hidden=true;});
+  slider.addEventListener('keydown',e=>{
+    const day=86400000;
+    const actions={
+      ArrowLeft:()=>goFrame(cursor>stamps[frameIndex]?frameIndex:frameIndex-1), ArrowDown:()=>actions.ArrowLeft(),
+      ArrowRight:()=>goFrame(frameIndex+1), ArrowUp:()=>actions.ArrowRight(),
+      PageUp:()=>{pause();setCursor(cursor+day);}, PageDown:()=>{pause();setCursor(cursor-day);},
+      Home:()=>goFrame(0), End:()=>{pause();setCursor(end);},
+    };
+    if(!actions[e.key])return;
+    e.preventDefault();e.stopPropagation();actions[e.key]();
+  });
 }
 function pause() {if(timer){clearInterval(timer);timer=null;}updatePlayButton();}
 function play() {
   if(timer){pause();return;}
   if(frameIndex===frames.length-1)setCursor(start);
   const movingTime=matchMedia('(prefers-reduced-motion: reduce)').matches?0:transitionDuration('frame');
-  const interval=movingTime+Math.max(2200,2900/Number($('playback-speed').value));
+  const interval=movingTime+Math.max(2200,2900/speed);
   timer=setInterval(()=>{if(frameIndex>=frames.length-1){pause();return;}setCursor(stamps[frameIndex+1]);if(frameIndex===frames.length-1)pause();},interval);updatePlayButton();
 }
 function updatePlayButton() {$('play-button').innerHTML=timer?'<span aria-hidden="true">Ⅱ</span><span>暂停</span>':'<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="m6 3 11 7-11 7Z" fill="currentColor"/></svg><span>播放</span>';$('play-button').setAttribute('aria-label',timer?'暂停回放':'开始回放');}
@@ -360,18 +573,14 @@ function rise() {changeLayer(layerPath(layerId).at(-2)||null);}
 $('story-subtitle').textContent=scenario.subtitle||'查看事项、原始依据与两周内的状态变化。';
 $('story-meta').innerHTML=`<strong>${escape(scenario.persona.name)}</strong><span>${escape(scenario.persona.role)}</span><small>${shortDate(start)} 至 ${shortDate(end)}</small>`;
 $('story-drawer').innerHTML=`<div><span class="eyebrow">演示说明</span><h2>${escape(scenario.title)}</h2><p>${escape(scenario.persona.context)}</p><p>这是作者编排的演示人物与私人消息，假设 Agent 已经作出了合适的整理判断。它检验状态演变与阅读体验，不评估真实模型能力。</p></div><div><h3>公开资料来源</h3>${(scenario.publicSources||[]).map(s=>`<a href="${escape(s.url)}" target="_blank" rel="noreferrer">${escape(s.title)} ↗</a><p>${escape(s.usedFor||s.fact)}</p>`).join('')}</div>`;
-$('time-slider').min=start;$('time-slider').max=end;$('time-slider').step=60000;
-$('timeline-markers').innerHTML=frames.map((f,i)=>`<button class="timeline-marker" style="left:${100*(stamps[i]-start)/(end-start)}%" data-frame="${i}" title="${escape(frameLabel(f,i))}" aria-label="跳转到${escape(frameLabel(f,i))}"><span></span></button>`).join('');
+$('timeline-markers').innerHTML=frames.map((f,i)=>`<span class="timeline-marker ${f.signal?.type==='review'?'is-review':''}" style="left:${100*(stamps[i]-start)/(end-start)}%" data-index="${i}"></span>`).join('');
 const dayCount=Math.floor((end-start)/86400000);
 const labelTimes=Array.from({length:dayCount+1},(_,i)=>start+i*86400000);
 labelTimes[labelTimes.length-1]=end;
 $('day-labels').innerHTML=labelTimes.map(t=>`<span style="left:${100*(t-start)/(end-start)}%">${new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',month:'numeric',day:'numeric'}).format(t)}</span>`).join('');
 $('chapter-list').innerHTML=scenario.chapters.map((c,i)=>`<button class="chapter-button" title="${escape(c.title)}" data-chapter="${escape(c.id)}" data-frame="${frames.findIndex(f=>f.chapter===c.id)}"><span>${String(i+1).padStart(2,'0')}</span>${escape(c.title.split('·').at(-1).trim())}</button>`).join('');
 $('play-button').onclick=play;$('previous-frame').onclick=()=>goFrame(frameIndex-1);$('next-frame').onclick=()=>goFrame(frameIndex+1);$('restart-button').onclick=()=>goFrame(0);
-$('playback-speed').onchange=()=>{if(timer){pause();play();}};
-$('time-slider').oninput=e=>{pause();setCursor(Number(e.target.value));};
-$('base-select').onchange=e=>{pause();baseIndex=Number(e.target.value);render({kind:'frame'});};
-$('target-select').onchange=e=>goFrame(Number(e.target.value));
+setupSpeed();setupScrubber();
 $('compare-button').onclick=()=>{pause();comparing=!comparing;if(comparing)baseIndex=Math.max(0,frameIndex-1);render({kind:'layout'});};
 $('close-compare').onclick=()=>{comparing=false;render({kind:'layout'});};
 $('replay-motion').onclick=replayMotion;
