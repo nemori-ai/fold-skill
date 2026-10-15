@@ -72,6 +72,7 @@ python3 scripts/eval_judgment.py --rescore .local/eval/<run-id> --report   # 用
 .venv/bin/python scripts/label_corpus.py curl-bagder       # 从后续行为推出弱标注；--audit 30 打印抽样供人工核对
 .venv/bin/python scripts/fetch_corpus.py composite         # 混合人物的社区、生活问答、newsletter 与天气
 .venv/bin/python scripts/compose_corpus.py build           # 拼出化名人物的两周；还有 labels、noise、audit
+.venv/bin/python scripts/compose_corpus.py family          # 追加作者编写的家庭流（节拍表入库，见 corpus/composite/family/）
 ```
 
 `scripts/fetch_corpus.py` 只用标准库与 `gh api` 子进程，顺序请求并限速、遵守 robots.txt，输出 `corpus/<source>/raw/`。主来源约需一千余次 GitHub 请求与数百次网页请求，二三十分钟；`--only` 只重抓部分流，`--start/--end` 改变窗口。抓取不调用任何模型，也不清洗或去重；唯一的改动是把电话号码样式替换为 `[phone]`。
@@ -185,6 +186,7 @@ node scripts/shoot-forms.mjs --only all --check all-sync          # 合页 all.h
 | [scripts/build_corpus.py](../scripts/build_corpus.py) | 真实语料切帧、ID 清单与噪音统计 |
 | [scripts/label_corpus.py](../scripts/label_corpus.py) | 从真实后续行为推出弱标注 |
 | [scripts/compose_corpus.py](../scripts/compose_corpus.py) | 把几个真实来源拼成化名人物的两周，并生成弱标注与噪音统计 |
+| [scripts/family_stream.py](../scripts/family_stream.py) | 家庭流：由节拍表渲染成品、生成作者标注，并做不可回溯检查 |
 | [.editorconfig](../.editorconfig) | 编码、换行和缩进约定 |
 | [.gitattributes](../.gitattributes) | 文本文件统一使用 LF 换行 |
 | [.gitignore](../.gitignore) | 忽略环境、缓存和本地临时文件 |

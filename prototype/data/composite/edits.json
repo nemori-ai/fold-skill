@@ -399,7 +399,7 @@
     },
     "f15": {
       "title": "#13528 NTLM 复用请他评审",
-      "narrative": "周日中午 59 条。hardy_birch 改了 Negotiate/NTLM 连接复用的匹配，点名请他评审；#12088 也问他是否还要改动。",
+      "narrative": "周一上午 59 条。hardy_birch 改了 Negotiate/NTLM 连接复用的匹配，点名请他评审；#12088 也问他是否还要改动。",
       "batch": [
         {
           "op": "replace",

@@ -1,0 +1,19 @@
+{
+ "checked_at": "2026-10-15T06:56:12Z",
+ "family_events": 388,
+ "family_capitalized": 348,
+ "family_proper_candidates": 207,
+ "family_ngrams": 1708,
+ "ngram": 8,
+ "enron_messages_scanned": 517401,
+ "enron_consulted_messages": 5044,
+ "consulted_folders": 30,
+ "swedish_common_excluded": [
+  "Grannen",
+  "Hoppas"
+ ],
+ "name_hits": [],
+ "proper_noun_hits": [],
+ "ngram_hits": [],
+ "note": "专名候选：成品里的大写词，去掉普通英文词与成品里也以小写出现的词。name_hits：候选同时出现在参考邮件的信头里；proper_noun_hits：候选出现在参考邮件全文的其他位置；ngram_hits：成品与整个 Enron 语料任一封邮件全文重合的 8 词序列。只列成品一侧的词。"
+}

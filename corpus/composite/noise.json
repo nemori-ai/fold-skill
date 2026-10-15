@@ -1,15 +1,15 @@
 {
  "source": "composite",
  "corpus": {
-  "inputs": 2829,
+  "inputs": 3217,
   "frames": 28,
   "per_frame": {
-   "mean": 101.0,
-   "median": 100.0,
-   "max": 209,
+   "mean": 114.9,
+   "median": 109.5,
+   "max": 235,
    "empty_frames": 0,
-   "text_chars_p50": 39276.5,
-   "text_chars_max": 95996
+   "text_chars_p50": 39977.5,
+   "text_chars_max": 97253
   },
   "channels": {
    "GitHub": 1041,
@@ -17,64 +17,78 @@
    "Mastodon": 464,
    "问答": 326,
    "CI": 152,
+   "iMessage": 149,
+   "WhatsApp": 129,
    "订阅邮件": 50,
+   "SMS": 48,
    "邮件": 21,
    "天气": 18,
    "邮件列表": 15,
-   "博客评论": 4
+   "Bankappen": 12,
+   "Förskoleappen": 10,
+   "Inköpslistan": 8,
+   "Telefon": 7,
+   "E-post": 6,
+   "Kalender": 5,
+   "Skärmtid": 5,
+   "博客评论": 4,
+   "Röstbrevlåda": 3,
+   "Skolappen": 3,
+   "Trygghem Försäkring": 2,
+   "Digital brevlåda": 1
   },
   "author_kinds": {
-   "human": 1928,
-   "self": 505,
-   "bot": 283,
-   "automation": 113
+   "human": 2180,
+   "self": 583,
+   "bot": 332,
+   "automation": 122
   },
-  "distinct_authors": 643,
-  "top_authors_share": 0.364,
+  "distinct_authors": 695,
+  "top_authors_share": 0.32,
   "low_info": {
    "by_class": {
-    "bot": 396,
+    "bot": 454,
     "template": 153,
-    "empty": 20,
-    "ack": 43
+    "empty": 35,
+    "ack": 54
    },
-   "total": 612,
+   "total": 696,
    "share": 0.216,
-   "share_of_non_self": 0.221
+   "share_of_non_self": 0.224
   },
   "duplicates": {
-   "exact_core_text": 171,
-   "exact_core_text_30plus": 130,
-   "near_30plus": 244,
-   "share_exact": 0.06,
-   "share_near": 0.086
+   "exact_core_text": 188,
+   "exact_core_text_30plus": 131,
+   "near_30plus": 252,
+   "share_exact": 0.058,
+   "share_near": 0.078
   },
   "threads": {
-   "distinct": 482,
-   "single_input": 172,
+   "distinct": 535,
+   "single_input": 176,
    "inputs_per_thread_p50": 3.0,
    "inputs_per_thread_p90": 15.0,
    "inputs_per_thread_max": 79,
-   "multi_channel_threads": 23,
+   "multi_channel_threads": 39,
    "cross_channel_mentions": 10
   },
   "length_chars": {
-   "p10": 37.0,
-   "p50": 205.0,
-   "p90": 1331.2000000000003,
+   "p10": 32.0,
+   "p50": 164.0,
+   "p90": 1211.8000000000002,
    "max": 81132,
    "over_limit": 172,
-   "under_20": 49
+   "under_20": 149
   },
   "gaps_minutes": {
    "p10": 0.4,
-   "p50": 3.2,
-   "p90": 17.3,
+   "p50": 2.9,
+   "p90": 15.2,
    "max": 199.6,
-   "same_minute": 600
+   "same_minute": 740
   },
   "local_hours": {
-   "night_00_07": 401,
+   "night_00_07": 406,
    "by_hour": [
     113,
     73,
@@ -82,24 +96,24 @@
     47,
     38,
     29,
-    54,
-    42,
-    87,
-    154,
-    170,
+    59,
+    65,
+    115,
     184,
-    133,
-    189,
-    213,
-    147,
-    166,
+    201,
+    205,
+    158,
+    211,
+    227,
+    162,
     195,
+    214,
+    162,
+    137,
+    126,
+    130,
     133,
-    106,
-    95,
-    106,
-    124,
-    184
+    186
    ]
   },
   "edited_after_post": 192
@@ -481,6 +495,114 @@
      1,
      0,
      3
+    ]
+   },
+   "edited_after_post": 0
+  },
+  "family": {
+   "inputs": 388,
+   "frames": 28,
+   "per_frame": {
+    "mean": 13.9,
+    "median": 12.5,
+    "max": 26,
+    "empty_frames": 0,
+    "text_chars_p50": 722.5,
+    "text_chars_max": 1367
+   },
+   "channels": {
+    "iMessage": 149,
+    "WhatsApp": 129,
+    "SMS": 48,
+    "Bankappen": 12,
+    "Förskoleappen": 10,
+    "Inköpslistan": 8,
+    "Telefon": 7,
+    "E-post": 6,
+    "Kalender": 5,
+    "Skärmtid": 5,
+    "Röstbrevlåda": 3,
+    "Skolappen": 3,
+    "Trygghem Försäkring": 2,
+    "Digital brevlåda": 1
+   },
+   "author_kinds": {
+    "human": 252,
+    "self": 78,
+    "bot": 49,
+    "automation": 9
+   },
+   "distinct_authors": 53,
+   "top_authors_share": 0.57,
+   "low_info": {
+    "by_class": {
+     "bot": 58,
+     "template": 0,
+     "empty": 15,
+     "ack": 11
+    },
+    "total": 84,
+    "share": 0.216,
+    "share_of_non_self": 0.252
+   },
+   "duplicates": {
+    "exact_core_text": 16,
+    "exact_core_text_30plus": 1,
+    "near_30plus": 8,
+    "share_exact": 0.041,
+    "share_near": 0.021
+   },
+   "threads": {
+    "distinct": 53,
+    "single_input": 4,
+    "inputs_per_thread_p50": 4.0,
+    "inputs_per_thread_p90": 17.60000000000001,
+    "inputs_per_thread_max": 48,
+    "multi_channel_threads": 16,
+    "cross_channel_mentions": 0
+   },
+   "length_chars": {
+    "p10": 7.0,
+    "p50": 39.0,
+    "p90": 105.30000000000001,
+    "max": 496,
+    "over_limit": 0,
+    "under_20": 100
+   },
+   "gaps_minutes": {
+    "p10": 0.7,
+    "p50": 18.5,
+    "p90": 89.1,
+    "max": 799.4,
+    "same_minute": 52
+   },
+   "local_hours": {
+    "night_00_07": 5,
+    "by_hour": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     5,
+     23,
+     28,
+     30,
+     31,
+     21,
+     25,
+     22,
+     14,
+     15,
+     29,
+     19,
+     29,
+     31,
+     31,
+     24,
+     9,
+     2
     ]
    },
    "edited_after_post": 0
