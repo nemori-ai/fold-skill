@@ -80,7 +80,7 @@
 </head>
 <body class="fs-page">
 <header class="fs-bar aa-bar">
-  <a class="fs-home" href="forms/index.html" title="形式画廊">← 画廊</a>
+  <a class="fs-home" href="forms/index.html" title="形式画廊" data-pages>← 画廊</a>
   <span class="fs-name">全部原型</span>
   <div class="fs-nav" id="aa-nav"><button data-step="-1" aria-label="上一帧（←）" title="上一帧（←）">‹</button>
     <div class="fs-when"><span class="fs-date" id="aa-date"></span><span class="fs-title" id="aa-title"></span></div>
@@ -93,10 +93,10 @@
 <main class="aa">
   <div class="aa-kicker">FOLD · 全部原型</div>
   <h1>同一份回放，全部表达形式合在一页</h1>
-  <p class="aa-lead">每一节是实时运行的原型页，不是截图。顶栏选一帧，所有页面一起切到那一刻；没有选帧时，各页停在自己的默认帧。数据集切换后整页按新数据重新载入。页面往下滚才加载，每一节右上角写着它此刻所在的帧，并可单独打开。</p>
+  <p class="aa-lead">每一节是实时运行的原型页，不是截图。顶栏选一帧，所有页面一起切到那一刻；没有选帧时，各页停在自己的默认帧。数据集切换后整页按新数据重新载入。页面往下滚才加载，每一节右上角写着它此刻所在的帧<span data-pages>，并可单独打开</span>。</p>
   <p class="aa-notice" id="aa-notice"></p>
   <div id="aa-sections"></div>
-  <p class="aa-foot">这些形式都没有选定。<a href="forms/index.html">形式画廊</a> · <a data-notes="CONCEPTS" href="forms/CONCEPTS.md">概念卡与两轮结论</a></p>
+  <p class="aa-foot">这些形式都没有选定。<span data-pages><a href="forms/index.html">形式画廊</a> · <a data-notes="CONCEPTS" href="forms/CONCEPTS.md">概念卡与两轮结论</a></span></p>
 </main>
 <script type="module">
   import { scenario, dataset } from './scenario.mjs';
@@ -113,6 +113,11 @@
   const local = location.port === '4173' || location.protocol === 'file:';
   const notes = path => (local ? `forms/${path}.md` : `/prototype-notes/forms/${path}`);
   document.querySelectorAll('[data-notes]').forEach(a => { a.href = notes(a.dataset.notes); });
+  // The single-file export (scripts/export-all.mjs) sets `foldExport`: it fills each iframe from srcdoc through
+  // `load`, and has no separate pages, so links to them ([data-pages], 单独打开, 打磨记录) are left out.
+  const exported = window.foldExport || null;
+  if (exported) document.querySelectorAll('[data-pages]').forEach(el => el.remove());
+  const load = (s, src) => { if (exported) exported.load(s.iframe, src); else s.iframe.src = src; };
 
   // Sections in reading order. `see` is what the form lets you see and `answers` the responses it carries, both
   // taken from the README「十二种形式」table and catalog.mjs, not written here. `frame` is the entry frame per
@@ -175,23 +180,24 @@
   }
 
   // ---------- page ----------
-  document.getElementById('aa-notice').textContent = `${datasets[dataset].label}。${datasetNotice()}`;
+  document.getElementById('aa-notice').textContent = `${datasets[dataset].label}。${datasetNotice()}${exported?.notice ? ` ${exported.notice}` : ''}`;
   document.getElementById('aa-sections').innerHTML = groups.map(g => `<div class="aa-group"><h2>${esc(g.title)}</h2>${g.note ? `<p>${esc(g.note)}</p>` : ''}</div>
     ${g.sections.map(s => `<section class="aa-sec" id="s-${s.id}" aria-labelledby="h-${s.id}">
       <header class="aa-head"><div class="aa-no">${s.no}</div>
         <div><h3 id="h-${s.id}">${esc(s.name)}${s.withdrawn ? '<small>第一轮 · 已撤下 · 未打磨</small>' : ''}</h3>
           <p class="aa-see">${esc(s.see)}</p>
-          <p class="aa-meta">${s.withdrawn ? '载体与用法' : '承载的回应'}：${esc(s.answers)}${s.notes ? ` · 打磨记录 <a href="${esc(notes(`polish/${s.notes}`))}">${s.notes}.md</a>` : ''}</p></div>
-        <div class="aa-side"><a class="aa-open" href="${esc(srcOf(s, { embed: false }))}" target="_blank" rel="noopener">单独打开 ↗</a><span class="aa-at" aria-live="off"></span></div></header>
+          <p class="aa-meta">${s.withdrawn ? '载体与用法' : '承载的回应'}：${esc(s.answers)}${s.notes && !exported ? ` · 打磨记录 <a href="${esc(notes(`polish/${s.notes}`))}">${s.notes}.md</a>` : ''}</p></div>
+        <div class="aa-side">${exported ? '' : `<a class="aa-open" href="${esc(srcOf(s, { embed: false }))}" target="_blank" rel="noopener">单独打开 ↗</a>`}<span class="aa-at" aria-live="off"></span></div></header>
       <div class="aa-frame ${s.size || ''}"><div class="aa-wait">滚到这里时载入…</div>
-        <iframe src="${esc(srcOf(s))}" title="${esc(s.name)}" loading="lazy"></iframe></div></section>`).join('')}`).join('');
+        <iframe ${exported ? '' : `src="${esc(srcOf(s))}" `}title="${esc(s.name)}" loading="lazy"></iframe></div></section>`).join('')}`).join('');
   document.querySelector('#aa-toc nav').innerHTML = groups.map(g => `<h3>${esc(g.title)}</h3>${g.sections.map(s => `<a href="#s-${s.id}"><b>${s.no}</b>${esc(s.name)}</a>`).join('')}`).join('');
   for (const s of sections) {
     s.el = document.getElementById(`s-${s.id}`);
     s.iframe = s.el.querySelector('iframe');
     s.label = s.el.querySelector('.aa-at');
     s.open = s.el.querySelector('.aa-open');
-    s.loaded = false; s.ready = false; s.at = null; s.visible = false; s.follows = null; s.parked = false; s.pending = false;
+    s.loaded = false; s.ready = false; s.at = null; s.visible = false; s.follows = null; s.pending = false;
+    s.parked = Boolean(exported);   // the export has no lazy iframe src: every page waits unloaded until scrolled near
     s.iframe.addEventListener('load', () => {
       if (s.parked) return;
       s.loaded = true;
@@ -222,19 +228,21 @@
   }
   function paintLabel(s) {
     const f = s.at == null ? null : frames[s.at];
-    s.label.textContent = s.parked ? '离得远，已卸载；滚回来时重新载入' : f ? `此刻 ${f.id} · ${dayTime(f.at)}` : s.follows === false ? '不随顶栏原地切帧，切帧时重新载入' : '';
+    s.label.textContent = s.parked ? '离得远，未载入；滚到这里时载入' : f ? `此刻 ${f.id} · ${dayTime(f.at)}` : s.follows === false ? '不随顶栏原地切帧，切帧时重新载入' : '';
     s.label.classList.toggle('is-behind', Boolean(f) && selected != null && s.at !== selected);
     s.label.title = f ? f.title : '';
   }
 
   // ---------- keeping every page on the chosen frame ----------
-  const post = s => s.iframe.contentWindow?.postMessage({ fold: 'go', frame: selected }, location.origin === 'null' ? '*' : location.origin);
+  // Messages carry only a frame index and are matched by their source window (embed.mjs), not by origin: under
+  // file:// and srcdoc the origins are opaque.
+  const post = s => s.iframe.contentWindow?.postMessage({ fold: 'go', frame: selected }, '*');
   // `pending`: a frame chosen in the bar that this page has not been sent yet. Stepping inside one page is left alone.
   function sync(s) {
     if (selected == null || s.parked || !s.pending) return;
     if (s.ready) { if (s.visible) { s.pending = false; if (s.at !== selected) post(s); } }
-    else if (!s.loaded) { if (s.srcFor !== selected) { s.srcFor = selected; s.iframe.src = srcOf(s); } }   // opens at the chosen frame; its first report confirms
-    else if (s.follows === false && s.visible) { s.pending = false; s.loaded = false; s.iframe.src = srcOf(s); }
+    else if (!s.loaded) { if (s.srcFor !== selected) { s.srcFor = selected; load(s, srcOf(s)); } }   // opens at the chosen frame; its first report confirms
+    else if (s.follows === false && s.visible) { s.pending = false; s.loaded = false; load(s, srcOf(s)); }
     // loaded but not reporting yet: stays pending until its first report
   }
   function choose(index) {
@@ -243,10 +251,9 @@
     q.set('frame', selected);
     history.replaceState(null, '', `?${q}`);
     paintBar();
-    for (const s of sections) { s.pending = true; sync(s); paintLabel(s); s.open.href = srcOf(s, { embed: false }); }
+    for (const s of sections) { s.pending = true; sync(s); paintLabel(s); if (s.open) s.open.href = srcOf(s, { embed: false }); }
   }
   addEventListener('message', event => {
-    if (location.origin !== 'null' && event.origin !== location.origin) return;
     if (event.data?.fold !== 'at' || !Number.isInteger(event.data.frame)) return;
     const s = sections.find(x => x.iframe.contentWindow === event.source);
     if (!s) return;
@@ -271,13 +278,13 @@
       const s = sections.find(x => x.el === entry.target);
       if (entry.isIntersecting && s.parked) {
         s.parked = false; s.pending = selected != null; s.srcFor = selected;
-        s.iframe.src = srcOf(s);
+        load(s, srcOf(s));
       } else if (!entry.isIntersecting && s.loaded && !s.parked) {
         s.parked = true;
         Object.assign(s, { loaded: false, ready: false, at: null });
         clearTimeout(s.waiting);
         s.el.querySelector('.aa-frame').classList.remove('is-loaded');
-        s.iframe.src = 'about:blank';
+        load(s, 'about:blank');
       }
       paintLabel(s);
     }
