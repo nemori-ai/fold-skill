@@ -1,0 +1,39 @@
+/* Round-two sketches: one static 1440×900 page each. Flat, paper-white, ink; colour carries one meaning per page. */
+:root {
+  --paper: oklch(0.975 0.006 95);
+  --ink: oklch(0.25 0.02 155);
+  --ink-2: oklch(0.47 0.015 150);
+  --ink-3: oklch(0.66 0.012 140);
+  --line: oklch(0.88 0.01 110);
+  --faint: oklch(0.93 0.008 105);
+  --vermilion: oklch(0.6 0.19 35);
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--paper); color: var(--ink); font: 13px/1.5 var(--sans); }
+a { color: inherit; }
+
+.sk { width: 1440px; height: 900px; margin: 0 auto; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; padding: 26px 40px 18px; overflow: hidden; }
+.sk-kicker { font: 11px var(--mono); letter-spacing: .12em; color: var(--ink-2); }
+.sk-kicker a { text-decoration: none; }
+.sk-kicker b { margin: 0 4px 0 8px; color: var(--ink); }
+.sk-head h1 { margin: 6px 0 6px; max-width: 1180px; font-size: 21px; line-height: 1.4; font-weight: 600; letter-spacing: .005em; }
+.sk-frame { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; font-size: 12px; color: var(--ink-2); }
+.sk-frame b { font: 600 12px var(--mono); color: var(--ink); }
+.sk-frame-title { color: var(--ink); }
+.sk-why { flex-basis: 100%; }
+.sk-figure { position: relative; min-height: 0; margin-top: 12px; }
+.sk-figure svg { display: block; overflow: visible; }
+.sk-key { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--ink-2); }
+.sk-key i { display: inline-block; vertical-align: -1px; margin-right: 5px; }
+.sk-key .sw { width: 10px; height: 10px; border-radius: 2px; }
+.sk-key svg { display: inline-block; vertical-align: -2px; margin-right: 5px; }
+.sk-key .note { margin-left: auto; }
+
+/* SVG text defaults shared by the sketches. */
+.sk-figure text { fill: var(--ink); font-family: var(--sans); }
+.sk-figure .mono { font-family: var(--mono); }
+.sk-figure .dim { fill: var(--ink-2); }
+.sk-figure .faint { fill: var(--ink-3); }
+.sk-figure .you { fill: var(--vermilion); }

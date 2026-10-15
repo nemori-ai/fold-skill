@@ -1,6 +1,6 @@
 # Fold 时光机原型
 
-用于回答：假设 Agent 已经合理整理输入，工作与生活交织的两周会形成怎样的状态演变？原型可作为体验站发布，仍为独立实验；Fold CLI 尚未实现。
+用于回答：Agent 把工作与生活交织的两周整理成一份有预算的状态之后，人在不同场景下怎样读懂它、怎样回应？同一份回放有十二种表达形式，共用一套回应组件。原型可作为体验站发布，仍为独立实验；Fold CLI 尚未实现。
 
 ## 运行
 
@@ -10,30 +10,76 @@
 make prototype
 ```
 
-打开 http://127.0.0.1:4173 。只需 Python 3，无需安装前端依赖。预览服务禁用缓存，修改后刷新即可看到最新版本。所有内容在浏览器内存中回放，不连接真实账户，不持久化数据。
+打开 http://127.0.0.1:4173 ；想一次看完所有原型，打开[全部原型合页](./all.html)。只需 Python 3，无需安装前端依赖。预览服务禁用缓存，修改后刷新即可看到最新版本。所有内容在浏览器内存中回放，不连接真实账户，不持久化数据。
 
-## 四种视觉表达
+## 演示数据
 
-在同一路径加 `variant` 即可进入本轮探索，底部可以切换方案，保留当前时刻、层级和选中的事项：
+所有页面（原版、A/B/C/D、形式画廊、合页、腕上一瞥、小倍数、五张复盘图与第一轮撤下的八个形式）都从 `scenario.mjs` 读同一份回放，用 `?data=<名字>` 选择数据集，在原型内点链接会带上这个选择；可选的数据集登记在 [data/select.mjs](data/select.mjs)：
 
-- [A · 空间排布](./index.html?variant=a&frame=6)：事项像独立纸片聚在中部，真实留白散在周围和间隙。
-- [B · 时间展开](./index.html?variant=b&frame=6)：顺着同一事项的份额轨迹，理解怎样走到当前局面。
-- [C · 流动形态](./index.html?variant=c&frame=6)：每件事是一滴液体，面积随份额变大变小，位置跨帧稳定；只有明确合并的事项真的融为一滴。下方 64 格预算带给出精确份数与未分配。
-- [D · 手机首页](./index.html?variant=d&frame=24)：手机打开助理的第一屏。顶部一句话说几件等你回应；只有登记了反馈路径的事是卡片，大字是要你回答的问题，按钮形态说明怎么答；其余进行中与结果是纸面上的行，小事叠在一起。
+| `?data=` | 内容 |
+| --- | --- |
+| `composite`（默认） | [data/composite/scenario.mjs](data/composite/scenario.mjs)：化名人物 Jonas Berglund 的两周，[混合语料](../corpus/composite/MIX.md)的真实输入：29 帧，`f00` 是空状态，其后 28 帧共 2808 条（正文截到 500 字，去掉了 21 封 Enron 营销邮件），判断来自一次真实模型的自由运行，再经人工打磨。由 `scripts/build_demo_data.py` 从 Agent 批次（[agent-batches.json](data/composite/agent-batches.json)）与修正（[edits.json](data/composite/edits.json)）重放生成，修正逐条记在 [POLISH.md](data/composite/POLISH.md)；各流的来源、许可、引用长度与化名处理见 [SOURCES.md](data/composite/SOURCES.md)，改写文本随站点公开前需用户决定。 |
+| `story` | [data/story/scenario.mjs](data/story/scenario.mjs)：作者手写的林苒两周，37 帧、112 条输入，判断全部预先编排（[STORY.md](STORY.md)）。判断评测（`scripts/eval_judgment.py`）读的也是它。 |
 
-四版与原版共用同一故事和回放数据。底栏的「选择回放片段」可直达冷启动、合并、用满预算和细节；「原版」可返回已有实现。「状态」打开数据核对区，可查看完整状态 JSON、原始输入、声明与回执、变化对比。←/→仍逐帧，Alt+←/→切换方案。
+每个数据集在 `select.mjs` 里带一句 `notice`，页面在数据旁照写，说明人物、输入与判断从哪里来。
 
-B 在桌面上将历史与此刻等宽并列，右侧详情独立滚动。悬停、键盘聚焦和选择会联动同一事项的历史带、当前截面与标签；切换时连续展示几何变化，也可点击「重播过渡」。
+每个数据集导出同形的 `scenario`：`persona`、`categories`（根层事项的稳定称呼：`label`、`colorKey`、`color`、`short`）、`feedback`（业务用途与默认反馈动作）、`frames`。每帧有 `id`、`at`、`title`（旁白）、`events`、`batch`（交给内核重放的声明批次），以及三项宿主侧记录，它们不进 Fold 状态：
 
-C 用 WebGL2 片元着色器在一张画布上绘制液滴：半径按份额开方，同层液滴面积之比等于份额之比；份额越大越靠近视觉中心，已有事项尽量留在原处。大液滴把份额、标题和登记的问题写在滴内，小液滴的标签放在旁边并用短引线相连，标签互相避让。颜色按类别稳定，子层在父类别内变化明度；朱红只用于登记了回应路径的液滴外的细环，虚线环表示回应路径在子项里，↩ / ◷ 标在本轮有回复、按钮或到点提醒的液滴边缘。换帧约 1.3 秒，可打断：同一事项连续移动并改变大小，移动时略沿路径拉长并绕开其他液滴；新事项滴入，撤下的缩小淡出；只有数据中 `merged_into` 的液滴互相靠拢、长出液桥并融为一滴，倒放时沿原路分开。点击有子项的液滴，镜头推进到它自己的 64 份，Esc 返回。选中时光从液滴内部透出。右侧阅读区（窄屏在下方）默认是本轮概览：零事件整理的窗口、覆盖与结果，本轮输入中的回复、按钮与到点提醒及其定位；选中后显示详情、依据原文与反馈回路，回应方式只展示。只在过渡、选中与悬停变化时渲染，静止时画面不动；不支持 WebGL2 时用 Canvas2D 画同样的液滴。
+- **`frame.asks`：回应路径。** 以条目 ID 为键，一件事此刻最多一条。字段：`id`（同一问题重登记时不变）、`item`、`registered_at`、`due_at`（问题自己的截止，可为 null）、`expects`（回应控件：confirm / choose / reply / schedule / approve / defer）、`meanings`（[领域模型](../docs/domain-model.md)里对用户的期待：decide / input / act）、`prompt`、`short`（可选，16 字以内的短问法，供只放得下一行的形式，如腕上一瞥）、`actions`（`{id, label, meaning, recommended?, input?}`；input 有 `type`：text / money / photo / datetime）、`subject`（approve 要批准的外部动作，`{label, url?}`）、`handler`。一条 ask 属于登记时的条目版本（`updated_at`）；条目被改写而这一帧没有重登记，就视为没有登记回应路径。
+- **`event.feedback`：用户反馈。** 事件上的数组，每项 `{ask?, target, action, meaning, via, value?, until?}`；`meaning` 为 ack / decide / input / act / snooze，`via` 为 button（Fold 里登记的按钮）、reply（回复 Agent 的消息）或 source（在来源处直接处理：GitHub 上评审、合并、关闭，论坛与问答站上回复）。via 为 source 时 `action` 取自 `feedback.sourceActions`，或映射到那条 ask 最接近的按钮。到点提醒是另一种事件，带 `reminder: {feedback, target, requested_at}`。
+- **事件的来源标注。** 真实语料的事件另有 `stream`（work / community / life / subscription）、`self`（本人发出）与 `author_kind`（bot / automation，人类不写），供形式区分“你自己”“机器”与“订阅”。`stream` 与 `self` 在自由运行里也交给了 Agent；`author_kind` 是语料构建时按公开资料推断的，没有交给 Agent。
+- **`frame.signal`：宿主为何此刻调用 Agent。** `{type, reason, received, window: {from, to}, coverage?, reminders?}`；`type` 为 events（有新输入）或 review（定时整理且窗口内 0 条）。
 
-D 按份额决定先后与字号：24 份是带依据原文的大卡，6 份只留一行，不为份额预留空白高度，空余份额写在底部折叠带；朱红只用于可回应的控件，变化只用一个黑点标记。份额不足一行且只需知道的事项错开叠在一起，最多露出四张，其余记为 +x。按钮形态对应[领域模型](../docs/domain-model.md)中的期待：选项是决定，输入框是提供，单个动作是去做，没有按钮是只需知道。点按产生的反馈只留在本页演示，不写回状态；故事里真实发生的回复和按钮标为 ↩。右侧（窄屏为顶部）可切换「近期重点」与「通知中心」两种业务用途，比较同一次已阅的不同处理。
+这三项是演示数据先行定下的形态，契约尚未接纳，见[决策记录](../docs/decisions.md#推迟到后续切片)；回应路径的生命周期、事项的稳定称呼等相关缺口列在[未决问题](../docs/decisions.md#未决问题)。
 
-原版与 A 的条目面积按份额比例布局；B 在记录节点和当前截面用带的粗细表达份额，连接区用于帮助追踪变化；C 的液滴面积按份额比例，融合处边缘略有出入，准确份额由 64 格预算带给出；D 用先后与字号档位表达份额，精确份数见详情。各方案都保留未分配份额。
+## 回应组件
 
-C 已改为自写的 WebGL2 着色器，不再使用随原型保存的 [Three.js 本地模块](vendor/three/README.md)。实验假设、表达边界和待评审问题见 [EXPLORATIONS.md](EXPLORATIONS.md)。
+[respond.mjs](respond.mjs) 按 `ask.expects` 给出回应控件，各形式共用：数据层（`normalizeAsk`、本页反馈记录 `createResponseStore`，记录先 saved、下一轮整理回放后 acknowledged，不采集查看）、标记层（`responseHTML`、`composerHTML`、`keypadHTML`、`deferHTML`、`scheduleHTML`、`receiptHTML`，每个部件带 `rs-*` 类，可传入形式自己的类名）、事件层（`bindResponses`，一个委托监听处理点按与键盘）；`mountResponse` 把三层合成一个可用控件，配 [respond.css](respond.css) 的默认样式（只在 `.rs-skin` 内生效）。D 手机首页已改为用它，外观与行为不变。[回应组件页](forms/respond.html)逐类演示，并列出与 `event.feedback` 同形的反馈记录。
 
-## 原版操作
+截图与报错检查用 `node scripts/shoot-forms.mjs`（本机 Chrome 无头运行，见[工作环境说明](../docs/development.md#体验站构建与发布)）；`--only all --check all-sync` 检查合页的同步切帧。
+
+## 十二种形式
+
+同一份回放、同一套回应组件，按场景分工：首页类只承载最急的少数问题，空间类在电脑前处理评审与二选一，时间类处理期限与推后，复盘类不承载作答、只标出问题的开闭与份额去向。每种形式现在怎样工作、怎样验证、还差什么，记在右列的打磨记录里；为什么这样分工见 [CONCEPTS.md](forms/CONCEPTS.md#真实数据下的问题清单)。
+
+| 形式 | 场景 | 承载的回应 | 入口 | 打磨记录 |
+| --- | --- | --- | --- | --- |
+| 原版树图 | 在电脑前掌握两周局面，顺手处理工作评审 | approve（格子里直接批准或要求修改）；其余在详情里作答 | [index.html?frame=26](./index.html?frame=26) | [spatial.md](forms/polish/spatial.md) |
+| A 空间排布 | 桌前，生活急事要当场二选一 | choose、稍后；也能批准、定时间、回一句 | [?variant=a&frame=26](./index.html?variant=a&frame=26) | [spatial.md](forms/polish/spatial.md) |
+| B 时间展开 | 期限落在此刻之后的哪里，谁先到 | schedule、choose，任何事项都可稍后提醒 | [?variant=b&frame=26](./index.html?variant=b&frame=26) | [temporal.md](forms/polish/temporal.md) |
+| C 流动形态 | 可以推后的事沉下去，到点浮起 | defer；其余用回应组件 | [?variant=c&frame=25](./index.html?variant=c&frame=25) | [temporal.md](forms/polish/temporal.md) |
+| D 手机首页 | 离开半天回来，先答最急的 3 件 | approve、choose 一键；confirm、reply、schedule、defer | [?variant=d&frame=26](./index.html?variant=d&frame=26) | [home.md](forms/polish/home.md) |
+| 腕上一瞥 | 抬腕两秒：要不要现在掏手机 | confirm 与两项的 choose；其余转到手机 | [forms/watch.html](forms/watch.html?frame=26) | [home.md](forms/polish/home.md) |
+| 两周小倍数 | 复盘两周注意力怎样移动 | 不承载作答；黑点标出此刻开着的问题 | [forms/multiples.html](forms/multiples.html?frame=26) | [review-a.md](forms/polish/review-a.md) |
+| 身份线 | 追一件事的来龙去脉：改名、撤下、并入 | 不承载作答；标出问题的开与闭 | [sketches/lineage.html](forms/sketches/lineage.html) | [review-a.md](forms/polish/review-a.md) |
+| 回应时序 | 我欠了谁什么回应，开了多久 | 不承载作答；所有类型的开闭与期限 | [sketches/timing.html](forms/sketches/timing.html) | [review-a.md](forms/polish/review-a.md) |
+| 来源矩阵 | 某件事背后是谁在推动 | 不承载作答 | [sketches/provenance.html](forms/sketches/provenance.html) | [review-b.md](forms/polish/review-b.md) |
+| 让位图 | 一件事变大，份额从谁那里来 | 不承载作答；作答之后份额让给了谁 | [sketches/yield.html](forms/sketches/yield.html) | [review-b.md](forms/polish/review-b.md) |
+| 批次记谱 | 每一轮整理读了多少、丢了多少、动了几件 | 不承载作答；每轮登记、失效与答掉的问题 | [sketches/notation.html](forms/sketches/notation.html) | [review-b.md](forms/polish/review-b.md) |
+
+入口里的 `frame` 是帧序号，composite 的 29 帧从 `f00`（空状态）到 `f28`；复盘类不带 `frame` 时打开数据集自己的默认帧。[形式画廊](forms/index.html)把它们并排放在一起，[回应组件页](forms/respond.html)逐类演示六种回应控件。
+
+[全部原型合页](./all.html)把上面十二种、回应组件页和第一轮撤下的八个形式按顺序嵌在一个长页面里，每节是实时运行的页面：顶栏选一帧，各页通过 `postMessage` 原地切到那一帧（[embed.mjs](embed.mjs)；页面自己往前走不会被拉回），切数据集时整页重载；离视野远的页面会卸载，滚回来时按所选帧重新载入。原版与 A/B/C/D 在合页里带 `?embed=1`，只隐藏方案切换栏；形式页带 `?card=0` 收起概念卡。
+
+第一轮撤下的八个形式（晨间朗读、进程条架、头版、小票、环境球、到期时刻表、出处栏、对话线程）已从 `codex/form-explorations` 恢复为可运行页面，概念卡在 `catalog.mjs` 的 `withdrawn` 里。它们只做了能在 composite 与 story 下无报错运行的最小适配（问题的期待改读 `ask.meanings`，来源作者从事件补出，对话线程的“本人”改用数据集人物与 `self` 事件），没有打磨，也没有按真实数据重新设计；为什么撤下见 [CONCEPTS.md](forms/CONCEPTS.md#第一轮结论)。
+
+### 共同操作
+
+- 原版与 A/B/C/D 共用底栏：在同一时刻切换方案，保留层级与选中的事项；「回放片段」直达各章，「状态」打开数据核对区（完整状态 JSON、原始输入、声明与回执、变化对比）。←/→ 逐帧，空格播放，Alt+←/→ 切换方案。
+- 腕上一瞥、小倍数与五张复盘图的页头各有帧导航：←/→ 逐帧，空格播放，当前帧写进地址栏 `frame=`；让位图、来源矩阵与批次记谱的侧栏底部链到同一帧的其他形式。
+- 本页作答只存在浏览器内存里：按下即“已保存”，推进到下一轮整理后显示“已收到”，随时可撤回；不写回演示数据，也不调用模型。
+- 原版与 A/B/C/D 都保留未分配份额：原版与 A 用面积、B 用带宽、C 用液滴面积与 64 格预算带、D 用先后与字号表达份额，精确份数在详情里。
+- `prefers-reduced-motion` 时切帧与作答直接到终态。
+
+C 用自写的 WebGL2 着色器画液滴，不再使用随原型保存的 [Three.js 本地模块](vendor/three/README.md)。第一版四种视觉表达的实验假设、表达边界和待评审问题见 [EXPLORATIONS.md](EXPLORATIONS.md)，其中的细节描述早于打磨，以打磨记录为准。
+
+### 形式从哪里来
+
+第一轮在 A/B/C/D 之外做了十个形式，多数把状态搬进现成载体（手表、广播、小票、报纸、时刻表、聊天窗），评审后留下两周小倍数；腕上一瞥是用户后来决定保留的。第二轮只为状态自身的结构发明画法：身份线、回应时序、来源矩阵、让位图、批次记谱起初是单帧草图，现在都已做成可逐帧的完整版。两轮结论、全部概念卡与做形式时发现状态里缺的信息见 [CONCEPTS.md](forms/CONCEPTS.md)，灵感来源见 [INSPIRATION.md](forms/INSPIRATION.md)。
+
+## 原版操作（手写情境）
+
+下面的帧号与份额按 `?data=story` 的林苒两周；composite 同样从空状态开始，操作相同。
 
 - 从真正的空状态开始：第一帧为 r0/e0，没有输入与提交。接着只纳入一件事，再补入生活背景，份额依次为 0 → 6 → 18 → 49；初始阶段有独立跳转入口。
 - 播放、逐帧前后跳转，或拖动时间轴到任意时刻。两次批处理之间业务状态保持，时间投影继续流逝。
@@ -46,11 +92,11 @@ C 已改为自写的 WebGL2 着色器，不再使用随原型保存的 [Three.js
 
 两个动画演示入口：
 
-- [两张账单合成一张](./index.html?frame=5)：向前一步看归并，再退一步看原来的两条线索展开。倒放是在查看合并前的历史，不代表生产系统有 split API。
-- [导出发布的两级细节](./index.html?frame=3)：进入「v0.8导出：模板编辑待定」，再进入「旧机操作验证与回滚演练」，用返回或 Esc 逐层收回。
+- [两张账单合成一张](./index.html?data=story&frame=5)：向前一步看归并，再退一步看原来的两条线索展开。倒放是在查看合并前的历史，不代表生产系统有 split API。
+- [导出发布的两级细节](./index.html?data=story&frame=3)：进入「v0.8导出：模板编辑待定」，再进入「旧机操作验证与回滚演练」，用返回或 Esc 逐层收回。
 
 人物和私人消息为演示创作，公共事实的官方来源见 [STORY.md](STORY.md)。故事中的 Agent 决策已预先编排，不能据此宣称真实 Agent 或模型达到相同判断质量。
 
 ## 评审留白
 
-通过实际播放继续判断：取舍是否自然，时间关系是否清楚，动画中的注意力转移是否可读，哪里需要反复查 JSON，以及噪音是否影响阅读。四种视觉方案仍在比较；公开体验不代表已选定产品方案，也不代表真实 Agent 判断质量或 Fold CLI 已通过验收。
+通过实际播放继续判断：取舍是否自然，时间关系是否清楚，动画中的注意力转移是否可读，哪里需要反复查 JSON，以及噪音是否影响阅读。十二种形式都没有选定；公开体验不代表已选定产品方案，也不代表真实 Agent 判断质量或 Fold CLI 已通过验收。默认演示数据含化名改写的真实公开文本，公开发布前需用户决定许可，见 [SOURCES.md](data/composite/SOURCES.md#公开之前)。

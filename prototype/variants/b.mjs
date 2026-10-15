@@ -1,30 +1,33 @@
 import {
   escapeHTML as esc, formatDate, formatTime, kindLabel,
-  getItem, getLayer, colorFor, detailHTML, currentAsk, feedbackTrail,
+  getItem, getLayer, colorFor, currentAsk, notice, scenario,
 } from './shared.mjs?v=feedback-loop-1';
-import { stableOrder, layoutSection, bandPath, centerPath, labelPositions } from './b-layout.mjs?v=b-polish-1';
-import { createTimeMotion } from './b-motion.mjs?v=b-polish-1';
+import { SMALL, GROUP, stableOrder, layoutSection, bandPath, centerPath, labelPositions, futureFraction, FUTURE_GRID, placeCaptions } from './b-layout.mjs?v=b-temporal-1';
+import { createTimeMotion } from './b-motion.mjs?v=b-temporal-1';
+import {
+  stamp, relative, actionHTML, frameActions, itemActions, versionsHTML, sourcesHTML, originHTML,
+  deadlinesOf, latestRecord, recordWords, createResponder,
+} from './temporal.mjs?v=temporal-1';
+import { createResponseStore, normalizeAsk } from '../respond.mjs?v=respond-1';
 
-const CHANGE_NAMES = { added: '新增事项', updated: '内容更新', withdrawn: '已撤下',
-  restored: '恢复事项', merged: '已合并', annotations_changed: '批注变化' };
-// Only expectations registered with a feedback path (frame.asks) get these words.
-const EXPECT = { decide: '需要你决定', input: '需要你提供', act: '需要你去做' };
-const MEANING = { decide: '回应决定', input: '提供输入', act: '报告已处理', ack: '已阅', snooze: '稍后提醒' };
-const VIA = { reply: '回复消息', button: '登记的按钮' };
+// B · 时间展开。左边是最近几次整理里每件事的份额带，中间一根是此刻的 64 份，右边是此刻之后：
+// 期限画成刻度，一眼看出谁先到。份额不足 3 的事项合成一条“小事”带，点开在阅读区逐件列出。
+const CHANGE_NAMES = { added: '新增', updated: '内容更新', withdrawn: '撤下', restored: '恢复', merged: '合并', annotations_changed: '批注变化' };
+const EXPECT = { decide: '需要你决定', input: '需要你提供', act: '需要你去做', snooze: '可以推后' };
 const SVG = 'http://www.w3.org/2000/svg';
 const AXIS_HEIGHT = 40;
-const stamp = value => `${formatDate(value)} ${formatTime(value)}`;
+const FRAME_MS = 340, EXPAND_MS = 280, LAYER_MS = 420;
 const frameShort = (frame, index, total) => `${String(index + 1).padStart(2, '0')} / ${total} · ${stamp(frame.at)}`;
 const frameName = (frame, index) => `${String(index + 1).padStart(2, '0')} · ${stamp(frame.at)} · ${frame.title}`;
-const center = point => point.y + point.height / 2;
 const isReview = frame => frame?.signal?.type === 'review';
+const shortTitle = title => { const head = String(title || '').split(/[：:]/)[0]; return [...head].length > 11 ? `${[...head].slice(0, 10).join('')}…` : head; };
+const expectOf = ask => ask ? EXPECT[normalizeAsk(ask).meanings[0]] || '登记了问题' : '';
 let mountNumber = 0;
 
 function explicitMerges(records, layerId) {
   const links = [];
   for (let index = 1; index < records.length; index += 1) {
-    const before = getLayer(records[index - 1].state, layerId);
-    const after = getLayer(records[index].state, layerId);
+    const before = getLayer(records[index - 1].state, layerId), after = getLayer(records[index].state, layerId);
     for (const source of before.items) {
       const historical = getItem(records[index].state, source.id);
       const target = after.items.find(item => item.id === historical?.merged_into);
@@ -33,54 +36,25 @@ function explicitMerges(records, layerId) {
   }
   return links;
 }
-
-// The registered question a later feedback answers. Prefer the ask that was still
-// valid for the version the person saw; otherwise the latest ask for that target.
-function askBefore(records, frames, target, index) {
-  if (index <= 0) return null;
-  const valid = currentAsk({ index: index - 1, state: records[index - 1].state }, target);
-  if (valid) return valid;
-  for (let at = index - 1; at >= 0; at -= 1) if (frames[at].asks?.[target]) return { ...frames[at].asks[target], frameIndex: at };
-  return null;
-}
-function anchorIn(state, id, visible) {
-  let item = getItem(state, id); const seen = new Set();
-  while (item && !visible.has(item.id) && item.parent_id && !seen.has(item.id)) { seen.add(item.id); item = getItem(state, item.parent_id); }
-  return item && visible.has(item.id) ? item.id : null;
-}
-// Only explicit records: event.feedback links and event.reminder targets.
+// History marks: a dot where the person acted on a visible item; a ring and a line back to the
+// registration only when the feedback names that question (link.ask).
 function loopMarks(records, frames, layerId) {
-  const marks = [];
+  const marks = [], seen = new Set();
   frames.forEach((frame, index) => {
-    const layer = getLayer(records[index].state, layerId);
-    const visible = new Set(layer.items.map(item => item.id));
-    const before = index > 0 ? getLayer(records[index - 1].state, layerId) : null;
-    const visibleBefore = new Set(before?.items.map(item => item.id) ?? []);
+    const visible = new Set(getLayer(records[index].state, layerId).items.map(item => item.id));
     for (const event of frame.events) {
-      const entries = [...(event.feedback || []).map(link => ({ link, target: link.target, kind: link.meaning === 'snooze' ? 'snooze' : 'answer' })),
-        ...(event.reminder ? [{ target: event.reminder.target, kind: 'reminder' }] : [])];
-      for (const entry of entries) {
-        const anchor = anchorIn(records[index].state, entry.target, visible)
-          ?? (index > 0 ? anchorIn(records[index - 1].state, entry.target, visibleBefore) : null);
-        if (!anchor) continue;
-        const ask = entry.kind === 'answer' ? askBefore(records, frames, entry.target, index) : null;
-        const askAnchor = ask ? anchorIn(records[ask.frameIndex].state, entry.target,
-          new Set(getLayer(records[ask.frameIndex].state, layerId).items.map(item => item.id))) : null;
-        marks.push({ key: `${event.id}:${entry.target}:${entry.kind}`, index, event, ...entry, anchor,
-          ask, askIndex: askAnchor === anchor ? ask.frameIndex : null,
-          changes: records[index].diff.changes.filter(change => change.item === entry.target || change.item === anchor) });
+      for (const link of event.feedback || []) {
+        if (!visible.has(link.target)) continue;
+        const key = `${index}:${link.target}:${link.ask || ''}`;
+        if (seen.has(key)) continue; seen.add(key);
+        let askIndex = null;
+        if (link.ask) for (let at = index; at >= 0; at -= 1) if (Object.values(frames[at].asks || {}).some(ask => ask.id === link.ask)) { askIndex = at; break; }
+        marks.push({ key, index, anchor: link.target, ask: link.ask || null, askIndex, kind: link.meaning === 'snooze' ? 'snooze' : 'answer' });
       }
+      if (event.reminder && visible.has(event.reminder.target)) marks.push({ key: `${index}:${event.reminder.target}:reminder`, index, anchor: event.reminder.target, kind: 'reminder', askIndex: null });
     }
   });
   return marks;
-}
-function markTitle(mark, frames, state) {
-  const target = getItem(state, mark.target)?.title || mark.target;
-  if (mark.kind === 'reminder') return `${stamp(mark.event.at)} 到点提醒：你 ${stamp(mark.event.reminder.requested_at)} 要求再看「${target}」，本轮按现在的事实重判`;
-  if (mark.kind === 'snooze') return `${stamp(mark.event.at)} 你要求 ${stamp(mark.link.until)} 再提醒「${target}」；不是已阅，不改截止`;
-  const asked = mark.ask ? `问（${stamp(frames[mark.ask.frameIndex].at)}）：${mark.ask.prompt}\n` : '';
-  const after = mark.changes.length ? `本轮：${mark.changes.map(change => CHANGE_NAMES[change.type] || change.type).join('、')}` : '本轮状态未变';
-  return `${asked}${stamp(mark.event.at)} 你${VIA[mark.link.via] ? `通过${VIA[mark.link.via]}` : ''}${MEANING[mark.link.meaning] || ''}${mark.link.value ? `「${mark.link.value}」` : ''}\n${after}`;
 }
 
 // Custom listbox (no native <select>): a button plus a fixed-position popup.
@@ -92,24 +66,24 @@ export function mount(host, model) {
   const $ = selector => host.querySelector(selector);
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const mobile = matchMedia('(max-width: 760px)');
-  let current = model.snapshot(), range = 'recent', readerMode = 'overview';
+  let current = model.snapshot(), range = 'recent', readerMode = 'overview', expanded = false, fromSmall = false;
   let hoveredId = null, focusedId = null, disposed = false, resizeFrame = null;
-  let chartStamp = '', readerStamp = '', openSelect = null, dragging = false;
-  const layerCache = new Map(), pathElements = new Map(), currentElements = new Map();
-  const nodeElements = new Map(), mergeElements = new Map(), markElements = new Map();
+  let chartStamp = '', readerStamp = '', openSelect = null, dragging = false, geometry = null, drawnExpanded = false;
+  const store = createResponseStore();
+  const responder = createResponder({ store, snapshot: () => current, cls: 'b', onChange: () => render(current, { type: 'record' }) });
+  const layerCache = new Map();
+  const elements = { bands: new Map(), grads: new Map(), nodes: new Map(), marks: new Map(), merges: new Map(), bars: new Map(), lanes: new Map(), ticks: new Map(), labels: new Map(), leaders: new Map(), numbers: new Map(), notches: new Map() };
   const cache = layerId => {
     const key = layerId ?? '__root__';
     if (!layerCache.has(key)) {
       const layers = current.records.map(record => getLayer(record.state, layerId));
-      layerCache.set(key, { layers, order: stableOrder(layers), merges: explicitMerges(current.records, layerId),
-        marks: loopMarks(current.records, current.frames, layerId) });
+      layerCache.set(key, { layers, order: stableOrder(layers), merges: explicitMerges(current.records, layerId), marks: loopMarks(current.records, current.frames, layerId) });
     }
     return layerCache.get(key);
   };
-  const frameOptions = current.frames.map((frame, index) => ({ value: index, text: frameName(frame, index),
-    note: isReview(frame) ? frame.signal.reason : '', className: isReview(frame) ? 'is-review' : '' }));
-  const ticks = current.frames.map((frame, index) => `<span class="b-tick${isReview(frame) ? ' is-review' : ''}${frame.events.some(event => event.feedback || event.reminder) ? ' has-loop' : ''}" style="--at:${index / Math.max(1, current.frames.length - 1)}"></span>`).join('');
-  const hatch = `<pattern id="${uid}-blank" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" class="b-blank-ground"/><line x1="0" y1="0" x2="0" y2="6" class="b-blank-line"/></pattern>`;
+  const frameOptions = current.frames.map((frame, index) => ({ value: index, text: frameName(frame, index), note: isReview(frame) ? frame.signal.reason : '', className: isReview(frame) ? 'is-review' : '' }));
+  const ticksHTML = current.frames.map((frame, index) => `<span class="b-tick${isReview(frame) ? ' is-review' : ''}${frame.events.some(event => event.feedback || event.reminder) ? ' has-loop' : ''}" style="--at:${index / Math.max(1, current.frames.length - 1)}"></span>`).join('');
+  const hatch = id => `<pattern id="${id}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" class="b-blank-ground"/><line x1="0" y1="0" x2="0" y2="6" class="b-blank-line"/></pattern>`;
 
   host.innerHTML = `<main class="b-shell">
     <header class="b-header">
@@ -118,236 +92,434 @@ export function mount(host, model) {
       <div class="b-header-actions"><button class="b-feedback-button" data-b-action="feedback" hidden>批注 <span class="b-feedback-count"></span></button><button data-lab-inspect="inputs">输入 <span class="b-input-count"></span></button><button data-lab-inspect="state"><span class="b-wide-word">完整</span>状态 ↗</button><button class="b-about" data-b-action="story" aria-label="演示说明">?</button></div>
     </header>
     <div class="b-time-tools">
-      <div class="b-play-controls"><button data-b-action="previous" aria-label="上一次整理" title="上一次整理，左方向键">←</button><button class="b-play" data-b-action="play" aria-label="播放回放"><span class="b-play-icon" aria-hidden="true">▷</span><span class="b-play-word">播放</span></button><button data-b-action="next" aria-label="下一次整理" title="下一次整理，右方向键">→</button></div>
+      <div class="b-play-controls"><button data-b-action="previous" aria-label="上一次整理" title="上一次整理（←）">←</button><button class="b-play" data-b-action="play" aria-label="播放回放" title="播放 / 暂停（空格）"><span class="b-play-icon" aria-hidden="true">▷</span><span class="b-play-word">播放</span></button><button data-b-action="next" aria-label="下一次整理" title="下一次整理（→）">→</button></div>
       <div class="b-jump">${selectHTML('frame', '跳到一次整理', frameOptions, current.index)}</div>
-      <button class="b-replay" data-b-action="replay" disabled title="重播上次过渡">↻ <span>重播过渡</span></button>
+      <button class="b-replay" data-b-action="replay" disabled title="慢放上次过渡">↻ <span>重播过渡</span></button>
       <button class="b-mobile-read" data-b-action="read">摘要 ↗</button>
     </div>
     <div class="b-main">
-      <section class="b-workspace" aria-label="事项份额随时间的变化">
+      <section class="b-workspace" aria-label="事项份额随时间的变化与此刻之后的期限">
         <div class="b-workspace-head"><nav class="b-breadcrumbs" aria-label="当前查看层级"></nav><div class="b-view-options"><div class="b-range" role="group" aria-label="显示的整理范围"><button data-b-range="recent" aria-pressed="true">近 5 次</button><button data-b-range="all" aria-pressed="false">全部</button></div><button class="b-compare" data-b-action="compare" aria-pressed="false">比较前后</button></div></div>
         <div class="b-chart-layout">
-          <div class="b-history"><div class="b-plot-caption"><strong>此前</strong><span class="b-history-range"></span></div><div class="b-chart-scroll" tabindex="0" aria-label="历史份额变化，可横向滚动"><div class="b-plot"><svg class="b-flow-svg" aria-label="同一事项的份额随整理变化" role="group"><defs>${hatch}<clipPath id="${uid}-clip"><rect class="b-clip-rect"/></clipPath></defs><rect class="b-history-ground" fill="url(#${uid}-blank)"/><g class="b-guides"></g><g clip-path="url(#${uid}-clip)"><g class="b-paths"></g><g class="b-merge-paths"></g><g class="b-node-lines"></g><g class="b-loop-marks"></g></g></svg><div class="b-node-buttons"></div><div class="b-plot-empty" hidden><p>暂无事项记录。</p><button data-b-action="next">查看下一次整理 →</button></div></div></div></div>
-          <div class="b-present"><div class="b-present-heading"><strong>此刻</strong><span class="b-budget"></span></div><div class="b-current-section"><svg class="b-section-svg" role="group" aria-label="当前注意力预算"><defs>${hatch.replace(`${uid}-blank`, `${uid}-blank-now`)}</defs><rect class="b-section-outline" fill="url(#${uid}-blank-now)"/><g class="b-current-fills"></g><g class="b-current-asks"></g><g class="b-label-links"></g></svg><div class="b-current-labels"></div><p class="b-current-empty" hidden>当前层暂无事项。</p></div></div>
+          <div class="b-history"><div class="b-plot-caption"><strong>此前</strong><span class="b-history-range"></span></div><div class="b-chart-scroll" tabindex="0" aria-label="历史份额变化，可横向滚动"><div class="b-plot"><svg class="b-flow-svg" role="group" aria-label="同一事项的份额随整理变化"><defs>${hatch(`${uid}-blank`)}<clipPath id="${uid}-clip"><rect class="b-clip-rect"/></clipPath></defs><rect class="b-history-ground" fill="url(#${uid}-blank)"/><g class="b-guides"></g><g clip-path="url(#${uid}-clip)"><g class="b-bands"></g><g class="b-merge-paths"></g><g class="b-node-lines"></g><g class="b-loop-marks"></g></g></svg><div class="b-node-buttons"></div><div class="b-plot-empty" hidden><p>暂无事项记录。</p><button data-b-action="next">查看下一次整理 →</button></div></div></div></div>
+          <div class="b-present">
+            <div class="b-present-heading"><span class="b-now-head"><strong>此刻</strong><span class="b-budget"></span></span><span class="b-future-head" aria-hidden="true">此刻之后 →</span></div>
+            <div class="b-present-body">
+              <svg class="b-now-svg" role="group" aria-label="此刻的 64 份与之后的期限"><defs>${hatch(`${uid}-blank-now`)}<linearGradient id="${uid}-fade" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".7" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><mask id="${uid}-lane-mask" maskContentUnits="userSpaceOnUse"><rect class="b-lane-mask-rect" fill="url(#${uid}-fade)"/></mask></defs><rect class="b-section-blank" fill="url(#${uid}-blank-now)"/><g class="b-future-grid"></g><g class="b-lanes" mask="url(#${uid}-lane-mask)"></g><g class="b-bars"></g><g class="b-numbers" aria-hidden="true"></g><g class="b-notches" aria-hidden="true"></g><line class="b-now-line"/><line class="b-next-line"/><g class="b-leaders"></g><g class="b-ticks"></g></svg>
+              <div class="b-labels" role="list" aria-label="此刻的事项，按此前的顺序"></div>
+              <div class="b-future-axis" aria-hidden="true"></div>
+              <p class="b-current-empty" hidden>当前层暂无事项。</p>
+            </div>
+          </div>
         </div>
-        <div class="b-chart-foot"><p class="b-legend"><span>带宽 = 份额</span><span><i class="b-key-blank" aria-hidden="true"></i>未分配</span><span><i class="b-key-ask" aria-hidden="true"></i>问你 <i class="b-key-answer" aria-hidden="true"></i>你的回应</span><span><i class="b-key-review" aria-hidden="true"></i>每日整理</span><span><i class="b-key-merge" aria-hidden="true"></i>明确合并</span></p><span class="b-check-note"></span></div>
-        <div class="b-scrubber"><span class="b-first-date"></span><div class="b-slider" role="slider" tabindex="0" aria-label="沿整理次数回看时间" aria-valuemin="0" aria-valuemax="${current.frames.length - 1}"><div class="b-slider-track"><div class="b-slider-fill"></div>${ticks}</div><div class="b-slider-thumb" aria-hidden="true"></div></div><span class="b-last-date"></span></div>
+        <div class="b-chart-foot"><p class="b-legend"><span>带宽 = 份额</span><span><i class="b-key-group" aria-hidden="true"></i>不足 ${SMALL} 份合成小事</span><span><i class="b-key-blank" aria-hidden="true"></i>未分配</span><span><i class="b-key-due" aria-hidden="true"></i>问题的期限</span><span><i class="b-key-ask" aria-hidden="true"></i>问你 <i class="b-key-answer" aria-hidden="true"></i>你的回应</span><span><i class="b-key-merge" aria-hidden="true"></i>明确合并</span></p><span class="b-check-note" aria-live="polite"></span></div>
+        <div class="b-scrubber"><span class="b-first-date"></span><div class="b-slider" role="slider" tabindex="0" aria-label="沿整理次数回看时间" aria-valuemin="0" aria-valuemax="${current.frames.length - 1}"><div class="b-slider-track"><div class="b-slider-fill"></div>${ticksHTML}</div><div class="b-slider-thumb" aria-hidden="true"></div></div><span class="b-last-date"></span></div>
       </section>
-      <aside class="b-reader" aria-labelledby="b-reader-title"><div class="b-reader-head"><div><span class="b-reader-kicker">摘要与依据</span><h2 id="b-reader-title" tabindex="-1" aria-live="polite">本轮判断</h2></div><div class="b-reader-actions"><button class="b-reader-back" data-b-action="back-chart">← 图</button><button data-b-action="overview" hidden aria-label="回到本轮判断">↶ 概览</button><button data-lab-inspect="batch" title="查看本轮声明与回执">声明 ↗</button></div></div><div class="b-reader-scroll"><div class="b-reader-body"></div></div><div class="b-reader-foot"><span>人物与私人消息均为演示创作</span><button data-b-action="story">演示说明 ↗</button></div></aside>
+      <aside class="b-reader" aria-labelledby="b-reader-title"><div class="b-reader-head"><div><span class="b-reader-kicker">摘要与依据</span><h2 id="b-reader-title" tabindex="-1">本轮判断</h2></div><div class="b-reader-actions"><button class="b-reader-back" data-b-action="back-chart">← 图</button><button data-b-action="overview" hidden aria-label="回到本轮判断">↶ 本轮</button><button data-lab-inspect="batch" title="查看本轮声明与回执">声明 ↗</button></div></div><div class="b-reader-scroll"><div class="b-reader-body" aria-live="polite"></div></div><div class="b-reader-foot"><span>${scenario.id === 'shanghai-two-weeks' ? '人物与私人消息均为演示创作' : esc(notice)}</span><button data-b-action="story">演示说明 ↗</button></div></aside>
     </div>
   </main>`;
 
-  function svgElement(tag, className, parent) {
-    const element = document.createElementNS(SVG, tag);
-    if (className) element.setAttribute('class', className);
-    parent.append(element); return element;
-  }
+  const svgEl = (tag, className, parent) => { const element = document.createElementNS(SVG, tag); if (className) element.setAttribute('class', className); parent.append(element); return element; };
   const set = (element, values) => { for (const [name, value] of Object.entries(values)) element.setAttribute(name, String(value)); };
-  const buttonInfo = (element, item) => { element.dataset.bItem = item.id; element.setAttribute('aria-label', `查看${item.title}`); };
-  const metaHTML = (item, ask) => `<b>${item.share}</b> 份 · ${ask ? `<em>${EXPECT[ask.expects[0]] || kindLabel[item.kind]}</em>` : kindLabel[item.kind]}`;
-  const labelHTML = (item, ask) => `<button class="b-label-main" data-b-item="${esc(item.id)}" aria-controls="b-reader-title"><span>${esc(item.title)}</span><small>${metaHTML(item, ask)}</small></button>${item.children?.items.length ? `<button class="b-dive" data-b-dive="${esc(item.id)}" aria-label="进入${esc(item.title)}的子层，${item.children.items.length} 项" title="进入子层（独立 64 份）">${item.children.items.length}<span aria-hidden="true">›</span></button>` : ''}`;
-  function measureLabels(items, width, dense) {
+  const removeMissing = (map, wanted, remove = element => element.remove()) => { for (const [key, element] of map) if (!wanted.has(key)) { remove(element); map.delete(key); } };
+
+  // ---------- labels ----------
+  function labelHTML(entry) {
+    if (entry.group) {
+      return `<button type="button" class="b-label-main b-label-group" data-b-group aria-expanded="${expanded}" aria-controls="b-reader-title"><span class="b-label-title">另 ${entry.count} 件小事</span><small><b>${entry.share}</b> 份${entry.asks ? ` · <em>${entry.asks} 件登记了问题</em>` : ''} · ${expanded ? '收起 ▴' : '逐件看 ▾'}</small></button>`;
+    }
+    const { item, ask, due, record } = entry;
+    const dueText = due ? `<i class="b-due${due.at < current.cursor ? ' is-over' : ''}">${due.at < current.cursor ? '已过期' : relative(due.at - current.cursor)}</i>` : '';
+    const recordText = record ? `<i class="b-rec">✓ ${entry.recordStatus === 'acknowledged' ? '已收到' : '已保存'}</i>` : '';
+    return `<button type="button" class="b-label-main" data-b-item="${esc(item.id)}" aria-controls="b-reader-title"><span class="b-label-title">${esc(item.title)}</span><small><b>${item.share}</b> 份 · ${ask ? `<em>${expectOf(ask)}</em>` : esc(kindLabel[item.kind] || item.kind)}${dueText ? ` · ${dueText}` : ''}${recordText ? ` · ${recordText}` : ''}</small></button>${item.children?.items.length ? `<button type="button" class="b-dive" data-b-dive="${esc(item.id)}" aria-label="进入${esc(item.title)}的子层，${item.children.items.length} 项" title="进入子层（独立 64 份）">${item.children.items.length}<span aria-hidden="true">›</span></button>` : ''}`;
+  }
+  function measureLabels(entries, width, dense) {
     const probe = document.createElement('div');
-    probe.className = `b-current-label${dense ? ' is-dense' : ''}`; probe.setAttribute('aria-hidden', 'true');
+    probe.className = `b-label${dense ? ' is-dense' : ''}`; probe.setAttribute('aria-hidden', 'true');
     probe.style.cssText = `position:absolute;visibility:hidden;pointer-events:none;transform:none;top:0;left:0;width:${width}px`;
-    $('.b-current-labels').append(probe);
+    $('.b-labels').append(probe);
     const heights = new Map();
-    for (const { item } of items) { probe.innerHTML = labelHTML(item, currentAsk(current, item.id)); heights.set(item.id, probe.getBoundingClientRect().height); }
+    for (const entry of entries) { probe.innerHTML = labelHTML(entry); heights.set(entry.id, probe.getBoundingClientRect().height); }
     probe.remove(); return heights;
   }
-  function removeMissing(map, wanted, remove) {
-    for (const [key, element] of map) if (!wanted.has(key)) { remove(element); map.delete(key); }
+
+  // ---------- scene ----------
+  function dims() {
+    const layout = $('.b-chart-layout'), total = layout.clientWidth;
+    const narrow = mobile.matches;
+    const presentW = narrow ? Math.round(total * .72) : Math.round(Math.max(470, Math.min(660, total * .64)));
+    const barW = narrow ? 30 : 46, leaderW = narrow ? 12 : 22;
+    const futureW = narrow ? Math.round(presentW * .3) : Math.round(Math.max(150, Math.min(240, presentW * .36)));
+    const labelW = presentW - barW - futureW - leaderW;
+    return { presentW, barW, futureW, leaderW, labelW, svgW: barW + futureW + leaderW };
   }
+  function makeScene(s) {
+    const { layers, order, merges, marks } = cache(s.layerId);
+    const d = geometry = dims();
+    $('.b-present').style.width = `${d.presentW}px`;
+    const height = Math.max(150, Math.floor($('.b-present-body').clientHeight - AXIS_HEIGHT));
+    const holderWidth = Math.max(120, $('.b-chart-scroll').clientWidth);
+    const first = range === 'all' ? 0 : Math.max(0, s.index - 4), last = s.index;
+    const indexes = Array.from({ length: last - first + 1 }, (_, index) => first + index);
+    const width = range === 'all' ? Math.max(holderWidth, indexes.length * (mobile.matches ? 34 : 64)) : holderWidth;
+    const step = (width - 28) / Math.max(1, indexes.length - 1);
+    const xFor = index => indexes.length === 1 ? width - 14 : 14 + (index - first) * step;
+    const sections = new Map(indexes.map(index => [index, layoutSection(layers[index], order, height)]));
+    const section = layoutSection(s.layer, order, height);
+    sections.set(last, section);
+    const meta = { bands: new Map(), bars: new Map(), ticks: new Map(), labels: new Map(), marks: new Map(), merges: new Map() };
+    const scene = { index: s.index, layerId: s.layerId, first, last, width, height, section, meta, ...d,
+      nodes: new Map(indexes.map(index => [index, { x: xFor(index), o: 1 }])),
+      bands: new Map(), bars: new Map(), lanes: new Map(), ticks: new Map(), labels: new Map(), marks: new Map(), merges: new Map(),
+      blankY: section.blank.y, blankH: section.blank.h, scrollLeft: Math.max(0, width - holderWidth),
+      members: new Set(section.group?.members || []) };
+    const itemFor = id => getItem(s.state, id) || [...indexes].reverse().map(index => getItem(s.records[index].state, id)).find(Boolean);
+    // History ribbons. A band inside 小事 keeps its exact position but is transparent while 小事 is closed.
+    for (const id of order) {
+      if (!indexes.some(index => sections.get(index).placed.has(id))) continue;
+      const present = indexes.filter(index => sections.get(index).placed.has(id));
+      const pts = new Map(indexes.map(index => {
+        const point = sections.get(index).placed.get(id);
+        if (point) return [index, { x: xFor(index), y: point.y, h: point.h, o: point.grouped && !expanded ? 0 : 1 }];
+        const near = present.reduce((best, at) => Math.abs(at - index) < Math.abs(best - index) || (Math.abs(at - index) === Math.abs(best - index) && at < index) ? at : best, present[0]);
+        const zone = sections.get(near).placed.get(id).grouped ? 'group' : 'sep';
+        return [index, { x: xFor(index), y: sections.get(index).anchor(id, zone), h: 0, o: zone === 'group' && !expanded ? 0 : 1 }];
+      }));
+      scene.bands.set(id, { pts, o: 1 });
+      const item = itemFor(id);
+      meta.bands.set(id, { color: colorFor(item, s.state), title: item?.title || id });
+    }
+    if (indexes.some(index => sections.get(index).group)) {
+      scene.bands.set(GROUP, { pts: new Map(indexes.map(index => { const g = sections.get(index).group; return [index, { x: xFor(index), y: g ? g.y : sections.get(index).blank.y, h: g ? g.h : 0, o: 1 }]; })), o: 1 });
+      meta.bands.set(GROUP, { group: true, title: '小事' });
+    }
+    // Present cross-section, lanes and labels.
+    const cursor = s.cursor;
+    const deadlines = new Map(deadlinesOf(s, [...section.placed.values()].map(point => point.item)).map(entry => [entry.id, entry]));
+    const entries = [];
+    for (const point of section.placed.values()) {
+      const ask = currentAsk(s, point.id), record = latestRecord(store, point.id, cursor);
+      const recordStatus = record ? (s.frames.some(frame => Date.parse(frame.at) > record.at && Date.parse(frame.at) <= cursor) ? 'acknowledged' : 'saved') : null;
+      scene.bars.set(point.id, { y: point.y, h: point.h, o: point.grouped && !expanded ? 0 : 1 });
+      scene.lanes.set(point.id, { y: point.y, h: point.h, o: point.grouped && !expanded ? 0 : 1 });
+      meta.bars.set(point.id, { color: colorFor(point.item, s.state), share: point.item.share, grouped: point.grouped, ask: Boolean(ask), title: point.item.title, record: recordStatus });
+      if (!point.grouped) entries.push({ id: point.id, item: point.item, y: point.y, h: point.h, ask, due: deadlines.get(point.id), record, recordStatus });
+    }
+    if (section.group) {
+      const g = section.group;
+      scene.bars.set(GROUP, { y: g.y, h: g.h, o: 1 });
+      scene.lanes.set(GROUP, { y: g.y, h: g.h, o: 1 });
+      meta.bars.set(GROUP, { group: true, share: g.share, title: '小事' });
+      entries.push({ id: GROUP, group: true, y: g.y, h: g.h, count: g.members.length, share: g.share, asks: g.members.filter(id => currentAsk(s, id)).length });
+    }
+    let heights = measureLabels(entries, d.labelW, false), dense = false;
+    if ([...heights.values()].reduce((sum, value) => sum + value + 3, 0) > height) { heights = measureLabels(entries, d.labelW, true); dense = true; }
+    scene.dense = dense;
+    const labelYs = labelPositions(entries, height, { heights, gap: dense ? 1 : 5 });
+    for (const entry of entries) { scene.labels.set(entry.id, { y: labelYs.get(entry.id), o: 1 }); meta.labels.set(entry.id, entry); }
+    // Ticks after now: deadlines (rust when a registered question owns them), local answers, overdue at the edge.
+    const center = point => point.y + point.h / 2;
+    const ticks = [];
+    for (const due of deadlines.values()) {
+      const point = section.placed.get(due.id), over = due.at < cursor;
+      ticks.push({ key: `due:${due.id}`, x: futureFraction(due.at - cursor) * d.futureW, y: center(point), h: Math.max(14, point.h), o: 1,
+        meta: { kind: due.kind === 'ask' ? 'due' : 'item-due', over, id: due.id, grouped: point.grouped, line1: point.grouped ? shortTitle(point.item.title) : stamp(due.at), line2: point.grouped ? `${stamp(due.at)} · ${relative(due.at - cursor)}` : relative(due.at - cursor) } });
+    }
+    for (const point of section.placed.values()) {
+      const record = latestRecord(store, point.id, cursor);
+      if (!record) continue;
+      const status = meta.bars.get(point.id).record;
+      ticks.push({ key: `chk:${point.id}`, x: -9, y: center(point), h: 0, o: point.grouped && !expanded ? .9 : 1, meta: { kind: 'check', id: point.id, status } });
+      if (record.until && record.until > cursor) ticks.push({ key: `rec:${point.id}`, x: futureFraction(record.until - cursor) * d.futureW, y: center(point), h: Math.max(14, point.h), o: 1,
+        meta: { kind: record.meaning === 'snooze' ? 'snooze' : 'scheduled', id: point.id, grouped: point.grouped, line1: `${record.meaning === 'snooze' ? '◷ 再提醒' : '你定的'} ${stamp(record.until)}`, line2: point.grouped ? shortTitle(point.item.title) : relative(record.until - cursor) } });
+    }
+    const textWidth = text => [...String(text)].reduce((sum, char) => sum + (/[\u2E80-\uFFFF]/.test(char) ? 11 : 6.3), 0);
+    // Captions never leave the strip after now: on a narrow strip each line is cut to fit, with an ellipsis.
+    const room = d.futureW + d.leaderW - 6;
+    const fit = text => { if (textWidth(text) <= room) return text; let out = ''; for (const char of String(text)) { if (textWidth(`${out}${char}…`) > room) break; out += char; } return `${out}…`; };
+    for (const tick of ticks) if (tick.meta.line1) {
+      tick.meta.line1 = fit(tick.meta.line1); tick.meta.line2 = fit(tick.meta.line2);
+      tick.meta.width = Math.max(textWidth(tick.meta.line1), textWidth(tick.meta.line2) * .95);
+    }
+    placeCaptions(ticks.filter(tick => tick.meta.kind !== 'check'), { lineHeight: 27, width: 110 });
+    for (const tick of ticks) { scene.ticks.set(tick.key, { x: tick.x, y: tick.y, h: tick.h, ty: tick.ty ?? tick.y, o: tick.o }); meta.ticks.set(tick.key, tick.meta); }
+    const next = s.frames[s.index + 1];
+    scene.nextX = next ? futureFraction(Date.parse(next.at) - cursor) * d.futureW : -1;
+    meta.next = next ? Date.parse(next.at) : null;
+    // History marks and explicit merges, positioned on the drawn ribbons at draw time.
+    for (const mark of marks) {
+      if (mark.index < first || mark.index > last || !scene.bands.has(mark.anchor)) continue;
+      const point = sections.get(mark.index).placed.get(mark.anchor);
+      if (point?.grouped && !expanded) continue;
+      scene.marks.set(mark.key, { o: 1 }); meta.marks.set(mark.key, { ...mark, askIndex: mark.askIndex != null && mark.askIndex >= first ? mark.askIndex : null });
+    }
+    for (const link of merges) {
+      if (link.index <= first || link.index > last) continue;
+      const key = `${link.index}:${link.from}:${link.to}`;
+      scene.merges.set(key, { o: 1 }); meta.merges.set(key, link);
+    }
+    return scene;
+  }
+
+  // ---------- prepare: create and remove elements for every key of the (template) scene ----------
   function prepare(scene) {
-    const width = scene.width, height = scene.height, sectionWidth = scene.barWidth + scene.leaderWidth;
+    const { width, height, barW, futureW, svgW } = scene;
     $('.b-plot').style.width = `${width}px`; $('.b-plot').style.height = `${height + AXIS_HEIGHT}px`;
     set($('.b-flow-svg'), { width, height, viewBox: `0 0 ${width} ${height}` });
     set($('.b-history-ground'), { x: 0, y: 0, width, height });
     set($('.b-clip-rect'), { x: 2, y: -8, width: Math.max(1, width - 4), height: height + 16 });
     $('.b-node-buttons').style.height = `${AXIS_HEIGHT}px`;
     $('.b-guides').innerHTML = [16, 32, 48].map(value => `<line x1="0" x2="${width}" y1="${value / 64 * height}" y2="${value / 64 * height}" class="b-guide"/>`).join('');
-    set($('.b-section-svg'), { width: sectionWidth, height, viewBox: `0 0 ${sectionWidth} ${height}` });
-    set($('.b-section-outline'), { x: 0, y: 0, width: scene.barWidth, height });
-    $('.b-current-labels').style.left = `${sectionWidth}px`;
-    $('.b-current-labels').classList.toggle('is-dense', Boolean(scene.dense));
-    removeMissing(pathElements, scene.paths, element => element.remove());
-    for (const [id, entry] of scene.paths) {
-      let path = pathElements.get(id);
+    set($('.b-now-svg'), { width: svgW, height, viewBox: `0 0 ${svgW} ${height}` });
+    set($('.b-lane-mask-rect'), { x: barW, y: 0, width: futureW, height });
+    set($('.b-now-line'), { x1: barW + .5, x2: barW + .5, y1: -6, y2: height + 6 });
+    $('.b-labels').style.left = `${svgW}px`;
+    $('.b-labels').classList.toggle('is-dense', Boolean(scene.dense));
+    $('.b-future-grid').innerHTML = FUTURE_GRID.map(([span]) => `<line class="b-future-guide" x1="${barW + futureFraction(span) * futureW}" x2="${barW + futureFraction(span) * futureW}" y1="0" y2="${height}"/>`).join('');
+    const nextText = scene.meta.next ? `下次整理 ${formatTime(scene.meta.next)}` : '';
+    const nextX = scene.meta.next ? barW + futureFraction(scene.meta.next - current.cursor) * futureW : -1;
+    $('.b-future-axis').innerHTML = `<span class="is-now" style="left:${barW}px">此刻 ${formatTime(current.cursor)}</span>${FUTURE_GRID.filter(([span]) => Math.abs(barW + futureFraction(span) * futureW - nextX) > 34).map(([span, text]) => `<span style="left:${barW + futureFraction(span) * futureW}px">${text}</span>`).join('')}${nextText ? `<span class="is-next" style="left:${nextX}px">${nextText}</span>` : ''}`;
+    // Ribbons: 小事 first so items paint over it.
+    removeMissing(elements.bands, scene.bands);
+    removeMissing(elements.grads, scene.bands);
+    for (const key of [GROUP, ...[...scene.bands.keys()].filter(key => key !== GROUP)]) {
+      if (!scene.bands.has(key)) continue;
+      const info = scene.meta.bands.get(key);
+      let path = elements.bands.get(key);
       if (!path) {
-        path = svgElement('path', 'b-flow', $('.b-paths')); set(path, { tabindex: 0, role: 'button' });
-        path.append(document.createElementNS(SVG, 'title')); pathElements.set(id, path);
+        path = svgEl('path', `b-flow${key === GROUP ? ' is-group' : ''}`, $('.b-bands'));
+        set(path, { tabindex: -1 }); path.dataset.bBand = key; path.append(document.createElementNS(SVG, 'title'));
+        if (key !== GROUP) {
+          const grad = svgEl('linearGradient', '', $('.b-flow-svg defs')); grad.id = `${uid}-g-${elements.grads.size}-${Math.random().toString(36).slice(2, 7)}`; set(grad, { gradientUnits: 'userSpaceOnUse' });
+          elements.grads.set(key, grad);
+        }
+        elements.bands.set(key, path);
       }
-      buttonInfo(path, entry.item); path.setAttribute('fill', entry.color);
-      path.firstElementChild.textContent = `${entry.item.title}；点击查看摘要与依据`;
+      if (key === GROUP) { path.dataset.bGroup = ''; delete path.dataset.bItem; } else path.dataset.bItem = key;
+      path.firstElementChild.textContent = key === GROUP ? '小事：份额不足 3 的事项合在一起' : `${info?.title}；点击查看摘要与依据`;
+      if (key === GROUP) $('.b-bands').prepend(path);
     }
-    removeMissing(currentElements, scene.current, entry => { entry.rect.remove(); entry.notch.remove(); entry.leader.remove(); entry.label.remove(); });
-    for (const [id, entry] of scene.current) {
-      let elements = currentElements.get(id);
-      if (!elements) {
-        const rect = svgElement('rect', 'b-current-fill', $('.b-current-fills'));
-        set(rect, { x: 0, y: 0, height: 1, role: 'button', tabindex: 0 });
-        const notch = svgElement('rect', 'b-ask-notch', $('.b-current-asks'));
-        set(notch, { x: 0, y: 0, width: 5, height: 1 });
-        const leader = svgElement('path', 'b-label-link', $('.b-label-links'));
-        const label = document.createElement('div'); label.className = 'b-current-label'; label.dataset.bLabel = id;
-        $('.b-current-labels').append(label); elements = { rect, notch, leader, label }; currentElements.set(id, elements);
-      }
-      const { rect, notch, leader, label } = elements;
-      buttonInfo(rect, entry.item); leader.dataset.bItem = id; label.dataset.bFocusId = id; notch.dataset.bItem = id;
-      set(rect, { width: scene.barWidth, fill: entry.color });
-      notch.classList.toggle('is-on', Boolean(entry.ask) && entry.active !== false);
-      if (entry.active !== false) {
-        rect.dataset.bCurrentShare = id; rect.dataset.share = String(entry.item.share);
-        rect.dataset.budget = String(scene.section.budget); delete rect.dataset.bMotionExit;
-      } else { delete rect.dataset.bCurrentShare; rect.dataset.bMotionExit = id; }
-      label.classList.toggle('has-ask', Boolean(entry.ask));
-      const signature = `${entry.item.title}|${entry.item.share}|${entry.item.kind}|${entry.item.children?.items.length ?? 0}|${entry.ask?.expects?.[0] ?? ''}`;
-      if (label.dataset.content !== signature) { label.dataset.content = signature; label.innerHTML = labelHTML(entry.item, entry.ask); }
-    }
-    removeMissing(nodeElements, scene.nodes, elements => { elements.line.remove(); elements.button.remove(); });
-    for (const [index, node] of scene.nodes) {
-      let elements = nodeElements.get(index);
-      if (!elements) {
+    removeMissing(elements.nodes, scene.nodes, pair => { pair.line.remove(); pair.button.remove(); });
+    for (const index of scene.nodes.keys()) {
+      let pair = elements.nodes.get(index);
+      if (!pair) {
         const frame = current.frames[index];
-        const line = svgElement('line', `b-node-line${isReview(frame) ? ' is-review' : ''}`, $('.b-node-lines'));
-        const button = document.createElement('button'); button.className = `b-node-button${isReview(frame) ? ' is-review' : ''}`;
+        const line = svgEl('line', `b-node-line${isReview(frame) ? ' is-review' : ''}`, $('.b-node-lines'));
+        const button = document.createElement('button'); button.type = 'button'; button.className = `b-node-button${isReview(frame) ? ' is-review' : ''}`;
         button.dataset.bFrame = String(index);
         button.setAttribute('aria-label', `${frameName(frame, index)}${isReview(frame) ? `；${frame.signal.reason}，窗口内 0 条事件` : ''}`);
         button.innerHTML = `<span class="b-node-dot"></span><span>${formatTime(frame.at)}</span><small>${isReview(frame) ? '每日整理' : formatDate(frame.at)}</small>`;
-        $('.b-node-buttons').append(button); elements = { line, button }; nodeElements.set(index, elements);
+        $('.b-node-buttons').append(button); pair = { line, button }; elements.nodes.set(index, pair);
       }
-      elements.line.classList.toggle('is-current', index === current.index);
-      elements.line.classList.toggle('is-baseline', current.comparing && index === current.baseIndex);
-      elements.button.classList.toggle('is-current', index === current.index);
-      elements.button.tabIndex = node.active === false ? -1 : 0;
-      if (index === current.index) elements.button.setAttribute('aria-current', 'step'); else elements.button.removeAttribute('aria-current');
+      pair.line.classList.toggle('is-current', index === current.index);
+      pair.line.classList.toggle('is-baseline', current.comparing && index === current.baseIndex);
+      pair.button.classList.toggle('is-current', index === current.index);
+      pair.button.tabIndex = scene.nodes.get(index).o < .5 ? -1 : 0;
+      if (index === current.index) pair.button.setAttribute('aria-current', 'step'); else pair.button.removeAttribute('aria-current');
     }
-    removeMissing(mergeElements, scene.merges, element => element.remove());
-    for (const [key, link] of scene.merges) {
-      let path = mergeElements.get(key);
-      if (!path) { path = svgElement('path', 'b-merge-link', $('.b-merge-paths')); path.append(document.createElementNS(SVG, 'title')); mergeElements.set(key, path); }
-      path.dataset.bItem = link.to; path.dataset.bSourceId = link.from;
-      path.firstElementChild.textContent = `${link.source.title}，明确合并至${link.target.title}`;
+    removeMissing(elements.merges, scene.merges);
+    for (const key of scene.merges.keys()) {
+      if (elements.merges.has(key)) continue;
+      const link = scene.meta.merges.get(key);
+      const path = svgEl('path', 'b-merge-link', $('.b-merge-paths')); path.dataset.bItem = link.to;
+      path.append(document.createElementNS(SVG, 'title')); path.firstElementChild.textContent = `${link.source.title}，明确合并至${link.target.title}`;
+      elements.merges.set(key, path);
     }
-    removeMissing(markElements, scene.marks, elements => elements.group.remove());
-    for (const [key, mark] of scene.marks) {
-      let elements = markElements.get(key);
-      if (!elements) {
-        const group = svgElement('g', `b-loop is-${mark.kind}`, $('.b-loop-marks'));
-        const title = svgElement('title', '', group);
-        const line = mark.askIndex != null ? svgElement('path', 'b-loop-line', group) : null;
-        const ring = mark.askIndex != null ? svgElement('circle', 'b-loop-ask', group) : null;
-        const dot = svgElement('circle', 'b-loop-dot', group);
-        const hand = mark.kind !== 'answer' ? svgElement('path', 'b-loop-hand', group) : null;
-        elements = { group, title, line, ring, dot, hand }; markElements.set(key, elements);
+    removeMissing(elements.marks, scene.marks, group => group.root.remove());
+    for (const key of scene.marks.keys()) {
+      if (elements.marks.has(key)) continue;
+      const mark = scene.meta.marks.get(key);
+      const root = svgEl('g', `b-loop is-${mark.kind}`, $('.b-loop-marks')); root.dataset.bItem = mark.anchor;
+      const title = svgEl('title', '', root);
+      title.textContent = mark.kind === 'reminder' ? '到点提醒' : mark.ask ? `你回应了登记的问题（${stamp(current.frames[mark.index].at)}）` : `你在来源处处理了它（${stamp(current.frames[mark.index].at)}）`;
+      const line = mark.askIndex != null ? svgEl('path', 'b-loop-line', root) : null;
+      const ring = mark.askIndex != null ? svgEl('circle', 'b-loop-ask', root) : null;
+      const dot = svgEl('circle', `b-loop-dot${mark.ask ? ' is-answer' : ''}`, root);
+      elements.marks.set(key, { root, line, ring, dot });
+    }
+    // Present bars, numbers, notches and lanes.
+    removeMissing(elements.bars, scene.bars);
+    removeMissing(elements.numbers, scene.bars);
+    removeMissing(elements.notches, scene.bars);
+    removeMissing(elements.lanes, scene.lanes);
+    for (const key of [GROUP, ...[...scene.bars.keys()].filter(key => key !== GROUP)]) {
+      if (!scene.bars.has(key)) continue;
+      const info = scene.meta.bars.get(key);
+      let rect = elements.bars.get(key);
+      if (!rect) {
+        rect = svgEl('rect', `b-bar${key === GROUP ? ' is-group' : ''}`, $('.b-bars')); set(rect, { x: 0, role: 'button', tabindex: -1 });
+        elements.bars.set(key, rect);
+        const number = svgEl('text', 'b-bar-number', $('.b-numbers')); elements.numbers.set(key, number);
+        const notch = svgEl('rect', 'b-ask-notch', $('.b-notches')); set(notch, { x: 0, width: 4 }); elements.notches.set(key, notch);
       }
-      elements.group.dataset.bItem = mark.anchor;
-      elements.title.textContent = markTitle(mark, current.frames, current.state);
+      set(rect, { width: barW });
+      if (key === GROUP) { rect.dataset.bGroup = ''; rect.setAttribute('aria-label', `小事 ${info.share} 份`); $('.b-bars').prepend(rect); }
+      else { rect.dataset.bItem = key; rect.setAttribute('aria-label', `${info.title} ${info.share} 份`); rect.style.fill = info.color; rect.classList.toggle('is-member', Boolean(info.grouped)); }
+      rect.dataset.share = String(info.share);
+      const number = elements.numbers.get(key);
+      number.textContent = String(info.share); set(number, { x: barW / 2 + 1 });
+      number.classList.toggle('is-group', key === GROUP);
+      elements.notches.get(key).classList.toggle('is-on', Boolean(info.ask));
+      if (key !== GROUP) elements.notches.get(key).dataset.bItem = key;
     }
-    $('.b-plot-empty').hidden = scene.paths.size > 0;
-    $('.b-current-empty').hidden = scene.section.items.length > 0;
+    for (const key of scene.lanes.keys()) {
+      let rect = elements.lanes.get(key);
+      if (!rect) { rect = svgEl('rect', `b-lane${key === GROUP ? ' is-group' : ''}`, $('.b-lanes')); set(rect, { x: barW }); elements.lanes.set(key, rect); }
+      set(rect, { x: barW, width: futureW });
+      const info = scene.meta.bars.get(key);
+      if (key !== GROUP && info) { rect.style.fill = info.color; rect.dataset.bItem = key; }
+    }
+    // Leaders and labels (one per separate band and one for 小事).
+    removeMissing(elements.leaders, scene.labels);
+    removeMissing(elements.labels, scene.labels);
+    for (const key of scene.labels.keys()) {
+      const entry = scene.meta.labels.get(key);
+      let leader = elements.leaders.get(key);
+      if (!leader) { leader = svgEl('path', 'b-leader', $('.b-leaders')); elements.leaders.set(key, leader); }
+      if (key === GROUP) leader.dataset.bGroup = ''; else leader.dataset.bItem = key;
+      let label = elements.labels.get(key);
+      if (!label) { label = document.createElement('div'); label.className = 'b-label'; label.setAttribute('role', 'listitem'); $('.b-labels').append(label); elements.labels.set(key, label); }
+      if (key === GROUP) { label.dataset.bGroupLabel = ''; delete label.dataset.bFocusId; } else label.dataset.bFocusId = key;
+      if (!entry) continue;
+      label.classList.toggle('has-ask', Boolean(entry.ask) || Boolean(entry.asks));
+      label.classList.toggle('is-group', Boolean(entry.group));
+      const html = labelHTML(entry);
+      if (label.dataset.content !== html) { label.dataset.content = html; label.innerHTML = html; }
+    }
+    // Keep DOM order = top-to-bottom order so Tab and ↑/↓ walk the labels in reading order.
+    [...elements.labels.entries()].sort((a, b) => (scene.labels.get(a[0])?.y ?? 0) - (scene.labels.get(b[0])?.y ?? 0)).forEach(([, label]) => $('.b-labels').append(label));
+    removeMissing(elements.ticks, scene.ticks, group => group.root.remove());
+    for (const key of scene.ticks.keys()) {
+      const info = scene.meta.ticks.get(key);
+      let tick = elements.ticks.get(key);
+      if (!tick) {
+        const root = svgEl('g', `b-tick-mark is-${info.kind}`, $('.b-ticks'));
+        const line = info.kind === 'check' ? null : svgEl('line', 'b-tick-line', root);
+        const head = svgEl(info.kind === 'check' ? 'circle' : 'path', 'b-tick-head', root);
+        const text = info.kind === 'check' ? null : svgEl('text', 'b-tick-text', root);
+        const t1 = text ? svgEl('tspan', 'b-tick-t1', text) : null, t2 = text ? svgEl('tspan', 'b-tick-t2', text) : null;
+        tick = { root, line, head, text, t1, t2 }; elements.ticks.set(key, tick);
+        if (info.kind === 'check') set(head, { r: 4.2 });
+      }
+      tick.root.dataset.bItem = info.id;
+      tick.root.classList.toggle('is-over', Boolean(info.over));
+      tick.root.classList.toggle('is-ack', info.status === 'acknowledged');
+      if (tick.t1) { tick.t1.textContent = info.line1; tick.t2.textContent = info.line2; }
+    }
+    $('.b-plot-empty').hidden = scene.bands.size > 0;
+    $('.b-current-empty').hidden = scene.section.placed.size > 0;
     updateEmphasis();
   }
+
+  // ---------- draw: write geometry for one sampled scene ----------
   function draw(scene) {
-    // The viewing window moves with the bands. Applying the final scroll before
-    // the shape tween would make every old node jump left by one column.
+    const { barW, futureW, svgW } = geometry || scene;
     $('.b-plot').style.width = `${scene.width}px`;
     set($('.b-flow-svg'), { width: scene.width, height: scene.height, viewBox: `0 0 ${scene.width} ${scene.height}` });
     set($('.b-history-ground'), { width: scene.width, height: scene.height });
-    set($('.b-clip-rect'), { width: Math.max(1, scene.width - 4), height: scene.height + 16 });
-    for (const [id, entry] of scene.paths) {
-      const path = pathElements.get(id); path.setAttribute('d', bandPath(entry.points));
-      path.style.setProperty('--b-motion-opacity', entry.opacity ?? 1);
+    for (const [key, band] of scene.bands) {
+      const path = elements.bands.get(key); if (!path) continue;
+      const pts = [...band.pts.entries()].sort((a, b) => a[0] - b[0]).map(([, point]) => point);
+      // A hairline of paper between neighbouring ribbons instead of a stroke (a stroke would trace zero-height stretches).
+      path.setAttribute('d', bandPath(key === GROUP ? pts : pts.map(point => point.h > 1.4 ? { ...point, y: point.y + .45, h: point.h - .9 } : point)));
+      path.style.setProperty('--o', Math.min(1, band.o).toFixed(3));
+      if (key === GROUP) continue;
+      const color = scene.meta.bands.get(key)?.color || '#999';
+      const visible = pts.map(point => point.o);
+      if (visible.every(o => o > .995)) { path.setAttribute('fill', color); path.style.display = ''; path.classList.remove('is-fading'); continue; }
+      if (visible.every(o => o < .005)) { path.style.display = 'none'; continue; }
+      path.style.display = ''; path.classList.add('is-fading');
+      const grad = elements.grads.get(key), x1 = pts[0].x, x2 = pts.at(-1).x;
+      set(grad, { x1, x2: Math.max(x1 + 1, x2), y1: 0, y2: 0 });
+      const stops = pts.map(point => `<stop offset="${((point.x - x1) / Math.max(1, x2 - x1)).toFixed(4)}" stop-color="${color}" stop-opacity="${point.o.toFixed(3)}"/>`).join('');
+      if (grad.dataset.stops !== stops) { grad.innerHTML = stops; grad.dataset.stops = stops; }
+      path.setAttribute('fill', `url(#${grad.id})`);
     }
-    for (const [id, entry] of scene.current) {
-      const { rect, notch, label, leader } = currentElements.get(id);
-      const transform = `translate(0 ${entry.y}) scale(1 ${Math.max(0, entry.height)})`;
-      rect.setAttribute('transform', transform); notch.setAttribute('transform', transform);
-      rect.dataset.y = String(entry.y); rect.dataset.height = String(entry.height);
-      const opacity = entry.height > .01 ? entry.opacity ?? 1 : 0;
-      rect.style.setProperty('--b-motion-opacity', opacity); notch.style.setProperty('--b-motion-opacity', opacity);
-      label.style.transform = `translateY(${entry.labelY}px) translateY(-50%)`;
-      label.style.setProperty('--b-motion-opacity', entry.opacity ?? 1);
-      label.style.pointerEvents = entry.opacity < .08 ? 'none' : '';
-      const middle = scene.barWidth + scene.leaderWidth * .5;
-      leader.setAttribute('d', `M ${scene.barWidth} ${center(entry)} C ${middle} ${center(entry)} ${middle} ${entry.labelY} ${scene.barWidth + scene.leaderWidth - 2} ${entry.labelY}`);
-      leader.style.setProperty('--b-motion-opacity', entry.opacity ?? 1);
+    for (const [index, node] of scene.nodes) {
+      const pair = elements.nodes.get(index); if (!pair) continue;
+      set(pair.line, { x1: node.x, x2: node.x, y1: 0, y2: scene.height });
+      const half = mobile.matches ? 15.5 : 29;
+      pair.button.style.transform = `translateX(${Math.max(half, Math.min(scene.width - half, node.x))}px) translateX(-50%)`;
+      pair.button.style.opacity = pair.line.style.opacity = String(node.o);
     }
-    for (const [index, entry] of scene.nodes) {
-      const { line, button } = nodeElements.get(index); set(line, { x1: entry.x, x2: entry.x, y1: 0, y2: scene.height });
-      const halfLabel = mobile.matches ? 15.5 : 29;
-      const labelX = Math.max(halfLabel, Math.min(scene.width - halfLabel, entry.x));
-      button.style.transform = `translateX(${labelX}px) translateX(-50%)`;
-      button.style.opacity = entry.opacity ?? 1; line.style.opacity = entry.opacity ?? 1;
-    }
+    const bandCenter = (key, index) => { const point = scene.bands.get(key)?.pts.get(index); return point ? { x: point.x, y: point.y + point.h / 2, h: point.h } : null; };
     for (const [key, entry] of scene.merges) {
-      const middle = (entry.x1 + entry.x2) / 2, path = mergeElements.get(key);
-      path.setAttribute('d', `M ${entry.x1} ${entry.y1} C ${middle} ${entry.y1} ${middle} ${entry.y2} ${entry.x2} ${entry.y2}`);
-      path.style.setProperty('--b-motion-opacity', entry.opacity ?? 1);
+      const link = scene.meta.merges.get(key), path = elements.merges.get(key);
+      const a = bandCenter(link.from, link.index - 1), b = bandCenter(link.to, link.index);
+      if (!path || !a || !b) { if (path) path.style.display = 'none'; continue; }
+      path.style.display = ''; const middle = (a.x + b.x) / 2;
+      path.setAttribute('d', `M ${a.x} ${a.y} C ${middle} ${a.y} ${middle} ${b.y} ${b.x} ${b.y}`);
+      path.style.setProperty('--o', entry.o.toFixed(3));
     }
-    // Feedback marks ride on the drawn band, so they follow every tween frame.
-    for (const [key, mark] of scene.marks) {
-      const elements = markElements.get(key), points = scene.paths.get(mark.anchor)?.points ?? [];
-      const at = points.find(point => point.index === mark.index);
-      if (!at || !(at.height > 0 || points.some(point => point.height > 0))) { elements.group.style.display = 'none'; continue; }
-      elements.group.style.display = '';
-      const opacity = scene.paths.get(mark.anchor)?.opacity ?? 1;
-      elements.group.style.setProperty('--b-motion-opacity', opacity);
-      const x = at.x, y = center(at);
-      set(elements.dot, { cx: x, cy: y, r: mobile.matches ? 3.6 : 4.4 });
-      if (elements.hand) elements.hand.setAttribute('d', `M ${x} ${y - 2.6} L ${x} ${y} L ${x + 2} ${y + 1.2}`);
-      if (elements.line) {
-        const trail = points.filter(point => point.index >= mark.askIndex && point.index <= mark.index);
-        const first = trail[0];
-        elements.line.setAttribute('d', trail.length > 1 ? centerPath(trail) : '');
-        if (first && first.index === mark.askIndex) { set(elements.ring, { cx: first.x, cy: center(first), r: mobile.matches ? 3.2 : 4 }); elements.ring.style.display = ''; }
-        else elements.ring.style.display = 'none';
+    for (const [key, entry] of scene.marks) {
+      const mark = scene.meta.marks.get(key), group = elements.marks.get(key); if (!group || !mark) continue;
+      const at = bandCenter(mark.anchor, mark.index);
+      if (!at || !(at.h > .5)) { group.root.style.display = 'none'; continue; }
+      group.root.style.display = ''; group.root.style.setProperty('--o', entry.o.toFixed(3));
+      set(group.dot, { cx: at.x, cy: at.y, r: mobile.matches ? 3.2 : 4 });
+      if (group.line) {
+        const pts = [...(scene.bands.get(mark.anchor)?.pts.entries() || [])].filter(([index]) => index >= mark.askIndex && index <= mark.index).sort((a, b) => a[0] - b[0]).map(([, point]) => point);
+        group.line.setAttribute('d', pts.length > 1 ? centerPath(pts) : '');
+        const start = bandCenter(mark.anchor, mark.askIndex);
+        if (start) { set(group.ring, { cx: start.x, cy: start.y, r: mobile.matches ? 3 : 3.8 }); group.ring.style.display = ''; } else group.ring.style.display = 'none';
+      }
+    }
+    // Present.
+    set($('.b-section-blank'), { x: 0, y: scene.blankY, width: barW, height: Math.max(0, scene.blankH) });
+    for (const [key, bar] of scene.bars) {
+      const rect = elements.bars.get(key); if (!rect) continue;
+      set(rect, { y: bar.y, height: Math.max(0, bar.h) });
+      rect.style.setProperty('--o', bar.o.toFixed(3));
+      rect.style.pointerEvents = bar.o < .3 ? 'none' : '';
+      const number = elements.numbers.get(key), info = scene.meta.bars.get(key);
+      const show = (key === GROUP || !info?.grouped) && bar.h >= 15 && bar.o > .5;
+      set(number, { y: bar.y + bar.h / 2 + 4 }); number.style.setProperty('--o', show ? Math.min(1, (bar.h - 15) / 6 + .2).toFixed(3) : '0');
+      const notch = elements.notches.get(key);
+      set(notch, { y: bar.y + .5, height: Math.max(0, bar.h - 1) });
+      notch.style.setProperty('--o', key === GROUP || !(bar.h > .5) ? '0' : '1');
+    }
+    for (const [key, lane] of scene.lanes) {
+      const rect = elements.lanes.get(key); if (!rect) continue;
+      set(rect, { y: lane.y + .5, height: Math.max(0, lane.h - 1) });
+      rect.style.setProperty('--o', lane.o.toFixed(3));
+    }
+    if (scene.nextX >= 0) { set($('.b-next-line'), { x1: barW + scene.nextX, x2: barW + scene.nextX, y1: 0, y2: scene.height }); $('.b-next-line').style.opacity = '1'; }
+    else $('.b-next-line').style.opacity = '0';
+    for (const [key, tick] of scene.ticks) {
+      const group = elements.ticks.get(key), info = scene.meta.ticks.get(key); if (!group || !info) continue;
+      const x = barW + tick.x;
+      group.root.style.setProperty('--o', tick.o.toFixed(3));
+      if (info.kind === 'check') { set(group.head, { cx: x, cy: tick.y }); continue; }
+      set(group.line, { x1: x, x2: x, y1: tick.y - tick.h / 2, y2: tick.y + tick.h / 2 });
+      const s = 5;
+      group.head.setAttribute('d', info.kind === 'snooze' ? `M ${x} ${tick.y} m -${s} 0 a ${s} ${s} 0 1 0 ${2 * s} 0 a ${s} ${s} 0 1 0 -${2 * s} 0` : info.kind === 'scheduled' ? `M ${x - s} ${tick.y} L ${x} ${tick.y - s} L ${x + s} ${tick.y} L ${x} ${tick.y + s} Z` : `M ${x - s} ${tick.y - s - 1} L ${x + s} ${tick.y - s - 1} L ${x} ${tick.y + 1} Z`);
+      // Caption beside the tick: right if it fits before the labels, else left, else pinned inside the strip.
+      const w = info.width || 0, room = futureW + scene.leaderW - 2;
+      const right = tick.x + 8 + w <= room || tick.x < 8 + w;
+      const tx = right ? Math.max(barW + 4, Math.min(x + 8, barW + room - w)) : Math.max(x - 8, barW + 4 + w);
+      set(group.text, { x: tx, y: tick.ty - 2, 'text-anchor': right ? 'start' : 'end' });
+      set(group.t1, { x: tx, dy: 0 }); set(group.t2, { x: tx, dy: 13 });
+    }
+    for (const [key, label] of scene.labels) {
+      const element = elements.labels.get(key); if (!element) continue;
+      element.style.transform = `translateY(${label.y.toFixed(1)}px) translateY(-50%)`;
+      element.style.setProperty('--o', label.o.toFixed(3));
+      element.style.pointerEvents = label.o < .1 ? 'none' : '';
+      const bar = scene.bars.get(key), leader = elements.leaders.get(key);
+      if (bar && leader) {
+        const yA = bar.y + bar.h / 2, x0 = barW + futureW, x1 = svgW - 2, mid = x0 + (x1 - x0) * .5;
+        leader.setAttribute('d', `M ${x0} ${yA.toFixed(1)} C ${mid} ${yA.toFixed(1)} ${mid} ${label.y.toFixed(1)} ${x1} ${label.y.toFixed(1)}`);
+        leader.style.setProperty('--o', label.o.toFixed(3));
       }
     }
     $('.b-chart-scroll').scrollLeft = scene.scrollLeft ?? 0;
   }
   const motion = createTimeMotion({ prepare, draw, reduced: () => reduced.matches,
     complete() { updateEmphasis(); },
-    status(status, progress) { host.dataset.bMotion = status; host.dataset.bMotionProgress = progress.toFixed(4); $('.b-replay').disabled = !motion.canReplay; },
+    status(state, progress) { host.dataset.bMotion = state; host.dataset.bMotionProgress = progress.toFixed(3); $('.b-replay').disabled = !motion.canReplay; },
   });
 
-  function makeScene(s) {
-    const { layers, order, merges, marks } = cache(s.layerId);
-    const availableHeight = Math.min($('.b-current-section').clientHeight, $('.b-chart-scroll').clientHeight - AXIS_HEIGHT);
-    const height = Math.max(130, Math.floor(availableHeight));
-    const holderWidth = Math.max(120, $('.b-chart-scroll').clientWidth);
-    const first = range === 'all' ? 0 : Math.max(0, s.index - 4), last = s.index;
-    const indexes = Array.from({ length: last - first + 1 }, (_, index) => first + index);
-    const width = range === 'all' ? Math.max(holderWidth, indexes.length * (mobile.matches ? 34 : 64)) : holderWidth;
-    const step = (width - 28) / Math.max(1, indexes.length - 1);
-    const xFor = index => indexes.length === 1 ? width / 2 : 14 + (index - first) * step;
-    const sections = layers.map(layer => layoutSection(layer, order, height));
-    const section = layoutSection(s.layer, order, height);
-    const sectionWidth = $('.b-current-section').getBoundingClientRect().width;
-    const barWidth = mobile.matches ? 34 : Math.round(Math.min(96, Math.max(64, sectionWidth * .2))), leaderWidth = mobile.matches ? 14 : 26;
-    const labelWidth = sectionWidth - barWidth - leaderWidth;
-    let heights = measureLabels(section.items, labelWidth, false), dense = false;
-    const total = [...heights.values()].reduce((sum, value) => sum + value, 0);
-    if (total + section.items.length * 3 > height) { heights = measureLabels(section.items, labelWidth, true); dense = true; }
-    const labels = labelPositions(section.items, height, { heights, gap: dense ? 1 : 6 });
-    const ids = order.filter(id => indexes.some(index => sections[index].points.get(id)?.height > 0));
-    const paths = new Map(ids.map(id => {
-      const item = getItem(s.state, id) || [...indexes].reverse().map(index => getItem(s.records[index].state, id)).find(Boolean);
-      return [id, { id, item, color: colorFor(item, s.state), opacity: 1,
-        points: indexes.map(index => ({ index, x: xFor(index), ...sections[index].points.get(id) })) }];
-    }));
-    const currentItems = new Map(section.items.map(point => [point.id, { ...point, labelY: labels.get(point.id), color: colorFor(point.item, s.state),
-      ask: currentAsk(s, point.id), opacity: 1, active: true }]));
-    const mergeMap = new Map(merges.filter(link => link.index > first && link.index <= last).map(link => {
-      const source = sections[link.index - 1].points.get(link.from), target = sections[link.index].points.get(link.to);
-      return [`${link.index}:${link.from}:${link.to}`, { ...link, x1: xFor(link.index - 1), y1: center(source), x2: xFor(link.index), y2: center(target), opacity: 1 }];
-    }));
-    const markMap = new Map(marks.filter(mark => mark.index >= first && mark.index <= last && paths.has(mark.anchor)).map(mark => [mark.key, mark]));
-    return { index: s.index, layerId: s.layerId, first, last, width, height, section, sections, order, paths, current: currentItems, xFor,
-      nodes: new Map(indexes.map(index => [index, { index, x: xFor(index), opacity: 1, active: true }])), merges: mergeMap, marks: markMap,
-      scrollLeft: $('.b-chart-scroll').scrollLeft, barWidth, leaderWidth, dense };
-  }
-
+  // ---------- reader ----------
   function renderBreadcrumbs(s) {
     $('.b-breadcrumbs').innerHTML = `${s.layerId ? '<button class="b-rise" data-b-action="rise" aria-label="返回上层">↑</button>' : ''}<button data-b-action="root" ${s.layerId ? '' : 'aria-current="page"'}>全部事项</button>${s.path.map((item, index) => `<span aria-hidden="true">/</span><button data-b-dive="${esc(item.id)}" title="${esc(item.title)}" ${index === s.path.length - 1 ? 'aria-current="page"' : ''}>${esc(item.title)}</button>`).join('')}${s.layerId ? '<span class="b-layer-note">子层独立 64 份</span>' : ''}`;
   }
@@ -355,38 +527,69 @@ export function mount(host, model) {
     const signal = s.frame.signal, receipt = s.records[s.index].receipt;
     if (!signal) return '<p class="b-signal">初始状态，尚未收到输入。</p>';
     const window = `${stamp(signal.window.from)}—${formatTime(signal.window.to)}`;
-    if (signal.type === 'review') {
-      return `<div class="b-signal is-review"><strong>${esc(signal.reason)}</strong><span>窗口 ${window} 收到 0 条事件</span><span>覆盖：${esc(signal.coverage)}</span><span>结果：${receipt?.type === 'checked' ? '检查后不改' : '按时间重看后有调整'}</span><small>没有消息不等于现实没有变化。</small></div>`;
-    }
-    return `<p class="b-signal">${signal.reason ? `${esc(signal.reason)} · ` : ''}窗口 ${window} 收到 ${signal.received} 条输入${receipt?.type === 'checked' ? ' · 检查后不改' : ''}</p>`;
+    if (signal.type === 'review') return `<div class="b-signal is-review"><strong>${esc(signal.reason)}</strong><span>窗口 ${window} 收到 0 条事件</span><span>覆盖：${esc(signal.coverage)}</span><span>结果：${receipt?.type === 'checked' ? '检查后不改' : '按时间重看后有调整'}</span><small>没有消息不等于现实没有变化。</small></div>`;
+    return `<p class="b-signal">${signal.reason ? `${esc(signal.reason)} · ` : ''}窗口 ${window} 收到 ${signal.received} 条输入${signal.coverage ? `（${esc(signal.coverage)}）` : ''}${receipt?.type === 'checked' ? ' · 检查后不改' : ''}</p>`;
   }
-  const changeText = (mark, s) => mark.changes.length ? mark.changes.map(change => {
-    const before = mark.index > 0 ? getItem(s.records[mark.index - 1].state, change.item) : null, after = getItem(s.records[mark.index].state, change.item);
-    const shares = before?.status === 'active' && after?.status === 'active' && before.share !== after.share ? ` ${before.share} → ${after.share} 份` : '';
-    return `${CHANGE_NAMES[change.type] || change.type}${shares}`;
-  }).filter((text, index, all) => all.indexOf(text) === index).join('，') : '状态未变';
-  function loopStepHTML(mark, s, { withTarget = true } = {}) {
-    const target = getItem(s.state, mark.target) || getItem(s.records[mark.index].state, mark.target);
-    const title = withTarget && target ? `<button data-b-item="${esc(mark.anchor)}">${esc(target.title)} ↗</button>` : '';
-    if (mark.kind === 'reminder') {
-      return `<article class="b-loop-step is-reminder"><small><i class="b-glyph-clock" aria-hidden="true"></i>到点提醒 · ${stamp(mark.event.at)}</small><p>你 ${stamp(mark.event.reminder.requested_at)} 要求此时再看。按现在的事实重判，不沿用当时的结论。</p><p class="b-loop-after">本轮：${changeText(mark, s)} ${title}</p></article>`;
+  const allPlaced = s => [...layoutSection(s.layer, cache(s.layerId).order, 640).placed.values()];
+  // Everything with a time after now, plus what is already overdue, in the order it arrives.
+  function upcomingHTML(s) {
+    const placed = allPlaced(s), rows = [];
+    for (const due of deadlinesOf(s, placed.map(point => point.item))) rows.push({ at: due.at, id: due.id, title: due.item.title, what: due.ask ? due.ask.prompt : '条目自己的期限', kind: due.at < s.cursor ? 'over' : due.kind === 'ask' ? 'due' : 'item-due' });
+    for (const point of placed) {
+      const record = latestRecord(store, point.id, s.cursor);
+      if (record?.until && record.until > s.cursor) rows.push({ at: record.until, id: point.id, title: point.item.title, what: record.meaning === 'snooze' ? '你推到这时再提醒' : '你定的时间', kind: record.meaning === 'snooze' ? 'snooze' : 'scheduled' });
     }
-    if (mark.kind === 'snooze') {
-      return `<article class="b-loop-step is-snooze"><small><i class="b-glyph-clock" aria-hidden="true"></i>稍后提醒 · ${stamp(mark.event.at)} · ${VIA[mark.link.via] || ''}</small><p>约定 ${stamp(mark.link.until)} 再提醒。不是已阅，也不改截止。</p>${title ? `<p class="b-loop-after">${title}</p>` : ''}</article>`;
-    }
-    return `<article class="b-loop-step">${mark.ask ? `<p class="b-loop-ask"><small><i class="b-glyph-ask" aria-hidden="true"></i>问 · ${stamp(s.frames[mark.ask.frameIndex].at)}</small>${esc(mark.ask.prompt)}</p>` : ''}<small><i class="b-glyph-answer" aria-hidden="true"></i>你的回应 · ${stamp(mark.event.at)} · ${VIA[mark.link.via] || ''} · ${MEANING[mark.link.meaning] || ''}</small><p class="b-loop-quote">${esc(mark.event.text)}</p><p class="b-loop-after">本轮：${changeText(mark, s)} ${title}</p></article>`;
+    const next = s.frames[s.index + 1];
+    if (next) rows.push({ at: Date.parse(next.at), kind: 'next', title: '下一次整理', what: '这之后，本页的回应会被 Agent 读到' });
+    rows.sort((a, b) => a.at - b.at);
+    if (!rows.some(row => row.kind !== 'next')) return `<section class="b-upcoming"><h3>此刻之后</h3><p class="b-muted">此刻没有带期限的问题。${next ? `下一次整理在 ${stamp(next.at)}。` : ''}</p></section>`;
+    return `<section class="b-upcoming"><h3>此刻之后 · 谁先到</h3><ol>${rows.map(row => row.kind === 'next'
+      ? `<li class="is-next"><time>${relative(row.at - s.cursor)}</time><span>${esc(row.title)} · ${stamp(row.at)}</span></li>`
+      : `<li class="is-${row.kind}"><time>${row.kind === 'over' ? relative(row.at - s.cursor) : relative(row.at - s.cursor)}</time><button type="button" data-b-item="${esc(row.id)}"><b>${esc(row.title)}</b><small>${stamp(row.at)} · ${esc(row.what)}</small></button></li>`).join('')}</ol></section>`;
   }
-  function askHTML(ask) {
-    return `<div class="b-ask"><small>${EXPECT[ask.expects[0]] || '登记了回应路径'} · 登记于 ${stamp(current.frames[ask.frameIndex].at)}</small><p>${esc(ask.prompt)}</p><p class="b-ask-actions">可回应：${ask.actions.map(action => `<span>${esc(action.label)}</span>`).join('')}</p></div>`;
+  function roundActionsHTML(s) {
+    const visible = new Set(allPlaced(s).map(point => point.id));
+    const entries = frameActions(s.index).filter(entry => visible.has(entry.target));
+    if (!entries.length) return '';
+    const shown = entries.slice(0, 5), rest = entries.slice(5);
+    const one = entry => actionHTML(entry, { cls: 'b', withTarget: getItem(s.state, entry.target) });
+    return `<section class="b-round-loop"><h3>本轮你在各处的回应 · ${entries.length} 条</h3>${shown.map(one).join('')}${rest.length ? `<details class="b-more"><summary>另 ${rest.length} 条</summary>${rest.map(one).join('')}</details>` : ''}</section>`;
   }
-  function itemLoopHTML(s, id) {
-    const ask = currentAsk(s, id);
-    const trail = feedbackTrail(s, id);
-    const marks = cache(s.layerId).marks.filter(mark => mark.index <= s.index && mark.target === id);
-    const known = new Set(marks.map(mark => mark.event.id));
-    const extra = trail.filter(entry => !known.has(entry.event.id));
-    if (!ask && !marks.length && !extra.length) return '';
-    return `<section class="b-item-loop"><h3>回应路径</h3>${ask ? askHTML(ask) : '<p class="b-muted-line">此刻这一版没有登记回应路径。</p>'}${marks.length || extra.length ? `<div class="b-loop-list">${marks.map(mark => loopStepHTML(mark, s, { withTarget: false })).join('')}${extra.map(entry => `<article class="b-loop-step"><small>${stamp(entry.event.at)}</small><p class="b-loop-quote">${esc(entry.event.text)}</p></article>`).join('')}</div>` : ''}</section>`;
+  function readingListHTML(s) {
+    const section = layoutSection(s.layer, cache(s.layerId).order, 640);
+    const rows = section.separate.map(id => {
+      const item = section.placed.get(id).item, ask = currentAsk(s, id);
+      return `<article class="b-reading-row${ask ? ' has-ask' : ''}" data-b-focus-id="${esc(id)}"><div class="b-reading-title"><button data-b-item="${esc(id)}" style="--item-color:${colorFor(item, s.state)}"><span class="b-item-dot" aria-hidden="true"></span>${esc(item.title)}</button><span><b>${item.share}</b> 份 · ${ask ? `<em>${expectOf(ask)}</em>` : esc(kindLabel[item.kind] || item.kind)}</span></div>${ask ? `<p class="b-reading-ask">${esc(ask.prompt)}</p>` : ''}<p>${esc(item.summary)}</p>${item.children?.items.length ? `<div class="b-row-links"><button data-b-dive="${esc(id)}">${item.children.items.length} 个子项 ↗</button></div>` : ''}</article>`;
+    });
+    if (section.group) rows.push(`<article class="b-reading-row is-group"><div class="b-reading-title"><button data-b-group><span class="b-item-dot is-group" aria-hidden="true"></span>另 ${section.group.members.length} 件小事</button><span><b>${section.group.share}</b> 份 · 每件不足 ${SMALL} 份${section.group.members.filter(id => currentAsk(s, id)).length ? ` · <em>${section.group.members.filter(id => currentAsk(s, id)).length} 件登记了问题</em>` : ''}</span></div></article>`);
+    return rows.length ? `<div class="b-reading-list">${rows.join('')}</div>` : '<div class="b-empty-reader"><p>暂无事项。</p><button data-b-action="next">查看下一次整理 →</button></div>';
+  }
+  function smallListHTML(s) {
+    const section = layoutSection(s.layer, cache(s.layerId).order, 640);
+    if (!section.group) return '<p class="b-muted">此刻没有不足 3 份的事项。</p>';
+    const members = section.group.members.map(id => ({ id, item: section.placed.get(id).item, ask: currentAsk(s, id), record: latestRecord(store, id, s.cursor) }));
+    const dues = new Map(deadlinesOf(s, members.map(m => m.item)).map(entry => [entry.id, entry]));
+    const asked = members.filter(m => m.ask), others = members.filter(m => !m.ask);
+    const row = m => `<li data-b-focus-id="${esc(m.id)}"><button type="button" data-b-item="${esc(m.id)}" style="--item-color:${colorFor(m.item, s.state)}"><span class="b-item-dot" aria-hidden="true"></span><span class="b-small-title">${esc(m.item.title)}</span><small>${m.item.share} 份 · ${m.ask ? `<em>${expectOf(m.ask)}</em>` : esc(kindLabel[m.item.kind] || m.item.kind)}${dues.get(m.id) ? ` · <i class="b-due${dues.get(m.id).at < s.cursor ? ' is-over' : ''}">${relative(dues.get(m.id).at - s.cursor)}</i>` : ''}${m.record ? ' · <i class="b-rec">✓ 已回应</i>' : ''}</small></button></li>`;
+    return `<p class="b-small-lead">份额都不足 ${SMALL} 份，合在一条带里；条带此刻按每件的真实份额分开画。点一件看详情与回应。</p>${asked.length ? `<h3>登记了问题 · ${asked.length}</h3><ol class="b-small-list">${asked.map(row).join('')}</ol>` : ''}<h3>其余 · ${others.length}</h3><ol class="b-small-list">${others.map(row).join('')}</ol>`;
+  }
+  function itemHTML(s, item) {
+    const ask = item.status === 'active' ? currentAsk(s, item.id) : null;
+    const response = responder.html(item, ask, { allowDefer: item.status === 'active' });
+    const answered = latestRecord(store, item.id, s.cursor);
+    const due = deadlinesOf(s, [item])[0];
+    const actions = itemActions(item.id, s.index);
+    const category = scenario.categories?.[item.id]?.label;
+    const back = fromSmall ? '<button type="button" class="b-back-link" data-b-group-open>← 小事列表</button>' : '';
+    return `${back}<div class="b-detail"><p class="b-detail-kicker"><i class="b-item-dot" style="--item-color:${colorFor(item, s.state)}" aria-hidden="true"></i><span>${esc(kindLabel[item.kind] || item.kind)} · <b>${item.share}</b> / 64 份</span>${item.status !== 'active' ? ` · ${item.status === 'merged' ? '已合并' : '已撤下'}` : ''}</p><h2>${esc(item.title)}</h2><p class="b-detail-summary">${esc(item.summary)}</p>
+      ${response ? `<section class="b-detail-respond${ask || answered ? '' : ' is-default'}"><h3>${ask ? `回应 · ${expectOf(ask)}` : answered ? '你的回应' : '稍后提醒'}</h3>${response}</section>` : ''}
+      ${due && !ask?.due_at ? `<p class="b-detail-due">期限 ${stamp(due.at)} · ${relative(due.at - s.cursor)}</p>` : ''}
+      ${item.reason ? `<section><h3>为什么是这个分量</h3><p>${esc(item.reason)}</p></section>` : ''}
+      ${item.sources?.length ? `<section><h3>依据 · ${item.sources.length} 条</h3>${originHTML(item, { cls: 'b' })}${sourcesHTML(item, { cls: 'b' })}</section>` : ''}
+      ${actions.length ? `<section><h3>你在来源处的回应 · ${actions.length}</h3>${actions.slice(0, 6).map(entry => actionHTML(entry, { cls: 'b' })).join('')}${actions.length > 6 ? `<p class="b-muted">更早还有 ${actions.length - 6} 条</p>` : ''}</section>` : ''}
+      <section><h3>两周版本</h3>${versionsHTML(item.id, s, { cls: 'b' })}</section>
+      ${item.children?.items.length ? `<section><h3>子项 · 独立 64 份</h3><button type="button" class="b-cta" data-b-dive="${esc(item.id)}">进入 ${item.children.items.length} 个子项 →</button></section>` : ''}
+      <details class="b-json"><summary>此事项的原始 JSON</summary><pre>${esc(JSON.stringify(item, null, 2))}</pre></details></div>`;
   }
   function diffHTML(s) {
     const ids = new Set([...s.layer.items, ...s.baseLayer.items].map(item => item.id));
@@ -397,74 +600,52 @@ export function mount(host, model) {
       const before = getItem(s.baseState, change.item), after = getItem(s.state, change.item);
       const allocation = change.fields.includes('share') && before?.status === 'active' && after?.status === 'active' && before.share !== after.share ? ` · ${before.share} → ${after.share} 份` : '';
       return `<button data-b-item="${esc(change.item)}"><small>${CHANGE_NAMES[change.type] || change.type}${allocation}</small><span>${esc(item?.title || change.item)}</span></button>`;
-    }).join('')}</div>` : '<p class="b-no-change">当前层没有内容变化，事项份额保持不变。</p>'}</div>`;
+    }).join('')}</div>` : '<p class="b-muted">当前层没有内容变化，事项份额保持不变。</p>'}</div>`;
   }
   function renderReader(s, force = false) {
-    const key = `${s.index}|${s.layerId}|${s.selectedId}|${readerMode}|${s.baseIndex}|${s.state.event_seq}`;
+    const key = `${s.index}|${s.cursor}|${s.layerId}|${s.selectedId}|${readerMode}|${s.baseIndex}|${expanded}`;
     if (!force && key === readerStamp) return;
     readerStamp = key; closeSelect(false);
     const selected = s.selectedItem;
     $('.b-reader-actions [data-b-action="overview"]').hidden = !selected && readerMode === 'overview';
-    let title = '本轮判断', content = '';
+    let title = '本轮判断', kicker = '摘要与依据', content = '';
     if (readerMode === 'feedback') {
       title = '待确认批注';
       const annotations = s.state.pending_annotations ?? [];
-      content = annotations.length ? `<div class="b-feedback-list">${annotations.map(annotation => {
-        const id = annotation.item ?? annotation.item_id, item = getItem(s.state, id);
-        return `<article><p>${esc(annotation.text)}</p><footer>${esc(annotation.author || '用户')} · 已保存，等待 Agent 处理确认</footer><button data-b-item="${esc(id)}">${esc(item?.title || id)}${item?.status !== 'active' ? '（历史事项）' : ''} ↗</button></article>`;
-      }).join('')}</div>` : '<p>暂无待确认批注。</p>';
+      content = annotations.length ? `<div class="b-feedback-list">${annotations.map(annotation => { const id = annotation.item ?? annotation.item_id, item = getItem(s.state, id); return `<article><p>${esc(annotation.text)}</p><footer>${esc(annotation.author || '用户')} · 已保存，等待 Agent 处理确认</footer><button data-b-item="${esc(id)}">${esc(item?.title || id)} ↗</button></article>`; }).join('')}</div>` : '<p>暂无待确认批注。</p>';
     } else if (readerMode === 'story') {
       title = '演示说明';
-      content = `<div class="b-story"><p>${esc(s.scenario.persona.context)}</p><h3>公开资料</h3>${s.scenario.publicSources.map(source => `<article><a href="${esc(source.url)}" target="_blank" rel="noreferrer">${esc(source.title)} ↗</a><p>${esc(source.usedFor)}</p></article>`).join('')}</div>`;
+      content = `<div class="b-story"><p>${esc(s.scenario.persona.context)}</p>${s.scenario.publicSources?.length ? `<h3>公开资料</h3>${s.scenario.publicSources.map(source => `<article><a href="${esc(source.url)}" target="_blank" rel="noreferrer">${esc(source.title)} ↗</a><p>${esc(source.usedFor)}</p></article>`).join('')}` : ''}</div>`;
     } else if (readerMode === 'diff') { title = '前后变化'; content = diffHTML(s); }
-    else if (selected) {
-      title = '事项详情';
-      content = (selected.status === 'active' ? '' : `<p class="b-history-notice">${selected.status === 'merged' ? '该事项已合并' : '该事项已撤下'}，以下是保留的历史，不占用此刻的预算。</p>`) + itemLoopHTML(s, selected.id) + detailHTML(s, selected.id);
-    } else {
-      content = `<p class="b-narrative">${esc(s.frame.narrative)}</p>${signalHTML(s)}`;
-      const loops = cache(s.layerId).marks.filter(mark => mark.index === s.index);
-      if (loops.length) content += `<section class="b-round-loop"><h3>本轮收到的回应</h3>${loops.map(mark => loopStepHTML(mark, s)).join('')}</section>`;
-      const mergeGroups = new Map();
-      for (const link of cache(s.layerId).merges.filter(link => link.index === s.index)) {
-        if (!mergeGroups.has(link.to)) mergeGroups.set(link.to, { ...link, sources: [] });
-        mergeGroups.get(link.to).sources.push(link.source.title);
-      }
-      content += [...mergeGroups.values()].map(link => `<button class="b-merge-note" data-b-item="${esc(link.to)}"><small>本轮明确合并了 ${link.sources.length} 个事项</small><span>${esc(link.target.title)} ↗</span><p>${esc(link.target.reason)}</p></button>`).join('');
-      content += s.layer.items.length ? `<div class="b-reading-list">${s.layer.items.map(item => {
-        const ask = currentAsk(s, item.id);
-        return `<article class="b-reading-row${ask ? ' has-ask' : ''}" data-b-focus-id="${esc(item.id)}"><div class="b-reading-title"><button data-b-item="${esc(item.id)}" style="--item-color:${colorFor(item, s.state)}"><span class="b-item-dot" aria-hidden="true"></span>${esc(item.title)}</button><span>${metaHTML(item, ask)}</span></div>${ask ? `<p class="b-reading-ask">问：${esc(ask.prompt)}</p>` : ''}<p>${esc(item.summary)}</p>${item.children?.items.length ? `<div class="b-row-links"><button data-b-dive="${esc(item.id)}">${item.children.items.length} 个子项 ↗</button></div>` : ''}</article>`;
-      }).join('')}</div>` : '<div class="b-empty-reader"><p>暂无事项。</p><button data-b-action="next">查看下一次整理 →</button></div>';
-    }
-    $('#b-reader-title').textContent = title; $('.b-reader-body').innerHTML = content; $('.b-reader-scroll').scrollTop = 0;
+    else if (selected) { title = '事项详情'; kicker = fromSmall ? '小事 · 详情' : '摘要与依据'; content = itemHTML(s, selected); }
+    else if (readerMode === 'small') { title = '小事'; kicker = '份额不足 3 的事项'; content = smallListHTML(s); }
+    else content = `<p class="b-narrative">${esc(s.frame.narrative || s.frame.title)}</p>${signalHTML(s)}${upcomingHTML(s)}${roundActionsHTML(s)}${readingListHTML(s)}`;
+    $('#b-reader-title').textContent = title; $('.b-reader-kicker').textContent = kicker;
+    // Replacing the body must not drop keyboard focus to <body>, or Esc and Tab lose their place.
+    const body = $('.b-reader-body'), hadFocus = body.contains(document.activeElement);
+    body.innerHTML = content;
+    if (!force) $('.b-reader-scroll').scrollTop = 0;
+    if (hadFocus && !body.contains(document.activeElement)) (body.querySelector('.b-rs-receipt') || $('#b-reader-title')).focus({ preventScroll: true });
   }
 
-  function anchorFor(id, visibleIds) {
-    let item = id && (getItem(current.state, id) || getItem(current.baseState, id));
-    const visited = new Set();
-    while (item && !visibleIds.has(item.id) && item.parent_id && !visited.has(item.id)) {
-      visited.add(item.id); item = getItem(current.state, item.parent_id) || getItem(current.baseState, item.parent_id);
-    }
-    return item && visibleIds.has(item.id) ? item.id : visibleIds.has(id) ? id : null;
-  }
+  // ---------- emphasis ----------
   function updateEmphasis() {
-    const elements = [...host.querySelectorAll('.b-chart-layout [data-b-item], .b-current-label[data-b-focus-id]')];
-    const visibleIds = new Set(elements.map(element => element.dataset.bItem ?? element.dataset.bFocusId));
-    const anchor = anchorFor(hoveredId || focusedId || current.selectedId, visibleIds);
-    const ids = new Set(anchor ? [anchor] : []);
-    if (anchor) {
-      const links = cache(current.layerId).merges.filter(link => link.index <= current.index);
-      for (let pass = 0; pass < links.length; pass += 1) for (const link of links) if (ids.has(link.to) || ids.has(link.from)) { ids.add(link.to); ids.add(link.from); }
-    }
+    const id = hoveredId || focusedId || current.selectedId;
+    const ids = new Set(id ? [id] : []);
+    if (id) for (const link of cache(current.layerId).merges.filter(link => link.index <= current.index)) if (ids.has(link.to) || ids.has(link.from)) { ids.add(link.to); ids.add(link.from); }
+    // A member of a closed 小事 band is only visible through the band itself.
+    if (id && id !== GROUP && geometryGrouped(id) && !expanded) ids.add(GROUP);
     $('.b-chart-layout').classList.toggle('has-emphasis', ids.size > 0);
-    for (const element of elements) {
-      const id = element.dataset.bItem ?? element.dataset.bFocusId;
-      element.classList.toggle('is-emphasized', ids.has(id));
-      if (element.matches('button, [role="button"]')) element.setAttribute('aria-pressed', String(id === current.selectedId));
+    for (const element of host.querySelectorAll('.b-chart-layout [data-b-item], .b-chart-layout [data-b-group], .b-label[data-b-focus-id], .b-label[data-b-group-label], .b-reader [data-b-focus-id]')) {
+      const key = element.dataset.bItem ?? element.dataset.bFocusId ?? GROUP;
+      element.classList.toggle('is-emphasized', ids.has(key));
+      if (key !== GROUP && element.matches('button')) element.setAttribute('aria-pressed', String(key === current.selectedId));
     }
     host.dataset.bEmphasis = [...ids].join(',');
   }
+  const geometryGrouped = id => Boolean(motion.visual?.meta?.bars?.get(id)?.grouped);
 
-  // Slider: role="slider" on a div, pointer drag plus arrow/page/home/end keys.
+  // ---------- slider ----------
   function renderSlider(s) {
     const slider = $('.b-slider'), ratio = s.index / Math.max(1, s.frames.length - 1);
     slider.style.setProperty('--value', ratio);
@@ -484,7 +665,7 @@ export function mount(host, model) {
     if (index !== current.index) model.goFrame(index);
   }
 
-  // Listbox behaviour, shared by the frame jumper and the comparison baseline.
+  // ---------- listbox ----------
   function placeSelect(root) {
     const button = root.querySelector('.b-select-button'), list = root.querySelector('.b-select-list');
     const rect = button.getBoundingClientRect(), bottomSpace = innerHeight - rect.bottom - 96, topSpace = rect.top - 12;
@@ -538,12 +719,19 @@ export function mount(host, model) {
     event.stopPropagation(); return true;
   }
 
+  // ---------- render ----------
+  const perf = { renders: 0, total: 0, worst: 0, samples: [] };
+  let readerTimer = 0;
   function render(s, event) {
+    const t0 = performance.now();
+    const previousIndex = current.index;
     current = s;
-    if (event.type === 'select' && s.selectedId) readerMode = 'item';
+    if (event.type === 'select') { if (s.selectedId) { readerMode = 'item'; if (geometryGrouped(s.selectedId) && !expanded) expanded = true; } else { readerMode = expanded ? 'small' : 'overview'; fromSmall = false; } }
     if (event.type === 'compare') readerMode = s.comparing ? 'diff' : 'overview';
-    if (event.type === 'dive' || event.type === 'rise') { readerMode = 'overview'; host.classList.remove('is-reading'); }
-    $('.b-date').textContent = `${formatDate(s.now)} · ${formatTime(s.now)}`;
+    if (event.type === 'dive' || event.type === 'rise') { readerMode = 'overview'; expanded = false; host.classList.remove('is-reading'); }
+    if (event.type === 'frame' && !s.selectedId && readerMode === 'item') readerMode = expanded ? 'small' : 'overview';
+    if (event.type === 'frame' && responder.closePanel()) readerStamp = '';
+    $('.b-date').textContent = stamp(s.now);
     $('#b-page-title').textContent = s.frame.title; $('#b-page-title').title = s.frame.title;
     const revision = String(s.state.revision);
     $('.b-revision').textContent = `状态 ${revision.startsWith('r') ? revision : `r${revision}`}`;
@@ -559,34 +747,49 @@ export function mount(host, model) {
     $('.b-play-word').textContent = s.playing ? '暂停' : '播放'; $('.b-play-icon').textContent = s.playing ? 'Ⅱ' : '▷';
     $('.b-play').setAttribute('aria-label', s.playing ? '暂停回放' : '播放回放'); $('.b-compare').setAttribute('aria-pressed', String(s.comparing));
     for (const button of host.querySelectorAll('[data-b-range]')) button.setAttribute('aria-pressed', String(button.dataset.bRange === range));
-    renderBreadcrumbs(s); renderReader(s);
-    const dimensions = `${Math.round($('.b-chart-scroll').clientWidth)}:${Math.round($('.b-current-section').clientHeight)}`;
-    const chartKey = `${s.index}|${s.layerId}|${s.comparing}|${s.baseIndex}|${range}|${dimensions}`;
-    if (chartKey !== chartStamp || event.type === 'resize') {
-      hoveredId = null; focusedId = null;
+    renderBreadcrumbs(s);
+    // On a frame change the reading pane is rebuilt in its own task, so the bands start moving first.
+    clearTimeout(readerTimer);
+    if (event.type === 'frame' && !reduced.matches) readerTimer = setTimeout(() => renderReader(current, false), 0);
+    else renderReader(s, event.type === 'record');
+    const size = `${Math.round($('.b-chart-layout').clientWidth)}:${Math.round($('.b-present-body').clientHeight)}`;
+    const chartKey = `${s.index}|${s.cursor}|${s.layerId}|${s.comparing}|${s.baseIndex}|${range}|${expanded}|${size}|${store.list().length}`;
+    if (chartKey !== chartStamp || event.type === 'resize' || event.type === 'record') {
       const scene = makeScene(s);
       $('.b-history-range').textContent = scene.first === scene.last ? `第 ${scene.last + 1} 次整理` : `第 ${scene.first + 1}—${scene.last + 1} 次整理`;
-      $('.b-budget').innerHTML = `<strong>${scene.section.used}</strong> / ${scene.section.budget} 份${scene.section.blank ? `<span class="b-blank-count"><i class="b-key-blank" aria-hidden="true"></i>${scene.section.blank} 份未分配</span>` : ''}`;
+      $('.b-budget').innerHTML = `<strong>${scene.section.used}</strong> / ${scene.section.budget} 份${scene.section.blank.share ? `<span class="b-blank-count"><i class="b-key-blank" aria-hidden="true"></i>${scene.section.blank.share} 份未分配</span>` : ''}`;
       const checked = s.index > 0 && s.frameDiff.changes.length === 0;
       $('.b-check-note').textContent = checked ? (isReview(s.frame) ? '每日整理：检查后不改' : '检查过，状态未变') : '';
-      host.dataset.bContentChanged = String(!checked);
-      const moving = ['frame', 'dive', 'rise', 'range'].includes(event.type);
-      const scrollLeft = $('.b-chart-scroll').scrollLeft;
-      scene.scrollLeft = Math.max(0, scene.width - $('.b-chart-scroll').clientWidth);
-      motion.transition(scene, { kind: event.type, anchorId: event.anchorId, instant: !moving || dragging, duration: 1600, scrollLeft });
+      let duration = event.type === 'frame' ? (Math.abs(s.index - previousIndex) > 1 && !dragging ? FRAME_MS + 80 : FRAME_MS)
+        : event.type === 'expand' || event.type === 'record' ? EXPAND_MS : event.type === 'dive' || event.type === 'rise' ? LAYER_MS : event.type === 'range' ? FRAME_MS : 0;
+      if (drawnExpanded !== expanded) duration = Math.max(duration, EXPAND_MS);
+      drawnExpanded = expanded;
+      motion.transition(scene, { duration, instant: duration === 0 });
       chartStamp = chartKey;
     } else updateEmphasis();
-    host.dataset.bStateIndex = String(s.index); host.dataset.bLayer = s.layerId ?? 'root';
+    host.dataset.bStateIndex = String(s.index); host.dataset.bLayer = s.layerId ?? 'root'; host.dataset.bExpanded = String(expanded);
+    const cost = performance.now() - t0; perf.renders += 1; perf.total += cost; perf.worst = Math.max(perf.worst, cost); if (perf.samples.length < 2000) perf.samples.push(cost);
   }
   function showReader() { if (mobile.matches) { host.classList.add('is-reading'); $('#b-reader-title').focus({ preventScroll: true }); } }
+  function toggleGroup(open = !expanded) {
+    expanded = open; fromSmall = false;
+    readerMode = open ? 'small' : 'overview';
+    if (current.selectedId) { model.select(null); return; }
+    render(current, { type: 'expand' });
+  }
   function click(event) {
     const option = event.target.closest('.b-select [role="option"]');
     if (option) { chooseOption(option.closest('.b-select'), option); return; }
     const selectButton = event.target.closest('.b-select-button');
     if (selectButton) { const root = selectButton.closest('.b-select'); if (openSelect === root) closeSelect(true); else openSelectBox(root); return; }
-    const button = event.target.closest('button, [role="button"], .b-loop');
+    const button = event.target.closest('button, [role="button"], .b-loop, .b-flow, .b-tick-mark, .b-lane');
     if (!button || !host.contains(button)) return;
-    if (button.dataset.bItem) { model.select(button.dataset.bItem); showReader(); return; }
+    if (button.dataset.labInspect) return;
+    if (button.dataset.tFrame != null) { model.goFrame(Number(button.dataset.tFrame)); return; }
+    if (button.dataset.bGroupOpen != null) { fromSmall = false; readerMode = 'small'; model.select(null); return; }
+    if (button.dataset.bGroup != null) { toggleGroup(); return; }
+    const item = button.dataset.bItem || button.dataset.tItem;
+    if (item) { fromSmall = readerMode === 'small' || (fromSmall && Boolean(current.selectedId)); model.select(item); showReader(); return; }
     if (button.dataset.bDive) { model.dive(button.dataset.bDive); return; }
     if (button.dataset.bFrame != null) { model.goFrame(Number(button.dataset.bFrame)); return; }
     if (button.dataset.bRange) { range = button.dataset.bRange; render(current, { type: 'range' }); return; }
@@ -597,7 +800,7 @@ export function mount(host, model) {
       case 'rise': model.rise(); break;
       case 'root': model.goRoot(); break;
       case 'replay': motion.replay(); break;
-      case 'overview': readerMode = 'overview'; model.select(null); break;
+      case 'overview': readerMode = 'overview'; fromSmall = false; expanded = false; if (current.selectedId) model.select(null); else render(current, { type: 'expand' }); break;
       case 'feedback': readerMode = 'feedback'; model.select(null); showReader(); break;
       case 'story': readerMode = 'story'; renderReader(current, true); showReader(); break;
       case 'read': readerMode = 'overview'; model.select(null); showReader(); break;
@@ -615,36 +818,48 @@ export function mount(host, model) {
       if (next != null && !event.altKey) { event.preventDefault(); event.stopPropagation(); model.goFrame(next); }
       return;
     }
-    if (event.target.matches('.b-flow, .b-current-fill') && ['Enter', ' '].includes(event.key)) {
-      event.preventDefault(); event.stopPropagation(); model.select(event.target.dataset.bItem); showReader();
+    if (event.key === 'Escape' && !event.altKey) {
+      if (responder.closePanel()) { renderReader(current, true); event.stopPropagation(); return; }
+      if (current.selectedId) { const back = current.selectedId; model.select(null); event.stopPropagation(); requestAnimationFrame(() => host.querySelector(`.b-label[data-b-focus-id="${CSS.escape(back)}"] .b-label-main, [data-b-group]`)?.focus({ preventScroll: true })); return; }
+      if (expanded) { toggleGroup(false); event.stopPropagation(); return; }
+    }
+    // ↑/↓ walk the chart labels in reading order.
+    const label = event.target.closest?.('.b-label');
+    if (label && ['ArrowUp', 'ArrowDown'].includes(event.key)) {
+      const all = [...host.querySelectorAll('.b-label .b-label-main')].filter(element => element.closest('.b-label').style.pointerEvents !== 'none');
+      const at = all.indexOf(event.target.closest('.b-label-main'));
+      const next = all[Math.max(0, Math.min(all.length - 1, at + (event.key === 'ArrowDown' ? 1 : -1)))];
+      if (next) { event.preventDefault(); next.focus(); }
     }
   }
-  const itemFrom = element => element?.closest?.('[data-b-item], [data-b-focus-id]')?.dataset.bItem ?? element?.closest?.('[data-b-focus-id]')?.dataset.bFocusId ?? null;
+  const itemFrom = element => element?.closest?.('[data-b-item], [data-b-focus-id], [data-b-group], [data-b-group-label]') ? (element.closest('[data-b-item], [data-b-focus-id], [data-b-group], [data-b-group-label]').dataset.bItem ?? element.closest('[data-b-item], [data-b-focus-id], [data-b-group], [data-b-group-label]').dataset.bFocusId ?? GROUP) : null;
   function pointerover(event) { const id = itemFrom(event.target); if (id !== hoveredId) { hoveredId = id; updateEmphasis(); } }
   function pointerout(event) { const id = itemFrom(event.relatedTarget); if (id !== hoveredId) { hoveredId = id; updateEmphasis(); } }
-  function focusin(event) { focusedId = itemFrom(event.target); updateEmphasis(); }
-  function focusout() { queueMicrotask(() => { if (!disposed) { focusedId = itemFrom(document.activeElement); updateEmphasis(); } }); }
+  function focusin(event) { if (event.target.closest('.b-reader-body')) return; focusedId = itemFrom(event.target); updateEmphasis(); }
+  function focusout() { queueMicrotask(() => { if (!disposed) { focusedId = document.activeElement?.closest?.('.b-reader-body') ? null : itemFrom(document.activeElement); updateEmphasis(); } }); }
   function outside(event) { if (openSelect && !openSelect.contains(event.target)) closeSelect(false); }
   function scrolled(event) { if (openSelect && !openSelect.querySelector('.b-select-list').contains(event.target)) closeSelect(false); }
-  const listeners = { click, keydown, pointerover, pointerout, focusin, focusout,
-    pointerdown: sliderPointer, pointermove: sliderPointer, pointerup: sliderPointer, pointercancel: sliderPointer };
+  const listeners = { click, keydown, pointerover, pointerout, focusin, focusout, pointerdown: sliderPointer, pointermove: sliderPointer, pointerup: sliderPointer, pointercancel: sliderPointer };
   for (const [name, listener] of Object.entries(listeners)) host.addEventListener(name, listener);
+  const unbindRespond = responder.bind($('.b-reader-body'), { getAsk: id => currentAsk(current, id), getItemVersion: id => getItem(current.state, id), render: () => renderReader(current, true) });
   document.addEventListener('pointerdown', outside, true);
   host.addEventListener('scroll', scrolled, true);
   const onResize = () => closeSelect(false); addEventListener('resize', onResize);
   const reduceMotion = () => { if (reduced.matches) motion.settle(); $('.b-replay').disabled = !motion.canReplay; };
   reduced.addEventListener?.('change', reduceMotion);
   const unsubscribe = model.subscribe(render);
-  let lastSize = `${$('.b-chart-scroll').clientWidth}:${$('.b-current-section').clientHeight}`;
+  let lastSize = `${$('.b-chart-layout').clientWidth}:${$('.b-present-body').clientHeight}`;
   const observer = new ResizeObserver(() => {
-    const size = `${$('.b-chart-scroll').clientWidth}:${$('.b-current-section').clientHeight}`;
-    if (disposed || size === lastSize || mobile.matches && host.classList.contains('is-reading')) return;
+    const size = `${$('.b-chart-layout').clientWidth}:${$('.b-present-body').clientHeight}`;
+    if (disposed || size === lastSize || (mobile.matches && host.classList.contains('is-reading'))) return;
     lastSize = size; cancelAnimationFrame(resizeFrame);
     resizeFrame = requestAnimationFrame(() => { if (!disposed) render(current, { type: 'resize' }); });
   });
-  observer.observe($('.b-chart-layout')); host.dataset.bBuild = 'b-polish-1';
+  observer.observe($('.b-chart-layout')); host.dataset.bBuild = 'b-temporal-1';
+  // For review tooling: per-frame draw cost of transitions, and render cost per model event.
+  host.__bTime = { motion, perf, store, get expanded() { return expanded; }, toggleGroup };
   return () => {
-    disposed = true; unsubscribe(); observer.disconnect(); cancelAnimationFrame(resizeFrame); motion.stop();
+    disposed = true; clearTimeout(readerTimer); unsubscribe(); unbindRespond(); observer.disconnect(); cancelAnimationFrame(resizeFrame); motion.stop();
     for (const [name, listener] of Object.entries(listeners)) host.removeEventListener(name, listener);
     document.removeEventListener('pointerdown', outside, true); host.removeEventListener('scroll', scrolled, true);
     removeEventListener('resize', onResize);

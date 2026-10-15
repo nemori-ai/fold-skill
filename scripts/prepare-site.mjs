@@ -1,3 +1,4 @@
+import { existsSync, statSync } from 'node:fs';
 import { copyFile, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,10 +16,13 @@ const sourcePages = new Map([
   ['.gitattributes', { page: 'source/gitattributes.md', language: 'text' }],
   ['.gitignore', { page: 'source/gitignore.md', language: 'text' }],
 ]);
-const prototypeEntries = new Set(['index.html', 'app.mjs', 'engine.mjs', 'scenario.mjs', 'motion.mjs', 'explore.mjs', 'styles.css', 'explore.css']);
+const prototypeEntries = new Set(['index.html', 'all.html', 'app.mjs', 'engine.mjs', 'scenario.mjs', 'motion.mjs', 'explore.mjs', 'embed.mjs', 'styles.css', 'explore.css', 'respond.mjs', 'respond.css']);
 const mediaExtensions = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.avif', '.woff', '.woff2']);
 const pages = new Map([['README.md', 'overview.md'], ['AGENTS.md', 'agents.md'], ['site/index.md', 'index.md']]);
 const assets = new Map();
+// Repository files and folders the site does not publish link to GitHub instead.
+const repositoryURL = 'https://github.com/nemori-ai/fold-skill/';
+const repositoryOnly = /^(?!\.\.)/;
 for (const variant of ['a', 'b', 'c', 'd']) assets.set(`site/previews/${variant}.jpg`, `previews/${variant}.jpg`);
 
 async function walk(directory) {
@@ -37,6 +41,12 @@ async function walk(directory) {
 for (const file of await walk('docs')) {
   if (file.endsWith('.md')) pages.set(file, file);
   else if (file.startsWith('docs/assets/')) assets.set(file, file);
+  // The brief is a standalone HTML booklet with its own screenshots; it is copied as is.
+  else if (file.startsWith('docs/brief/') && (file.endsWith('.html') || mediaExtensions.has(path.extname(file).toLowerCase()))) assets.set(file, file);
+}
+// The skill and the corpus notes are documents too; the corpus data and scripts stay in the repository.
+for (const directory of ['skill', 'corpus']) {
+  for (const file of await walk(directory)) if (file.endsWith('.md')) pages.set(file, file);
 }
 
 for (const file of await walk('prototype')) {
@@ -46,6 +56,8 @@ for (const file of await walk('prototype')) {
     pages.set(file, `prototype-notes/${relative}`);
   } else if (prototypeEntries.has(relative)
     || relative.startsWith('variants/') && ['.mjs', '.js', '.css'].includes(extension)
+    || relative.startsWith('forms/') && ['.mjs', '.css', '.html'].includes(extension)
+    || relative.startsWith('data/') && extension === '.mjs'
     || relative.startsWith('vendor/') && (['.mjs', '.js', '.css'].includes(extension) || /\/(?:LICENSE|NOTICE|COPYING)(?:\.[^/]+)?$/i.test(relative))
     || relative.startsWith('assets/') && mediaExtensions.has(extension.toLowerCase())) {
     assets.set(file, file);
@@ -79,6 +91,9 @@ function publishedURL(input, source) {
   for (const filename of ['README.md', 'index.md']) {
     const candidate = `${target.replace(/\/$/, '')}/${filename}`;
     if (pages.has(candidate)) return pageURL(pages.get(candidate)) + suffix;
+  }
+  if (repositoryOnly.test(target) && existsSync(path.join(root, target))) {
+    return `${repositoryURL}${statSync(path.join(root, target)).isDirectory() ? 'tree' : 'blob'}/main/${target}${suffix}`;
   }
   throw new Error(`Unpublished local link in ${source}: ${input}`);
 }

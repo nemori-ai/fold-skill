@@ -1,0 +1,35 @@
+.o-room { --c: #bfe3d2; --b: .2; min-height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 330px; grid-template-rows: 1fr auto; background: radial-gradient(ellipse 60% 55% at 38% 40%, color-mix(in oklab, var(--c) calc(var(--b) * 32%), #101113), #0b0c0d 75%); color: #e9e4d8; }
+.o-scene { grid-column: 1; grid-row: 1; position: relative; min-height: 600px; }
+.o-glow { position: absolute; left: 50%; top: 250px; width: 700px; height: 700px; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, color-mix(in oklab, var(--c) calc(var(--b) * 55%), transparent) 0%, transparent 60%); pointer-events: none; }
+.o-orb { position: absolute; left: 50%; top: 110px; width: 280px; height: 280px; margin-left: -140px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  background: radial-gradient(circle at 50% 58%, color-mix(in oklab, var(--c) calc(40% + var(--b) * 60%), #000) 0%, color-mix(in oklab, var(--c) calc(var(--b) * 70%), #0b0b0b) 62%, #070707 100%);
+  box-shadow: 0 0 calc(30px + var(--b) * 140px) calc(var(--b) * 40px) color-mix(in oklab, var(--c) calc(var(--b) * 80%), transparent), inset 0 -18px 40px rgb(0 0 0 / .45); }
+.o-shine { position: absolute; left: 22%; top: 13%; width: 34%; height: 22%; border-radius: 50%; background: radial-gradient(ellipse, rgb(255 255 255 / .55), transparent 70%); transform: rotate(-24deg); }
+.is-breathing .o-orb, .is-breathing .o-glow { animation: o-breathe 3.4s ease-in-out infinite; }
+@keyframes o-breathe { 50% { filter: brightness(1.35); } }
+@media (prefers-reduced-motion: reduce) { .is-breathing .o-orb, .is-breathing .o-glow { animation: none; } }
+.o-base { z-index: 2; position: absolute; left: 50%; top: 372px; width: 470px; margin-left: -235px; overflow: visible; }
+.o-rim { fill: #1d1e20; stroke: #34363a; stroke-width: 2; }
+.o-base circle.is-off { fill: #2c2e31; }
+.o-base circle.is-on { fill: #e9efe9; opacity: .85; }
+.o-base circle.is-warm { fill: #ff8a3d; filter: drop-shadow(0 0 3px #ff8a3d); }
+.o-desk { position: absolute; left: 50%; top: 392px; width: 640px; height: 120px; margin-left: -320px; border-radius: 50%; background: radial-gradient(ellipse, color-mix(in oklab, var(--c) calc(var(--b) * 30%), transparent), transparent 70%); pointer-events: none; }
+.o-voice { position: absolute; left: 50%; top: 470px; width: min(560px, 90%); transform: translateX(-50%); margin: 0; padding: 12px 18px; border-radius: 12px; background: rgb(255 255 255 / .08); font-size: 17px; line-height: 1.6; text-align: center; color: #fff; }
+.o-hint { position: absolute; left: 0; right: 0; top: 560px; margin: 0; text-align: center; font-size: 12.5px; color: #8b877d; }
+.o-decode { grid-column: 2; grid-row: 1; padding: 64px 32px 24px 8px; }
+.o-decode h2 { margin: 0 0 18px; font: 600 12px var(--mono); letter-spacing: .2em; color: #8b877d; }
+.o-decode dl { margin: 0; }
+.o-decode dt { font-size: 11.5px; letter-spacing: .14em; color: #8b877d; margin-top: 18px; }
+.o-decode dd { margin: 2px 0 0; }
+.o-decode dd b { display: block; font-size: 24px; font-weight: 600; color: #fff; }
+.o-decode dd span { font-size: 13px; color: #b8b3a7; }
+.o-small { margin-top: 26px; font-size: 12px; color: #8b877d; line-height: 1.6; }
+.o-history { grid-column: 1 / -1; padding: 18px 32px 30px; border-top: 1px solid #222428; }
+.o-history h3 { margin: 0 0 12px; font-size: 13px; font-weight: 600; color: #cfcabe; }
+.o-history small { margin-left: 8px; font-weight: 400; color: #8b877d; }
+.o-strip { display: flex; gap: 6px; }
+.o-strip button { position: relative; flex: 1; min-width: 0; padding: 0 0 16px; border: 0; background: none; }
+.o-strip i { display: block; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 50% 60%, color-mix(in oklab, var(--c) calc(30% + var(--b) * 70%), #000), #0a0a0a 90%); box-shadow: 0 0 calc(var(--b) * 14px) color-mix(in oklab, var(--c) calc(var(--b) * 90%), transparent); }
+.o-strip button.is-on i { outline: 2px solid #fff; outline-offset: 3px; }
+.o-strip em { position: absolute; left: 50%; bottom: 10px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: #ff8a3d; }
+.o-strip span { position: absolute; left: 0; right: 0; bottom: -2px; font: 9.5px var(--mono); color: #6d6a63; }

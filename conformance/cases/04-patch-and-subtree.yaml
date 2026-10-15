@@ -1,6 +1,7 @@
 # 补丁与子树：先构造真实条目和批注，再验证省略、显式清空与撤下留存。
 # items 按全局 ID 核对保留记录；withdrawn、pending_annotations 按集合核对。
 # active_children 核对仍在展示的孩子，不限定空 children 的序列化形式。
+# history 的 events 是按条目查询的完整记录列表；祖先撤下时，被连带撤下的后代也能查到该批次。
 # 只改单个已有子项时用其全局 ID supersede；不是用 children 列表做递归补丁。
 
 budget: 64
@@ -273,7 +274,7 @@ steps:
     now: "2026-10-09T09:27:00+08:00"
     history: {item: bank-print}
     expect:
-      events_contain:
+      events:
         - {type: commit, batch_id: patch-initial, revision: r1}
         - {type: annotation, batch_id: patch-print-note, revision: r1}
         - {type: commit, batch_id: patch-clear-subtree, revision: r5}
@@ -335,7 +336,7 @@ steps:
     now: "2026-10-09T09:41:00+08:00"
     history: {item: flight}
     expect:
-      events_contain:
+      events:
         - {type: commit, batch_id: patch-initial, revision: r1}
         - {type: annotation, batch_id: patch-flight-note, revision: r5}
         - {type: commit, batch_id: patch-withdraw-tree, revision: r6}

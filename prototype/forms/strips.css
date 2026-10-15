@@ -1,0 +1,50 @@
+.st-rack { min-height: 100%; padding: 26px 28px 60px; background: linear-gradient(#24272a, #1b1d20); color: #d8d4c8; --paper-strip: #efe6cc; --ink-blue: #1f4fd1; }
+.st-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18px; }
+.st-kicker { font: 11px var(--mono); letter-spacing: .14em; color: #8e8a80; }
+.st-head h2 { margin: 2px 0 0; font-size: 24px; color: #f1ede2; }
+.st-sum { font-size: 13px; color: #a9a59a; text-align: right; }
+.st-sum b { font-size: 26px; color: #f1ede2; margin-right: 2px; }
+.st-legend { display: block; margin-top: 4px; }
+.st-legend .st-ink { color: #8fb0ff; }
+.st-bay { display: grid; grid-template-columns: 74px 1fr; margin-bottom: 14px; }
+.st-bay h3 { margin: 0; padding: 10px 0 0; border-top: 3px solid #4a4e52; font-size: 13px; color: #c9c5b9; }
+.st-bay h3 span { display: block; letter-spacing: .1em; }
+.st-bay h3 em { font: 600 22px var(--mono); font-style: normal; color: #f1ede2; }
+.st-slot { display: flex; flex-direction: column; gap: 5px; padding: 6px 8px; border-radius: 4px; background: #121416; box-shadow: inset 0 2px 6px rgb(0 0 0 / .6); }
+.st-empty { padding: 10px; color: #5d6064; font-size: 12px; }
+.st-strip { position: relative; display: grid; grid-template-columns: 86px minmax(0, 1fr) 84px 84px 132px 44px 44px 172px; align-items: stretch; min-height: 58px; margin-left: calc(var(--depth) * 36px); border-radius: 2px; background: var(--paper-strip); color: #1b1b1b; box-shadow: 0 1px 0 rgb(255 255 255 / .35) inset, 0 2px 3px rgb(0 0 0 / .5); font-size: 12px; }
+.st-strip.is-child { min-height: 48px; background: #e6dcbf; }
+.st-strip.has-kids { cursor: pointer; }
+.st-strip.has-kids:hover { outline: 2px solid #8fb0ff; }
+.st-strip > div { padding: 6px 8px; border-right: 1px solid #b9ae8e; }
+.st-strip > div:last-of-type { border-right: 0; }
+.st-share { display: flex; flex-direction: column; justify-content: center; background: #e2d6b3; }
+.st-share b { font: 700 26px/1 var(--mono); letter-spacing: -.03em; }
+.st-share b s { font-size: 15px; color: #6b6655; margin-right: 4px; text-decoration-color: var(--ink-blue); text-decoration-thickness: 2px; }
+.st-share i { display: block; height: 4px; margin: 5px 0 2px; background: linear-gradient(90deg, #1b1b1b var(--w), #c9bd99 var(--w)); }
+.st-share small { font: 10px var(--mono); color: #6b6655; }
+.st-main { min-width: 0; }
+.st-main strong { display: block; font-size: 16px; line-height: 1.3; letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-main p { margin: 2px 0 0; font: 11.5px/1.4 var(--mono); color: #4d4a40; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-old { display: block; font: 11px var(--mono); color: #6b6655; text-decoration-color: var(--ink-blue); text-decoration-thickness: 1.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-f { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.st-f small { font: 9.5px var(--mono); letter-spacing: .08em; color: #807a66; }
+.st-f span { font: 12px/1.35 var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-f s { font: 10.5px var(--mono); color: #6b6655; text-decoration-color: var(--ink-blue); }
+.st-f em { font-style: normal; font: 10.5px var(--mono); color: #807a66; }
+.st-n span { font-size: 13px; }
+.st-reply span { font-weight: 600; }
+.st-reply span:not(.is-ask) { color: #807a66; font-weight: 400; }
+.st-reply em { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--sans); font-size: 11px; color: #3d3a31; }
+.st-ink { font-family: "Kaiti SC", "STKaiti", "Bradley Hand", cursive; color: var(--ink-blue); font-size: 1.08em; font-weight: 600; }
+.st-main strong .st-ink { font-size: 17px; }
+.st-stamp { position: absolute; right: 8px; top: -7px; padding: 0 6px; border: 2px solid var(--ink-blue); border-radius: 4px; color: var(--ink-blue); font: 700 13px "Kaiti SC", "STKaiti", cursive; background: var(--paper-strip); transform: rotate(-4deg); }
+.st-moved { position: absolute; left: 92px; bottom: -8px; padding: 0 4px; background: var(--paper-strip); color: var(--ink-blue); font: 600 12px "Kaiti SC", "STKaiti", cursive; }
+.st-kids { display: flex; flex-direction: column; gap: 4px; padding: 2px 0 6px; }
+.st-kids-label { margin-left: 36px; font: 11px var(--mono); color: #8fb0ff; }
+.st-free { margin: 4px 0 0 74px; padding: 12px; border: 1.5px dashed #4a4e52; border-radius: 4px; color: #8e8a80; font: 12px var(--mono); text-align: center; }
+.st-free.is-full { border-style: solid; color: #c9c5b9; }
+.st-out { margin-top: 22px; opacity: .85; }
+.st-strip.is-gone { grid-template-columns: 86px 1fr; background: #cfc6ab; }
+.st-strip.is-gone strong { text-decoration: line-through; text-decoration-color: var(--ink-blue); }
+.st-side { font-size: 12.5px; color: var(--ink-2); margin: 0; }

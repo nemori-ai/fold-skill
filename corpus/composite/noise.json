@@ -1,0 +1,718 @@
+{
+ "source": "composite",
+ "corpus": {
+  "inputs": 2829,
+  "frames": 28,
+  "per_frame": {
+   "mean": 101.0,
+   "median": 100.0,
+   "max": 209,
+   "empty_frames": 0,
+   "text_chars_p50": 39276.5,
+   "text_chars_max": 95996
+  },
+  "channels": {
+   "GitHub": 1041,
+   "论坛": 738,
+   "Mastodon": 464,
+   "问答": 326,
+   "CI": 152,
+   "订阅邮件": 50,
+   "邮件": 21,
+   "天气": 18,
+   "邮件列表": 15,
+   "博客评论": 4
+  },
+  "author_kinds": {
+   "human": 1928,
+   "self": 505,
+   "bot": 283,
+   "automation": 113
+  },
+  "distinct_authors": 643,
+  "top_authors_share": 0.364,
+  "low_info": {
+   "by_class": {
+    "bot": 396,
+    "template": 153,
+    "empty": 20,
+    "ack": 43
+   },
+   "total": 612,
+   "share": 0.216,
+   "share_of_non_self": 0.221
+  },
+  "duplicates": {
+   "exact_core_text": 171,
+   "exact_core_text_30plus": 130,
+   "near_30plus": 244,
+   "share_exact": 0.06,
+   "share_near": 0.086
+  },
+  "threads": {
+   "distinct": 482,
+   "single_input": 172,
+   "inputs_per_thread_p50": 3.0,
+   "inputs_per_thread_p90": 15.0,
+   "inputs_per_thread_max": 79,
+   "multi_channel_threads": 23,
+   "cross_channel_mentions": 10
+  },
+  "length_chars": {
+   "p10": 37.0,
+   "p50": 205.0,
+   "p90": 1331.2000000000003,
+   "max": 81132,
+   "over_limit": 172,
+   "under_20": 49
+  },
+  "gaps_minutes": {
+   "p10": 0.4,
+   "p50": 3.2,
+   "p90": 17.3,
+   "max": 199.6,
+   "same_minute": 600
+  },
+  "local_hours": {
+   "night_00_07": 401,
+   "by_hour": [
+    113,
+    73,
+    47,
+    47,
+    38,
+    29,
+    54,
+    42,
+    87,
+    154,
+    170,
+    184,
+    133,
+    189,
+    213,
+    147,
+    166,
+    195,
+    133,
+    106,
+    95,
+    106,
+    124,
+    184
+   ]
+  },
+  "edited_after_post": 192
+ },
+ "streams": {
+  "work": {
+   "inputs": 1676,
+   "frames": 28,
+   "per_frame": {
+    "mean": 59.9,
+    "median": 53.5,
+    "max": 128,
+    "empty_frames": 0,
+    "text_chars_p50": 21399.5,
+    "text_chars_max": 50451
+   },
+   "channels": {
+    "GitHub": 1041,
+    "Mastodon": 464,
+    "CI": 152,
+    "邮件列表": 15,
+    "博客评论": 4
+   },
+   "author_kinds": {
+    "human": 965,
+    "self": 405,
+    "bot": 282,
+    "automation": 24
+   },
+   "distinct_authors": 286,
+   "top_authors_share": 0.615,
+   "low_info": {
+    "by_class": {
+     "bot": 306,
+     "template": 153,
+     "empty": 20,
+     "ack": 41
+    },
+    "total": 520,
+    "share": 0.31,
+    "share_of_non_self": 0.331
+   },
+   "duplicates": {
+    "exact_core_text": 171,
+    "exact_core_text_30plus": 130,
+    "near_30plus": 228,
+    "share_exact": 0.102,
+    "share_near": 0.136
+   },
+   "threads": {
+    "distinct": 221,
+    "single_input": 13,
+    "inputs_per_thread_p50": 5.0,
+    "inputs_per_thread_p90": 18.0,
+    "inputs_per_thread_max": 79,
+    "multi_channel_threads": 23,
+    "cross_channel_mentions": 10
+   },
+   "length_chars": {
+    "p10": 36.0,
+    "p50": 135.0,
+    "p90": 1212.0,
+    "max": 56602,
+    "over_limit": 76,
+    "under_20": 39
+   },
+   "gaps_minutes": {
+    "p10": 0.4,
+    "p50": 3.4,
+    "p90": 27.1,
+    "max": 412.0,
+    "same_minute": 362
+   },
+   "local_hours": {
+    "night_00_07": 139,
+    "by_hour": [
+     62,
+     22,
+     15,
+     12,
+     9,
+     4,
+     15,
+     15,
+     66,
+     136,
+     131,
+     144,
+     80,
+     136,
+     136,
+     79,
+     115,
+     129,
+     52,
+     48,
+     34,
+     45,
+     66,
+     125
+    ]
+   },
+   "edited_after_post": 84
+  },
+  "community": {
+   "inputs": 738,
+   "frames": 28,
+   "per_frame": {
+    "mean": 26.4,
+    "median": 22.5,
+    "max": 55,
+    "empty_frames": 0,
+    "text_chars_p50": 9145.0,
+    "text_chars_max": 30383
+   },
+   "channels": {
+    "论坛": 738
+   },
+   "author_kinds": {
+    "human": 718,
+    "self": 19,
+    "bot": 1
+   },
+   "distinct_authors": 230,
+   "top_authors_share": 0.18,
+   "low_info": {
+    "by_class": {
+     "bot": 1,
+     "template": 0,
+     "empty": 0,
+     "ack": 2
+    },
+    "total": 3,
+    "share": 0.004,
+    "share_of_non_self": 0.004
+   },
+   "duplicates": {
+    "exact_core_text": 0,
+    "exact_core_text_30plus": 0,
+    "near_30plus": 2,
+    "share_exact": 0.0,
+    "share_near": 0.003
+   },
+   "threads": {
+    "distinct": 142,
+    "single_input": 78,
+    "inputs_per_thread_p50": 1.0,
+    "inputs_per_thread_p90": 15.0,
+    "inputs_per_thread_max": 61,
+    "multi_channel_threads": 0,
+    "cross_channel_mentions": 0
+   },
+   "length_chars": {
+    "p10": 78.0,
+    "p50": 325.0,
+    "p90": 1143.400000000002,
+    "max": 6145,
+    "over_limit": 28,
+    "under_20": 6
+   },
+   "gaps_minutes": {
+    "p10": 2.1,
+    "p50": 12.9,
+    "p90": 67.9,
+    "max": 273.3,
+    "same_minute": 27
+   },
+   "local_hours": {
+    "night_00_07": 196,
+    "by_hour": [
+     39,
+     41,
+     26,
+     30,
+     22,
+     21,
+     17,
+     14,
+     15,
+     8,
+     22,
+     20,
+     30,
+     31,
+     39,
+     42,
+     30,
+     37,
+     44,
+     45,
+     36,
+     44,
+     44,
+     41
+    ]
+   },
+   "edited_after_post": 77
+  },
+  "life": {
+   "inputs": 326,
+   "frames": 28,
+   "per_frame": {
+    "mean": 11.6,
+    "median": 9.0,
+    "max": 35,
+    "empty_frames": 0,
+    "text_chars_p50": 3361.5,
+    "text_chars_max": 12745
+   },
+   "channels": {
+    "问答": 326
+   },
+   "author_kinds": {
+    "human": 245,
+    "self": 81
+   },
+   "distinct_authors": 97,
+   "top_authors_share": 0.475,
+   "low_info": {
+    "by_class": {
+     "bot": 0,
+     "template": 0,
+     "empty": 0,
+     "ack": 0
+    },
+    "total": 0,
+    "share": 0.0,
+    "share_of_non_self": 0.0
+   },
+   "duplicates": {
+    "exact_core_text": 0,
+    "exact_core_text_30plus": 0,
+    "near_30plus": 0,
+    "share_exact": 0.0,
+    "share_near": 0.0
+   },
+   "threads": {
+    "distinct": 34,
+    "single_input": 0,
+    "inputs_per_thread_p50": 9.0,
+    "inputs_per_thread_p90": 16.7,
+    "inputs_per_thread_max": 21,
+    "multi_channel_threads": 0,
+    "cross_channel_mentions": 0
+   },
+   "length_chars": {
+    "p10": 77.0,
+    "p50": 257.0,
+    "p90": 724.0,
+    "max": 3603,
+    "over_limit": 5,
+    "under_20": 3
+   },
+   "gaps_minutes": {
+    "p10": 2.3,
+    "p50": 28.6,
+    "p90": 166.9,
+    "max": 722.6,
+    "same_minute": 14
+   },
+   "local_hours": {
+    "night_00_07": 41,
+    "by_hour": [
+     9,
+     9,
+     6,
+     3,
+     5,
+     3,
+     6,
+     12,
+     4,
+     6,
+     13,
+     18,
+     22,
+     21,
+     27,
+     21,
+     17,
+     19,
+     30,
+     10,
+     20,
+     16,
+     14,
+     15
+    ]
+   },
+   "edited_after_post": 31
+  },
+  "subscription": {
+   "inputs": 89,
+   "frames": 28,
+   "per_frame": {
+    "mean": 3.2,
+    "median": 3.0,
+    "max": 7,
+    "empty_frames": 1,
+    "text_chars_p50": 4060.0,
+    "text_chars_max": 13165
+   },
+   "channels": {
+    "订阅邮件": 50,
+    "邮件": 21,
+    "天气": 18
+   },
+   "author_kinds": {
+    "automation": 89
+   },
+   "distinct_authors": 31,
+   "top_authors_share": 0.562,
+   "low_info": {
+    "by_class": {
+     "bot": 89,
+     "template": 0,
+     "empty": 0,
+     "ack": 0
+    },
+    "total": 89,
+    "share": 1.0,
+    "share_of_non_self": 1.0
+   },
+   "duplicates": {
+    "exact_core_text": 0,
+    "exact_core_text_30plus": 0,
+    "near_30plus": 14,
+    "share_exact": 0.0,
+    "share_near": 0.157
+   },
+   "threads": {
+    "distinct": 85,
+    "single_input": 81,
+    "inputs_per_thread_p50": 1.0,
+    "inputs_per_thread_p90": 1.0,
+    "inputs_per_thread_max": 2,
+    "multi_channel_threads": 0,
+    "cross_channel_mentions": 0
+   },
+   "length_chars": {
+    "p10": 60.0,
+    "p50": 6541.0,
+    "p90": 20789.600000000006,
+    "max": 81132,
+    "over_limit": 63,
+    "under_20": 1
+   },
+   "gaps_minutes": {
+    "p10": 35.3,
+    "p50": 151.6,
+    "p90": 466.7,
+    "max": 989.0,
+    "same_minute": 0
+   },
+   "local_hours": {
+    "night_00_07": 25,
+    "by_hour": [
+     3,
+     1,
+     0,
+     2,
+     2,
+     1,
+     16,
+     1,
+     2,
+     4,
+     4,
+     2,
+     1,
+     1,
+     11,
+     5,
+     4,
+     10,
+     7,
+     3,
+     5,
+     1,
+     0,
+     3
+    ]
+   },
+   "edited_after_post": 0
+  }
+ },
+ "curl-bagder": {
+  "inputs": 1676,
+  "frames": 28,
+  "per_frame": {
+   "mean": 59.9,
+   "median": 53.5,
+   "max": 128,
+   "empty_frames": 0,
+   "text_chars_p50": 21324.5,
+   "text_chars_max": 50284
+  },
+  "channels": {
+   "GitHub": 1041,
+   "Mastodon": 464,
+   "CI": 152,
+   "邮件列表": 15,
+   "博客评论": 4
+  },
+  "author_kinds": {
+   "human": 965,
+   "self": 405,
+   "bot": 282,
+   "automation": 24
+  },
+  "distinct_authors": 286,
+  "top_authors_share": 0.615,
+  "low_info": {
+   "by_class": {
+    "bot": 306,
+    "template": 153,
+    "empty": 20,
+    "ack": 41
+   },
+   "total": 520,
+   "share": 0.31,
+   "share_of_non_self": 0.331
+  },
+  "duplicates": {
+   "exact_core_text": 171,
+   "exact_core_text_30plus": 117,
+   "near_30plus": 215,
+   "share_exact": 0.102,
+   "share_near": 0.128
+  },
+  "threads": {
+   "distinct": 221,
+   "single_input": 13,
+   "inputs_per_thread_p50": 5.0,
+   "inputs_per_thread_p90": 18.0,
+   "inputs_per_thread_max": 79,
+   "multi_channel_threads": 23,
+   "cross_channel_mentions": 10
+  },
+  "length_chars": {
+   "p10": 33.0,
+   "p50": 134.0,
+   "p90": 1207.5,
+   "max": 56552,
+   "over_limit": 76,
+   "under_20": 45
+  },
+  "gaps_minutes": {
+   "p10": 0.4,
+   "p50": 3.4,
+   "p90": 27.1,
+   "max": 412.0,
+   "same_minute": 362
+  },
+  "local_hours": {
+   "night_00_07": 139,
+   "by_hour": [
+    62,
+    22,
+    15,
+    12,
+    9,
+    4,
+    15,
+    15,
+    66,
+    136,
+    131,
+    144,
+    80,
+    136,
+    136,
+    79,
+    115,
+    129,
+    52,
+    48,
+    34,
+    45,
+    66,
+    125
+   ]
+  },
+  "edited_after_post": 84,
+  "stale": {
+   "comments_on_closed_threads": 53,
+   "replies_to_7d_old": 1,
+   "threads_known": 1026
+  }
+ },
+ "scenario": {
+  "inputs": 112,
+  "frames": 37,
+  "per_frame": {
+   "mean": 3.0,
+   "median": 3.0,
+   "max": 9,
+   "empty_frames": 3,
+   "text_chars_p50": 101.0,
+   "text_chars_max": 376
+  },
+  "channels": {
+   "团队群": 25,
+   "用户消息": 18,
+   "客户邮件": 9,
+   "家人消息": 6,
+   "监控": 6,
+   "物业私信": 6,
+   "团队私信": 5,
+   "财务邮件": 5,
+   "招聘邮件": 5,
+   "资讯订阅": 3,
+   "官方资料": 3,
+   "反馈": 3,
+   "日历提醒": 3,
+   "合作伙伴群": 2,
+   "招聘平台": 2,
+   "供应商邮件": 2,
+   "同楼群": 1,
+   "个人随手记": 1,
+   "团购群": 1,
+   "快递通知": 1,
+   "部署记录": 1,
+   "促销短信": 1,
+   "物业群": 1,
+   "客户群": 1,
+   "定时提醒": 1
+  },
+  "author_kinds": {
+   "human": 65,
+   "self": 26,
+   "bot": 13,
+   "automation": 8
+  },
+  "distinct_authors": 27,
+  "top_authors_share": 0.589,
+  "low_info": {
+   "by_class": {
+    "bot": 21,
+    "template": 0,
+    "empty": 0,
+    "ack": 0
+   },
+   "total": 21,
+   "share": 0.188,
+   "share_of_non_self": 0.244
+  },
+  "duplicates": {
+   "exact_core_text": 0,
+   "exact_core_text_30plus": 0,
+   "near_30plus": 0,
+   "share_exact": 0.0,
+   "share_near": 0.0
+  },
+  "threads": {
+   "distinct": 13,
+   "single_input": 4,
+   "inputs_per_thread_p50": 8.0,
+   "inputs_per_thread_p90": 15.8,
+   "inputs_per_thread_max": 17,
+   "multi_channel_threads": 8,
+   "cross_channel_mentions": 0
+  },
+  "length_chars": {
+   "p10": 18.1,
+   "p50": 34.5,
+   "p90": 47.0,
+   "max": 67,
+   "over_limit": 0,
+   "under_20": 14
+  },
+  "gaps_minutes": {
+   "p10": 3.0,
+   "p50": 13.0,
+   "p90": 736.0,
+   "max": 1400.0,
+   "same_minute": 0
+  },
+  "local_hours": {
+   "night_00_07": 0,
+   "by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    12,
+    33,
+    4,
+    0,
+    0,
+    6,
+    7,
+    3,
+    1,
+    12,
+    10,
+    8,
+    11,
+    5,
+    0,
+    0
+   ]
+  },
+  "edited_after_post": 0,
+  "author_dispositions": {
+   "used": 84,
+   "noise": 12,
+   "duplicate": 10,
+   "deferred": 6
+  }
+ }
+}

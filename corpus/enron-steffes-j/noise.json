@@ -1,0 +1,223 @@
+{
+ "source": "enron-steffes-j",
+ "corpus": {
+  "inputs": 754,
+  "frames": 28,
+  "per_frame": {
+   "mean": 26.9,
+   "median": 19.0,
+   "max": 81,
+   "empty_frames": 3,
+   "text_chars_p50": 24374.0,
+   "text_chars_max": 105771
+  },
+  "channels": {
+   "邮件": 754
+  },
+  "author_kinds": {
+   "human": 463,
+   "self": 250,
+   "automation": 41
+  },
+  "distinct_authors": 138,
+  "top_authors_share": 0.458,
+  "low_info": {
+   "by_class": {
+    "bot": 41,
+    "template": 0,
+    "empty": 7,
+    "ack": 14
+   },
+   "total": 62,
+   "share": 0.082,
+   "share_of_non_self": 0.097
+  },
+  "duplicates": {
+   "exact_core_text": 34,
+   "exact_core_text_30plus": 11,
+   "near_30plus": 28,
+   "share_exact": 0.045,
+   "share_near": 0.037
+  },
+  "threads": {
+   "distinct": 402,
+   "single_input": 258,
+   "inputs_per_thread_p50": 1.0,
+   "inputs_per_thread_p90": 4.0,
+   "inputs_per_thread_max": 17,
+   "multi_channel_threads": 0,
+   "cross_channel_mentions": 0
+  },
+  "length_chars": {
+   "p10": 222.3,
+   "p50": 1427.5,
+   "p90": 5319.700000000002,
+   "max": 122537,
+   "over_limit": 277,
+   "under_20": 2
+  },
+  "gaps_minutes": {
+   "p10": 0.6,
+   "p50": 4.7,
+   "p90": 34.7,
+   "max": 2002.6,
+   "same_minute": 116
+  },
+  "local_hours": {
+   "night_00_07": 12,
+   "by_hour": [
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    4,
+    25,
+    57,
+    63,
+    79,
+    54,
+    34,
+    79,
+    48,
+    53,
+    111,
+    59,
+    27,
+    23,
+    13,
+    7,
+    4,
+    6
+   ]
+  },
+  "edited_after_post": 0,
+  "stale": {}
+ },
+ "scenario": {
+  "inputs": 112,
+  "frames": 37,
+  "per_frame": {
+   "mean": 3.0,
+   "median": 3.0,
+   "max": 9,
+   "empty_frames": 3,
+   "text_chars_p50": 101.0,
+   "text_chars_max": 376
+  },
+  "channels": {
+   "团队群": 25,
+   "用户消息": 18,
+   "客户邮件": 9,
+   "家人消息": 6,
+   "监控": 6,
+   "物业私信": 6,
+   "团队私信": 5,
+   "财务邮件": 5,
+   "招聘邮件": 5,
+   "资讯订阅": 3,
+   "官方资料": 3,
+   "反馈": 3,
+   "日历提醒": 3,
+   "合作伙伴群": 2,
+   "招聘平台": 2,
+   "供应商邮件": 2,
+   "同楼群": 1,
+   "个人随手记": 1,
+   "团购群": 1,
+   "快递通知": 1,
+   "部署记录": 1,
+   "促销短信": 1,
+   "物业群": 1,
+   "客户群": 1,
+   "定时提醒": 1
+  },
+  "author_kinds": {
+   "human": 65,
+   "self": 26,
+   "bot": 13,
+   "automation": 8
+  },
+  "distinct_authors": 27,
+  "top_authors_share": 0.589,
+  "low_info": {
+   "by_class": {
+    "bot": 21,
+    "template": 0,
+    "empty": 0,
+    "ack": 0
+   },
+   "total": 21,
+   "share": 0.188,
+   "share_of_non_self": 0.244
+  },
+  "duplicates": {
+   "exact_core_text": 0,
+   "exact_core_text_30plus": 0,
+   "near_30plus": 0,
+   "share_exact": 0.0,
+   "share_near": 0.0
+  },
+  "threads": {
+   "distinct": 13,
+   "single_input": 4,
+   "inputs_per_thread_p50": 8.0,
+   "inputs_per_thread_p90": 15.8,
+   "inputs_per_thread_max": 17,
+   "multi_channel_threads": 8,
+   "cross_channel_mentions": 0
+  },
+  "length_chars": {
+   "p10": 18.1,
+   "p50": 34.5,
+   "p90": 47.0,
+   "max": 67,
+   "over_limit": 0,
+   "under_20": 14
+  },
+  "gaps_minutes": {
+   "p10": 3.0,
+   "p50": 13.0,
+   "p90": 736.0,
+   "max": 1400.0,
+   "same_minute": 0
+  },
+  "local_hours": {
+   "night_00_07": 0,
+   "by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    12,
+    33,
+    4,
+    0,
+    0,
+    6,
+    7,
+    3,
+    1,
+    12,
+    10,
+    8,
+    11,
+    5,
+    0,
+    0
+   ]
+  },
+  "edited_after_post": 0,
+  "author_dispositions": {
+   "used": 84,
+   "noise": 12,
+   "duplicate": 10,
+   "deferred": 6
+  }
+ }
+}

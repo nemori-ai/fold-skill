@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fold · 回应组件</title>
+  <link rel="stylesheet" href="forms.css">
+  <link rel="stylesheet" href="../respond.css">
+  <style>
+    .rk { max-width: 1120px; margin: 0 auto; padding: 36px 32px 60px; }
+    .rk-kicker { font: 12px var(--mono); color: var(--ink-2); letter-spacing: .08em; }
+    .rk h1 { margin: 6px 0 10px; font-size: 30px; }
+    .rk-lead { max-width: 760px; margin: 0 0 24px; line-height: 1.75; }
+    .rk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
+    .rk-card { display: flex; flex-direction: column; gap: 10px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+    .rk-card header { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+    .rk-card h2 { margin: 0; font-size: 16px; }
+    .rk-card h2 code { font: 600 13px var(--mono); color: var(--vermilion); margin-right: 6px; }
+    .rk-source { font-size: 12px; color: var(--ink-2); }
+    .rk-item { margin: 0; font-size: 13px; color: var(--ink-2); }
+    .rk-meta { margin: 0; font: 11.5px var(--mono); color: var(--ink-2); }
+    .rk-log { margin-top: 28px; }
+    .rk-log h2 { font-size: 16px; margin: 0 0 8px; }
+    .rk-log table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .rk-log th, .rk-log td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .rk-log code { font: 12px var(--mono); }
+    .rk-tools { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 13px; color: var(--ink-2); }
+    .rk-tools button { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 4px 10px; }
+  </style>
+</head>
+<body>
+<main class="rk">
+  <div class="rk-kicker"><a href="index.html">← 形式</a> · FOLD · 回应组件</div>
+  <h1>回应组件：按 ask.expects 给出回应方式</h1>
+  <p class="rk-lead">所有形式共用 <code>prototype/respond.mjs</code>：同一份回应路径（ask）在手机卡片、表盘、草图里各自包上自己的样式，结构、键盘操作与反馈记录相同。下面每张卡优先取当前演示数据里第一次登记的同类问题，数据里没有的类型用示例补上。点按只留在本页，记录先是“已保存”，推进到下一轮整理后变为“已收到”；不写回状态，也不采集查看。</p>
+  <div class="rk-grid" id="grid"></div>
+  <section class="rk-log">
+    <h2>反馈记录</h2>
+    <div class="rk-tools"><span id="cursor"></span><button id="advance" type="button">推进到下一轮整理</button><button id="clear" type="button">清除</button></div>
+    <table><thead><tr><th>时间</th><th>事项</th><th>回应</th><th>记录（与 event.feedback 同形）</th><th>状态</th></tr></thead><tbody id="log"></tbody></table>
+  </section>
+</main>
+<script type="module">
+  import { scenario } from '../scenario.mjs';
+  import { CONTROLS, normalizeAsk, createResponseStore, mountResponse, responseStatus, asFeedback, setTimeZone, clock, day } from '../respond.mjs';
+  import { followFrames } from '../embed.mjs';
+  setTimeZone(scenario.timeZone || 'Asia/Shanghai');
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const frames = scenario.frames;
+  let reportFrame = () => {};
+  const examples = {
+    confirm: { id: 'ex-confirm', item: 'ex-confirm', expects: 'confirm', prompt: '周末陪家人的安排照旧吗？', actions: [] },
+    choose: { id: 'ex-choose', item: 'ex-choose', expects: 'choose', prompt: '这个回归先怎么处理？', actions: [{ id: 'revert', label: '先回退', meaning: 'decide', recommended: true }, { id: 'patch', label: '直接修', meaning: 'decide' }, { id: 'wait', label: '等报告人复现', meaning: 'decide' }] },
+    reply: { id: 'ex-reply', item: 'ex-reply', expects: 'reply', prompt: '给报告人回一句？', actions: [{ id: 'reply', label: '写一句回复', meaning: 'input', input: { type: 'text', placeholder: '例如：已复现，今晚提交修复', suggestions: ['已复现，今晚修', '请补一份最小复现'] } }] },
+    schedule: { id: 'ex-schedule', item: 'ex-schedule', expects: 'schedule', prompt: '什么时候和贡献者通话？', actions: [{ id: 'time', label: '选一个时间', meaning: 'input', input: { type: 'datetime' } }] },
+    approve: { id: 'ex-approve', item: 'ex-approve', expects: 'approve', prompt: 'CI 全绿，两位评审已批准。合并吗？', subject: { label: '合并 PR #1234', url: 'https://example.org/pull/1234' }, actions: [] },
+    defer: { id: 'ex-defer', item: 'ex-defer', expects: 'defer', prompt: '这份长评审先推到什么时候看？', actions: [] },
+  };
+  // First registered ask of each type in the current dataset, with the frame and item it belongs to.
+  const found = {};
+  frames.forEach((frame, index) => {
+    for (const [item, ask] of Object.entries(frame.asks || {})) {
+      const type = normalizeAsk(ask).expects;
+      if (!found[type]) found[type] = { ask, index, item };
+    }
+  });
+  const store = createResponseStore();
+  // ?frame=<index> picks the replay moment, as on the other pages; by default the frame after the last example is registered.
+  const requested = new URLSearchParams(location.search).get('frame');
+  let cursor = Date.parse(frames[/^\d+$/.test(requested ?? '') ? Math.min(frames.length - 1, Number(requested))
+    : Math.min(frames.length - 1, Math.max(...Object.values(found).map(f => f.index), 1))].at);
+  const mounts = [];
+  const grid = document.getElementById('grid');
+  grid.innerHTML = Object.keys(CONTROLS).map(type => `<article class="rk-card"><header><h2><code>${type}</code>${CONTROLS[type].label}</h2><span class="rk-source">${found[type] ? `数据 · ${esc(frames[found[type].index].id)}` : '示例'}</span></header><p class="rk-item" id="item-${type}"></p><div id="mount-${type}"></div><p class="rk-meta" id="meta-${type}"></p></article>`).join('');
+  for (const type of Object.keys(CONTROLS)) {
+    const source = found[type];
+    const ask = source ? source.ask : examples[type];
+    const item = source ? { id: source.item, title: findTitle(source.item, source.index), updated_at: `frame-${source.index}` } : { id: ask.item, title: '示例事项', updated_at: 'example' };
+    document.getElementById(`item-${type}`).textContent = item.title;
+    document.getElementById(`meta-${type}`).textContent = `id ${ask.id || '—'} · 登记 ${ask.registered_at ? `${day(ask.registered_at)} ${clock(ask.registered_at)}` : '—'} · 截止 ${ask.due_at ? `${day(ask.due_at)} ${clock(ask.due_at)}` : '无'}`;
+    mounts.push(mountResponse(document.getElementById(`mount-${type}`), { ask, item, store, now: () => cursor, frames, onChange: renderLog }));
+  }
+  function findTitle(id, index) {
+    for (const declaration of walk(frames.slice(0, index + 1).flatMap(f => f.batch?.declarations || []))) if (declaration.id === id && declaration.title) return declaration.title;
+    return id;
+  }
+  function* walk(list) { for (const d of list) { yield d; yield* walk(d.children || []); } }
+  function renderLog() {
+    reportFrame(frames.findLastIndex(frame => Date.parse(frame.at) <= cursor));
+    document.getElementById('cursor').textContent = `回放时刻 ${day(cursor)} ${clock(cursor)}`;
+    document.getElementById('log').innerHTML = store.list().map(record => {
+      const { status, at } = responseStatus(record, frames, cursor);
+      return `<tr><td>${clock(record.at)}</td><td>${esc(record.title)}</td><td>${esc(record.label)}${record.value ? `：${esc(record.value)}` : ''}${record.until ? `（${day(record.until)} ${clock(record.until)}）` : ''}</td><td><code>${esc(JSON.stringify(asFeedback(record)))}</code></td><td>${status === 'acknowledged' ? `已收到 · ${clock(at)} 的整理` : '已保存'}</td></tr>`;
+    }).join('') || '<tr><td colspan="5">还没有回应。</td></tr>';
+  }
+  document.getElementById('advance').onclick = () => {
+    const next = frames.find(frame => Date.parse(frame.at) > cursor);
+    if (next) cursor = Date.parse(next.at);
+    mounts.forEach(m => m.render());
+    renderLog();
+  };
+  document.getElementById('clear').onclick = () => { store.clear(); mounts.forEach(m => m.render()); renderLog(); };
+  // Embedded in all.html: the frame chosen above becomes this page's replay moment.
+  reportFrame = followFrames(i => {
+    cursor = Date.parse(frames[Math.max(0, Math.min(frames.length - 1, i))].at);
+    mounts.forEach(m => m.render());
+    renderLog();
+  });
+  renderLog();
+</script>
+</body>
+</html>

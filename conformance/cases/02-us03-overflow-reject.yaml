@@ -91,6 +91,7 @@ steps:
       text_brief_contains:
         - "**签证材料**"
         - 水电账单
+        - 另有 2 项次要事项：明早例会、邮件过滤   # low 与 trace 折成一行尾注。
       text_brief_not_contains:
         - 阅读推荐
 

@@ -51,7 +51,8 @@ export default defineConfig({
       };
       const linkOpen = md.renderer.rules.link_open;
       md.renderer.rules.link_open = (tokens, index, options, env, self) => {
-        if (tokens[index].attrGet('href')?.startsWith('/prototype/')) {
+        // Prototype pages and the brief are static HTML outside the VitePress router.
+        if (/^\/(?:prototype|docs\/brief)\//.test(tokens[index].attrGet('href') || '')) {
           tokens[index].attrSet('data-vp-ignore', '');
           tokens[index].attrSet('target', '_self');
         }
@@ -63,18 +64,22 @@ export default defineConfig({
     siteTitle: 'Fold',
     nav: [
       { text: '概览', link: '/overview' },
+      { text: '小册子', link: '/docs/brief/index.html', target: '_self' },
       { text: '产品文档', link: '/docs/product', activeMatch: '^/docs/' },
       { text: '原型体验', items: [
         { text: 'A · 空间排布', link: '/prototype/?variant=a&frame=0', target: '_self' },
         { text: 'B · 时间展开', link: '/prototype/?variant=b&frame=0', target: '_self' },
         { text: 'C · 流动形态', link: '/prototype/?variant=c&frame=0', target: '_self' },
+        { text: 'D · 手机首页', link: '/prototype/?variant=d&frame=26', target: '_self' },
         { text: '原版 · 完整工作台', link: '/prototype/', target: '_self' },
+        { text: '形式画廊', link: '/prototype/forms/index.html', target: '_self' },
       ] },
       { text: '原型说明', link: '/prototype-notes/README', activeMatch: '^/prototype-notes/' },
     ],
     sidebar: [
       { text: '产品', items: [
         { text: '项目概览', link: '/overview' },
+        { text: '小册子（16 页图文）', link: '/docs/brief/index.html', target: '_self' },
         { text: '产品方向', link: '/docs/product' },
         { text: '用户故事', link: '/docs/user-stories' },
         { text: 'Skill 设计', link: '/docs/skill-design' },
@@ -90,6 +95,12 @@ export default defineConfig({
         { text: '工作环境', link: '/docs/development' },
         { text: '开发协作约定', link: '/agents' },
         { text: '一致性用例', link: '/conformance/cases/' },
+        { text: 'Fold skill（SKILL.md）', link: '/skill/SKILL' },
+        { text: '评测报告', link: '/docs/evaluations/README' },
+        { text: '真实语料', link: '/corpus/README' },
+        { text: '混合人物语料', link: '/corpus/composite/MIX' },
+        { text: 'curl 语料噪音画像', link: '/corpus/curl-bagder/NOISE' },
+        { text: 'curl 语料弱标注', link: '/corpus/curl-bagder/LABELS' },
         { text: '配图索引', link: '/docs/visual-guide' },
         { text: '配图来源与提示词', link: '/docs/assets/illustrations/README' },
         { text: '历史草案 v0.3', link: '/docs/reference/design-v0.3' },
@@ -100,6 +111,9 @@ export default defineConfig({
         { text: '原型产品定义', link: '/prototype-notes/PRODUCT' },
         { text: '原版视觉规范', link: '/prototype-notes/DESIGN' },
         { text: '三种视觉表达', link: '/prototype-notes/EXPLORATIONS' },
+        { text: '更多形式：概念卡', link: '/prototype-notes/forms/CONCEPTS' },
+        { text: '演示数据打磨记录', link: '/prototype-notes/data/composite/POLISH' },
+        { text: '更多形式：灵感来源', link: '/prototype-notes/forms/INSPIRATION' },
         { text: 'Three.js 依赖说明', link: '/prototype-notes/vendor/three/README' },
       ] },
     ],

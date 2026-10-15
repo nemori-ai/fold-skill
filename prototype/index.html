@@ -4,15 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f4f4ef">
-  <title>Fold · 林苒的事项回放</title>
+  <title>Fold · 事项回放</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%232c4c3b'/%3E%3Cpath d='M11 10h19L20 20v11h-9z' fill='%23ececdf'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
   <script>
-    if (['a', 'b', 'c', 'd'].includes(new URLSearchParams(location.search).get('variant')?.toLowerCase())) {
+  {
+    const opening = new URLSearchParams(location.search);
+    if (['a', 'b', 'c', 'd'].includes(opening.get('variant')?.toLowerCase())) {
       document.documentElement.classList.add('opening-exploration');
     }
+    // ?embed=1: shown inside all.html, which lists every version itself; hide only the version switchers.
+    if (opening.get('embed') === '1') document.documentElement.classList.add('is-embedded');
+  }
   </script>
-  <style>.opening-exploration .app-shell { display: none; }</style>
+  <style>.opening-exploration .app-shell { display: none; }
+    .is-embedded .prototype-versions, .is-embedded .lab-switcher { display: none; }</style>
 </head>
 <body>
 <a class="skip-link" href="#workspace">跳到事项概览</a>
@@ -20,47 +26,48 @@
   <header class="masthead">
     <a class="brand" href="./" aria-label="Fold 事项回放首页"><svg width="27" height="29" viewBox="0 0 27 29" aria-hidden="true"><path d="M2 2h23L14 13v14H2Z" fill="currentColor"/><path d="m14 2 11 0-11 11Z" fill="currentColor" opacity=".35"/></svg><span>Fold</span><span class="masthead-caption">事项回放</span></a>
     <nav class="prototype-versions" aria-label="原型版本"><span aria-current="page">原版</span><a data-prototype-variant="a" href="./?variant=a&frame=0">A 空间排布</a><a data-prototype-variant="b" href="./?variant=b&frame=0">B 时间展开</a><a data-prototype-variant="c" href="./?variant=c&frame=0">C 流动形态</a><a data-prototype-variant="d" href="./?variant=d&frame=26">D 手机首页</a></nav>
-    <div class="header-actions"><span class="prototype-badge">交互原型</span><button id="story-button" aria-expanded="false" aria-controls="story-drawer">演示说明</button><button id="full-state-button" title="查看此刻完整 state JSON">完整 state <span aria-hidden="true">↗</span></button></div>
+    <div class="story-heading"><h1 id="story-title">事项回放</h1><p class="story-meta" id="story-meta"></p></div>
+    <div class="header-actions"><button id="story-button" aria-expanded="false" aria-controls="story-drawer">演示说明</button><button id="full-state-button" title="查看此刻完整 state JSON">完整 state <span aria-hidden="true">↗</span></button></div>
   </header>
   <section class="story-drawer" id="story-drawer" hidden></section>
-  <section class="story-header">
-    <div class="story-heading"><span class="eyebrow">事项变化 · 两周回放</span><h1>林苒的事项回放</h1><p id="story-subtitle">查看事项、原始依据与两周内的状态变化。</p></div>
-    <div class="story-meta" id="story-meta"></div>
-  </section>
   <main class="main-grid">
-    <aside class="inputs-panel" aria-label="本轮原始输入">
-      <div class="panel-heading"><h2 id="inputs-heading">本轮原始输入</h2><span id="event-count"></span></div>
-      <div class="input-tabs"><button id="all-events" class="is-active" aria-pressed="true">全部输入</button><button id="used-events" aria-pressed="false">已采用</button><button id="batch-button">Batch <span aria-hidden="true">↗</span></button></div>
+    <aside class="inputs-panel" aria-label="本轮输入">
+      <div class="panel-heading"><h2 id="inputs-heading">本轮输入</h2><span id="event-count"></span></div>
+      <p class="input-window" id="input-window"></p>
       <div class="event-list" id="event-list"></div>
-      <div class="input-footnote">输入不自动占用份额<br>重复、噪音和暂缓消息均保留。</div>
     </aside>
     <section class="workspace" id="workspace" aria-label="当前事项概览">
-      <div class="workspace-toolbar"><nav class="breadcrumbs" id="breadcrumbs" aria-label="事项层级"></nav><div class="view-actions"><button id="replay-motion" disabled title="重播刚才的份额与布局变化"><span aria-hidden="true">↻</span> 重播过渡</button><button id="slow-motion" aria-pressed="false" title="放慢过渡动画，便于看清去向">慢动作</button><button id="compare-button" aria-pressed="false"><span aria-hidden="true">⇄</span> 对比状态</button></div></div>
-      <div class="frame-heading"><div><div class="frame-date" id="frame-date"></div><h2 id="frame-title"></h2></div><span class="revision-tag" id="revision-tag"></span></div>
-      <div class="signal-note" id="signal-note" hidden></div>
-      <div class="agent-note"><span class="note-label">本轮整理依据</span><p id="agent-note"></p></div>
+      <div class="frame-heading">
+        <div class="frame-heading-main"><div class="frame-date"><span id="frame-date"></span><span class="revision-tag" id="revision-tag"></span></div><h2 id="frame-title"></h2></div>
+        <div class="view-actions"><button id="replay-motion" disabled title="重播刚才的份额与布局变化"><span aria-hidden="true">↻</span> 重播</button><button id="slow-motion" aria-pressed="false" title="放慢过渡，便于看清去向">慢动作</button><button id="compare-button" aria-pressed="false"><span aria-hidden="true">⇄</span> 对比</button></div>
+      </div>
+      <div class="frame-note" id="frame-note"><p class="frame-note-text"><span class="signal-note" id="signal-note" hidden></span><span class="note-label">整理依据</span><span id="agent-note"></span></p><button class="note-toggle" id="note-toggle" type="button" aria-expanded="false" hidden>展开</button></div>
       <nav class="cold-start-progress" id="cold-start-progress" aria-label="初始整理步骤" hidden></nav>
       <div id="compare-controls" class="compare-controls" hidden><div class="picker-field"><span class="picker-caption" id="base-caption">从</span><div class="picker" id="base-picker"></div></div><span class="picker-arrow" aria-hidden="true">→</span><div class="picker-field"><span class="picker-caption" id="target-caption">到</span><div class="picker" id="target-picker"></div></div><button id="close-compare" aria-label="关闭状态对比" title="关闭对比">×</button></div>
-      <div class="board-heading"><span id="layer-title">全部关注事项</span><span id="budget-label"></span></div>
+      <div class="board-heading"><nav class="breadcrumbs" id="breadcrumbs" aria-label="事项层级"></nav><span class="layer-title" id="layer-title">全部关注事项</span><span class="budget-label" id="budget-label"></span></div>
       <div class="boards-wrap" id="boards-wrap"><div class="board-column" id="base-column" hidden><div class="board-label" id="base-label"></div><div class="pinboard" id="base-board" aria-label="基线 Pinboard"></div></div><div class="board-column"><div class="board-label" id="current-label" hidden></div><div class="pinboard" id="current-board" aria-label="当前 Pinboard"></div></div></div>
-      <div class="board-legend" id="board-legend"><span><i class="legend-area" aria-hidden="true"></i>面积 = 份额</span><span><i class="legend-blank" aria-hidden="true"></i>留白 = 未分配</span><span><i class="legend-ask" aria-hidden="true"></i>登记了回应路径</span><span><i class="legend-changed" aria-hidden="true"></i><span id="legend-changed-label">本轮有变化</span></span></div>
+      <div class="board-legend" id="board-legend"><span><i class="legend-area" aria-hidden="true"></i>面积 = 份额</span><span><i class="legend-blank" aria-hidden="true"></i>留白 = 未分配</span><span><i class="legend-ask" aria-hidden="true"></i>等你回应</span><span><i class="legend-changed" aria-hidden="true"></i><span id="legend-changed-label">本轮有变化</span></span><span class="legend-keys">点格子看详情 · Tab 逐格 · Esc 返回</span></div>
       <section class="diff-summary" id="diff-summary" hidden></section>
     </section>
     <aside class="inspector" aria-label="事项详情与原始数据">
-      <div class="inspector-top"><span class="eyebrow" id="inspector-eyebrow">当前状态</span><button id="close-detail" aria-label="返回状态概览" title="返回状态概览">↶</button></div>
+      <div class="inspector-top"><span class="eyebrow" id="inspector-eyebrow">当前状态</span><button id="close-detail" aria-label="返回状态概览" title="返回状态概览（Esc）">↶ 概览</button></div>
       <h2 id="inspector-title" tabindex="-1">本轮状态概览</h2>
       <div class="detail-tabs" role="tablist" aria-label="内容呈现方式"><button id="detail-tab" role="tab" aria-selected="true" class="is-active">详情</button><button id="json-tab" role="tab" aria-selected="false">原始 JSON</button><button id="copy-json" title="复制当前检查对象的 JSON" aria-label="复制 JSON">⧉</button></div>
       <div class="inspector-body" id="inspector-body" role="tabpanel"></div>
     </aside>
   </main>
   <footer class="transport" aria-label="事项回放控制">
-    <div class="transport-main"><div class="playback-controls"><button id="previous-frame" aria-label="上一帧" title="上一帧（←）">‹</button><button id="play-button" class="play-button" aria-label="开始回放" title="播放 / 暂停（空格）"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="m6 3 11 7-11 7Z" fill="currentColor"/></svg><span>播放</span></button><button id="next-frame" aria-label="下一帧" title="下一帧（→）">›</button></div><div class="time-readout"><strong id="cursor-date"></strong><span id="cursor-time"></span><span class="between-note" id="between-note"></span></div><div class="playback-options"><span id="frame-count"></span><div class="speed-control" id="playback-speed" role="radiogroup" aria-label="播放速度"><button role="radio" data-speed="0.5" aria-checked="false" tabindex="-1">0.5×</button><button role="radio" data-speed="1" aria-checked="true" tabindex="0">1×</button><button role="radio" data-speed="2" aria-checked="false" tabindex="-1">2×</button></div><button id="restart-button" title="从头开始" aria-label="从头开始">↺</button></div></div>
-    <div class="timeline-track"><div class="time-slider" id="time-slider" role="slider" tabindex="0" aria-label="回放时刻" aria-orientation="horizontal"><div class="slider-rail" aria-hidden="true"><div class="slider-fill"></div><div class="timeline-markers" id="timeline-markers"></div></div><div class="slider-thumb" aria-hidden="true"></div><div class="slider-hover" id="slider-hover" aria-hidden="true" hidden></div></div><div class="day-labels" id="day-labels" aria-hidden="true"></div></div>
-    <nav class="chapter-list" id="chapter-list" aria-label="日期与主题导航"></nav>
+    <div class="transport-main">
+      <div class="playback-controls"><button id="previous-frame" aria-label="上一帧" title="上一帧（←）">‹</button><button id="play-button" class="play-button" aria-label="开始回放" title="播放 / 暂停（空格）"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="m6 3 11 7-11 7Z" fill="currentColor"/></svg><span>播放</span></button><button id="next-frame" aria-label="下一帧" title="下一帧（→）">›</button></div>
+      <div class="time-readout"><strong id="cursor-date"></strong><span id="cursor-time"></span><span class="between-note" id="between-note"></span></div>
+      <div class="timeline-track"><nav class="chapter-list" id="chapter-list" aria-label="日期与主题导航"></nav><div class="time-slider" id="time-slider" role="slider" tabindex="0" aria-label="回放时刻" aria-orientation="horizontal"><div class="slider-rail" aria-hidden="true"><div class="slider-fill"></div><div class="timeline-markers" id="timeline-markers"></div></div><div class="slider-thumb" aria-hidden="true"></div><div class="slider-hover" id="slider-hover" aria-hidden="true" hidden></div></div><div class="day-labels" id="day-labels" aria-hidden="true"></div></div>
+      <div class="playback-options"><span id="frame-count"></span><div class="speed-control" id="playback-speed" role="radiogroup" aria-label="播放速度"><button role="radio" data-speed="0.5" aria-checked="false" tabindex="-1">0.5×</button><button role="radio" data-speed="1" aria-checked="true" tabindex="0">1×</button><button role="radio" data-speed="2" aria-checked="false" tabindex="-1">2×</button></div><button id="restart-button" title="从头开始" aria-label="从头开始">↺</button></div>
+    </div>
   </footer>
-  <div class="prototype-note"><span>演示人物与私人消息均为创作；公共事实附原始来源。</span><span>← → 逐帧 · 空格播放 · Esc 返回上层</span></div>
+  <div class="prototype-note"><span id="prototype-notice">演示人物与私人消息均为创作；公共事实附原始来源。</span><span>← → 逐帧 · 空格播放 · Esc 返回 · A 批准 · U 撤销 · <a href="forms/index.html">更多表达形式</a></span></div>
 </div>
-<div id="toast" class="toast" role="status" hidden></div>
+<div id="hover-card" class="hover-card" role="tooltip" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <noscript>这个交互原型需要启用 JavaScript。</noscript>
 <script type="module">
   const variant = new URLSearchParams(location.search).get('variant')?.toLowerCase();

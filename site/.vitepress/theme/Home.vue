@@ -61,7 +61,7 @@ const prototypes = [
 
       <ul class="fold-prototype-gallery">
         <li v-for="prototype in prototypes" :id="`preview-${prototype.id}`" :key="prototype.id">
-          <a class="fold-preview-link" :href="`/prototype/?variant=${prototype.id}&frame=${prototype.frame ?? 9}`" target="_self">
+          <a class="fold-preview-link" :href="`/prototype/?variant=${prototype.id}&frame=${prototype.frame ?? 9}&data=story`" target="_self">
             <div class="fold-preview-heading">
               <div class="fold-preview-title">
                 <span class="fold-prototype-letter">{{ prototype.id.toUpperCase() }}</span>

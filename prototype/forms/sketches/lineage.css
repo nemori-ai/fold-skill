@@ -1,0 +1,74 @@
+/* 01 身份线（完整版）。颜色只表示事项身份（前 8 件）；墨黑是站点、问题括号与文字；灰是长尾。 */
+.ln-scroll { position: absolute; inset: 0; display: flex; overflow-x: auto; overflow-y: hidden; }
+.ln-gutter { position: sticky; left: 0; z-index: 2; flex: none; background: var(--paper); }
+.ln-main { flex: none; }
+.ln-svg, .ln-gut { display: block; overflow: visible; user-select: none; }
+.ln-svg text, .ln-gut text { fill: var(--ink); font-family: var(--sans); }
+
+.ln-row { cursor: pointer; transition: opacity calc(200ms * var(--lv-slow, 1)); }
+.ln-row.is-future { opacity: .38; }
+.ln-row-hit { fill: transparent; }
+.ln-row:hover .ln-row-hit { fill: var(--faint); }
+.ln-gut .ln-day { font: 600 14px var(--mono); }
+.ln-gut .ln-wd { font-size: 9px; fill: var(--ink-2); }
+.ln-gut .ln-time { font: 8.5px var(--mono); fill: var(--ink-3); text-anchor: end; }
+.ln-gut .ln-quiet { fill: var(--ink-2); }
+.ln-gut-rule { stroke: var(--line); }
+.ln-rules line { stroke: var(--line); }
+
+.ln-zone { font-size: 10.5px; font-weight: 600; letter-spacing: .12em; }
+.ln-svg .ln-zone-n { fill: var(--ink-2); font-weight: 400; letter-spacing: 0; }
+.ln-zone-rule { stroke: var(--ink); stroke-width: 1; }
+.ln-fold { font-size: 10.5px; fill: var(--ink-2); text-decoration: underline; cursor: pointer; }
+.ln-head { cursor: pointer; outline: none; transition: opacity calc(240ms * var(--lv-slow, 1)); }
+.ln-head.is-hidden { opacity: 0; pointer-events: none; }
+.ln-head-name { font-weight: 600; }
+.ln-svg .ln-head-sub { font: 9.5px var(--mono); fill: var(--ink-2); }
+.ln-head:focus-visible .ln-head-name, .ln-head.is-fold:focus-visible text { text-decoration: underline; }
+.ln-head.is-bundle .ln-head-name { fill: var(--ink-2); }
+.ln-head.is-bundle:hover text, .ln-head.is-fold:hover text { fill: var(--ink); }
+
+.ln-col { transition: transform calc(380ms * var(--lv-slow, 1)) cubic-bezier(.3, .7, .2, 1), opacity calc(300ms * var(--lv-slow, 1)); }
+.ln-col.is-entering { opacity: 0; }
+.ln-line { transition: opacity calc(110ms * var(--lv-slow, 1)); }
+.ln-colhit { fill: transparent; }
+.ln-g { fill: #fff; stroke: var(--ink); stroke-width: 1.3; }
+.ln-g-you { fill: var(--ink); stroke: #fff; stroke-width: 1.3; }
+.ln-g-dot { fill: var(--ink); }
+.is-track .ln-g, .is-track .ln-g-you { stroke-width: 1; }
+.ln-station { cursor: pointer; }
+.ln-hit { fill: transparent; stroke: none; }
+.ln-rewrite { stroke: var(--ink); stroke-width: 1; opacity: .55; }
+.ln-cut { stroke: var(--ink); stroke-width: 2.2; }
+.ln-thread { stroke-width: 1.3; stroke-dasharray: 1.5 3; fill: none; }
+.ln-svg .ln-name { fill: var(--ink); }
+.ln-svg .ln-name.is-sub { fill: var(--ink-2); }
+.ln-svg .ln-tag { font-family: var(--mono); fill: var(--ink-2); }
+.ln-merge { fill: none; stroke-width: 2; opacity: .7; }
+
+.ln-ask { cursor: pointer; }
+.ln-askline { stroke: var(--ink); stroke-width: 1.3; }
+.ln-askline.is-thick { stroke-width: 2; }
+.ln-askhead { fill: var(--ink); }
+.ln-svg .ln-cap { font-size: 10px; font-weight: 700; text-anchor: middle; }
+.ln-svg .ln-cap.is-dim { fill: var(--ink-2); }
+.ln-openask path { fill: none; stroke: var(--ink); stroke-width: 1.6; }
+.ln-openask { cursor: pointer; transition: opacity calc(110ms * var(--lv-slow, 1)); }
+.ln-openask.is-pending { opacity: 0 !important; }
+
+.ln-bundle { cursor: pointer; }
+.ln-bundle-band rect { fill: #ddd8cb; }
+.ln-bundle:hover .ln-bundle-band rect { fill: #cfc9ba; }
+
+.ln-now line { stroke: var(--ink); stroke-width: 1.1; }
+.ln-now text { font: 600 9.5px var(--mono); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; }
+
+.ln-col > *, .ln-merges { transition: opacity calc(110ms * var(--lv-slow, 1)); }
+.ln-svg.has-hot .ln-col:not(.is-hot) > *, .ln-svg.has-hot .ln-merges { opacity: .2; }
+.ln-svg.has-hot .ln-openask:not(.is-hot) { opacity: .3; }
+.ln-col.is-hot .ln-name { font-weight: 600; }
+.ln-ask.is-hot .ln-askline { stroke-width: 2.4; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ln-col, .ln-line, .ln-head, .ln-row { transition: none !important; }
+}

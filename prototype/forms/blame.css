@@ -1,0 +1,33 @@
+.bl-wrap { min-height: 100%; padding: 24px 28px 60px; background: #fff; }
+.bl-head { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 10px 14px; border: 1px solid #d8dee4; border-bottom: 0; border-radius: 8px 8px 0 0; background: #f6f8fa; font-size: 12.5px; color: #57606a; }
+.bl-path b { color: #1f2328; }
+.bl-key { display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+.bl-key i { width: 12px; height: 10px; border-radius: 2px; }
+.bl-key span { margin-left: 10px; }
+.bl-doc { border: 1px solid #d8dee4; border-radius: 0 0 8px 8px; overflow: hidden; }
+.bl-line { display: grid; grid-template-columns: 4px 82px 46px 150px 38px minmax(0, 1fr); align-items: baseline; min-height: 24px; cursor: pointer; font-size: 12px; }
+.bl-line.is-first { border-top: 1px solid #eaeef2; }
+.bl-line:hover { background: #f6f8fa; }
+.bl-line.is-picked { background: #fff8c5; }
+.bl-heat { align-self: stretch; }
+.bl-age, .bl-frame, .bl-who { padding: 4px 6px; color: #57606a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bl-age { padding-left: 10px; }
+.bl-frame { font: 11.5px var(--mono); color: #0969da; }
+.bl-who { border-right: 1px solid #d8dee4; }
+.bl-no { padding: 4px 8px 4px 0; text-align: right; font: 11px var(--mono); color: #8c959f; }
+.bl-line code { padding: 4px 10px; font: 13px/1.5 var(--mono), var(--sans); white-space: pre-wrap; color: #1f2328; }
+.bl-line.is-h code { font-weight: 700; font-size: 14px; color: #0b3d2e; }
+.bl-line.is-p code { color: #31373d; }
+.bl-line.is-meta code { color: #6e7781; }
+.bl-line.is-ask code { color: #0a3069; }
+.bl-line.is-note code { color: #6639ba; }
+.bl-side-title { margin: 0 0 6px; font-size: 12px; color: var(--ink-2); letter-spacing: .06em; }
+.bl-side-frame { margin: 0 0 10px; font-size: 13px; line-height: 1.6; }
+.bl-side-change { padding: 8px 10px; background: var(--paper); border-radius: 6px; font-size: 12.5px; line-height: 1.6; }
+.bl-side-change small { display: block; color: var(--ink-2); }
+.bl-side-change code { font-size: 11px; color: var(--ink-2); }
+.fs-card h4 { margin: 14px 0 4px; font-size: 12px; color: var(--ink-2); }
+.fs-card blockquote { margin: 6px 0; padding-left: 10px; border-left: 2px solid var(--line); font-size: 12.5px; line-height: 1.6; }
+.fs-card blockquote small { display: block; color: var(--ink-2); }
+.bl-side-small { font-size: 12px; color: var(--ink-2); }
+.bl-empty { padding: 28px 16px; color: #57606a; font-size: 13px; }

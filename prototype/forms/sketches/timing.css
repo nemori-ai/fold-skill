@@ -1,0 +1,114 @@
+/* 02 回应时序（完整版）。朱红只表示你的回应；墨黑是问题格、期限与批次；灰是中线与已关上的格子。 */
+.tm-canvas { position: absolute; inset: 0; }
+.tm-svg { display: block; overflow: visible; user-select: none; }
+.tm-svg text { fill: var(--ink); font-family: var(--sans); }
+.tm-day { stroke: var(--line); }
+.tm-daynum { font: 600 12.5px var(--mono); text-anchor: middle; }
+.tm-svg .tm-weekday { fill: var(--ink-2); font-size: 9.5px; text-anchor: middle; }
+.tm-future { fill: var(--faint); }
+.tm-slot { stroke: var(--ink-3); }
+.tm-bar { fill: var(--ink); }
+.tm-bar.is-quiet { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
+.tm-hit { fill: transparent; stroke: transparent; cursor: pointer; }
+.tm-tick .tm-hit { stroke-width: 9; }
+.tm-strip-label { font-size: 12px; font-weight: 600; }
+.tm-svg .tm-strip-sub { fill: var(--ink-2); font-size: 9.5px; }
+.tm-rule { stroke: var(--line); }
+.tm-group { font-size: 10.5px; font-weight: 600; letter-spacing: .12em; }
+.tm-svg .tm-group-n { fill: var(--ink-2); font-weight: 400; letter-spacing: 0; }
+
+.tm-lane { transition: opacity calc(110ms * var(--lv-slow, 1)); }
+.tm-lane-hit { fill: transparent; }
+.tm-label { cursor: pointer; outline: none; transition: opacity calc(240ms * var(--lv-slow, 1)); }
+.tm-label text { font-weight: 550; }
+.tm-label.is-hidden { opacity: 0; pointer-events: none; }
+.tm-label.is-gone text { fill: var(--ink-3); }
+.tm-label:focus-visible text { text-decoration: underline; }
+.tm-life { stroke: var(--ink-3); stroke-width: 1; }
+.tm-life.is-out { stroke-dasharray: 1.5 3; }
+
+.tm-cell { cursor: pointer; }
+.tm-cell polygon { fill: #fff; stroke: var(--ink); stroke-width: 1.3; transition: fill calc(180ms * var(--lv-slow, 1)), stroke calc(180ms * var(--lv-slow, 1)); }
+.tm-cell text { font-size: 10px; pointer-events: none; }
+.tm-cell.is-answered polygon, .tm-k-answered { fill: color-mix(in oklch, var(--ink) 11%, var(--paper)); stroke: var(--ink-2); stroke-width: 1; }
+.tm-cell.is-lapsed polygon { fill: var(--paper); stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 3 2; }
+.tm-cell.is-lapsed text, .tm-cell.is-replaced text { fill: var(--ink-2); }
+.tm-cell.is-replaced polygon, .tm-cell.is-withdrawn polygon, .tm-cell.is-merged polygon { fill: var(--paper); stroke: var(--ink-2); stroke-width: 1; }
+.tm-cell .tm-end { stroke: var(--ink); stroke-width: 2; opacity: 0; }
+.tm-cell.is-end-withdrawn:not(.is-open) .tm-end, .tm-cell.is-end-merged:not(.is-open) .tm-end { opacity: 1; }
+.tm-cell.is-hot polygon { stroke: var(--ink); stroke-width: 2; }
+.tm-overdue { fill: url(#tm-hatch); pointer-events: none; }
+.tm-hatch-line { stroke: var(--ink); stroke-width: 1; opacity: .38; }
+
+.tm-tick line:not(.tm-hit) { stroke: var(--vermilion); stroke-width: 2; }
+.tm-tick circle, .tm-tick rect:not(.tm-hit) { fill: var(--vermilion); }
+.tm-tick.is-loose line:not(.tm-hit) { stroke-width: 1.5; opacity: .7; }
+.tm-tick { cursor: pointer; }
+.tm-reminder { fill: var(--paper); stroke: var(--ink); }
+
+.tm-due { opacity: 0; transition: opacity calc(200ms * var(--lv-slow, 1)); pointer-events: none; }
+.tm-due.is-known { opacity: 1; }
+.tm-due path { fill: var(--ink); }
+.tm-due path.tm-far { fill: none; stroke: var(--ink); stroke-width: 1.4; }
+.tm-due line { stroke: var(--ink); stroke-width: 1.2; }
+.tm-due text { font: 9px var(--mono); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; opacity: 0; transition: opacity calc(160ms * var(--lv-slow, 1)); }
+.tm-due.is-ahead text, .tm-lane.is-hot .tm-due.is-known text { opacity: 1; }
+.tm-due.is-closed path, .tm-due.is-closed line { fill: var(--ink-3); stroke: var(--ink-3); }
+.tm-due.is-closed path.tm-far { fill: none; }
+.tm-due.is-far.is-closed { opacity: 0; }
+.tm-snooze { fill: none; stroke: var(--vermilion); stroke-width: 1.2; stroke-dasharray: 3 2; opacity: 0; transition: opacity calc(200ms * var(--lv-slow, 1)); }
+.tm-snooze.is-known { opacity: 1; }
+
+.tm-nowline { stroke: var(--ink); stroke-width: 1.3; }
+.tm-nowtext { font: 600 10px var(--mono); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; }
+.tm-openmark { transition: opacity calc(160ms * var(--lv-slow, 1)); cursor: pointer; }
+.tm-openmark .tm-chev { fill: none; stroke: var(--ink); stroke-width: 1.4; }
+.tm-openmark circle { fill: var(--ink); }
+.tm-openmark text { fill: var(--paper); font: 600 9.5px var(--mono); text-anchor: middle; pointer-events: none; }
+.tm-openmark.is-late circle { fill: var(--paper); stroke: var(--ink); stroke-width: 1.4; }
+.tm-openmark.is-late text { fill: var(--ink); }
+.tm-openmark.is-pending { opacity: 0 !important; pointer-events: none; }
+.tm-svg.has-hot .tm-openmark:not(.is-hot) { opacity: .25; }
+
+/* Highlight: everything but the hot lane steps back. */
+.tm-svg.has-hot .tm-lane:not(.is-hot) { opacity: .26; }
+
+/* Side column. */
+.tm-open h2 { margin: 0; font-size: 15px; }
+.tm-open h2 b { font: 600 22px var(--mono); margin: 0 2px; }
+.tm-sub { margin: 2px 0 8px; font-size: 11.5px; color: var(--ink-2); }
+.tm-rows { display: flex; flex-direction: column; gap: 4px; }
+.tm-row { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 8px; align-items: start; width: 100%; padding: 7px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+  transition: transform calc(320ms * var(--lv-slow, 1)) cubic-bezier(.3, .7, .2, 1), opacity calc(240ms * var(--lv-slow, 1)), border-color calc(110ms * var(--lv-slow, 1)), background calc(110ms * var(--lv-slow, 1)); }
+.tm-row.is-new { opacity: 0; transform: translateY(6px); }
+.tm-row:hover, .tm-row.is-hot { border-color: var(--ink); }
+.tm-row:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.lv-side.has-hot .tm-row:not(.is-hot) { opacity: .55; }
+.tm-badge { display: grid; place-items: center; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; background: var(--ink); color: var(--paper); font: 600 10px var(--mono); }
+.tm-row.is-late .tm-badge { background: var(--paper); color: var(--ink); border: 1.4px solid var(--ink); }
+.tm-row-main { display: flex; flex-direction: column; min-width: 0; }
+.tm-row-top { font-size: 11px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tm-row-top b { color: var(--ink); }
+.tm-row-q { font-size: 12.5px; line-height: 1.45; font-weight: 550; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tm-row-meta { font-size: 10.5px; color: var(--ink-2); font-family: var(--mono); }
+.tm-row-meta em { font-style: normal; }
+.tm-row.is-late .tm-row-meta em { color: var(--ink); font-weight: 600; background: repeating-linear-gradient(45deg, transparent 0 3px, color-mix(in oklch, var(--ink) 16%, transparent) 3px 4px); }
+.tm-empty { margin: 8px 0; color: var(--ink-2); }
+.tm-tally { margin: 6px 0 8px; }
+.tm-frame { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+.tm-frame h3 { margin: 0 0 6px; font-size: 12px; }
+.tm-units { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 4px; }
+.tm-unit { width: 13px; height: 13px; border-radius: 3px; border: 1.3px solid var(--ink); background: #fff; cursor: pointer; transition: background calc(180ms * var(--lv-slow, 1)), border-color calc(180ms * var(--lv-slow, 1)); }
+.tm-unit.is-answered { background: color-mix(in oklch, var(--ink) 18%, var(--paper)); border-color: var(--ink-2); }
+.tm-unit.is-lapsed { border-style: dashed; border-color: var(--ink-2); background: var(--paper); }
+.tm-unit.is-replaced, .tm-unit.is-withdrawn, .tm-unit.is-merged { border-color: var(--ink-3); background: var(--paper); }
+.tm-unit.is-hot { outline: 2px solid var(--ink); outline-offset: 1px; }
+.tm-tally p { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 0; font-size: 11.5px; color: var(--ink-2); }
+.tm-tally p b { color: var(--ink); font-family: var(--mono); }
+.tm-frame-title { margin: 0 0 4px; font-weight: 600; font-size: 12.5px; }
+.tm-narr { margin: 0 0 4px; font-size: 12px; line-height: 1.6; color: var(--ink-2); }
+.tm-frame-n { margin: 0; font: 10.5px var(--mono); color: var(--ink-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-row, .tm-lane, .tm-label, .tm-due, .tm-openmark, .tm-cell polygon { transition: none !important; }
+}

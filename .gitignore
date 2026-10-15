@@ -16,3 +16,7 @@ dist/
 site/.generated/
 site/.vitepress/cache/
 .impeccable/
+.claude/worktrees/
+# 真实语料的原文只在本机重建，不入库（见 corpus/README.md）
+corpus/*/raw/
+corpus/*/frames.json
