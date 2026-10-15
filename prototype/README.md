@@ -18,7 +18,7 @@ make prototype
 
 | `?data=` | 内容 |
 | --- | --- |
-| `composite`（默认） | [data/composite/scenario.mjs](data/composite/scenario.mjs)：化名人物 Jonas Berglund 的两周，[混合语料](../corpus/composite/MIX.md)的真实输入：29 帧，`f00` 是空状态，其后 28 帧共 2808 条（正文截到 500 字，去掉了 21 封 Enron 营销邮件），判断来自一次真实模型的自由运行，再经人工打磨。由 `scripts/build_demo_data.py` 从 Agent 批次（[agent-batches.json](data/composite/agent-batches.json)）与修正（[edits.json](data/composite/edits.json)）重放生成，修正逐条记在 [POLISH.md](data/composite/POLISH.md)；各流的来源、许可、引用长度与化名处理见 [SOURCES.md](data/composite/SOURCES.md)，改写文本随站点公开前需用户决定。 |
+| `composite`（默认） | [data/composite/scenario.mjs](data/composite/scenario.mjs)：化名人物 Jonas Berglund 的两周，[混合语料](../corpus/composite/MIX.md)的输入：29 帧，`f00` 是空状态，其后 28 帧共 3196 条（四条流是化名改写的真实公开数据，另有作者编写的家庭流 388 条；正文截到 500 字，去掉了 21 封 Enron 营销邮件）。判断来自混合语料上的第二次自由运行（`free-20261015-161501`，`claude-opus-5-5`，31 次调用，23.23 美元，报告见[评测记录](../docs/evaluations/free-run-composite-v2-2026-10-15.md)），再经人工打磨：对 Agent 批次的修正 9 处、手写反馈链接 4 处，登记回应路径 26 条（都带短问法），从本人后续动作推出反馈链接 160 条。由 `scripts/build_demo_data.py` 从 Agent 批次（[agent-batches.json](data/composite/agent-batches.json)）与修正（[edits.json](data/composite/edits.json)）重放生成，修正逐条记在 [POLISH.md](data/composite/POLISH.md)；各流的来源、许可、引用长度与化名处理见 [SOURCES.md](data/composite/SOURCES.md)，改写文本随站点公开前需用户决定。 |
 | `story` | [data/story/scenario.mjs](data/story/scenario.mjs)：作者手写的林苒两周，37 帧、112 条输入，判断全部预先编排（[STORY.md](STORY.md)）。判断评测（`scripts/eval_judgment.py`）读的也是它。 |
 
 每个数据集在 `select.mjs` 里带一句 `notice`，页面在数据旁照写，说明人物、输入与判断从哪里来。
@@ -26,8 +26,8 @@ make prototype
 每个数据集导出同形的 `scenario`：`persona`、`categories`（根层事项的稳定称呼：`label`、`colorKey`、`color`、`short`）、`feedback`（业务用途与默认反馈动作）、`frames`。每帧有 `id`、`at`、`title`（旁白）、`events`、`batch`（交给内核重放的声明批次），以及三项宿主侧记录，它们不进 Fold 状态：
 
 - **`frame.asks`：回应路径。** 以条目 ID 为键，一件事此刻最多一条。字段：`id`（同一问题重登记时不变）、`item`、`registered_at`、`due_at`（问题自己的截止，可为 null）、`expects`（回应控件：confirm / choose / reply / schedule / approve / defer）、`meanings`（[领域模型](../docs/domain-model.md)里对用户的期待：decide / input / act）、`prompt`、`short`（可选，16 字以内的短问法，供只放得下一行的形式，如腕上一瞥）、`actions`（`{id, label, meaning, recommended?, input?}`；input 有 `type`：text / money / photo / datetime）、`subject`（approve 要批准的外部动作，`{label, url?}`）、`handler`。一条 ask 属于登记时的条目版本（`updated_at`）；条目被改写而这一帧没有重登记，就视为没有登记回应路径。
-- **`event.feedback`：用户反馈。** 事件上的数组，每项 `{ask?, target, action, meaning, via, value?, until?}`；`meaning` 为 ack / decide / input / act / snooze，`via` 为 button（Fold 里登记的按钮）、reply（回复 Agent 的消息）或 source（在来源处直接处理：GitHub 上评审、合并、关闭，论坛与问答站上回复）。via 为 source 时 `action` 取自 `feedback.sourceActions`，或映射到那条 ask 最接近的按钮。到点提醒是另一种事件，带 `reminder: {feedback, target, requested_at}`。
-- **事件的来源标注。** 真实语料的事件另有 `stream`（work / community / life / subscription）、`self`（本人发出）与 `author_kind`（bot / automation，人类不写），供形式区分“你自己”“机器”与“订阅”。`stream` 与 `self` 在自由运行里也交给了 Agent；`author_kind` 是语料构建时按公开资料推断的，没有交给 Agent。
+- **`event.feedback`：用户反馈。** 事件上的数组，每项 `{ask?, target, action, meaning, via, value?, until?}`；`meaning` 为 ack / decide / input / act / snooze，`via` 为 button（Fold 里登记的按钮）、reply（回复 Agent 的消息）或 source（在来源处直接处理：GitHub 上评审、合并、关闭，论坛与问答站上回复）。via 为 source 时 `action` 取自 `feedback.sourceActions`（含家庭流里的通话 `call`、表情 `react`、转账 `pay`），或映射到那条 ask 最接近的按钮。到点提醒是另一种事件，带 `reminder: {feedback, target, requested_at}`。
+- **事件的来源标注。** 真实语料的事件另有 `stream`（work / family / community / life / subscription）、`self`（本人发出）与 `author_kind`（bot / automation，人类不写），供形式区分“你自己”“机器”与“订阅”；家庭流里不是普通消息的事件另带 `kind`（call_log、reaction、swish_sent 等），形式据此把本人的动作写成“给诊所打了电话”。`stream` 与 `self` 在自由运行里也交给了 Agent；`author_kind` 是语料构建时按公开资料推断的，没有交给 Agent。
 - **`frame.signal`：宿主为何此刻调用 Agent。** `{type, reason, received, window: {from, to}, coverage?, reminders?}`；`type` 为 events（有新输入）或 review（定时整理且窗口内 0 条）。
 
 这三项是演示数据先行定下的形态，契约尚未接纳，见[决策记录](../docs/decisions.md#推迟到后续切片)；回应路径的生命周期、事项的稳定称呼等相关缺口列在[未决问题](../docs/decisions.md#未决问题)。

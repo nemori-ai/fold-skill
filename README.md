@@ -6,9 +6,9 @@
 
 阶段之外，到 2026-10-15 有三条并行工作：
 
-- **判断与评测。** [skill/SKILL.md](skill/SKILL.md) 已改到第二版，做过三次真实模型评测：手写情境上两次逐帧对比作者编排（换过模型与 Harness），混合真实语料上一次从空状态自由运行两周。结论与局限见[评测索引](docs/evaluations/README.md)。
-- **真实语料。** 从公开渠道收集带噪音的真实输入，拼成化名人物 Jonas 的两周（2829 条），并用当事人后来的行为推出弱标注，见[真实语料](corpus/README.md)。
-- **原型与形式。** 自由运行的结果经人工打磨（修正逐条记录）成原型的默认演示数据；同一份状态有十二种表达形式，共用一套回应组件，见[交互原型](prototype/README.md)。另一套手写情境的输入与判断预先编排，可切换。演示不代表真实 Agent 已经稳定达到其中的判断质量。
+- **判断与评测。** [skill/SKILL.md](skill/SKILL.md) 已改到第二版，做过四次真实模型评测：手写情境上两次逐帧对比作者编排（换过模型与 Harness），混合语料上两次从空状态自由运行两周，第二次语料里加入了作者编写的家庭流，默认演示数据就依据这一次。结论与局限见[评测索引](docs/evaluations/README.md)。
+- **真实语料。** 从公开渠道收集带噪音的真实输入，拼成化名人物 Jonas 的两周，再加上作者编写的家庭往来，共 3217 条（家庭流 388 条）；前四条流用当事人后来的行为推出弱标注，家庭流的标注由作者写定，见[真实语料](corpus/README.md)。
+- **原型与形式。** 第二次自由运行的结果经人工打磨（修正逐条记录）成原型的默认演示数据；同一份状态有十二种表达形式，共用一套回应组件，见[交互原型](prototype/README.md)。另一套手写情境的输入与判断预先编排，可切换。演示不代表真实 Agent 已经稳定达到其中的判断质量。
 
 想先快速看懂这项工作，读 16 页的[小册子](docs/brief/index.html)；精确规则以下面的规范为准。各处撞到、还没决定的问题集中在[决策记录的未决问题](docs/decisions.md#未决问题)。
 
@@ -62,14 +62,14 @@ flowchart LR
 | 文件 | 内容 |
 | --- | --- |
 | [skill/SKILL.md](skill/SKILL.md) | 给使用 Fold 的 Agent 的判断指引，第二版 |
-| [docs/evaluations/README.md](docs/evaluations/README.md) | 三份评测报告的索引：各是什么设置、一句话结论与费用 |
+| [docs/evaluations/README.md](docs/evaluations/README.md) | 四份评测报告的索引：各是什么设置、一句话结论与费用 |
 
 ### 真实语料
 
 | 文件 | 内容 |
 | --- | --- |
 | [corpus/README.md](corpus/README.md) | 来源调查、许可与入库范围、重建方法、弱标注 |
-| [corpus/composite/MIX.md](corpus/composite/MIX.md) | 化名人物 Jonas 的设定、四条流的来源与改写规则 |
+| [corpus/composite/MIX.md](corpus/composite/MIX.md) | 化名人物 Jonas 的设定、五条流的来源与改写规则（家庭流见 [family/README.md](corpus/composite/family/README.md)） |
 | [corpus/composite/NOISE.md](corpus/composite/NOISE.md) | 噪音画像，与工作单流和手写情境并排 |
 | [corpus/composite/LABELS.md](corpus/composite/LABELS.md) | 从后续行为推出的弱标注：规则、覆盖与局限 |
 
@@ -79,7 +79,7 @@ flowchart LR
 | --- | --- |
 | [prototype/README.md](prototype/README.md) | 运行方式、演示数据、十二种形式的场景与入口 |
 | [prototype/forms/CONCEPTS.md](prototype/forms/CONCEPTS.md) | 两轮形式的概念卡与结论、状态里缺的信息、打磨记录索引 |
-| [prototype/data/composite/POLISH.md](prototype/data/composite/POLISH.md) | 自由运行怎样打磨成演示数据：31 处修正与三类常见错误 |
+| [prototype/data/composite/POLISH.md](prototype/data/composite/POLISH.md) | 第二次自由运行怎样打磨成演示数据：与第一次的差别、9 处修正与几类常见错误 |
 | [prototype/data/composite/SOURCES.md](prototype/data/composite/SOURCES.md) | 演示数据各流的来源、许可与公开之前要决定的事 |
 
 ## 工作环境

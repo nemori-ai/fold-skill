@@ -1,13 +1,13 @@
 """把自由运行的结果打磨成原型演示数据：prototype/data/<name>/scenario.mjs。
 
 输入（前两项只在本机，第三、四项入库）：
-  corpus/<name>/frames.json                 语料原文（化名改写后的版本）
+  corpus/<name>/frames.json                 语料原文（化名改写后的版本；composite 含作者编写的家庭流）
   prototype/data/<name>/agent-batches.json  自由运行里 Agent 每帧被接受的批次与处置（由 --import-run 从运行目录导出）
   prototype/data/<name>/edits.json          打磨：对 Agent 批次的修正、处置更正、旁白、信号、回应路径与反馈
 修正只改批次，再用内存内核从空状态逐帧重放；任何一帧被拒绝就停下并报出原因，不手改最终状态。
 
 用法：
-  .venv/bin/python scripts/build_demo_data.py composite --import-run .local/eval/free-composite-2026-10-15
+  .venv/bin/python scripts/build_demo_data.py composite --import-run .local/eval/free-20261015-161501
   .venv/bin/python scripts/build_demo_data.py composite            # 重放并写出 scenario.mjs，再用原型引擎回放核对
   .venv/bin/python scripts/build_demo_data.py composite --report   # 另打印每帧根层与修正清单，供写 POLISH.md
 
@@ -34,6 +34,7 @@ TEXT_LIMIT = 500
 # Enron 营销群发只用于评测时的噪音，不进演示数据（见 POLISH.md）：输入删去，Agent 对它的引用一并去掉。
 DROPPED_PREFIXES = ("promo:",)
 QUOTE_LIMIT = 280
+STREAM_NAMES = {"work": "工作", "family": "家庭", "life": "生活", "community": "社区", "subscription": "订阅"}
 PALETTE = ["#2f7f6f", "#b8643a", "#c49a2c", "#86569c", "#3a78b0", "#c04f78", "#5b8c37", "#8a6a3c",
            "#4f6fa8", "#a3485a", "#6b7f2a", "#7a5c99", "#2a8a9a", "#b0704a", "#5e6f86", "#9a7a2a"]
 COLOR_KEYS = ["sage", "clay", "sand", "lilac", "blue", "mint"]
@@ -62,12 +63,18 @@ SOURCE_ACTIONS = [
     {"id": "merge", "label": "合并", "meaning": "act"},
     {"id": "close", "label": "关闭", "meaning": "act"},
     {"id": "comment", "label": "回复", "meaning": "input"},
+    # 家庭流（作者编写）里本人的动作：通话记录、表情回应、Swish 转账。
+    {"id": "call", "label": "打电话", "meaning": "act"},
+    {"id": "react", "label": "回了表情", "meaning": "ack"},
+    {"id": "pay", "label": "转账", "meaning": "act"},
 ]
 VERB_OF_KIND = {"comment": "comment", "discussion_comment": "comment", "qa_comment": "comment", "forum_post": "comment",
                 "list_post": "comment", "blog_comment": "comment", "mastodon_post": "comment",
-                "state_merged": "merge", "state_closed": "close"}
+                "state_merged": "merge", "state_closed": "close",
+                "message": "comment", "call_log": "call", "reaction": "react", "swish_sent": "pay", "screen_time_approved": "approve"}
 # 一条 ask 没有这个动作时，按它最接近的按钮记：合并算批准，关闭算处理完。
-VERB_FALLBACK = {"merge": ["approve", "done"], "close": ["done", "close"], "approve": ["done"], "request-changes": ["comment"]}
+VERB_FALLBACK = {"merge": ["approve", "done"], "close": ["done", "close"], "approve": ["done"], "request-changes": ["comment"],
+                 "pay": ["done"]}
 FEEDBACK = {
     "defaults": [{"id": "ack", "meaning": "ack", "label": "已阅"}, {"id": "snooze", "meaning": "snooze", "label": "稍后提醒"}],
     "sourceActions": SOURCE_ACTIONS,
@@ -176,14 +183,6 @@ def apply_edits(batch: dict, ops: list[dict], frame_id: str) -> dict:
 
 def load(name: str):
     corpus = json.loads((ROOT / "corpus" / name / "frames.json").read_text(encoding="utf-8"))
-    # 家庭流（2026-10-15 追加，见 corpus/composite/family/README.md）不在演示所依据的那次自由运行里：
-    # 重跑之前演示不收它，帧的条数也还原为不含家庭流时的数字。
-    for frame in corpus["frames"]:
-        kept = [e for e in frame["events"] if e.get("stream") != "family"]
-        if len(kept) != len(frame["events"]):
-            frame["events"] = kept
-            frame["signal"]["received"] = len(kept)
-            frame["title"] = re.sub(r"· \d+ 条输入$", f"· {len(kept)} 条输入", frame.get("title", ""))
     data_dir = ROOT / "prototype" / "data" / name
     agent = json.loads((data_dir / "agent-batches.json").read_text(encoding="utf-8"))
     edits_path = data_dir / "edits.json"
@@ -232,7 +231,7 @@ def build(name: str, report: bool = False) -> dict:
         for op in fe.get("batch", []):
             log.append({"frame": fid, "op": op["op"], "id": op.get("id") or op.get("declaration", {}).get("id"), "why": op.get("why", "")})
         request = {"batch_id": f"{name}-{fid}", "declarations": batch["declarations"], "acknowledges": batch.get("acknowledges", [])}
-        items_before.append({k: (v["updated_at"], {threads.get(s.get("ref", "")[6:]) for s in v.get("sources") or []} - {None})
+        items_before.append({k: (v["updated_at"], collections.Counter(t for s in v.get("sources") or [] if (t := threads.get(s.get("ref", "")[6:]))))
                              for k, v in store.snapshot["items"].items() if v["status"] == "active"})
         receipt = store.commit(copy.deepcopy(request), "assistant", frame["at"])
         if not receipt.get("accepted"):
@@ -253,6 +252,8 @@ def build(name: str, report: bool = False) -> dict:
             d = dispositions.get(e["id"], {})
             text = (e.get("text") or "").replace("\r\n", "\n")
             event = {"id": e["id"], "channel": e["channel"], "from": e["from"], "at": e["at"], "stream": e.get("stream")}
+            if e.get("stream") == "family" and e.get("kind") != "message":
+                event["kind"] = e["kind"]
             if e.get("author_kind") == "self":
                 event["self"] = True
             elif e.get("author_kind") not in (None, "human"):
@@ -269,7 +270,7 @@ def build(name: str, report: bool = False) -> dict:
                           "relatedIds": d.get("related") or []})
             events.append(event)
         signal = copy.deepcopy(frame.get("signal") or {})
-        names = {"work": "工作", "community": "社区", "life": "生活", "subscription": "订阅"}
+        names = STREAM_NAMES
         counts = collections.Counter(e["stream"] for e in events)
         dropped = sum(1 for e in frame["events"] if e["id"].startswith(DROPPED_PREFIXES))
         signal["coverage"] = " · ".join(f"{names.get(k, k)} {counts[k]}" for k in names if counts[k]) + (
@@ -349,13 +350,18 @@ def auto_title(state: dict, receipt: dict) -> str:
 def auto_narrative(events: list[dict]) -> str:
     streams = collections.Counter(e["stream"] for e in events)
     disp = collections.Counter(e["disposition"] for e in events)
-    names = {"work": "工作", "community": "社区", "life": "生活", "subscription": "订阅"}
+    names = STREAM_NAMES
     parts = "、".join(f"{names.get(k, k)} {v}" for k, v in streams.most_common())
     kept = disp.get("used", 0)
     return f"这 12 小时收到 {len(events)} 条（{parts}）；Agent 采用 {kept} 条，其余判为重复、噪音或暂缓。"
 
 
 UNLINKED: set = set()
+# 不推导反馈的线程：家庭流里的杂事（浇番茄、收快递、照片），几件事都会顺带引用，回一句“好”不是对哪件事的回应。
+UNDERIVED_THREADS = {"fam:hemmasysslor"}
+# ask id → 能回答它的线程。批准某个 PR 的 ask 默认只认那个 PR 上的动作（条目引用了别的线程时，那边的回复只记在事项上）；
+# 也可以在 edits 里用 answer_threads 显式写。
+ANSWER_THREADS: dict = {}
 
 
 def resolve_ask(spec: dict) -> dict:
@@ -367,7 +373,7 @@ def resolve_ask(spec: dict) -> dict:
 
 
 def attach_asks(frames: list[dict], edits: dict, versions: list[dict]) -> list[dict]:
-    """edits.asks: [{item, frame, until?, template | (expects, actions), prompt, short?, due_at?, subject?}]。
+    """edits.asks: [{item, frame, until?, template | (expects, actions), prompt, short?, due_at?, subject?, answer_threads?, link_source?}]。
 
     ask 属于登记时的条目版本：在登记帧写入；此后条目每被改写一次（updated_at 变化）就在那一帧以同一 id
     重登记，直到 until 帧（不含）或条目不再 active。id 按登记先后编为 ask-NN。
@@ -376,6 +382,7 @@ def attach_asks(frames: list[dict], edits: dict, versions: list[dict]) -> list[d
     index = {f["id"]: i for i, f in enumerate(frames)}
     specs = sorted(edits.get("asks", []), key=lambda s: (index[s["frame"]], s["item"]))
     UNLINKED.clear()
+    ANSWER_THREADS.clear()
     for n, spec in enumerate(specs, 1):
         start = index[spec["frame"]]
         end = index[spec["until"]] if spec.get("until") else len(frames)
@@ -389,6 +396,11 @@ def attach_asks(frames: list[dict], edits: dict, versions: list[dict]) -> list[d
             ask["subject"] = spec["subject"]
         if spec.get("link_source") is False:  # 他在来源处的动作答的不是这个问题（例如回的是另一个人）
             UNLINKED.add(ask["id"])
+        pull = re.search(r"github\.com/([^/]+/[^/]+)/pull/(\d+)", (spec.get("subject") or {}).get("url", ""))
+        if spec.get("answer_threads") is not None:
+            ANSWER_THREADS[ask["id"]] = set(spec["answer_threads"])
+        elif pull:
+            ANSWER_THREADS[ask["id"]] = {f"gh:{pull.group(1)}#{pull.group(2)}"}
         last = None
         for i in range(start, end):
             status, version = versions[i].get(spec["item"], (None, None))
@@ -448,12 +460,20 @@ def derive_feedback(frames: list[dict], corpus: dict, edits: dict, items_before:
             thread = source.get("thread")
             if not verb or not thread:
                 continue
-            targets = [item for item, (_, item_threads) in before.items() if thread in item_threads]
+            if thread in UNDERIVED_THREADS:
+                continue
+            # 同一线程被几件事引用时：Agent 在处置里把这条输入关联到其中哪几件，就挂到哪几件；
+            # 没有关联的，先挂到以它为主线程（引用最多）的那件，再看引用次数，并列都挂。
+            # 一件事顺带引用了别处的一两条输入，不等于他在那边的回复是对这件事的回应。
+            weight = {item: (item in event.get("relatedIds", []), cited[thread] == max(cited.values()), cited[thread])
+                      for item, (_, cited) in before.items() if cited[thread]}
+            targets = [item for item, w in weight.items() if w == max(weight.values())]
             links = []
             for target in targets:
                 ask, version = asks.get(target, (None, None))
                 link = None
-                if ask and version == before[target][0] and ask["id"] not in UNLINKED:
+                if (ask and version == before[target][0] and ask["id"] not in UNLINKED
+                        and thread in ANSWER_THREADS.get(ask["id"], {thread})):
                     ids = {a["id"]: a for a in ask["actions"]}
                     action = next((a for a in [verb, *VERB_FALLBACK.get(verb, [])] if a in ids), None)
                     if action:

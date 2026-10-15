@@ -26,8 +26,8 @@ const N = frames.length;
 
 // ---------- data ----------
 const hasStreams = frames.some(f => f.events.some(e => e.stream));
-const streamOrder = hasStreams ? ['work', 'life', 'community', 'subscription'] : ['people', 'machine', 'feed', 'official'];
-const groupNames = { you: '你自己', work: '工作', life: '生活', community: '社区', subscription: '订阅', people: '人', machine: '机器与提醒', feed: '订阅、群与推销', official: '官方资料', other: '其他' };
+const streamOrder = hasStreams ? ['work', 'family', 'life', 'community', 'subscription'] : ['people', 'machine', 'feed', 'official'];
+const groupNames = { you: '你自己', work: '工作', family: '家庭', life: '生活', community: '社区', subscription: '订阅', people: '人', machine: '机器与提醒', feed: '订阅、群与推销', official: '官方资料', other: '其他' };
 function groupOf(e) {
   if (isSelf(e)) return 'you';
   if (hasStreams) return e.stream || 'other';

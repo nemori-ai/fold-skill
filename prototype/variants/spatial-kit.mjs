@@ -5,12 +5,12 @@
 //   3. history   the versions of one item across the replay
 //   4. answers   a page-local answer book over respond.mjs (saved → acknowledged after the next 整理)
 //   5. motion    a keyed board whose tiles keep their DOM node across frames and move with FLIP
-import { scenario, records, getItem, currentAsk, personName, formatDate, formatTime, escapeHTML as esc } from './shared.mjs?v=feedback-loop-1';
+import { scenario, records, getItem, currentAsk, personName, formatDate, formatTime, escapeHTML as esc, familyMove } from './shared.mjs?v=feedback-loop-1';
 import { normalizeAsk, createResponseStore, responseStatus, setTimeZone } from '../respond.mjs?v=respond-1';
 
 setTimeZone(scenario.timeZone || 'Asia/Shanghai');
 export const TAIL_ID = '__tail__';
-export const streamNames = { work: '工作', community: '社区', life: '生活', subscription: '订阅' };
+export const streamNames = { work: '工作', family: '家庭', community: '社区', life: '生活', subscription: '订阅' };
 const stamp = value => `${formatDate(value)} ${formatTime(value)}`;
 const HOUR = 3600000;
 
@@ -101,6 +101,8 @@ const short = (text, max = 34) => { const value = String(text || '').trim(); ret
 
 /** The person's own move at the source, as a sentence: “在 GitHub 上批准了 #13528”. */
 export function actionText(event) {
+  const family = familyMove(event);
+  if (family) return { verb: family, object: '', title: '', platform: '家里', sentence: family };
   const ref = eventRef(event), text = event.text || '', mention = mentionOf(text);
   let verb, object = ref.label;
   if (ref.platform === 'GitHub') {

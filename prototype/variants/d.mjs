@@ -1,4 +1,4 @@
-import { escapeHTML as esc, formatDate, formatTime, kindLabel, getItem, colorFor, findEvent, currentAsk, feedbackTrail, scenario, personName } from './shared.mjs?v=feedback-loop-1';
+import { escapeHTML as esc, formatDate, formatTime, kindLabel, getItem, colorFor, findEvent, currentAsk, feedbackTrail, scenario, personName, familyMove } from './shared.mjs?v=feedback-loop-1';
 import { createResponseStore, responseHTML, composerHTML, keypadHTML, deferHTML, scheduleHTML, bindResponses, setTimeZone, normalizeAsk, responseStatus } from '../respond.mjs?v=respond-1';
 
 // D · 手机首页。人离开半天回来，手机上第一屏回答三件事：几件等我、最急的是哪件、它为什么在这里。
@@ -63,6 +63,10 @@ function threadRef(event) {
 }
 const SOURCE_VERB = { approve: '批准了', 'request-changes': '要求修改了', merge: '合并了', close: '关闭了' };
 function actionWords(event, link, ask) {
+  if (link.via === 'source' && familyMove(event)) {
+    const label = link.meaning === 'decide' && ask?.actions?.find(a => a.id === link.action)?.label;
+    return `你${familyMove(event)}${label ? `，选了「${label}」` : ''}`;
+  }
   if (link.via === 'source') {
     const ref = threadRef(event);
     let what;

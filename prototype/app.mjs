@@ -283,7 +283,7 @@ function renderEvents() {
       shown.map(e=>eventRow(e,frameIndex)).join('')+(self.length>shown.length?`<button class="group-more" data-group-toggle="self:all">还有 ${self.length-shown.length} 件 ▾</button>`:''),{open,foldLabel:''}));
   }
   const others=events.filter(e=>!e.self);
-  const streams=[...new Set(others.map(e=>e.stream||'all'))].sort((a,b)=>['work','life','community','subscription','all'].indexOf(a)-['work','life','community','subscription','all'].indexOf(b));
+  const streams=[...new Set(others.map(e=>e.stream||'all'))].sort((a,b)=>['work','family','life','community','subscription','all'].indexOf(a)-['work','family','life','community','subscription','all'].indexOf(b));
   for(const stream of streams) {
     const list=others.filter(e=>(e.stream||'all')===stream), used=list.filter(e=>e.disposition==='used'), rest=list.filter(e=>e.disposition!=='used');
     const restOpen=openGroups.has(`rest:${stream}`), open=!openGroups.has(`closed:${stream}`);

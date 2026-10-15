@@ -3,7 +3,7 @@
 // 撤下时线断开，恢复时同一身份接上；并入时连向另一条线。线左侧的细括号是登记过的问题：◆ 登记，✓ 答后关上，
 // × 改写后失效，⊥ 随事项撤下，此刻仍开着的带一个向下的箭头。
 //
-// 按流分区（工作、生活、社区），每区画两周累计份额最多的 3 件；其余折成一束（宽 = 这些事份额之和），点开
+// 按流分区（工作、家庭、生活、社区），每区画两周累计份额最多的 3 件；其余折成一束（宽 = 这些事份额之和），点开
 // 展开成没有站名的细线，悬停看名字。颜色只表示事项身份：与两周小倍数相同，只有累计份额前 8 的事有颜色。
 import { frames, records, at, dayOf, weekdayOf, formatTime, fitText, textWidth } from './kit.mjs';
 import {
@@ -38,7 +38,7 @@ const TOP_N = hasStreams ? 3 : Infinity;
 const lived = rootIds.filter(id => factOf(id).cum > 0);
 const zoneOf = id => (hasStreams ? streamOf(id) || 'work' : 'all');
 const byFirst = (a, b) => factOf(a).first - factOf(b).first || (a < b ? -1 : 1);
-const zones = (hasStreams ? ['work', 'life', 'community', 'subscription'] : ['all']).map(z => {
+const zones = (hasStreams ? ['work', 'family', 'life', 'community', 'subscription'] : ['all']).map(z => {
   const ids = lived.filter(id => zoneOf(id) === z).sort((a, b) => factOf(b).cum - factOf(a).cum || byFirst(a, b));
   return { z, label: hasStreams ? STREAMS[z].label : '全部', total: ids.length, top: ids.slice(0, TOP_N).sort(byFirst), rest: ids.slice(TOP_N).sort(byFirst) };
 }).filter(zone => zone.total);
