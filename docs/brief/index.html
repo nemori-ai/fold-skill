@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Fold 小册子</title>
-<meta name="description" content="替一个人整理多个 Agent 的两周：Fold 的问题、假设、真实数据、评测、十二种表达形式与尚缺的设计，16 页。">
+<meta name="description" content="替一个人整理多个 Agent 的两周：Fold 的问题、假设、真实数据、评测、按读者处境分工的表达形式与尚缺的设计，16 页。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232f5b4a'/%3E%3Cpath d='M9 7h15v4H13v5h9v4h-9v6H9z' fill='%23f6f5ee'/%3E%3C/svg%3E">
 <style>
 :root{
@@ -118,18 +118,15 @@ td.r,th.r{text-align:right}
 .bar-cell{display:flex;align-items:center;gap:8px}
 .bar-cell i{display:inline-block;height:12px;border-radius:2px;background:var(--green)}
 
-.classes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px}
-.classes div{border-top:3px solid var(--line);padding-top:8px;font-size:15px;line-height:1.5;color:var(--muted)}
-.classes b{display:block;font-size:17px;color:var(--ink)}
-.classes .c-home{border-color:#e3a593}.classes .c-desk{border-color:#8fb39d}.classes .c-time{border-color:#d9b46a}.classes .c-rev{border-color:#9a95c0}
-
-/* 07 twelve */
-.twelve{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 14px;margin-top:20px}
-.twelve figure img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:5px}
-.twelve figcaption{margin-top:6px;font-size:15.5px;line-height:1.4;color:var(--ink)}
-.twelve figcaption small{display:block;font-size:13px;color:var(--muted);margin-top:1px}
-.klass{display:inline-block;font-size:12px;padding:0 6px;border-radius:4px;margin-right:4px;vertical-align:1px}
-.k-home{background:var(--verm-soft);color:#9b3520}.k-desk{background:var(--green-soft);color:var(--green)}.k-time{background:var(--ochre-soft);color:#7d5a17}.k-rev{background:#e9e8f1;color:#4f4a72}
+/* 07 scenes */
+.scenes{margin-top:16px;border-top:1px solid var(--line)}
+.scene{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start;padding:6px 0;border-bottom:1px solid var(--line)}
+.scene img{display:block;width:300px;height:auto;border:1px solid var(--line);border-radius:5px;background:#fff}
+.scene h3{font-size:17px;line-height:1.4;margin:0 0 2px}
+.scene h3 small{font-size:13.5px;font-weight:500;color:var(--verm);margin-left:10px}
+.scene dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:0 8px;font-size:14px;line-height:1.5}
+.scene dt{font-size:12.5px;color:var(--faint);padding-top:1px}
+.scene dd{margin:0}
 
 /* 08 */
 .home-fig{display:grid;grid-template-columns:320px 1fr;gap:28px;align-items:start;margin-top:18px}
@@ -196,14 +193,14 @@ td.r,th.r{text-align:right}
   h1,.cover h1{font-size:30px}
   .lead,.cover .lead{font-size:19px}
   .foot{position:static;margin-top:28px;font-size:12px;flex-direction:column;gap:4px;overflow-wrap:anywhere}
-  .pair,.budget,.cover-fig,.home-fig,.six,.decide,.cards,.cross,.desk-row,.also,.more,.classes{grid-template-columns:1fr}
+  .pair,.budget,.cover-fig,.home-fig,.six,.decide,.cards,.cross,.desk-row,.also,.more,.scene{grid-template-columns:1fr}
   .rung{grid-template-columns:30px 1fr}.rung .st{grid-column:2;text-align:left}
   .closing{position:static;margin-top:24px}
   .types{display:table}
   .states{grid-template-columns:1fr}
   .flow{grid-template-columns:1fr;gap:8px}.flow span{display:none}
   .stats{grid-template-columns:1fr 1fr}
-  .twelve,.states{grid-template-columns:1fr 1fr}
+  .scene img{width:100%}
   .cover-fig img,.home-fig img.phone{width:min(300px,100%)}
   .funnel{grid-template-columns:auto auto;gap:14px}
   .funnel .arrow{display:none}
@@ -242,7 +239,7 @@ td.r,th.r{text-align:right}
     <option value="page-4">04 · Jonas 的两周：四个真实来源加一条家庭流</option>
     <option value="page-5">05 · 处置大体可靠，档位与结构因模型而异</option>
     <option value="page-6">06 · 它判错的不是格式，而是取舍</option>
-    <option value="page-7">07 · 同一份状态，为不同场景画成十二种样子</option>
+    <option value="page-7">07 · 同一份状态，按读者处境画成不同样子</option>
     <option value="page-8">08 · 回来一眼：先知道几件等我</option>
     <option value="page-9">09 · 在电脑前：面积就是份额</option>
     <option value="page-10">10 · 期限画在此刻之后，推后的事沉下去</option>
@@ -514,35 +511,103 @@ td.r,th.r{text-align:right}
 <section id="page-7" class="page">
   <header>
     <div class="kicker">FOLD / 07</div>
-    <h1>同一份状态，为不同场景画成十二种样子</h1>
-    <p class="lead">没有一种画法能同时回答“此刻要我做什么”和“两周里注意力去了哪”。</p>
+    <h1>同一份状态，按读者处境画成不同样子</h1>
+    <p class="lead">读者看得下多少、能看多久、手上能做什么，决定了这份状态该怎样画。</p>
   </header>
   <div class="body">
-    <p>形式按场景分工。首页类只放最急的几件；空间类在电脑前处理评审与二选一；时间类处理期限与推后；复盘类不收作答，只标出问题怎样开、怎样关。</p>
-    <p>第一轮把状态搬进手表、广播、小票、报纸这类现成载体，第一眼成立，结构却没有新东西，多数撤下。第二轮只为状态自身的关系发明画法。</p>
-    <p>要练的是一种元能力：先想清楚读者在哪、此刻想知道什么，再决定把份额画成面积、带宽、液滴、字号还是刻度。</p>
-    <div class="twelve">
-      <figure><img src="assets/thumb-d.png" alt="D 手机首页缩略"><figcaption><span class="klass k-home">首页</span>D 手机首页<small>回来先答最急的 3 件</small></figcaption></figure>
-      <figure><img src="assets/thumb-watch.png" alt="腕上一瞥缩略"><figcaption><span class="klass k-home">首页</span>腕上一瞥<small>要不要现在掏手机</small></figcaption></figure>
-      <figure><img src="assets/thumb-original.png" alt="原版树图缩略"><figcaption><span class="klass k-desk">空间</span>原版树图<small>面积即份额，批准评审</small></figcaption></figure>
-      <figure><img src="assets/thumb-a.png" alt="A 空间排布缩略"><figcaption><span class="klass k-desk">空间</span>A 空间排布<small>纸片与留白，当场二选一</small></figcaption></figure>
-      <figure><img src="assets/thumb-b.png" alt="B 时间展开缩略"><figcaption><span class="klass k-time">时间</span>B 时间展开<small>期限画在此刻之后</small></figcaption></figure>
-      <figure><img src="assets/thumb-c.png" alt="C 流动形态缩略"><figcaption><span class="klass k-time">时间</span>C 流动形态<small>推后沉下，到点浮起</small></figcaption></figure>
-      <figure><img src="assets/thumb-multiples.png" alt="两周小倍数缩略"><figcaption><span class="klass k-rev">复盘</span>两周小倍数<small>注意力怎样移动</small></figcaption></figure>
-      <figure><img src="assets/thumb-lineage.png" alt="身份线缩略"><figcaption><span class="klass k-rev">复盘</span>身份线<small>一件事的改写史</small></figcaption></figure>
-      <figure><img src="assets/thumb-timing.png" alt="回应时序缩略"><figcaption><span class="klass k-rev">复盘</span>回应时序<small>问题开了多久</small></figcaption></figure>
-      <figure><img src="assets/thumb-yield.png" alt="让位图缩略"><figcaption><span class="klass k-rev">复盘</span>让位图<small>份额从谁那里来</small></figcaption></figure>
-      <figure><img src="assets/thumb-provenance.png" alt="来源矩阵缩略"><figcaption><span class="klass k-rev">复盘</span>来源矩阵<small>谁在推动哪件事</small></figcaption></figure>
-      <figure><img src="assets/thumb-notation.png" alt="批次记谱缩略"><figcaption><span class="klass k-rev">复盘</span>批次记谱<small>每一轮由什么组成</small></figcaption></figure>
-    </div>
-    <div class="classes">
-      <div class="c-home"><b>首页类 · 回来时</b>只放最急的几件；一键作答，表上只答确认与二选一。</div>
-      <div class="c-desk"><b>空间类 · 在电脑前</b>铺开整份状态；格子里批准评审，大卡里二选一。</div>
-      <div class="c-time"><b>时间类 · 安排时</b>期限与推后；定时间、稍后提醒、推到某一刻。</div>
-      <div class="c-rev"><b>复盘类 · 回顾两周</b>不收作答；标出问题的开与关、份额的来去。</div>
+    <p>带宽是一眼读得下几个字、几个数，注意力是两秒还是半小时，交互是能点、能打字还是只能听。两轮试下来，载体只是外壳，画法跟着处境走；下面八种按注意力从短到长排。</p>
+    <div class="scenes">
+      <article class="scene">
+        <img src="assets/scene-watch.png" alt="腕上一瞥的三屏：表盘一圈 64 格刻度，中间写 1 件要紧；卡片堆只有主水管一张；回应屏是整根挖开换、免挖穿新管两颗按钮与 1 小时后再提醒。">
+        <div>
+          <h3>腕上一瞥<small>抬腕，两秒</small></h3>
+          <dl>
+            <dt>处境</dt><dd>会议间隙或走路时抬腕，一寸见方的屏只容一个数、一行字，两秒就放下。</dd>
+            <dt>交互</dt><dd>手指只点得准两三颗大按钮，打不了字；翻一屏已嫌多，更别说读原文。</dd>
+            <dt>所以</dt><dd>表圈一格一份，中间只数要紧的问题；能在表上答的一次给全：问题连同两颗大按钮与“1 小时后再提醒”，其余转到手机。</dd>
+          </dl>
+        </div>
+      </article>
+      <article class="scene">
+        <img src="assets/scene-departures.png" alt="到期时刻表的翻牌屏：前方·到期，按到期时刻一行一件，车道下铜管裂一行翻成琥珀色的等你决定。">
+        <div>
+          <h3>到期时刻表<small>路过，几秒</small></h3>
+          <dl>
+            <dt>处境</dt><dd>挂在走廊里的大屏，路过时隔几米扫一眼，只认得出大字、颜色和时刻。</dd>
+            <dt>交互</dt><dd>没有交互，路过的人不会停下来点；只能靠翻牌的动静把目光拉过来。</dd>
+            <dt>所以</dt><dd>按几点到期排，不按份额；琥珀色只标等你回应，变了的行才翻牌；不写摘要，没有期限的事退到下半块“未定时”。</dd>
+          </dl>
+        </div>
+      </article>
+      <article class="scene">
+        <img src="assets/scene-receipt.png" alt="小票的一段：左边刻度尺一格一份，车道下铜管裂占 24 份、标着请回应，右上角印 12→24，下面是主水管二选一的打勾方框。">
+        <div>
+          <h3>小票<small>掏出纸，十几秒</small></h3>
+          <dl>
+            <dt>处境</dt><dd>早上打一张热敏纸带出门，一天里掏出来看几眼；打出之后就不再更新。</dd>
+            <dt>交互</dt><dd>只能用笔在方框里打勾，勾了不回传，也点不开详情、问不了为什么。</dd>
+            <dt>所以</dt><dd>纸长就是份额，每件印成单独读得懂的一段，问题连选项一起印出，份额变化印成 12→24；不印颜色，子层只印个数。</dd>
+          </dl>
+        </div>
+      </article>
+      <article class="scene">
+        <img src="assets/scene-radio.png" alt="晨间朗读：一条播报时间轴，车道下铜管裂占 24 份、约 36 秒，后面各件依次变短；下方是播放、下一件、展开这一件与稍后再说。">
+        <div>
+          <h3>晨间朗读<small>只能听，一分多钟</small></h3>
+          <dl>
+            <dt>处境</dt><dd>通勤或做早饭，眼和手都占着，只剩耳朵；听过的句子回不去，也没法并排比。</dd>
+            <dt>交互</dt><dd>只能开口说“下一件”“展开”“稍后”或“选第一个”，记不住长选项。</dd>
+            <dt>所以</dt><dd>份额换成播报秒数，每份约 1.5 秒：大事读几句，小事一句带过，留白就是提前结束；大事要答的问题连选项一起念出。</dd>
+          </dl>
+        </div>
+      </article>
+      <article class="scene">
+        <img src="assets/scene-home.png" alt="手机首页顶部：5 件等你回应，上次看过之后收到 158 条；第一张大卡是车道下的主水管，标着档位关键、还有 34 小时、新问题。">
+        <div>
+          <h3>D 手机首页<small>刚回来，一两分钟</small></h3>
+          <dl>
+            <dt>处境</dt><dd>离开半天后掏出手机，一屏只放得下三张卡，先想知道几件在等自己、哪件最急。</dd>
+            <dt>交互</dt><dd>拇指点得了按钮、打得了一句话；读原文、比几件事就嫌屏幕小。</dd>
+            <dt>所以</dt><dd>顶上一句“几件等你回应”，最急的三件是大卡，按钮形态说明怎么答，一键作答；其余问题折成一行，小事折成“另有 N 项次要事项”。</dd>
+          </dl>
+        </div>
+      </article>
+      <article class="scene">
+        <img src="assets/scene-b.png" alt="B 时间展开的一段：左边是份额带，中间的预算柱里车道下铜管裂占 24 份，右边的期限刻度写 8/17 周一 10:00、34 小时后。">
+        <div>
+          <h3>B 时间展开<small>排日程，几分钟</small></h3>
+          <dl>
+            <dt>处境</dt><dd>坐在电脑前排接下来几天，要答的不是做不做，而是什么时候做、谁先到期。</dd>
+            <dt>交互</dt><dd>鼠标能选时间、推后提醒、二选一，也能往回翻前几轮看一件事怎样涨落。</dd>
+            <dt>所以</dt><dd>左边是最近几轮的份额带，中间是此刻的预算柱，右边把期限画成此刻之后的刻度，谁先到一眼可见，过期的写明已过多久。</dd>
+          </dl>
+        </div>
+      </article>
+      <article class="scene">
+        <img src="assets/scene-original.png" alt="原版树图的上半：车道下铜管裂一格占 24 份，右边窄格是待你批准的 #13596，占 6 份；顶上写已用 63/64、留白 1。">
+        <div>
+          <h3>原版树图<small>电脑前，十几分钟</small></h3>
+          <dl>
+            <dt>处境</dt><dd>在电脑前有一整块屏和十几分钟，想一次看清哪件大、哪件新、哪里还空。</dd>
+            <dt>交互</dt><dd>鼠标键盘都在，能逐格打开详情、下钻子层，读完依据与原文再作答。</dd>
+            <dt>所以</dt><dd>根层铺满一块板，面积就是份额，留白是最后一格；没有问题的小事合成一格，等你批准的评审在右栏当场答。</dd>
+          </dl>
+        </div>
+      </article>
+      <article class="scene">
+        <img src="assets/scene-multiples.png" alt="两周小倍数：每帧一个 8 乘 8 小方阵，按日分行；8 月 16 日零点那一帧被框出。">
+        <div>
+          <h3>两周小倍数<small>复盘，半小时</small></h3>
+          <dl>
+            <dt>处境</dt><dd>周末或会前回顾两周，时间和屏幕都够，想看注意力怎样移动，而非此刻做什么。</dd>
+            <dt>交互</dt><dd>悬停一件事，它在全部帧里同时亮起；点一格看详情，但不收作答。</dd>
+            <dt>所以</dt><dd>每帧一个 8×8 方阵，按日分行、同尺度并排；只给累计份额前 8 件上色，其余灰；黑点标出当时开着的问题。</dd>
+          </dl>
+        </div>
+      </article>
     </div>
   </div>
-  <footer class="foot"><span>出处：<code>prototype/README.md</code>（十二种形式）、<code>prototype/forms/CONCEPTS.md</code>（两轮结论与打磨记录）</span><span class="pn">07 / 16</span></footer>
+  <footer class="foot"><span>出处：<code>prototype/forms/CONCEPTS.md</code>（载体、场景与用法）、<code>prototype/forms/polish/</code>；画面都是 f26，8 月 16 日零点。到期时刻表、小票、晨间朗读是第一轮撤下的形式，入选只因处境独特，不代表产品选定。</span><span class="pn">07 / 16</span></footer>
 </section>
 
 <!-- 08 -->
