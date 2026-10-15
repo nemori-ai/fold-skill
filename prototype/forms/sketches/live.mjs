@@ -9,7 +9,7 @@
 // - the item dossier (summary, reason, ask record, versions, sources with originals);
 // - motion: one tween helper that honours prefers-reduced-motion, render timing in window.foldPerf;
 // - the page frame of the two sketches: frame bar with play, scrubber, keyboard, URL state.
-import { scenario, records, escapeHTML, formatDate, formatTime, kindLabel, notice } from '../../variants/shared.mjs?v=feedback-loop-1';
+import { scenario, records, escapeHTML, formatDate, formatTime, kindLabel, notice, familyMove } from '../../variants/shared.mjs?v=feedback-loop-1';
 import { frames, at, categoryName, chosenFrame, rootOf, personName } from './kit.mjs';
 import { followFrames } from '../../embed.mjs';
 
@@ -35,6 +35,7 @@ const refEvent = ref => (typeof ref === 'string' && ref.startsWith('event:') ? e
 
 export const STREAMS = {
   work: { label: '工作', color: '#2f5f9e' },
+  family: { label: '家庭', color: '#a2479a' },
   life: { label: '生活', color: '#d0782c' },
   community: { label: '社区', color: '#1d9a7e' },
   subscription: { label: '订阅', color: '#8f8a7d' },
@@ -214,6 +215,7 @@ export function actionSentence(response) {
   const path = response.path && pathByKey.get(response.path);
   const label = path?.ask.actions?.find(a => a.id === link.action)?.label
     || scenario.feedback?.sourceActions?.find(a => a.id === link.action)?.label || link.action;
+  if (link.via === 'source' && familyMove(event)) return `你${familyMove(event)}${path && link.meaning === 'decide' ? `，选了「${label}」` : ''}`;
   if (link.via === 'source') {
     const place = PLACES[event.channel.split(' · ')[0]] || `${event.channel.split(' · ')[0]}上`;
     const ref = (event.subject || '').match(/#\d+/)?.[0] || '';

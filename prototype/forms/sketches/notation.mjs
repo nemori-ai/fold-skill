@@ -21,7 +21,7 @@ const figure = stage.figure;
 // ---------- data ----------
 const DISPOSITIONS = ['used', 'duplicate', 'deferred', 'noise', 'unjudged'];
 const dispWord = { used: '采用', duplicate: '重复', deferred: '暂缓', noise: '噪音', unjudged: '未判' };
-const streamWord = { work: '工作', community: '社区', life: '生活', subscription: '订阅' };
+const streamWord = { work: '工作', family: '家庭', community: '社区', life: '生活', subscription: '订阅' };
 const opWord = { new: '新增', up: '变大', withdraw: '撤下', merge: '合并', down: '变小', same: '只改内容' };
 const opGlyph = { new: '＋', up: '▲', withdraw: '⊘', merge: '⋈', down: '▼', same: '◇' };
 const rows = frames.map((frame, i) => {

@@ -37,7 +37,7 @@ const drawer = createDrawer(page.body, { onClose: () => { pinned = null; applyHo
 // ---------- lanes ----------
 const laneItems = [...new Set(askPaths.map(path => path.item))];
 const groupOf = id => (hasStreams ? streamOf(id) || 'other' : rootOf(id));
-const groupOrder = hasStreams ? ['work', 'life', 'community', 'subscription', 'other'] : [...new Set(laneItems.map(rootOf).sort((a, b) => factOf(a).first - factOf(b).first))];
+const groupOrder = hasStreams ? ['work', 'family', 'life', 'community', 'subscription', 'other'] : [...new Set(laneItems.map(rootOf).sort((a, b) => factOf(a).first - factOf(b).first))];
 const groupLabel = g => (hasStreams ? STREAMS[g]?.label || '其他' : categoryName(g));
 const firstPath = id => askPaths.find(path => path.item === id).from;
 const lanes = [];

@@ -110,12 +110,23 @@ export function futureFraction(span) {
   return Math.min(1, f + .04 * Math.log2(1 + (span - last) / last));
 }
 
-/** Stack tick captions so two deadlines at nearby times never print over each other. */
-export function placeCaptions(ticks, { lineHeight = 26, width = 120 } = {}) {
+/**
+ * Stack tick captions so two deadlines never print over each other. A caption spans from its tick to
+ * the right by its measured width (`meta.width`, else `width`); a clash moves it one line down, or up
+ * when that would leave the strip (`height`), e.g. two small items with deadlines in the 小事 band.
+ */
+export function placeCaptions(ticks, { lineHeight = 26, width = 120, height = Infinity } = {}) {
   const placed = [];
+  const span = tick => [tick.x - 8, tick.x + 8 + (tick.meta?.width ?? width)];
+  const clash = (tick, y) => placed.find(other => {
+    const [a0, a1] = span(tick), [b0, b1] = span(other);
+    return a0 < b1 && b0 < a1 && Math.abs(other.ty - y) < lineHeight;
+  });
   for (const tick of [...ticks].sort((a, b) => a.y - b.y)) {
     let y = tick.y;
-    for (const other of placed) if (Math.abs(other.x - tick.x) < width && Math.abs(other.ty - y) < lineHeight) y = other.ty + lineHeight;
+    for (let guard = 0, other; guard < 12 && (other = clash(tick, y)); guard += 1) {
+      y = other.ty + lineHeight + lineHeight / 2 <= height ? other.ty + lineHeight : other.ty - lineHeight;
+    }
     tick.ty = y; placed.push(tick);
   }
   return ticks;

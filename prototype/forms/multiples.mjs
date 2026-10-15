@@ -1,7 +1,7 @@
 // 08 两周小倍数：每帧同尺度并排，每帧 8×8 = 64 格，一格一份，按排名从左上填，空格是未分配。
-// 真实数据两周有 89 件根层事项，颜色不够分：两种上色可切换（按 C）：
+// 真实数据两周有六十到九十件根层事项（随运行而变），颜色不够分：两种上色可切换（按 C）：
 //   前 8 件 —— 两周累计份额最多的 8 件各一色，其余灰；看“哪几件事吃掉了注意力、何时变大或消失”。默认。
-//   按流   —— 工作、生活、社区三色，格子先按流再按份额排；看“工作与生活此消彼长”。
+//   按流   —— 工作、家庭、生活、社区各一色，格子先按流再按份额排；看“工作与家里此消彼长”。
 // 黑点只表示“这件事此刻有登记中的问题”，每件事一个点，点在它的第一格。悬停一件事时它在全部帧里亮起。
 // 右栏的“此刻”方阵在切帧时逐格移动到新位置；格子本身不重绘。
 import {
@@ -30,7 +30,7 @@ export function mount(stage, model, kit) {
     for (const { item } of kit.activeItems(state)) { const ask = kit.currentAsk(ctx, item.id); if (ask) asks.set(kit.rootOf(state, item.id), ask); }
     return { frame, index, items: state.root.items, asks, used: state.root.used };
   });
-  const STREAM_ORDER = ['work', 'life', 'community', 'subscription', null];
+  const STREAM_ORDER = ['work', 'family', 'life', 'community', 'subscription', null];
   const cellColor = id => (mode === 'top' ? topColor(id) || OTHER_COLOR : STREAMS[streamOf(id)]?.color || OTHER_COLOR);
   /** The 64 cells of one frame, keyed item#k, in this mode's order. */
   function cellsOf(d) {
@@ -135,7 +135,7 @@ export function mount(stage, model, kit) {
   function streamArea() {
     // Stacked shares per stream over the two weeks: work at the bottom, then life, community.
     const H = 64, W = 250;
-    const keys = ['work', 'life', 'community', 'subscription'].filter(k => data.some(d => d.items.some(i => streamOf(i.id) === k)));
+    const keys = ['work', 'family', 'life', 'community', 'subscription'].filter(k => data.some(d => d.items.some(i => streamOf(i.id) === k)));
     const sums = data.map(d => Object.fromEntries(keys.map(k => [k, d.items.filter(i => streamOf(i.id) === k).reduce((n, i) => n + i.share, 0)])));
     let base = data.map(() => 0), out = '';
     for (const k of keys) {

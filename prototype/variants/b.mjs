@@ -2,7 +2,7 @@ import {
   escapeHTML as esc, formatDate, formatTime, kindLabel,
   getItem, getLayer, colorFor, currentAsk, notice, scenario,
 } from './shared.mjs?v=feedback-loop-1';
-import { SMALL, GROUP, stableOrder, layoutSection, bandPath, centerPath, labelPositions, futureFraction, FUTURE_GRID, placeCaptions } from './b-layout.mjs?v=b-temporal-1';
+import { SMALL, GROUP, stableOrder, layoutSection, bandPath, centerPath, labelPositions, futureFraction, FUTURE_GRID, placeCaptions } from './b-layout.mjs?v=b-temporal-2';
 import { createTimeMotion } from './b-motion.mjs?v=b-temporal-1';
 import {
   stamp, relative, actionHTML, frameActions, itemActions, versionsHTML, sourcesHTML, originHTML,
@@ -241,7 +241,7 @@ export function mount(host, model) {
       tick.meta.line1 = fit(tick.meta.line1); tick.meta.line2 = fit(tick.meta.line2);
       tick.meta.width = Math.max(textWidth(tick.meta.line1), textWidth(tick.meta.line2) * .95);
     }
-    placeCaptions(ticks.filter(tick => tick.meta.kind !== 'check'), { lineHeight: 27, width: 110 });
+    placeCaptions(ticks.filter(tick => tick.meta.kind !== 'check'), { lineHeight: 27, width: 110, height });
     for (const tick of ticks) { scene.ticks.set(tick.key, { x: tick.x, y: tick.y, h: tick.h, ty: tick.ty ?? tick.y, o: tick.o }); meta.ticks.set(tick.key, tick.meta); }
     const next = s.frames[s.index + 1];
     scene.nextX = next ? futureFraction(Date.parse(next.at) - cursor) * d.futureW : -1;

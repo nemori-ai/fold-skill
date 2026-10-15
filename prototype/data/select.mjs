@@ -6,7 +6,7 @@ export const datasets = {
   composite: {
     label: '真实语料 · Jonas Berglund 的两周',
     module: './composite/scenario.mjs',
-    notice: '人物是化名拼成的；输入是化名改写后的真实公开数据，正文截到 500 字；Agent 判断来自一次真实模型的自由运行，再经人工打磨（见 POLISH.md）。',
+    notice: '人物是化名拼成的；输入是化名改写后的真实公开数据，家人往来由作者编写，正文截到 500 字；Agent 判断来自一次真实模型的自由运行，再经人工打磨（见 POLISH.md）。',
   },
   story: {
     label: '手写情境 · 林苒的两周',
