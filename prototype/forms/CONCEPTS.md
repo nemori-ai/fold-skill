@@ -556,7 +556,7 @@ A/B/C/D 都把整份状态铺在一块屏幕上，区别在怎样编码份额：
 
 ## 真实数据下的问题清单
 
-2026-10-15。默认数据集换成 [composite](../data/composite/POLISH.md)（化名改写的真实公开输入，Agent 判断来自一次自由运行再经打磨）之后，把每种形式按 1440×900 重新截图：原版、A/B/C/D、腕上一瞥、小倍数与回应组件取 8/16 零点（f26，此刻 9 个问题开着），五张草图取数据集自己的选用帧（`sketchFrames`）。截图在本机 `.local/polish-base/<form>.png`，不提交；重截用 `node scripts/shoot-forms.mjs --frame 26`，草图去掉 `--frame`。
+2026-10-15。默认数据集换成 [composite](../data/composite/POLISH.md)（化名改写的真实公开输入，Agent 判断来自一次自由运行再经打磨）之后，把每种形式按 1440×900 重新截图：原版、A/B/C/D、腕上一瞥、小倍数与回应组件取 8/16 零点（f26，此刻 9 个问题开着），五张草图取数据集自己的选用帧（`sketchFrames`）。截图在本机 `.local/polish-base/<form>.png`，不提交；重截用 `node scripts/shoot-forms.mjs --frame 26`，草图去掉 `--frame`。本节的数字按第一次自由运行打磨出的演示数据；之后演示数据按含家庭流的第二次自由运行重建（同一时刻最多 26 件、两周 60 件，见 [POLISH.md](../data/composite/POLISH.md#新旧两次运行)）；下面的问题清单没有按新数据重做。
 
 ### 真实数据与手写情境差在哪
 

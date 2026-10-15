@@ -10,7 +10,7 @@
 :root{
   --ink:#1f2b26;--muted:#5b6862;--faint:#8a948f;--paper:#fbfaf5;--desk:#e2e1d9;--line:#d9d8cd;--soft:#f2f0e7;
   --green:#2f6b57;--green-soft:#e3ece6;--verm:#c4452c;--verm-soft:#f7e6df;--ochre:#a97a26;--ochre-soft:#f4ecdb;
-  --c-cat:#7fae8f;--c-ci:#c9805f;--c-pr:#a596c4;--c-pipe:#b9a9d4;--c-up:#d8b05e;--c-small:#d3cdbd;
+  --c-pipe:#7fae8f;--c-pr:#a596c4;--c-old:#c9805f;--c-ci:#d8b05e;--c-vet:#e0a487;--c-low:#9db6c9;--c-small:#d3cdbd;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -239,7 +239,7 @@ td.r,th.r{text-align:right}
     <option value="page-1">01 · 替一个人整理多个 Agent 的两周</option>
     <option value="page-2">02 · 每帧上百条输入，要他决定的只有几件</option>
     <option value="page-3">03 · 让 LLM 当注意力编辑，让规则守住边界</option>
-    <option value="page-4">04 · Jonas 的两周由四个真实来源拼成</option>
+    <option value="page-4">04 · Jonas 的两周：四个真实来源加一条家庭流</option>
     <option value="page-5">05 · 处置大体可靠，档位与结构因模型而异</option>
     <option value="page-6">06 · 它判错的不是格式，而是取舍</option>
     <option value="page-7">07 · 同一份状态，为不同场景画成十二种样子</option>
@@ -267,9 +267,9 @@ td.r,th.r{text-align:right}
   <div class="body">
     <p>几个 Agent 同时替一个人工作时，工作进展、外部观测、别人或本人说的话会一起涌来。加在一起，往往超过这个人读得完的量。</p>
     <p>Fold 让 Agent 承担这部分整理：结合当前状态和这个人的处境，判断什么值得他看，给每件事分一份注意力，并说清楚哪些事在等他决定。</p>
-    <p>这本小册子用一份由真实公开数据改写的两周，说明这项工作做到了哪里、还缺什么。</p>
+    <p>这本小册子用一个化名人物两周的输入，说明这项工作做到了哪里、还缺什么。</p>
     <div class="cover-fig">
-      <img src="assets/cover-home.png" alt="原型的手机首页：8 月 16 日零点，9 件等你回应，最上面一张大卡问“按 Merck 的说法这个剂量有突然失明的风险：现在打给兽医？”，下面是批准 #13596 与主水管的问题。">
+      <img src="assets/cover-home.png" alt="原型的手机首页：8 月 16 日零点，5 件等你回应，最上面一张大卡问车道下的主水管是整根挖开换还是免挖穿新管，下面是批准 #13596。">
       <div class="cover-side">
         <p class="when">原型 · 手机首页 · 8 月 16 日零点</p>
         <p>一个化名人物的收件箱，这半天进来上百条输入。首页只说几件在等他，最急的一件放在最上面，按钮说明怎么答。</p>
@@ -289,32 +289,32 @@ td.r,th.r{text-align:right}
     <p class="lead">噪音不是少数例外，而是一个真实收件箱的常态。</p>
   </header>
   <div class="body">
-    <p>Jonas 是一个化名人物：开源网络库的维护者，家里有孩子、有猫、有在修的房子，也逛自然论坛、订 newsletter。他两周收到的输入，按半天切成一帧。</p>
+    <p>Jonas 是一个化名人物：开源网络库的维护者，家里有伴侣、两个孩子、一只猫和在修的房子，也逛自然论坛、订 newsletter。他两周收到的输入，按半天切成一帧。</p>
     <p>多数输入写得认真，却与他无关：关注分类里的论坛长帖、newsletter 全文、机器人的评审与失败通知。文本规则认得出机器人和“谢谢”，认不出“写得认真、与他无关”。</p>
-    <p>要他亲自决定的事夹在中间：猫可能吃了双倍抗生素，车道下的主水管在漏，航班改成了经停。</p>
+    <p>要他亲自决定的事夹在中间：母亲换水管那六周住哪，猫可能多吃了药，车道下的主水管在漏。</p>
     <div class="stats">
-      <div class="stat"><b>101 条</b><span>每帧平均输入，最多一帧 209 条</span></div>
+      <div class="stat"><b>115 条</b><span>每帧平均输入，最多一帧 235 条</span></div>
       <div class="stat"><b>22%</b><span>文本规则认得出的低信息量，占他人来信</span></div>
       <div class="stat"><b>648 / 719</b><span>论坛他人来信中，落在他后来没有行动的事项上</span></div>
       <div class="stat"><b>≤ 3 件</b><span>弱标注里每帧的高档位事项</span></div>
     </div>
     <figure class="visual">
       <div class="funnel" id="funnel" aria-hidden="true"></div>
-      <figcaption>8 月 16 日零点这一帧：每个方块是一条输入、一件事或一个问题。其中当天要他决定的，是猫的药量和车道下的主水管。</figcaption>
+      <figcaption>8 月 16 日零点这一帧：每个方块是一条输入、一件事或一个问题。其中要他拍板的，是主水管怎么修与 #13596 合不合。</figcaption>
     </figure>
     <p class="tbl-cap">同一帧里的六条输入，与 Agent 写下的处置和理由</p>
     <table class="inbox">
       <thead><tr><th>来源</th><th>输入</th><th>处置</th></tr></thead>
       <tbody>
-        <tr><td>论坛 · 自然闲谈</td><td>raven13：Which animals to look for during the cold…</td><td><span class="disp d-noise">噪音</span>他人的自然话题</td></tr>
-        <tr><td>订阅邮件</td><td>The Azure Journal：EP222: What is Google’s TPU?</td><td><span class="disp d-noise">噪音</span>订阅通讯</td></tr>
-        <tr><td>Mastodon</td><td>frost_heath：:ablobcatheartsqueeze:</td><td><span class="disp d-noise">噪音</span>对他嘟文的一个表情</td></tr>
-        <tr><td>GitHub · Copilot</td><td>Re: build: drop <code>dirent.h</code> detections (PR #13588)</td><td><span class="disp d-def">暂缓</span>他人 PR，没有点名他</td></tr>
-        <tr><td>CI · github-actions</td><td>Run failed: Windows - master (d43a585)</td><td><span class="disp d-used">用上</span>合并修复后仍失败</td></tr>
-        <tr><td>问答 · 房屋维修</td><td>Jonas B.：Can a split copper water line be patched?</td><td><span class="disp d-used">用上</span>他的新提问：主水管漏水</td></tr>
+        <tr><td>论坛 · 自然闲谈</td><td>urchin60：Which animals to look for during the cold…</td><td><span class="disp d-noise">噪音</span>自然闲谈帖的回复</td></tr>
+        <tr><td>订阅邮件</td><td>The Azure Journal：EP222: What is Google’s TPU?</td><td><span class="disp d-noise">噪音</span>订阅的 newsletter</td></tr>
+        <tr><td>GitHub · Copilot</td><td>Re: build: drop <code>dirent.h</code> detections (PR #13588)</td><td><span class="disp d-def">暂缓</span>他人 PR，没有请他评审</td></tr>
+        <tr><td>家庭 · 邻居群</td><td>~Leif：Rörfirma hos nr 14? 😮</td><td><span class="disp d-def">暂缓</span>邻居好奇，不用他做事</td></tr>
+        <tr><td>家庭 · 水管工短信</td><td>Ronny：kopparledningen under uppfarten har spruckit…</td><td><span class="disp d-used">用上</span>铜管裂了，两个报价</td></tr>
+        <tr><td>问答 · 房屋维修</td><td>Jonas B.：Can a split copper water line be patched?</td><td><span class="disp d-used">用上</span>他的提问：还在权衡</td></tr>
       </tbody>
     </table>
-    <p class="small" style="margin-top:8px">这一帧 142 条：用上 78 条，暂缓 34 条，判为噪音 30 条。英文是改写后的原文，只替换了名字。</p>
+    <p class="small" style="margin-top:8px">这一帧 158 条：用上 40，暂缓 84，噪音 31，重复 3。英文是改写后的原文，只换了名字；瑞典语来自作者编写的家庭流。</p>
   </div>
   <footer class="foot"><span>数字出处：<code>corpus/composite/NOISE.md</code>、<code>corpus/composite/LABELS.md</code>、<code>prototype/forms/CONCEPTS.md</code>（真实数据下的问题清单）、<code>prototype/data/composite/scenario.mjs</code>（f26）</span><span class="pn">02 / 16</span></footer>
 </section>
@@ -333,9 +333,9 @@ td.r,th.r{text-align:right}
     <p>每件事可以有自己的下一层，下一层有同样大小的预算。留白是允许的，它说明这一刻没有更多值得占位的事。</p>
     <div class="budget visual">
       <figure>
-        <div class="g64" id="g64" role="img" aria-label="8 乘 8 的 64 格：猫的药量 12 格，三件事各 6 格，一件 3 格，30 件小事各 1 格，留白 1 格。"></div>
+        <div class="g64" id="g64" role="img" aria-label="8 乘 8 的 64 格：车道下的主水管 24 格，四件事各 6 格，三件各 3 格，6 件小事各 1 格，留白 1 格。"></div>
         <div class="legend">
-          <span style="--sw:var(--c-cat)">猫的药量</span><span style="--sw:var(--c-ci)">master CI</span><span style="--sw:var(--c-pr)">#13596 复审</span><span style="--sw:var(--c-pipe)">主水管</span><span style="--sw:var(--c-up)">#13586 上传</span><span style="--sw:var(--c-small)">小事各 1 份</span>
+          <span style="--sw:var(--c-pipe)">主水管</span><span style="--sw:var(--c-pr)">#13596 复审</span><span style="--sw:var(--c-old)">三个旧 PR</span><span style="--sw:var(--c-ci)">master CI</span><span style="--sw:var(--c-vet)">猫复诊</span><span style="--sw:var(--c-low)">三件各 3 份</span><span style="--sw:var(--c-small)">小事各 1 份</span>
         </div>
       </figure>
       <div>
@@ -350,15 +350,15 @@ td.r,th.r{text-align:right}
             <tr><td>trace</td><td class="r">1</td><td>固定 1 份</td></tr>
           </tbody>
         </table>
-        <p class="small" style="margin-top:12px">左图：8 月 16 日零点 Jonas 的根层，用掉 63 份、留白 1 份。猫的药量是 high，12 份；三件 normal 各 6 份；一件 low 3 份；30 件 trace 各 1 份。</p>
+        <p class="small" style="margin-top:12px">左图：8 月 16 日零点 Jonas 的根层，用掉 63 份、留白 1 份。车道下的主水管是 critical，24 份；四件 normal 各 6 份；三件 low 各 3 份；6 件 trace 各 1 份。</p>
       </div>
     </div>
     <figure class="visual">
-      <p class="tbl-cap">假如这一帧把猫的药量升到 critical，别的都不动，内核会这样退回整批：</p>
+      <p class="tbl-cap">假如这一帧把 #13596 的复审升到 high，别的都不动，内核会这样退回整批：</p>
       <div class="receipt"><span class="dim">accepted:</span> <span class="bad">false</span>
 <br><span class="dim">error:</span> budget_exceeded<span class="dim"> · constraint:</span> layer_budget<span class="dim"> · layer:</span> root
-<br><span class="dim">budget:</span> 64<span class="dim"> · declared:</span> <span class="bad">75</span><span class="dim"> · over:</span> <span class="bad">11</span>
-<br><span class="dim">shares:</span> {qa-cat-enro: 24, ci-master-urls: 6, issue-13587-ftps: 6, qa-copper-line: 6, <span class="dim">另 31 件共 33</span>}
+<br><span class="dim">budget:</span> 64<span class="dim"> · declared:</span> <span class="bad">69</span><span class="dim"> · over:</span> <span class="bad">5</span>
+<br><span class="dim">shares:</span> {driveway-wet: 24, issue-13587: 12, pr-reviews-0814: 6, ci-urls-master: 6, smilla-vet: 6, <span class="dim">另 9 件共 15</span>}
 <br><span class="dim">revision 不变 · events_appended:</span> 0</div>
       <figcaption>示意：字段与用例 02 的拒绝回执相同，ID 取自演示数据。回执列出这一层每件事的份额；谁降档、谁撤下，由 Agent 改好后整批重交。</figcaption>
     </figure>
@@ -370,33 +370,33 @@ td.r,th.r{text-align:right}
 <section id="page-4" class="page">
   <header>
     <div class="kicker">FOLD / 04</div>
-    <h1>Jonas 的两周，由四个真实来源拼成</h1>
-    <p class="lead">人物是化名，输入是真实公开文本；只按规则替换名字，没有用模型改写。</p>
+    <h1>Jonas 的两周：四个真实来源加一条家庭流</h1>
+    <p class="lead">前四条流是真实公开文本，只按规则替换名字，没有用模型改写；家人往来由作者编写。</p>
   </header>
   <div class="body">
-    <p>工作流来自一位开源维护者在 GitHub、CI、邮件列表、Mastodon 与博客上的两周；社区流来自一个自然观察论坛；生活流来自生活问答站上的真实提问；订阅流是 newsletter、营销邮件与天气提醒。</p>
+    <p>工作流来自一位开源维护者在 GitHub、CI、邮件列表、Mastodon 与博客上的两周；社区流来自一个自然观察论坛；生活流来自生活问答站上的真实提问；订阅流是 newsletter、营销邮件与天气提醒。家庭流是伴侣、孩子、母亲、妹妹、朋友与邻居的瑞典语往来和家务通知，作者参考真实私人邮件的语气仿写，不含其中的内容。</p>
     <p>项目、账号、人名、链接与编号按一张本机化名表一致替换。化名不是匿名，逐字搜索仍可能找回出处。</p>
     <p>拼接必然有接缝：有人住公寓、有人有车道，营销邮件来自旧年代。这些不一致来自拼接，不是 Agent 的误读。</p>
     <div class="visual">
-      <div class="streambar" role="img" aria-label="四条流的条数占比：工作 59%，社区 26%，生活 12%，订阅 3%">
-        <span style="width:59.2%;background:#4f7fa8">工作</span><span style="width:26.1%;background:#6f9e72">社区</span><span style="width:11.5%;background:#c9824f">生活</span><span style="width:3.2%;background:#9a948a"></span>
+      <div class="streambar" role="img" aria-label="五条流的条数占比：工作 52%，社区 23%，家庭 12%，生活 10%，订阅 3%">
+        <span style="width:52.1%;background:#4f7fa8">工作</span><span style="width:22.9%;background:#6f9e72">社区</span><span style="width:12.1%;background:#a2479a">家庭</span><span style="width:10.1%;background:#c9824f">生活</span><span style="width:2.8%;background:#9a948a"></span>
       </div>
-      <div class="streamkey"><span><b>工作</b> 1676 条</span><span><b>社区</b> 738 条</span><span><b>生活</b> 326 条</span><span><b>订阅</b> 89 条</span><span>两周共 2829 条，28 帧</span></div>
+      <div class="streamkey"><span><b>工作</b> 1676 条</span><span><b>社区</b> 738 条</span><span><b>家庭</b> 388 条</span><span><b>生活</b> 326 条</span><span><b>订阅</b> 89 条</span><span>两周共 3217 条，28 帧</span></div>
       <p class="tbl-cap">和只有工作的单一来源、手写情境并排</p>
       <table>
         <thead><tr><th>指标</th><th class="r">只有工作</th><th class="r">Jonas（拼成）</th><th class="r">手写情境</th></tr></thead>
         <tbody>
-          <tr><td>输入条数</td><td class="r">1676</td><td class="r">2829</td><td class="r">112</td></tr>
-          <tr><td>每帧平均 / 最多</td><td class="r">59.9 / 128</td><td class="r">101.0 / 209</td><td class="r">3.0 / 9</td></tr>
-          <tr><td>不同作者；前 5 位占比</td><td class="r">286；62%</td><td class="r">643；36%</td><td class="r">27；59%</td></tr>
+          <tr><td>输入条数</td><td class="r">1676</td><td class="r">3217</td><td class="r">112</td></tr>
+          <tr><td>每帧平均 / 最多</td><td class="r">59.9 / 128</td><td class="r">114.9 / 235</td><td class="r">3.0 / 9</td></tr>
+          <tr><td>不同作者；前 5 位占比</td><td class="r">286；62%</td><td class="r">695；32%</td><td class="r">27；59%</td></tr>
           <tr><td>低信息量占他人来信</td><td class="r">33%</td><td class="r">22%</td><td class="r">24%</td></tr>
-          <tr><td>事项数；只出现一次</td><td class="r">221；13</td><td class="r">482；172</td><td class="r">13；4</td></tr>
-          <tr><td>当地 0–7 点到达</td><td class="r">8%</td><td class="r">14%</td><td class="r">0</td></tr>
+          <tr><td>事项数；只出现一次</td><td class="r">221；13</td><td class="r">535；176</td><td class="r">13；4</td></tr>
+          <tr><td>当地 0–7 点到达</td><td class="r">8%</td><td class="r">13%</td><td class="r">0</td></tr>
         </tbody>
       </table>
       <p class="small" style="margin-top:10px">低信息量只算文本规则认得出的机器人、模板、空内容与致谢。论坛帖与问答回复几乎都有实质内容，所以这一行在 Jonas 身上反而更低。</p>
     </div>
-    <p class="tbl-cap" style="margin-top:4px">六件跨流的事：挑的是时间或话题真实重合的线程，没有手写输入</p>
+    <p class="tbl-cap" style="margin-top:4px">六件跨流的事：挑的是前四条流里时间或话题真实重合的线程；家庭流另与生活问答有 15 处话题咬合，由作者写明</p>
     <div class="cross">
       <div><b>热浪里的空调与喝水</b>连续高温时问空调超出温控范围<small>生活 · 订阅 · 工作 · f01、f22–f25</small></div>
       <div><b>航班改成经停</b>撞上工作输入最多的一天<small>生活 · 订阅 · 工作 · f03–f08、f22</small></div>
@@ -406,7 +406,7 @@ td.r,th.r{text-align:right}
       <div><b>厨房</b>高汤与锅具的提问，美食通讯同周<small>生活 · 订阅 · f02、f11、f16、f20</small></div>
     </div>
   </div>
-  <footer class="foot"><span>数字出处：<code>corpus/composite/MIX.md</code>（各流）、<code>corpus/composite/NOISE.md</code>（并排指标）</span><span class="pn">04 / 16</span></footer>
+  <footer class="foot"><span>数字出处：<code>corpus/composite/MIX.md</code>（各流）、<code>corpus/composite/family/README.md</code>（家庭流）、<code>corpus/composite/NOISE.md</code>（并排指标）</span><span class="pn">04 / 16</span></footer>
 </section>
 
 <!-- 05 -->
@@ -418,7 +418,7 @@ td.r,th.r{text-align:right}
   </header>
   <div class="body">
     <p>逐帧评测每帧都从作者的状态出发，只看这一帧怎么判。四次运行换了模型、Harness 与指引版本。哪些输入该用、哪些是噪音，四次几乎一致；档位与 kind 的分歧更大，同一配置重跑也会变。提交被退回的原因因模型而异：一个漏列子项，一个把可选字段写成 null。</p>
-    <p>自由运行让 Agent 维护自己的状态两周，没有失控，同一组输入大多进了同一件事。压下订阅与社区帖，与他后来的行为相符。每个条件都只跑了一次。</p>
+    <p>自由运行让 Agent 维护自己的状态两周。跑了两次，都没有失控，同一组输入大多进了同一件事，订阅与社区帖都被压下。第二次加入了家庭流：家里六条线的结构几乎都对，份额却普遍高一档。每个条件都只跑了一次。</p>
     <div class="visual">
       <p class="tbl-cap">逐帧评测：手写情境 36 帧、112 条输入，与作者编排对比</p>
       <table>
@@ -433,21 +433,22 @@ td.r,th.r{text-align:right}
         </tbody>
       </table>
       <p class="small" style="margin:6px 0 16px">Opus = claude-opus-5-5，Haiku = claude-haiku-5-5，Sol = Codex 下的 gpt-6.1-sol；一版、二版指 SKILL.md 的版本。</p>
-      <p class="tbl-cap">自由运行：混合语料 28 帧、2829 条，与弱标注对照</p>
+      <p class="tbl-cap">自由运行：混合语料 28 帧，前四条流与弱标注对照</p>
       <table>
-        <thead><tr><th>对照</th><th class="r">结果</th></tr></thead>
+        <thead><tr><th>对照</th><th class="r">第一次 · 2829 条</th><th class="r">第二次 · 3217 条</th></tr></thead>
         <tbody>
-          <tr><td>提交</td><td class="r">28 / 28 帧；退回 5 次，看到回执后都改对</td></tr>
-          <tr><td>判为噪音的输入，与他后来的行为不矛盾</td><td class="r">0.89</td></tr>
-          <tr><td>有强依据该忽略的输入被忽略（召回）</td><td class="r">0.277</td></tr>
-          <tr><td>同组输入进了同一根层事项</td><td class="r">0.983</td></tr>
-          <tr><td>同帧事项的成对排序与弱档位一致（平局记半）</td><td class="r">0.661</td></tr>
+          <tr><td>提交（看到回执后都改对）</td><td class="r">28 / 28；退回 5 次</td><td class="r">28 / 28；退回 3 次</td></tr>
+          <tr><td>判为噪音的输入，与他后来的行为不矛盾</td><td class="r">0.89</td><td class="r">0.882</td></tr>
+          <tr><td>有强依据该忽略的输入被忽略（召回）</td><td class="r">0.277</td><td class="r">0.26</td></tr>
+          <tr><td>同组输入进了同一根层事项</td><td class="r">0.983</td><td class="r">1.0</td></tr>
+          <tr><td>同帧事项的成对排序与弱档位一致（平局记半）</td><td class="r">0.661</td><td class="r">0.603</td></tr>
+          <tr><td>家庭流：按作者档成对排序一致（平局记半）</td><td class="r">—</td><td class="r">0.827</td></tr>
         </tbody>
       </table>
-      <p class="small" style="margin-top:6px">召回低，多是 CI 失败、评审与关闭通知被引用进了 CI 事项与每日完成记录，没有被丢掉。</p>
+      <p class="small" style="margin-top:6px">召回低，多是 CI 失败、评审与关闭通知被引用进事项或判为暂缓，没有被丢掉。第二次的同组一致到 1.0，但被引用的输入少，可比的对从 726 降到 293；排序一致下降，主要来自两件都是 0 份的平局。家庭流对照的是作者写定的标注。</p>
     </div>
   </div>
-  <footer class="foot"><span>数字出处：<code>docs/evaluations/judgment-run-codex-2026-10-15.md</code>（Harness 对比表）、<code>docs/evaluations/free-run-composite-2026-10-15.md</code>（与弱标注对照）</span><span class="pn">05 / 16</span></footer>
+  <footer class="foot"><span>数字出处：<code>docs/evaluations/judgment-run-codex-2026-10-15.md</code>（Harness 对比表）、<code>docs/evaluations/free-run-composite-2026-10-15.md</code> 与 <code>free-run-composite-v2-2026-10-15.md</code>（与弱标注对照）</span><span class="pn">05 / 16</span></footer>
 </section>
 
 <!-- 06 -->
@@ -455,52 +456,55 @@ td.r,th.r{text-align:right}
   <header>
     <div class="kicker">FOLD / 06</div>
     <h1>它判错的不是格式，而是取舍</h1>
-    <p class="lead">把自由运行打磨成演示数据时，多数修正落在三类错误上。</p>
+    <p class="lead">两次自由运行都守住了格式与预算；错在注意力往哪边偏，以及少数事实。</p>
   </header>
   <div class="body">
-    <p>自由运行的批次全部被内核接受，预算也守住了。问题出在取舍：工作里的事更容易拿到份额，生活里要他决定的事常被压低。</p>
-    <p>反例也有：猫的药量在看到“有失明风险”的回答后，Agent 自己把它升成了根层最大的一件。</p>
-    <p>打磨只在判断会误导读者时才改，改法写成对批次的补丁，再从空状态重放；措辞偏好和说得通的档位分歧都不改。</p>
-    <p class="statline">31 处修正，分布在 18 帧；其中 14 处是 master CI 的同一个判断逐帧延续；输入的处置一处没改。</p>
+    <p>第一次，工作里的事更容易拿到份额，生活里要他决定的事常被压低。加入家庭流之后反了过来：家里的事普遍高一档，工作与生活问答被挤到根层边上。</p>
+    <p>第一次打磨要改的地方，这次 Agent 多半自己判对了：航班改经停一开始就记成等你，master CI 有人在修就降为进行中，猫的药量看到失明风险后升到最高一档。</p>
+    <p>打磨只在判断会误导读者时才改，改法写成对批次的补丁，再从空状态重放；措辞偏好和差一档的分歧都不改。演示数据来自第二次运行。</p>
+    <p class="statline">9 处修正，分布在 6 帧，另手写 4 处反馈链接；输入的处置一处没改。第一次打磨了 31 处，分布在 18 帧。</p>
     <div class="cards">
       <article class="card">
-        <div class="k">生活被压低</div>
-        <h3>航班改成经停</h3>
-        <p><b>Agent</b>f08 记成知会、3 份；f10 降到 1 份；f11 在改签选项还开着时撤下。</p>
-        <p><b>打磨</b>改为等你并一直保留，到 f13 答者确认只是技术经停，才降回知会。</p>
+        <div class="k">把接缝当成事实</div>
+        <h3>rc1 发了没有</h3>
+        <p><b>Agent</b>f13 读到他对朋友说“晚上发 rc1”，把已发的 rc1 改回待发，此后 15 帧挂着“待确认”。</p>
+        <p><b>打磨</b>以工作流为准：rc1 在 8 日夜里已经发出，保持已完成。</p>
       </article>
       <article class="card">
-        <div class="k">长期事项占位</div>
-        <h3>master CI 失败</h3>
-        <p><b>Agent</b>f02 到 f28 共 27 帧都是“等你”、12 份，期间别人在修。</p>
-        <p><b>打磨</b>f11 起改为进行中、6 份：他的动作是评审与合并修复，不是亲自去查。</p>
+        <div class="k">随口的事被抬高</div>
+        <h3>和朋友骑车</h3>
+        <p><b>Agent</b>f24 朋友把“明早九点？”发错到派对群，给了 12 份，排在根层第一。</p>
+        <p><b>打磨</b>降为 3 份，仍等他回一句；作者判它最多一条痕迹。</p>
       </article>
       <article class="card">
-        <div class="k">不相关的提问并成一件</div>
-        <h3>汤底与猫</h3>
-        <p><b>Agent</b>同一个半天里的两个提问：贝壳熬汤、猫在花盆里排便，并成一件。</p>
-        <p><b>打磨</b>f11 拆成两件；猫的那件与人物设定直接相关，问题与反馈不再挂在一起。</p>
+        <div class="k">该急的反而低</div>
+        <h3>Ture 发烧</h3>
+        <p><b>Agent</b>f20 儿子发烧 38.4 度、伴侣在手术室，只给 1 份知会，首页会把它折进“其余”。</p>
+        <p><b>打磨</b>升到 3 份；份额从一件 Agent 下一帧自己撤下的事提前腾出。</p>
       </article>
     </div>
     <p class="small" style="margin-top:14px">f 后面是帧号：f01 是 8 月 3 日正午，此后每 12 小时一帧，f28 是 8 月 17 日零点。</p>
     <figure class="visual">
       <p class="tbl-cap">自由运行原样：根层 64 份，两周平均分给了谁</p>
-      <div class="sharebar" role="img" aria-label="根层 64 份平均：工作 48.9 份，生活 13.1 份，其余 2.0 份">
-        <span style="width:76.4%;background:#4f7fa8">工作 48.9</span><span style="width:20.5%;background:#c9824f">生活 13.1</span><span style="width:3.1%;background:#9a948a"></span>
+      <div class="sharebar" role="img" aria-label="第一次：工作 48.9 份，生活 13.1 份，其余 2.0 份">
+        <span style="width:76.4%;background:#4f7fa8">第一次 · 工作 48.9</span><span style="width:20.5%;background:#c9824f">生活 13.1</span><span style="width:3.1%;background:#9a948a"></span>
+      </div>
+      <div class="sharebar" role="img" aria-label="第二次：家庭 37.7 份，工作 20.3 份，生活 2.6 份，其余 3.4 份">
+        <span style="width:58.9%;background:#a2479a">第二次 · 家庭 37.7</span><span style="width:31.7%;background:#4f7fa8">工作 20.3</span><span style="width:4.1%;background:#c9824f"></span><span style="width:5.3%;background:#9a948a"></span>
       </div>
       <table style="margin-top:12px">
-        <thead><tr><th>生活流：看见了，但份额低</th><th class="r">数量</th></tr></thead>
+        <thead><tr><th>同一批前四条流的输入</th><th class="r">第一次</th><th class="r">第二次</th></tr></thead>
         <tbody>
-          <tr><td>他人发来的生活输入，被采用</td><td class="r">227 / 245</td></tr>
-          <tr><td>他后来有行动的生活事项帧，被 Agent 纳入</td><td class="r">45 / 61</td></tr>
-          <tr><td>其中拿到 6 份以上</td><td class="r">2</td></tr>
-          <tr><td>航班改经停、车道下的主水管、热浪里的空调</td><td class="r">各 1–3 份</td></tr>
+          <tr><td>他人发来的生活输入，被采用（共 245 条）</td><td class="r">227</td><td class="r">130</td></tr>
+          <tr><td>他后来有行动的工作事项帧，被纳入（共 200 个）</td><td class="r">110</td><td class="r">79</td></tr>
+          <tr><td>其中拿到 6 份以上</td><td class="r">49</td><td class="r">29</td></tr>
+          <tr><td>他人发来的工作输入，判为暂缓</td><td class="r">388</td><td class="r">671</td></tr>
         </tbody>
       </table>
-      <figcaption>其余 2.0 份是社区、订阅与留白。生活被压低是模型倾向，还是指引偏向工作，要靠重复运行区分。</figcaption>
+      <figcaption>第二次的生活 2.6 份未标字；其余是社区、订阅与留白。家里有 12 帧把母亲住哪排到 24 份，作者标的是 12 份。差别同时来自语料、写进背景的家人名字与随机性，要用同一份背景重跑才能分开。</figcaption>
     </figure>
   </div>
-  <footer class="foot"><span>数字出处：<code>prototype/data/composite/POLISH.md</code>（统计、最常见的三类错误、逐帧修正）、<code>docs/evaluations/free-run-composite-2026-10-15.md</code></span><span class="pn">06 / 16</span></footer>
+  <footer class="foot"><span>数字出处：<code>prototype/data/composite/POLISH.md</code>（新旧两次运行、最常见的几类错误、逐帧修正）、两份自由运行报告</span><span class="pn">06 / 16</span></footer>
 </section>
 
 <!-- 07 -->
@@ -548,12 +552,12 @@ td.r,th.r{text-align:right}
   <div class="body">
     <p>手机首页顶部一句话说几件等你回应。最急的三件是大卡，大字是要你回答的问题，按钮形态说明怎么答：选项是决定，回复框是补一句，单个动作是去做。卡片顶上写它为什么在这里：档位、离截止还有多久、新问题还是已更新、等了多久。</p>
     <p>腕上一瞥只回答一个问题：要不要现在掏手机。表圈一格一份，中间的数只数要紧的问题；能在表上答的只有确认与二选一，其余转到手机。</p>
-    <p>他在原处做过的事写成动作句，例如“你在问答站回复了 Gerda”；回复的不是这张卡的问题，就不算回答。</p>
+    <p>他在原处做过的事写成动作句，例如“你用 iMessage 回复 Kajsa”“你给母亲打了电话”；回复的不是这张卡的问题，就不算回答，卡片照旧开着。</p>
     <div class="home-fig">
-      <img class="phone" src="assets/home-f22.png" alt="手机首页，8 月 14 日零点：7 件等你回应，最上面是猫的药量，17:00 前要答，下面是批准 #13572。">
+      <img class="phone" src="assets/home-f22.png" alt="手机首页，8 月 14 日零点：5 件等你回应，最上面是 Smilla 可能多吃了药，8 点前打给诊所还是先观察，下面是母亲换水管那六周住哪的三选一。">
       <div>
-        <img class="shot" src="assets/watch-f22.png" alt="腕上一瞥的三屏：表盘写 2 件要紧，卡片堆是猫药量超标，回应屏有打给兽医、先观察与 1 小时后再提醒三个按钮。">
-        <p class="caption" style="margin-top:8px">8 月 14 日零点：猫的药量超过禁忌。首页 7 件等你回应，表上只数 2 件要紧，最急的 17 点前要答。</p>
+        <img class="shot" src="assets/watch-f22.png" alt="腕上一瞥的三屏：表盘写 2 件要紧，卡片堆是 Smilla 多吃了药，回应屏有打给诊所、先观察与 1 小时后再提醒三个按钮。">
+        <p class="caption" style="margin-top:8px">8 月 14 日零点：猫的药量可能超过失明线，母亲住处的回执当天截止。首页 5 件等你回应，表上只数 2 件要紧，最急的 8 点前要打给诊所；三选一的住处问题表上答不了，转到手机。</p>
         <div class="tags"><span class="tag resp">approve</span><span class="tag resp">choose</span><span class="tag resp">confirm</span><span class="tag">首页还有 reply · schedule · defer</span><span class="tag">表上只答 confirm 与两项的 choose</span></div>
         <p class="small" style="margin-top:12px">首页排序：档位，24 小时内到期，截止时间，份额。其余问题折成一行，长尾的小事折成“另有若干项次要事项”。</p>
       </div>
@@ -570,19 +574,19 @@ td.r,th.r{text-align:right}
     <p class="lead">原版树图与 A 空间排布把整份状态铺开，适合顺手批准评审、当场二选一。</p>
   </header>
   <div class="body">
-    <p>原版把根层铺满一块板，格子面积等于份额，留白是最后一格。工作评审的格子里直接给出“批准 / 要求修改”。</p>
-    <p>真实数据里，根层的大多数事只占最小的一份。两种形式都把这类没有问题的小事合成“另有若干件小事”，点开再铺。切帧时格子平移、长大或缩小，正文不被拉伸；作答后格子收成一行回执。</p>
+    <p>原版把根层铺满一块板，格子面积等于份额，留白是最后一格。等你批准的评审，右栏直接给出“批准 / 要求修改”。</p>
+    <p>真实数据里，根层常拖着一串只占最小一份的事。两种形式都把这类没有问题的小事合成“另有若干件小事”，点开再铺。切帧时格子平移、长大或缩小，正文不被拉伸；作答后格子收成一行回执。</p>
     <figure class="visual">
-      <img class="shot" src="assets/original-f26.png" alt="原版树图，8 月 16 日零点的左上部分：35 件，9 件等你回应；猫的药量 12 份待你选择，master CI 与 #13586 进行中，右下是另有 24 件小事的清单。">
-      <figcaption>原版 · 8 月 16 日零点（局部）：35 件事，24 件小事折成一格，各占 1 份。</figcaption>
+      <img class="shot" src="assets/original-f26.png" alt="原版树图，8 月 16 日零点：14 件，5 件等你回应；车道下的主水管 24 份待你选择，#13596 待你批准，三个旧 PR 待你稍后提醒，右下是另有 4 件小事的格子与 1 份留白。">
+      <figcaption>原版 · 8 月 16 日零点：14 件事，主水管一件占 24 份；没有问题的 4 件小事折成一格，各占 1 份。</figcaption>
     </figure>
     <div class="desk-row">
       <figure>
-        <img class="shot" src="assets/a-left-f26.png" alt="A 空间排布的左栏“现在要你定”：猫的药量与车道下的主水管两张大卡，各有选项、回一句与稍后，下面一行另有 7 个问题开着。">
+        <img class="shot" src="assets/a-left-f26.png" alt="A 空间排布的左栏“现在要你定”：车道下的主水管与 #13596 两张大卡，一张二选一，一张批准、要求修改或评论，下面一行另有 3 个问题开着。">
       </figure>
       <div>
-        <p>A 让事项像纸片散在桌上，空着的桌面就是未分配。左栏只给最急的两个问题大卡，选项可以直接点，也可以回一句或稍后再看。</p>
-        <p class="caption">A · 同一时刻的左栏：猫的药量截止已过 1 天，主水管要在整根换与顶管免挖之间选；推荐项实心，另有 7 个问题收成一行。</p>
+        <p>A 让事项像纸片散在桌上，空着的桌面就是未分配。左栏只给最急的两个问题大卡，选项可以直接点，也可以稍后再看；评审还能评论一句。</p>
+        <p class="caption">A · 同一时刻的左栏：主水管 1 天后截止，要在整根挖开换与免挖穿新管之间选；#13596 等你批准，推荐项实心，另有 3 个问题收成一行。</p>
       </div>
     </div>
   </div>
@@ -601,12 +605,12 @@ td.r,th.r{text-align:right}
     <p>C 让每件够大的事成为一滴液体，面积与份额成正比；不够大的沉在底部，串成小珠。把一件事推后，它沉到水面以下，到点的那一帧从原处浮回来。只有明确合并的两滴才会融成一滴。</p>
     <p>两种形式都只把作答记在本页，回执写明问题在回放里仍开着。</p>
     <figure class="visual p10fig" style="margin:12px 0 8px">
-      <img class="shot" src="assets/b-f26.png" alt="B 时间展开，8 月 16 日零点：左边是第 23 到 27 次整理的份额带，中间是此刻 63/64 份的预算柱，右边是此刻之后的期限刻度：猫的药量已过 31 小时，后刹间歇变软 20 小时后。">
-      <figcaption>B · 8 月 16 日零点：猫的药量已过期 31 小时；最近的期限是 20 小时后的后刹问题。</figcaption>
+      <img class="shot" src="assets/b-f26.png" alt="B 时间展开，8 月 16 日零点：左边是第 23 到 27 次整理的份额带，中间是此刻 63/64 份的预算柱，右边是此刻之后的期限刻度：车道下的主水管 34 小时后截止，Smilla 复诊在 8 天后，Signe 的漫画谈话已过 3 天。">
+      <figcaption>B · 8 月 16 日零点：最近的期限是 34 小时后答复水管工；Signe 的漫画谈话已过 3 天，写在底部的小事带上。</figcaption>
     </figure>
     <figure class="visual p10fig" style="margin:0">
-      <img class="shot" src="assets/c-defer-f25.png" alt="C 流动形态，8 月 15 日正午：几滴按份额大小的液滴，底部一串小珠，右下托盘里有一颗推后到 13:00 的小珠；右栏回执写已保存。">
-      <figcaption>C · 8 月 15 日正午：把 #13295 推到 13:00，它沉进水面以下的托盘，回执是“已保存”。</figcaption>
+      <img class="shot" src="assets/c-defer-f25.png" alt="C 流动形态，8 月 15 日正午：几滴按份额大小的液滴，底部一串小珠，右下托盘里有一颗推后到 13:00 的小珠；右栏是 #13466，回执写已保存。">
+      <figcaption>C · 8 月 15 日正午：把 #13466 推到 13:00，它沉进水面以下的托盘，回执是“已保存”。</figcaption>
     </figure>
   </div>
   <footer class="foot"><span>出处：<code>prototype/forms/polish/temporal.md</code>；画面：<code>?variant=b&amp;frame=26</code>、<code>?variant=c&amp;frame=25</code>（推后之后）</span><span class="pn">10 / 16</span></footer>
@@ -624,7 +628,7 @@ td.r,th.r{text-align:right}
     <p>六张图读的是同一份回放，各挑一种关系画出来：名字怎样变，问题怎样开关，格子怎样移动，份额怎样让渡，输入从哪里来，每一轮由什么组成。</p>
     <p>它们也把状态的缺口照得最清楚：没有稳定的称呼，身份线不知道该把一件事叫什么；没有让位配对，让位图只能把增减并排，不能连线。</p>
     <div class="six">
-      <figure><img class="shot" src="assets/review-lineage.png" alt="身份线：工作、生活、社区三区，每件事一条竖线，线宽是份额，站点是改写。"><figcaption><b>身份线</b>一件事改了几次名，何时撤下又恢复，何时并入另一件。</figcaption></figure>
+      <figure><img class="shot" src="assets/review-lineage.png" alt="身份线：工作、家庭等按流分区，每件事一条竖线，线宽是份额，站点是改写。"><figcaption><b>身份线</b>一件事改了几次名，何时撤下又恢复，何时并入另一件。</figcaption></figure>
       <figure><img class="shot" src="assets/review-timing.png" alt="回应时序：每件事一条泳道，每个问题是一个六边形格，长度是开了多久，朱红刻度是回应。"><figcaption><b>回应时序</b>每个问题开了多久，被回答关上，还是改写后悄悄失效。</figcaption></figure>
       <figure><img class="shot" src="assets/review-multiples.png" alt="两周小倍数：每帧一个 8 乘 8 小方阵，按日分行。"><figcaption><b>两周小倍数</b>每帧 64 格同尺度并排，看注意力怎样移动。</figcaption></figure>
       <figure><img class="shot" src="assets/review-yield.png" alt="让位图：每帧一行，左翼让出、右翼拿到，两翼等长。"><figcaption><b>让位图</b>一件事变大，份额从谁那里来；左右两翼永远等长。</figcaption></figure>
@@ -645,19 +649,19 @@ td.r,th.r{text-align:right}
   <div class="body">
     <p>每个登记的问题声明自己期待哪种回应：确认、选择、回复、定时间、批准一个外部动作、推迟。控件按类型生成。</p>
     <p>按下按钮只说明“已保存”；下一轮整理读到它，才显示“已收到”；批准合并之后 PR 是否真的合了，要看之后的版本。三件事分开写，不把“已保存”说成“已办完”，每一步都可以撤回。</p>
-    <p>真实数据里，他的回应大多发生在来源处：在 GitHub 上批准，在问答站回评论。只有对得上登记的问题，这些动作才算回答。</p>
-    <p class="statline">演示数据登记了 20 条回应路径：7 条在两周内被他在来源处回答，13 条到最后仍开着。</p>
+    <p>真实数据里，他的回应大多发生在来源处：在 GitHub 上批准，在问答站回评论，给家人回消息、打电话。只有对得上登记的问题，这些动作才算回答。</p>
+    <p class="statline">演示数据登记了 26 条回应路径：11 条在两周内被他在来源处回答，7 条到最后仍开着，8 条随事项改写、撤下或并入而关上。</p>
     <table class="types">
       <thead><tr><th>confirm 确认</th><th>choose 选择</th><th>reply 回复</th><th>schedule 定时间</th><th>approve 批准</th><th>defer 推迟</th></tr></thead>
       <tbody>
         <tr><td>一个按钮</td><td>两三个选项</td><td>回一句</td><td>选一个时间</td><td>批准、要求修改、评论</td><td>推到某一刻</td></tr>
-        <tr><td><b>1</b>条</td><td><b>5</b>条</td><td><b>4</b>条</td><td><b>2</b>条</td><td><b>6</b>条</td><td><b>2</b>条</td></tr>
+        <tr><td><b>5</b>条</td><td><b>9</b>条</td><td><b>3</b>条</td><td><b>1</b>条</td><td><b>6</b>条</td><td><b>2</b>条</td></tr>
       </tbody>
     </table>
     <div class="states">
-      <figure><img class="shot" src="assets/state-0-before.png" alt="作答前：猫的药量卡片，档位高、已过 31 小时、已等 2 天，打给兽医（推荐）与先观察两个按钮，下面是回一句与稍后。"><figcaption>作答前<small>推荐项实心；撤回后卡片回到这个样子</small></figcaption></figure>
+      <figure><img class="shot" src="assets/state-0-before.png" alt="作答前：#13596 的卡片，新问题，6 份，问修好 --ssl-reqd 时的重复计时、报告者实测有效，批准合并吗；批准（推荐）与要求修改两个按钮，下面是评论与稍后。"><figcaption>作答前<small>推荐项实心；撤回后卡片回到这个样子</small></figcaption></figure>
       <div class="stack">
-        <figure><img class="shot" src="assets/state-1-saved.png" alt="已保存：卡片收成回执，你选了打给兽医，已保存，等 Agent 下一轮整理，状态还没变，右边是撤回。"><figcaption>已保存<small>只在本页记下，状态还没变</small></figcaption></figure>
+        <figure><img class="shot" src="assets/state-1-saved.png" alt="已保存：卡片收成回执，你选了批准，已保存，等 Agent 下一轮整理，状态还没变，右边是撤回。"><figcaption>已保存<small>只在本页记下，状态还没变</small></figcaption></figure>
         <figure><img class="shot" src="assets/state-2-received.png" alt="已收到：回执写 Agent 在 12:00 的整理中读到，仍可撤回。"><figcaption>已收到<small>下一轮整理读到了；办没办成，看之后的版本</small></figcaption></figure>
       </div>
     </div>
@@ -667,7 +671,7 @@ td.r,th.r{text-align:right}
       <div role="listitem" class="done"><b>办成</b>之后的输入或版本显示事情真的变了，例如 PR 已合并</div>
     </div>
   </div>
-  <footer class="foot"><span>数字出处：<code>prototype/data/composite/POLISH.md</code>（回应路径与反馈）；组件：<code>prototype/respond.mjs</code>；画面：<code>?variant=d&amp;frame=26</code> 作答前后</span><span class="pn">12 / 16</span></footer>
+  <footer class="foot"><span>数字出处：<code>prototype/data/composite/POLISH.md</code>（回应路径与反馈）；组件：<code>prototype/respond.mjs</code>；画面：<code>?variant=d&amp;frame=26</code> 第二张卡作答前后</span><span class="pn">12 / 16</span></footer>
 </section>
 
 <!-- 13 -->
@@ -680,10 +684,10 @@ td.r,th.r{text-align:right}
   <div class="body">
     <div class="try" id="try">
       <iframe src="../../prototype/index.html?variant=d&amp;frame=26" title="Fold 原型：手机首页，8 月 16 日零点" loading="lazy"></iframe>
-      <img class="try-print" src="assets/try-d-f26.png" alt="原型的手机首页，8 月 16 日零点：左栏是帧导航与读法，右边手机上 9 件等你回应。">
+      <img class="try-print" src="assets/try-d-f26.png" alt="原型的手机首页，8 月 16 日零点：左栏是帧导航与读法，右边手机上 5 件等你回应。">
     </div>
     <ol class="steps">
-      <li>点“打给兽医”，卡片收成回执，写着“已保存”。</li>
+      <li>在第二张卡上点“批准”，卡片收成回执，写着“已保存”。</li>
       <li>点左栏的 ›，推进一轮整理，“已保存”变成“已收到”。</li>
       <li>点“撤回”，卡片回到原位；点“详情”，看为什么在这里、依据原文和这件事怎么变的。</li>
       <li>底栏可以换到 A、B、C 的同一时刻，切回来时停在原处。</li>
@@ -723,18 +727,18 @@ td.r,th.r{text-align:right}
     </div>
     <p class="tbl-cap" style="margin-top:4px">演示数据先补上的三种形态，只存在于 <code>prototype/data/composite/scenario.mjs</code></p>
     <div class="more">
-      <article class="card"><div class="k">回应路径</div><h3>问题有编号、登记时间与截止</h3><pre><i>id:</i> ask-02
-<i>item:</i> pr-13350-etag
-<i>registered_at:</i> 8/3 12:00
-<i>due_at:</i> null
-<i>expects:</i> approve
-<i>handler:</i> assistant:next-batch</pre></article>
-      <article class="card"><div class="k">稳定称呼</div><h3>事项有手写短名与颜色</h3><pre><i>ci-master-urls:</i>
-  <i>label:</i> master URLs CI 失败
-  <i>short:</i> master CI
-  <i>color:</i> #b8643a</pre></article>
-      <article class="card"><div class="k">批次级说明</div><h3>每一帧有标题与旁白</h3><pre><i>f26 title:</i> 车道下的主水管在漏
-<i>narrative:</i> 周六下午他问铜水管裂口能不能补……Agent 只给 3 份，打磨时升为 6 份并登记二选一。</pre></article>
+      <article class="card"><div class="k">回应路径</div><h3>问题有编号、登记时间与截止</h3><pre><i>id:</i> ask-23
+<i>item:</i> driveway-wet
+<i>registered_at:</i> 8/16 00:00
+<i>due_at:</i> 8/17 10:00
+<i>expects:</i> choose
+<i>short:</i> 主水管：挖开换还是免挖？</pre></article>
+      <article class="card"><div class="k">稳定称呼</div><h3>事项有手写短名与颜色</h3><pre><i>driveway-wet:</i>
+  <i>label:</i> 邻居说车道信箱旁地面潮湿
+  <i>short:</i> 主水管
+  <i>color:</i> #b0704a</pre></article>
+      <article class="card"><div class="k">批次级说明</div><h3>每一帧有标题与旁白</h3><pre><i>f26 title:</i> 车道下的铜管裂了
+<i>narrative:</i> 水管工 Ronny 报价……Agent 把家里与问答并成一件、升到 24 份，打磨时登记二选一。</pre></article>
     </div>
     <p class="small" style="margin-top:12px">同一份清单里还有部分子项列表的语义、SKILL.md 第三版与自由运行的方差（见第 15 页），以及两件待用户决定的事（见第 16 页）。</p>
   </div>
@@ -757,9 +761,9 @@ td.r,th.r{text-align:right}
       <div class="rung todo" role="listitem"><span class="mark">8</span><div>让人读文字简报与首页<small>回来以后，能不能很快认出要自己处理的事</small></div><span class="st">待做 · 最终问题</span></div>
       <div class="rung todo" role="listitem"><span class="mark">7</span><div>等义改写、相关背景改变与观测缺口的对照<small>无关变化下是否稳定，相关变化下能否调整</small></div><span class="st">待做</span></div>
       <div class="rung todo" role="listitem"><span class="mark">6</span><div>挑少数帧由人写完整批次，作为锚点<small>弱标注本身偏差多大</small></div><span class="st">待做</span></div>
-      <div class="rung todo" role="listitem"><span class="mark">5</span><div>在真实语料上重复自由运行，换人物背景或流的顺序<small>生活被压低是模型倾向，还是指引偏向工作</small></div><span class="st">待做</span></div>
+      <div class="rung todo" role="listitem"><span class="mark">5</span><div>同一份语料与背景重复自由运行，再换背景写法或流的顺序<small>份额偏向工作还是家里，是模型倾向、背景写法还是指引</small></div><span class="st">待做</span></div>
       <div class="rung todo" role="listitem"><span class="mark">4</span><div>SKILL.md 第三版<small>重复提醒怎样判、拆出子项后父项怎样写、null 的反例</small></div><span class="st">待写</span></div>
-      <div class="rung done" role="listitem"><span class="mark">3</span><div>真实语料上自由运行两周，不失控<small>28 帧全部提交；同组输入 98% 进同一件事</small></div><span class="st">已有 · 只跑一次</span></div>
+      <div class="rung done" role="listitem"><span class="mark">3</span><div>混合语料上自由运行两周，不失控<small>两次都 28 帧全部提交；同组输入 98% 以上进同一件事</small></div><span class="st">已有 · 两次，语料不同</span></div>
       <div class="rung done" role="listitem"><span class="mark">2</span><div>逐帧判断与作者编排大体一致<small>处置 86–91%；同一配置重跑，抽查帧约 15% 档位不同</small></div><span class="st">已有 · 四次运行</span></div>
       <div class="rung done" role="listitem"><span class="mark">1</span><div>内核守住预算、回执与幂等<small>用例运行器在内存内核上逐步断言</small></div><span class="st">已有 · <code>make test</code></span></div>
     </div>
@@ -780,7 +784,7 @@ td.r,th.r{text-align:right}
       <h3>依据</h3>
       <ul>
         <li>产品与规范：<code>docs/product.md</code>、<code>docs/decisions.md</code>、<code>docs/information-contract.md</code></li>
-        <li>评测：<code>docs/evaluations/README.md</code> 与它列出的三份报告</li>
+        <li>评测：<code>docs/evaluations/README.md</code> 与它列出的四份报告</li>
         <li>语料：<code>corpus/README.md</code>、<code>corpus/composite/MIX.md</code>、<code>NOISE.md</code>、<code>LABELS.md</code></li>
         <li>演示数据：<code>prototype/data/composite/POLISH.md</code>、<code>SOURCES.md</code></li>
         <li>形式：<code>prototype/README.md</code>、<code>prototype/forms/CONCEPTS.md</code>、<code>prototype/forms/polish/</code> 五份打磨记录</li>
@@ -794,14 +798,15 @@ td.r,th.r{text-align:right}
         <tbody>
           <tr><td>Opus 逐帧评测，手写情境全量</td><td class="r">5.63 美元</td></tr>
           <tr><td>Haiku 逐帧评测，手写情境全量</td><td class="r">0.29 美元</td></tr>
-          <tr><td>Opus 自由运行，混合语料两周</td><td class="r">24.50 美元</td></tr>
+          <tr><td>Opus 自由运行，混合语料两周（第一次）</td><td class="r">24.50 美元</td></tr>
+          <tr><td>Opus 自由运行，混合语料加家庭流两周（第二次）</td><td class="r">23.23 美元</td></tr>
           <tr><td>Codex 下的 Sol：两次全量运行，另两组 12 帧对照</td><td class="r">订阅额度，不按次计费</td></tr>
         </tbody>
       </table>
     </div>
     <div class="decide">
-      <article class="card"><div class="k">已决定</div><h3>Enron 私人往来</h3><p>只作仿写参考，不用真实内容。家庭流改由作者编写：388 条瑞典语往来，与 Enron 没有共同的人名、没有 8 词以上的重合；含家庭流的自由运行尚未重跑。</p></article>
-      <article class="card"><div class="k">待决定</div><h3>改写文本的公开许可</h3><p>演示数据与本册截图含化名改写的真实公开文本。决定之前不发布站点；问答站的署名要求在化名后无法满足。</p></article>
+      <article class="card"><div class="k">已决定</div><h3>Enron 私人往来</h3><p>只作仿写参考，不用真实内容。家庭流改由作者编写：388 条瑞典语往来，与 Enron 没有共同的人名、没有 8 词以上的重合。含家庭流的自由运行已经重跑，演示数据据此重建。</p></article>
+      <article class="card"><div class="k">待决定</div><h3>改写文本的公开许可</h3><p>演示数据与本册截图含化名改写的真实公开文本；家庭流是原创，不在此列。决定之前不发布站点；问答站的署名要求在化名后无法满足。</p></article>
       <article class="card"><div class="k">待决定</div><h3>合并时的署名</h3><p>这一轮的提交里，两种模型署名并存，历史不改写。合并到主干时是否统一，由你决定。</p></article>
     </div>
     <p class="closing">替人整理，<br>把决定留给人。</p>
@@ -818,7 +823,7 @@ td.r,th.r{text-align:right}
 
   // 03 · the 64 cells of Jonas's root layer at f26 (prototype/data/composite/scenario.mjs).
   const g = document.getElementById('g64');
-  const parts = [['--c-cat', 12], ['--c-ci', 6], ['--c-pr', 6], ['--c-pipe', 6], ['--c-up', 3], ['--c-small', 30]];
+  const parts = [['--c-pipe', 24], ['--c-pr', 6], ['--c-old', 6], ['--c-ci', 6], ['--c-vet', 6], ['--c-low', 9], ['--c-small', 6]];
   const cells = parts.flatMap(([color, n]) => Array.from({ length: n }, () => `var(${color})`));
   g.innerHTML = cells.map(c => `<i style="background:${c}"></i>`).join('') + '<i style="border:1.5px dashed #b9b4a4"></i>';
 
@@ -826,13 +831,13 @@ td.r,th.r{text-align:right}
   const funnel = document.getElementById('funnel');
   const block = (n, cols, cls, label, note) => `<div><div class="blk ${cls}" style="grid-template-columns:repeat(${cols},12px)">${'<i></i>'.repeat(n)}</div><div class="flabel"><b>${label}</b>${note}</div></div>`;
   funnel.innerHTML = [
-    block(142, 16, 'inputs', '142 条输入', '这半天收到的'),
+    block(158, 16, 'inputs', '158 条输入', '这半天收到的'),
     '<div class="arrow">→</div>',
-    block(35, 7, 'items', '35 件事', '状态里正在关注的'),
+    block(14, 7, 'items', '14 件事', '状态里正在关注的'),
     '<div class="arrow">→</div>',
-    block(9, 5, 'asks', '9 个问题', '等他回应的'),
+    block(5, 5, 'asks', '5 个问题', '等他回应的'),
     '<div class="arrow">→</div>',
-    block(2, 2, 'today', '2 件', '当天要他决定'),
+    block(2, 2, 'today', '2 件', '要他拍板'),
   ].join('');
 
   // 13 · keep the embedded prototype at its 1440×900 layout, scaled to the frame width.
