@@ -72,7 +72,7 @@ GitHub 上的 issue 与评论、Mastodon 帖子、邮件列表与博客评论的
 | `noise.json`、`labels.json`：只含统计、ID 与依据 | `.local/cache/`：Enron 压缩包缓存 |
 | composite 的 `ids.json` 只含化名 ID 与 `origin`，不含来源 URL | `.local/composite/`：化名表、随机盐与挑选，营销邮件缓存 |
 
-例外是原型的演示数据：[prototype/data/composite/scenario.mjs](../prototype/data/composite/scenario.mjs) 收入了截到 500 字的化名改写正文，随本分支入库，各流的引用长度与公开前要解决的事见 [SOURCES.md](../prototype/data/composite/SOURCES.md)。它能否随站点公开由用户决定，决定之前不运行 `npm run deploy`。
+例外是原型的演示数据：[prototype/data/composite/scenario.mjs](../prototype/data/composite/scenario.mjs) 收入了截到 500 字的化名改写正文，随本分支入库，各流的引用长度、许可与已知的署名缺口见 [SOURCES.md](../prototype/data/composite/SOURCES.md)。2026-10-15 用户决定它随站点照现状公开。
 
 composite 另用到 Stack Exchange（CC BY-SA 4.0）、SMHI 观测（CC BY 4.0）、iNaturalist 论坛与 Substack 的公开文章（版权归作者），处理方式相同；许可逐项列在 [MIX.md](composite/MIX.md#许可与入库)。文档只引用极短的通用片段（如“Thanks!”）说明噪音形态，不转录成段原文。抓取时把电话号码样式替换为 `[phone]` 并计数，不保存邮箱地址以外的个人联系方式；Enron 的邮箱地址保留，用于识别本人与回复关系。只抓公开数据，遵守 robots.txt，顺序请求并限速。
 

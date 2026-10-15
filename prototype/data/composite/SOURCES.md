@@ -30,8 +30,7 @@
 
 ## 公开之前
 
-站点构建（`npm run site:build`）会把 `prototype/data/` 下的 `.mjs` 一起发布。在用户决定之前：
+站点构建（`npm run site:build`）会把 `prototype/data/` 下的 `.mjs` 一起发布。2026-10-15 用户决定照现状公开，站点已发布到 fold.vibecoding.icu。已知缺口与退路：
 
-1. 不运行 `npm run deploy`，也不把含这份数据的分支推到会自动发布的地方；
-2. 需要公开演示时，可以临时把 [select.mjs](../select.mjs) 的默认数据集切回 `story`，并在站点构建中排除 `data/composite/`；
-3. 若决定公开，至少要为 life 流补上 CC BY-SA 要求的署名与许可声明，并重新确认其余各流的引用方式；family 流是原创文本，可以照常公开。
+1. life 流来自 Stack Exchange，许可是 CC BY-SA，要求署名并链接原帖；化名改写后无法逐条满足，这里只能笼统声明来源与许可。family 流是原创文本，没有许可问题。
+2. 若收到来源方异议，把 [select.mjs](../select.mjs) 的默认数据集切回 `story`，在站点构建中排除 `data/composite/`，重新 `npm run deploy`。
