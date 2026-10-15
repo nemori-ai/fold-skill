@@ -99,7 +99,7 @@ make prototype        # 本地原型，http://127.0.0.1:4173
 
 ## 文档与原型体验站
 
-在线体验：[fold.vibecoding.icu](https://fold.vibecoding.icu/)。首页提供三个真实原型预览，点击图片进入同一时刻的对应视图；顶部菜单可直接选择 A、B、C 或原版。默认演示数据与小册子截图含化名改写的真实公开文本，2026-10-15 用户决定照现状公开，来源、许可与已知的署名缺口见 [SOURCES.md](prototype/data/composite/SOURCES.md#公开与许可)。
+在线体验：[fold.vibecoding.icu](https://fold.vibecoding.icu/)。首页与顶部菜单的“原型体验”都是全部 21 个原型的画册网格（顺序与[合页](prototype/all.html)相同），每张卡片是该原型默认时刻的真实截图；点卡片在当前页的弹框里载入那个原型，可直接逐帧回放与就地回应，也可另开新标签页。默认演示数据与小册子截图含化名改写的真实公开文本，2026-10-15 用户决定照现状公开，来源、许可与已知的署名缺口见 [SOURCES.md](prototype/data/composite/SOURCES.md#公开与许可)。
 
 体验站使用 VitePress 构建文档导航、中文搜索、公式和流程图，在 `/prototype/` 提供完整原型，在 `/docs/brief/` 提供小册子。原始 Markdown 和原型代码仍是内容源；构建时生成站点文件。
 

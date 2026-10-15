@@ -66,14 +66,8 @@ export default defineConfig({
       { text: '概览', link: '/overview' },
       { text: '小册子', link: '/docs/brief/index.html', target: '_self' },
       { text: '产品文档', link: '/docs/product', activeMatch: '^/docs/' },
-      { text: '原型体验', items: [
-        { text: 'A · 空间排布', link: '/prototype/?variant=a&frame=0', target: '_self' },
-        { text: 'B · 时间展开', link: '/prototype/?variant=b&frame=0', target: '_self' },
-        { text: 'C · 流动形态', link: '/prototype/?variant=c&frame=0', target: '_self' },
-        { text: 'D · 手机首页', link: '/prototype/?variant=d&frame=26', target: '_self' },
-        { text: '原版 · 完整工作台', link: '/prototype/', target: '_self' },
-        { text: '形式画廊', link: '/prototype/forms/index.html', target: '_self' },
-      ] },
+      // 原型体验：铺开全部 21 个原型的画册面板，点卡片在本页弹框里打开（theme/PrototypeMenu.vue、PrototypeLayer.vue）。
+      { component: 'PrototypeMenu' },
       { text: '原型说明', link: '/prototype-notes/README', activeMatch: '^/prototype-notes/' },
     ],
     sidebar: [
