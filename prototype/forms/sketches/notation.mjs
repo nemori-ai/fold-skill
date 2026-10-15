@@ -179,6 +179,8 @@ function overview(i) {
   const opsBlock = ['new', 'up', 'withdraw', 'merge', 'down', 'same'].filter(op => r.ops[op].length)
     .map(op => `<li><b>${opGlyph[op]} ${opWord[op]} ${r.ops[op].length}</b><span class="n-chips">${chips(r.ops[op])}</span></li>`).join('');
   const responses = responsesIn(i);
+  const linked = new Set(responses.map(x => x.event.id));
+  const unlinked = f.events.filter(e => isSelf(e) && !linked.has(e.id));
   const askLine = (ask, word) => `<li><b>${word}</b><span>${esc(ask.prompt)}<small>${chip(ask.item)}</small></span></li>`;
   const asks = [...r.life.fresh.map(a => askLine(a, '◆ 登记')), ...r.life.lapsed.map(a => askLine(a, '◇ 失效')), ...r.life.answered.map(a => askLine(a, '↩ 答了'))].join('');
   return {
@@ -190,8 +192,8 @@ function overview(i) {
         ${Object.keys(r.streams).length ? `<p class="st-muted">${Object.entries(r.streams).map(([s, n]) => `${streamWord[s] || s} ${n}`).join(' · ')}${sig?.coverage && /另有/.test(sig.coverage) ? `（${esc(sig.coverage.match(/（(.*)）/)?.[1] || '')}）` : ''}</p>` : ''}` : `<p class="st-muted">${i === 0 ? '空状态，还没有输入。' : '窗口内没有新输入，这是一次定时整理。'}</p>`}
       </section>
       ${r.self || r.annotations.length ? `<section class="n-yours"><h4>来自你 <small>${r.self} 条输入${r.annotations.length ? ` · ${r.annotations.length} 条批注` : ''}</small></h4>
-        ${responses.length ? `<ul class="n-acts">${foldSentences(responses).map(x => `<li>${esc(x.label)}${x.first.link.ask ? '<small>答登记的问题</small>' : ''}</li>`).join('')}</ul>` : ''}
-        ${r.self > responses.length ? `<p class="st-muted">${r.self - new Set(responses.map(x => x.event.id)).size} 条你自己的输入没有指向事项的动作（发帖、评论别处的讨论等）。</p>` : ''}
+        ${responses.length ? `<ul class="n-acts">${foldSentences(responses).map(x => `<li>${esc(x.label)}${x.item ? ` ${chip(x.item)}` : ''}${x.first.link.ask ? '<small>答登记的问题</small>' : ''}</li>`).join('')}</ul>` : ''}
+        ${unlinked.length ? `<p class="st-muted">${unlinked.length} 条你自己的输入没有指向事项的动作（发帖、评论别处的讨论${unlinked.some(e => e.stream === 'family') ? '、家里的消息' : ''}等）。</p>` : ''}
         ${r.annotations.map(a => `<p class="n-annot">✎「${esc(a.text)}」</p>`).join('')}</section>` : ''}
       ${asks ? `<section><h4>问题 <small>此刻开着 ${r.life.open.size} 个</small></h4><ul class="n-asklist">${asks}</ul></section>` : `<p class="st-muted">这一轮没有登记、失效或答掉的问题；此刻开着 ${r.life.open.size} 个。</p>`}
       ${opsBlock ? `<section><h4>改动 <small>悬停名字看它在每一轮的记号，点击固定</small></h4><ul class="n-opslist">${opsBlock}</ul></section>` : ''}
