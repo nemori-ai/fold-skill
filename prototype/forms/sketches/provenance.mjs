@@ -372,7 +372,7 @@ function detail(I) {
     body: `${self ? `<p class="st-muted">${[...row.s.names].map(esc).join(' · ')}：同一个人在不同平台的署名，合成一行。</p>` : row.type === 'sender' ? `<p class="st-muted">${[...row.s.channels].map(esc).join(' · ')}${row.s.machine ? ' · 机器' : ''}</p>` : ''}
       <p class="pv-counts"><b>${c.total} 条</b>${countsLine(c)}</p>
       ${fed.length ? `<section><h4>用到了哪些事 <small>采用条数</small></h4><p class="pv-chips">${fed.slice(0, 16).map(([r, n]) => `<span class="pv-cn">${chip(r)}<small>${n}</small></span>`).join(' ')}</p></section>` : '<p class="st-muted">没有一条被用到任何事项。</p>'}
-      ${acts.length ? `<section><h4>你在来源处的动作 <small>写成动作，不贴原文</small></h4><ul class="pv-acts">${acts.slice(-10).map(x => `<li>${esc(x.label)}</li>`).join('')}</ul></section>` : ''}
+      ${acts.length ? `<section><h4>你在来源处的动作 <small>写成动作，不贴原文</small></h4><ul class="pv-acts">${acts.slice(-10).map(x => `<li>${esc(x.label)}${x.item ? ` ${chip(x.item)}` : ''}</li>`).join('')}</ul></section>` : ''}
       ${topSenders}
       <section><h4>最近的输入</h4><ul class="pv-inputs">${all.slice(0, 8).map(inputLine).join('')}</ul></section>`,
   };

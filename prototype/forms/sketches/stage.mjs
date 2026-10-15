@@ -7,7 +7,7 @@
 // so links to other forms carry the same moment. Records are the replay's precomputed snapshots:
 // stepping does not re-project state, which keeps a frame change inside one animation frame.
 import {
-  scenario, records, escapeHTML as esc, formatDate, formatTime, getItem, currentAsk, findEvent, notice, kindLabel,
+  scenario, records, escapeHTML as esc, formatDate, formatTime, getItem, currentAsk, findEvent, notice, kindLabel, familyMove,
 } from '../../variants/shared.mjs?v=feedback-loop-1';
 import { withDataset } from '../../data/select.mjs';
 import { followFrames } from '../../embed.mjs';
@@ -59,11 +59,18 @@ function objectOf(event, link) {
   const number = String(event.url || '').match(/\/(?:pull|issues)\/(\d+)/)?.[1];
   return number ? `#${number}` : shortOf(link.target);
 }
+/** The person's move in the family stream, worded as the other forms word it (shared.mjs `familyMove`: D 首页, 回应时序, A, B). */
+const familyOf = (event, link) => (link.via === 'source' && familyMove(event)) || null;
 /**
  * One feedback link as an action sentence: what the person did and where, never the original text.
  * “你在 GitHub 上批准了 #13572”“你在问答站回复了 Gerda Moberg”“你在 Fold 里选了「锁定周六上午」”.
+ * Family moves name the person and the app instead of an item: “你用 iMessage 回复 Kajsa”“你给母亲打了电话”.
  */
 export function responseSentence(event, link) {
+  const ask = link.ask && askById(link.ask);
+  const label = ask?.actions?.find(action => action.id === link.action)?.label;
+  const family = familyOf(event, link);
+  if (family) return `你${family}${link.meaning === 'decide' && label ? `，选了「${label}」` : ''}`;
   if (link.via === 'source') {
     const verb = sourceAction(link.action) || link.action;
     const platform = platformOf(event.channel);
@@ -76,19 +83,23 @@ export function responseSentence(event, link) {
     }
     return `你${place}${verb}了 ${objectOf(event, link)}`;
   }
-  const ask = link.ask && askById(link.ask);
-  const label = ask?.actions?.find(action => action.id === link.action)?.label;
   if (link.via === 'button') return `你在 Fold 里选了「${label || link.action}」`;
   const value = String(link.value || '');
   return value && [...value].length <= 18 ? `你回复 Agent：${value}` : `你回复了 Agent${label ? `（${label}）` : ''}`;
 }
-/** Identical action sentences folded together: six comments on one thread read “……（6 次）”. */
+/**
+ * Identical action sentences folded together: six comments on one thread read “……（6 次）”.
+ * A family move names the person, not the item, and one chat with Kajsa runs across many items, so
+ * family moves fold per item and carry `item` (the target id) for the caller to show beside the sentence.
+ */
 export function foldSentences(responses) {
   const out = new Map();
   for (const r of responses) {
     const text = responseSentence(r.event, r.link);
-    if (!out.has(text)) out.set(text, { text, n: 0, first: r });
-    out.get(text).n += 1;
+    const item = familyOf(r.event, r.link) ? r.link.target : null;
+    const key = item ? `${text}\n${item}` : text;
+    if (!out.has(key)) out.set(key, { text, item, n: 0, first: r });
+    out.get(key).n += 1;
   }
   return [...out.values()].map(x => ({ ...x, label: x.n > 1 ? `${x.text}（${x.n} 次）` : x.text }));
 }

@@ -266,7 +266,7 @@ function overview(i) {
     title: esc(frames[i].title),
     body: `<p class="y-eq"><b>让出 ${r.total}</b><span>=</span><b>拿到 ${r.total}</b><small>此后留白 ${r.free} / 64</small></p>
       ${r.total ? `<div class="y-cols"><section><h4>← 让出</h4>${line(r.gave, 'gave')}</section><section><h4>拿到 →</h4>${line(r.took, 'took')}</section></div>` : '<p class="st-muted">这一轮份额没有变化。</p>'}
-      ${answers.length ? `<section><h4>你作答的问题 <small>点开看份额去向</small></h4><ul class="y-list y-answers">${foldSentences(answers).map(x => `<li><button type="button" data-answer-pin="${esc(x.first.link.target)}" data-answer-row="${i}">↩ ${esc(x.label)}</button></li>`).join('')}</ul></section>` : ''}
+      ${answers.length ? `<section><h4>你作答的问题 <small>点开看份额去向</small></h4><ul class="y-list y-answers">${foldSentences(answers).map(x => `<li><button type="button" data-answer-pin="${esc(x.first.link.target)}" data-answer-row="${i}">↩ ${esc(x.label)}${x.item ? ` <span class="y-chip" style="--c:${colorOf(x.item)}">${esc(shortOf(x.item))}</span>` : ''}</button></li>`).join('')}</ul></section>` : ''}
       ${responses.length > answers.length ? `<p class="st-muted">另有 ${responses.length - answers.length} 条你在来源处的动作，指向事项但没有回答登记的问题。</p>` : ''}
       ${r.annotations.length ? `<section><h4>${esc(personName)}的批注</h4>${r.annotations.map(a => `<p>「${esc(a.text)}」</p>`).join('')}</section>` : ''}
       ${frames[i].narrative ? `<section><h4>旁白 <small>演示数据</small></h4><p>${esc(frames[i].narrative)}</p></section>` : ''}
@@ -287,7 +287,7 @@ function tipFor(el) {
     return `<b>${esc(frames[r.i].title)}</b>${r.tags.length ? `<br>${esc(r.tags.join(' · '))}` : ''}<br><small>让出 ${r.total} = 拿到 ${r.total} · 此后留白 ${r.free}</small>`;
   }
   if (el.matches('[data-answer]')) {
-    return foldSentences(rows[el.dataset.answer].answers).map(x => esc(x.label)).join('<br>') + '<br><small>这一轮你答了登记的问题 · 点开看份额让给了谁</small>';
+    return foldSentences(rows[el.dataset.answer].answers).map(x => `${esc(x.label)}${x.item ? ` · ${esc(shortOf(x.item))}` : ''}`).join('<br>') + '<br><small>这一轮你答了登记的问题 · 点开看份额让给了谁</small>';
   }
   const i = Number(el.dataset.i), side = el.dataset.side, id = el.dataset.item;
   const s = (side === 'l' ? rows[i].gave : rows[i].took).find(x => x.id === id);
