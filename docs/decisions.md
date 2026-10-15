@@ -61,7 +61,7 @@
 | 2. 核心边界与读取投影 | 完善 04 的子树边界、05 的操作限制、03 的非中断场景，以及 06 的选择范围与语义 diff。 | 同一规范在边界情况下仍一致，视觉投影与 JSON 对应；不把这些数据断言当作实际截图验收。 | 03/04/05 的内存层断言已通过；06 的概览与 diff 未实现。 |
 | 3. 本地存储与 CLI 交付 | 接入文件恢复、四个 CLI 子命令及可选浏览器渲染；运行 03 的真实中断恢复和 06 的 PNG/DOM 验收。 | 六组完整用例、CLI 输入输出、重启恢复和真实概览图通过；用户往返与 Agent 视觉辅助均可在本地完成。 | 未开始。 |
 | 并行 · 判断评测 | [skill/SKILL.md](../skill/SKILL.md) 与 `scripts/eval_judgment.py`：手写情境上的 teacher-forced 逐帧评测，真实语料上的自由运行。 | 真实模型能否只凭指引和回执维护状态；判断与作者编排或弱标注差在哪里。 | 2026-10-15：SKILL.md 已改到第二版；三次评测完成，见[评测索引](evaluations/README.md)。每个条件只跑一次，人工锚点与重复运行未做。 |
-| 并行 · 真实语料 | [corpus/](../corpus/README.md)：公开来源抓取、切帧、噪音统计与弱标注；混合人物 Jonas 的两周。 | 手写情境缺少的噪音有多少；Agent 在噪音里的取舍与本人后来的行为是否相符。 | 2026-10-15：curl-bagder、enron-steffes-j 与 composite 三份语料可在本机重建，入库的只有 ID 清单、统计与弱标注。Enron 私人往来与改写文本的公开许可待用户决定。 |
+| 并行 · 真实语料 | [corpus/](../corpus/README.md)：公开来源抓取、切帧、噪音统计与弱标注；混合人物 Jonas 的两周。 | 手写情境缺少的噪音有多少；Agent 在噪音里的取舍与本人后来的行为是否相符。 | 2026-10-15：curl-bagder、enron-steffes-j 与 composite 三份语料可在本机重建，入库的只有 ID 清单、统计与弱标注（composite 的本机化名表当天丢失，前四条流暂不能按原化名重建）。composite 加入作者编写的家庭流 388 条，节拍表、成品与作者标注入库，见[家庭流说明](../corpus/composite/family/README.md)。改写文本的公开许可待用户决定。 |
 | 并行 · 演示数据与表达形式 | [prototype/](../prototype/README.md)：自由运行打磨成的 composite 演示数据（默认）、手写情境（可切换），十二种表达形式与共用的回应组件。 | 同一份状态在不同场景下怎样被读懂和回应；状态里还缺哪些信息。 | 2026-10-15：十二种形式都在真实数据下打磨并接上回应组件，打磨记录见 [CONCEPTS.md](../prototype/forms/CONCEPTS.md#打磨记录)；图文说明见[小册子](brief/index.html)。演示数据的回应路径与反馈形态未进契约。 |
 
 内核用进程内调用验证，存储故障可用明确的测试注入点；恢复验收保留少量真实子进程终止后重新启动的检查，不能用普通异常替代全部崩溃场景。`make check` 只检查仓库材料；`make test` 用内存内核运行用例，持久化与渲染断言在其中标为 skipped。
@@ -106,7 +106,7 @@
 | 部分 `children` 列表的语义 | 保持“目标集合”语义，靠“移除孩子须显式撤下”的护栏；Opus 踩部分列表、Sol 踩 `children: null`，都被拦住、没有丢数据。是否改为“嵌套 supersedes 只改该孩子”，留待契约讨论。 | [第一次评测](evaluations/judgment-run-2026-10-14.md#契约与实现层面的问题不在本轮修改)；[Codex 对照评测](evaluations/judgment-run-codex-2026-10-15.md#契约与实现层面的问题不在本轮修改) |
 | SKILL.md 第三版 | 待写。至少三处：duplicate 的判别问句让重复提醒落进 `used`；拆出子项后父项标题不应重复子项（f23 六次运行全部一事两写）；`null` 与降档漏写 `reason` 的反例。回执写明触发规则可一并考虑。 | [Codex 对照评测：第二版指引](evaluations/judgment-run-codex-2026-10-15.md#第二版指引在-sol-上改善了什么)；[自由运行的三类错误](../prototype/data/composite/POLISH.md#最常见的三类错误) |
 | 自由运行的方差 | 未做。混合语料只跑了一次；生活流份额偏低是模型倾向还是指引偏向工作，需要重复运行、换人物背景或调换流的顺序。人工锚点批次也还没写。 | [自由运行评测](evaluations/free-run-composite-2026-10-15.md#还没有回答的问题) |
-| Enron 私人往来是否作为家庭流 | 待用户决定。挑选时被权限系统以个人敏感信息为由拦下，没有绕过；生活流暂用 Stack Exchange 问答。 | [MIX.md](../corpus/composite/MIX.md#家庭往来为什么还没有) |
+| Enron 私人往来是否作为家庭流 | 已决（2026-10-15 用户决定）：参考真实数据仿写，不用真实内容，形式不限于邮件。Enron 私人往来只在本机作语气参考；家庭流 388 条（瑞典语）由作者编写，与参考邮件没有共同专名，与整个 Enron 语料没有 8 词以上的重合，节拍表与成品入库。含家庭流的自由运行尚未重跑，演示数据暂不含它；生活流里与这家不符的提问这一版不挪。 | [家庭流说明](../corpus/composite/family/README.md)；[MIX.md](../corpus/composite/MIX.md#家庭往来) |
 | 混合语料改写文本的公开许可 | 待用户决定。演示数据与小册子截图含化名改写的真实公开文本，站点构建会一起发布；决定之前不运行 `npm run deploy`。Stack Exchange 的 CC BY-SA 署名在化名后无法满足。 | [演示数据的来源与许可](../prototype/data/composite/SOURCES.md#公开之前)；[MIX.md 许可与入库](../corpus/composite/MIX.md#许可与入库) |
 
 ## 原稿中不再作为默认实现要求的内容

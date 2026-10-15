@@ -2376,5 +2376,797 @@
       {"thread": "gh:skarv/skarv#13594", "tier": "noise", "high": false, "events": ["gh-e:skarv/skarv#13594:76804939603"], "basis": ["low_info_inputs", "no_action_7d"], "evidence": [], "outcome": {"state": "closed", "reason": null, "closed_at": "2026-08-16T10:34:53Z", "merged": false, "labels": ["build", "cmdline tool", "Windows"]}}
      ]
    }
-  ]
+  ],
+ "family": {
+  "method": {
+   "basis": "authored",
+   "source": "corpus/composite/family/beats.json",
+   "level": "节拍表里作者写定的 Fold 关注档（critical / high / normal / low / trace / none），帧末取该事项最后一拍的档位",
+   "tier": "与其他流同一口径的行为档；“本人后来的行动”是合成的 Jonas 消息与通话记录，所以它检验一致，不检验真实",
+   "ignore": "节拍表里标了 ignore 的输入（表情、附和、群聊闲聊、照片、通知、诈骗短信、重复催促等），依据前缀 authored",
+   "asks": "节拍表登记的问题：登记的输入与帧、被回答（answered）或失效（void）的输入与帧；到窗口结束仍开着的 resolved 为 null",
+   "doc": "corpus/composite/LABELS.md"
+  },
+  "summary": {
+   "asks": 19,
+   "asks_answered": 8,
+   "asks_open": 7,
+   "asks_void": 4,
+   "events": 388,
+   "high": 20,
+   "ignore_events": 185,
+   "input_events": 310,
+   "level_high": 20,
+   "level_low": 31,
+   "level_none": 69,
+   "level_normal": 18,
+   "level_trace": 6,
+   "self_only_threads": 2,
+   "tier_engaged": 66,
+   "tier_later": 8,
+   "tier_noise": 57,
+   "tier_untouched": 13
+  },
+  "items": {
+   "fam:smilla-veterinar": {
+    "line": "A",
+    "title": "猫 Smilla 看兽医、吃药、药量",
+    "kind": "要去办",
+    "cross": ["qa:pets:q16452"]
+   },
+   "fam:mamma-stambyte": {
+    "line": "B",
+    "title": "母亲九月换水管期间住哪",
+    "kind": "要决定",
+    "cross": []
+   },
+   "fam:mamma-bankid": {
+    "line": "B",
+    "title": "母亲的 BankID 用不了，回执交不了",
+    "kind": "要去办",
+    "merge": "fam:mamma-stambyte",
+    "cross": []
+   },
+   "fam:cykeltur": {
+    "line": "C",
+    "title": "和 Joakim 去骑车",
+    "kind": "不了了之",
+    "cross": ["qa:bicycles:q749337"]
+   },
+   "fam:vattenlacka": {
+    "line": "D",
+    "title": "车道下的主水管漏水",
+    "kind": "要决定",
+    "cross": ["qa:diy:q703714", "qa:diy:q383508", "qa:money:q897112"]
+   },
+   "fam:flyg-14sep": {
+    "line": "E",
+    "title": "9 月 14 日那趟航班几点到家",
+    "kind": "等他答复",
+    "cross": ["qa:travel:q321223"]
+   },
+   "fam:kraftskiva": {
+    "line": "F",
+    "title": "Joakim 家的小龙虾派对",
+    "kind": "报人数",
+    "cross": ["qa:cooking:q784539"]
+   },
+   "fam:kattvakt": {
+    "line": "A",
+    "title": "托邻居周末喂猫",
+    "kind": "一次性",
+    "merge": "fam:smilla-veterinar",
+    "cross": ["qa:pets:q58635"]
+   },
+   "fam:ture-feber": {
+    "line": "-",
+    "title": "Ture 发烧被接回、请护理假",
+    "kind": "一次性",
+    "cross": []
+   },
+   "fam:signe-serier": {
+    "line": "-",
+    "title": "Signe 夜里看网上漫画",
+    "kind": "一次性",
+    "cross": ["qa:parenting:q68615"]
+   },
+   "fam:kajsa-cykel": {
+    "line": "-",
+    "title": "Kajsa 的通勤车后刹与新车",
+    "kind": "一次性",
+    "cross": ["qa:bicycles:q131725", "qa:bicycles:q188332"]
+   },
+   "fam:skolstart": {
+    "line": "-",
+    "title": "Signe 开学与要签的文件",
+    "kind": "要去办",
+    "cross": []
+   },
+   "fam:aterkrav": {
+    "line": "-",
+    "title": "退单的钱到账",
+    "kind": "一次性",
+    "cross": ["qa:travel:q723334"]
+   },
+   "fam:mamma-varme": {
+    "line": "B",
+    "title": "热浪里母亲那边没风扇",
+    "kind": "一次性",
+    "cross": []
+   },
+   "fam:flakt": {
+    "line": "-",
+    "title": "给 Ture 买风扇",
+    "kind": "一次性",
+    "cross": ["qa:diy:q300671"]
+   },
+   "fam:stuga-resa": {
+    "line": "-",
+    "title": "去小屋接人、卸车",
+    "kind": "一次性",
+    "cross": []
+   },
+   "fam:forradet": {
+    "line": "-",
+    "title": "棚屋：铁皮顶与 Göran 说要帮忙抬高",
+    "kind": "不了了之",
+    "cross": ["qa:diy:q814000", "qa:diy:q637273"]
+   },
+   "fam:hemmasysslor": {
+    "line": "-",
+    "title": "家务小事（浇番茄、收快递）",
+    "kind": "琐事",
+    "cross": []
+   },
+   "fam:signe-vardag": {
+    "line": "-",
+    "title": "Signe 白天一个人在家的零碎请求",
+    "kind": "琐事",
+    "cross": []
+   },
+   "fam:mamma-middag": {
+    "line": "B",
+    "title": "母亲想下周日来吃饭",
+    "kind": "等他答复",
+    "cross": []
+   },
+   "fam:mamma-73": {
+    "line": "B",
+    "title": "母亲 9 月 30 日满 73 岁",
+    "kind": "不了了之",
+    "cross": []
+   },
+   "fam:bedrageri": {
+    "line": "-",
+    "title": "诈骗短信（假快递关税、假 BankID 续期）",
+    "kind": "噪音",
+    "cross": []
+   },
+   "fam:joakim-prat": {
+    "line": "-",
+    "title": "Joakim 发来的链接与播客",
+    "kind": "琐事",
+    "cross": []
+   }
+  },
+  "asks": [
+    {"id": "ask-a-boka", "q": "给 Smilla 约兽医", "options": ["网上预约", "打电话"], "due": null, "item": "fam:smilla-veterinar", "beat": "A01", "registered": {"event": "fam:A01.1", "frame": "f01", "at": "2026-08-03T07:58:12+02:00"}, "resolved": {"how": "answered", "event": "fam:A03.2", "frame": "f05", "at": "2026-08-05T08:07:12+02:00", "beat": "A03"}},
+    {"id": "ask-f-antal", "q": "派对回几个人（周三 12 日前）", "options": ["4 人", "不去"], "due": "08-12", "item": "fam:kraftskiva", "beat": "F01", "registered": {"event": "fam:F01.1", "frame": "f01", "at": "2026-08-03T10:31:00+02:00"}, "resolved": {"how": "void", "event": "fam:F04.1", "frame": "f22", "at": "2026-08-13T12:05:22+02:00", "beat": "F04"}},
+    {"id": "ask-b-boende", "q": "母亲九月能不能来住、住多久", "options": ["住我们家", "去临时公寓", "各住一段"], "due": "08-14", "item": "fam:mamma-stambyte", "beat": "B03", "registered": {"event": "fam:B03.1", "frame": "f03", "at": "2026-08-04T06:12:30+02:00"}, "resolved": {"how": "void", "event": "fam:B14.1", "frame": "f23", "at": "2026-08-14T10:50:30+02:00", "beat": "B14"}},
+    {"id": "ask-c-sondag", "q": "周日和 Joakim 去骑车吗", "options": ["去", "改天"], "due": "08-09", "item": "fam:cykeltur", "beat": "C01", "registered": {"event": "fam:C01.1", "frame": "f06", "at": "2026-08-05T16:40:33+02:00"}, "resolved": {"how": "answered", "event": "fam:C02.2", "frame": "f13", "at": "2026-08-09T09:30:55+02:00", "beat": "C02"}},
+    {"id": "ask-forrad", "q": "Göran 九月来帮忙抬棚屋，要不要", "options": ["要", "不用"], "due": null, "item": "fam:forradet", "beat": "X03", "registered": {"event": "fam:X03.1", "frame": "f06", "at": "2026-08-05T19:02:00+02:00"}, "resolved": null},
+    {"id": "ask-e-landar", "q": "9 月 14 日几点落地到家", "options": null, "due": null, "item": "fam:flyg-14sep", "beat": "E01", "registered": {"event": "fam:E01.1", "frame": "f08", "at": "2026-08-06T13:05:10+02:00"}, "resolved": {"how": "answered", "event": "fam:E02.2", "frame": "f08", "at": "2026-08-06T22:40:15+02:00", "beat": "E02"}},
+    {"id": "ask-c-lordag", "q": "下周六（15 日）和 Joakim 骑车", "options": ["去", "取消"], "due": "08-15", "item": "fam:cykeltur", "beat": "C02", "registered": {"event": "fam:C02.1", "frame": "f13", "at": "2026-08-09T08:50:02+02:00"}, "resolved": {"how": "void", "event": "fam:C04.1", "frame": "f25", "at": "2026-08-15T08:40:20+02:00", "beat": "C04"}},
+    {"id": "ask-skola-signera", "q": "18 日前用 BankID 签 Signe 的数字工具同意书", "options": ["签"], "due": "08-18", "item": "fam:skolstart", "beat": "S01", "registered": {"event": "fam:S01.1", "frame": "f16", "at": "2026-08-10T14:02:00+02:00"}, "resolved": null},
+    {"id": "ask-a-ring", "q": "怀疑给猫喂了双倍抗生素：打给诊所，还是先观察", "options": ["打给诊所", "先观察"], "due": null, "item": "fam:smilla-veterinar", "beat": "A09", "registered": {"event": "fam:A09.1", "frame": "f18", "at": "2026-08-11T15:52:08+02:00"}, "resolved": {"how": "answered", "event": "fam:A13.1", "frame": "f23", "at": "2026-08-14T08:02:00+02:00", "beat": "A13"}},
+    {"id": "ask-aterkrav", "q": "Kajsa 问春天那张票的钱回来没", "options": null, "due": null, "item": "fam:aterkrav", "beat": "R01", "registered": {"event": "fam:R01.1", "frame": "f19", "at": "2026-08-12T11:20:00+02:00"}, "resolved": {"how": "answered", "event": "fam:R01.3", "frame": "f20", "at": "2026-08-12T14:20:31+02:00", "beat": "R01"}},
+    {"id": "ask-ture-hamta", "q": "Ture 发烧，能马上去接吗", "options": ["去接"], "due": "08-12", "item": "fam:ture-feber", "beat": "G01", "registered": {"event": "fam:G01.1", "frame": "f20", "at": "2026-08-12T14:50:12+02:00"}, "resolved": {"how": "answered", "event": "fam:G01.2", "frame": "f20", "at": "2026-08-12T14:53:40+02:00", "beat": "G01"}},
+    {"id": "ask-i-broms", "q": "Kajsa 的后刹：周末自己修还是送修", "options": ["自己修", "送修"], "due": "08-15", "item": "fam:kajsa-cykel", "beat": "I01", "registered": {"event": "fam:I01.1", "frame": "f20", "at": "2026-08-12T18:35:20+02:00"}, "resolved": {"how": "void", "event": "fam:I02.1", "frame": "f21", "at": "2026-08-13T09:30:10+02:00", "beat": "I02"}},
+    {"id": "ask-vab", "q": "申报今天的护理假（VAB）", "options": ["申报"], "due": null, "item": "fam:ture-feber", "beat": "G03", "registered": {"event": "fam:G03.1", "frame": "f21", "at": "2026-08-13T07:10:12+02:00"}, "resolved": null},
+    {"id": "ask-mamma-varme", "q": "热浪里给母亲打个电话", "options": ["打"], "due": "08-13", "item": "fam:mamma-varme", "beat": "B13", "registered": {"event": "fam:B13.1", "frame": "f22", "at": "2026-08-13T14:30:44+02:00"}, "resolved": {"how": "answered", "event": "fam:B13.2", "frame": "f22", "at": "2026-08-13T17:10:02+02:00", "beat": "B13"}},
+    {"id": "ask-flakt", "q": "给 Ture 买台风扇", "options": null, "due": "08-14", "item": "fam:flakt", "beat": "X15", "registered": {"event": "fam:X15.1", "frame": "f24", "at": "2026-08-14T16:00:10+02:00"}, "resolved": {"how": "answered", "event": "fam:X15.3", "frame": "f24", "at": "2026-08-14T16:12:40+02:00", "beat": "X15"}},
+    {"id": "ask-d-ror", "q": "主水管：整根挖开换（约 6.8 万）还是免挖（约 4.1 万）；周一前答复才能排周二", "options": ["整根换", "免挖"], "due": "08-17", "item": "fam:vattenlacka", "beat": "D04", "registered": {"event": "fam:D04.1", "frame": "f26", "at": "2026-08-15T12:40:31+02:00"}, "resolved": null},
+    {"id": "ask-f-swish", "q": "派对：Swish 给 Joakim 500 克朗（周五前）", "options": ["付"], "due": "08-21", "item": "fam:kraftskiva", "beat": "F05", "registered": {"event": "fam:F05.1", "frame": "f28", "at": "2026-08-16T12:00:10+02:00"}, "resolved": null},
+    {"id": "ask-mamma-73", "q": "母亲 9 月 30 日生日，和 Ulrika 一起做点什么", "options": null, "due": null, "item": "fam:mamma-73", "beat": "B23", "registered": {"event": "fam:B23.1", "frame": "f28", "at": "2026-08-16T14:40:31+02:00"}, "resolved": null},
+    {"id": "ask-mamma-middag", "q": "母亲下周日（23 日）来吃饭？", "options": ["来", "改天"], "due": null, "item": "fam:mamma-middag", "beat": "B17", "registered": {"event": "fam:B17.1", "frame": "f28", "at": "2026-08-16T19:02:31+02:00"}, "resolved": null}
+   ],
+  "cross_stream": [
+    {"item": "fam:smilla-veterinar", "title": "猫 Smilla 看兽医、吃药、药量", "life_threads": ["qa:pets:q16452"], "frames": ["f01", "f03", "f05", "f14", "f15", "f16", "f18", "f19", "f20", "f22", "f23", "f28"]},
+    {"item": "fam:cykeltur", "title": "和 Joakim 去骑车", "life_threads": ["qa:bicycles:q749337"], "frames": ["f06", "f13", "f24", "f25"]},
+    {"item": "fam:vattenlacka", "title": "车道下的主水管漏水", "life_threads": ["qa:diy:q703714", "qa:diy:q383508", "qa:money:q897112"], "frames": ["f16", "f24", "f25", "f26", "f27", "f28"]},
+    {"item": "fam:flyg-14sep", "title": "9 月 14 日那趟航班几点到家", "life_threads": ["qa:travel:q321223"], "frames": ["f08", "f16"]},
+    {"item": "fam:kraftskiva", "title": "Joakim 家的小龙虾派对", "life_threads": ["qa:cooking:q784539"], "frames": ["f01", "f11", "f20", "f22", "f26", "f28"]},
+    {"item": "fam:kattvakt", "title": "托邻居周末喂猫", "life_threads": ["qa:pets:q58635"], "frames": ["f09", "f11", "f13"]},
+    {"item": "fam:signe-serier", "title": "Signe 夜里看网上漫画", "life_threads": ["qa:parenting:q68615"], "frames": ["f18", "f23"]},
+    {"item": "fam:kajsa-cykel", "title": "Kajsa 的通勤车后刹与新车", "life_threads": ["qa:bicycles:q131725", "qa:bicycles:q188332"], "frames": ["f20", "f21", "f22", "f26"]},
+    {"item": "fam:aterkrav", "title": "退单的钱到账", "life_threads": ["qa:travel:q723334"], "frames": ["f19", "f20"]},
+    {"item": "fam:flakt", "title": "给 Ture 买风扇", "life_threads": ["qa:diy:q300671"], "frames": ["f24", "f25"]},
+    {"item": "fam:forradet", "title": "棚屋：铁皮顶与 Göran 说要帮忙抬高", "life_threads": ["qa:diy:q814000", "qa:diy:q637273"], "frames": ["f06", "f08"]}
+   ],
+  "frames": [
+    {
+     "frame": "f01",
+     "at": "2026-08-03T12:00:00+02:00",
+     "ignore": [
+       {"event": "fam:X19.1", "basis": ["authored", "photo"]},
+       {"event": "fam:F01.1", "basis": ["authored", "system"]},
+       {"event": "fam:F01.2", "basis": ["authored", "system"]},
+       {"event": "fam:F01.4", "basis": ["authored", "emoji", "low_info:empty"]},
+       {"event": "fam:B01.1", "basis": ["authored", "system", "low_info:bot"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:mamma-stambyte", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:B01.1", "fam:B01.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-03T17:05:40+02:00", "who": "self", "action": "message", "ref": "fam:B02.1"}, {"at": "2026-08-04T09:30:02+02:00", "who": "self", "action": "message", "ref": "fam:B05.1"}]},
+       {"thread": "fam:smilla-veterinar", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:A01.1", "fam:A01.2", "fam:A01.3"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-03T08:41:22+02:00", "who": "self", "action": "message", "ref": "fam:A01.5"}, {"at": "2026-08-04T10:52:17+02:00", "who": "self", "action": "message", "ref": "fam:A02.3"}], "open_asks": ["ask-a-boka"]},
+       {"thread": "fam:kraftskiva", "level": "low", "high": false, "tier": "untouched", "events": ["fam:F01.1", "fam:F01.2", "fam:F01.3", "fam:F01.4", "fam:F01.5", "fam:F01.6"], "basis": ["authored", "no_action_7d"], "evidence": [], "open_asks": ["ask-f-antal"]},
+       {"thread": "fam:hemmasysslor", "level": "none", "high": false, "tier": "engaged", "events": ["fam:A01.4", "fam:X19.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-03T19:02:44+02:00", "who": "self", "action": "reaction", "ref": "fam:X01.4"}, {"at": "2026-08-03T23:48:02+02:00", "who": "self", "action": "reaction", "ref": "fam:X20.2"}]}
+      ]
+    },
+    {
+     "frame": "f02",
+     "at": "2026-08-04T00:00:00+02:00",
+     "ignore": [
+       {"event": "fam:X01.1", "basis": ["authored", "photo"]},
+       {"event": "fam:X01.2", "basis": ["authored", "chatter"]},
+       {"event": "fam:X01.3", "basis": ["authored", "emoji", "low_info:empty"]},
+       {"event": "fam:X20.1", "basis": ["authored", "chatter"]},
+       {"event": "fam:N-grannar-01.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-grannar-01.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-01.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-01.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-01.3", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-01.4", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-01.5", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-auto-02.1", "basis": ["authored", "receipt", "low_info:bot"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:mamma-stambyte", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:B02.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-04T09:30:02+02:00", "who": "self", "action": "message", "ref": "fam:B05.1"}, {"at": "2026-08-04T21:30:12+02:00", "who": "self", "action": "message", "ref": "fam:B07.1"}, {"at": "2026-08-04T21:50:06+02:00", "who": "self", "action": "message", "ref": "fam:B07.5"}, {"at": "2026-08-04T22:10:40+02:00", "who": "self", "action": "message", "ref": "fam:B06.3"}]},
+       {"thread": "fam:hemmasysslor", "level": "none", "high": false, "tier": "engaged", "events": ["fam:X01.1", "fam:X01.2", "fam:X01.3", "fam:X20.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-03T19:02:44+02:00", "who": "self", "action": "reaction", "ref": "fam:X01.4"}, {"at": "2026-08-03T23:48:02+02:00", "who": "self", "action": "reaction", "ref": "fam:X20.2"}]},
+       {"thread": "fam:n:grannar-hjalm", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-grannar-01.1", "fam:N-grannar-01.2"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:klass-forsta-dagen", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-klass-01.1", "fam:N-klass-01.2", "fam:N-klass-01.3", "fam:N-klass-01.4", "fam:N-klass-01.5"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:kort", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-auto-02.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f03",
+     "at": "2026-08-04T12:00:00+02:00",
+     "ignore": [
+       {"event": "fam:X02.1", "basis": ["authored", "list", "low_info:bot"]},
+       {"event": "fam:A02.2", "basis": ["authored", "duplicate", "low_info:empty"]}
+      ],
+     "groups": [
+       {"threads": ["fam:mamma-bankid", "fam:mamma-stambyte"], "events": ["fam:B04.1", "fam:B03.1", "fam:B03.2"], "why": ["authored_merge"]}
+      ],
+     "items": [
+       {"thread": "fam:mamma-stambyte", "level": "high", "high": true, "tier": "engaged", "events": ["fam:B03.1", "fam:B03.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-04T09:30:02+02:00", "who": "self", "action": "message", "ref": "fam:B05.1"}, {"at": "2026-08-04T21:30:12+02:00", "who": "self", "action": "message", "ref": "fam:B07.1"}, {"at": "2026-08-04T21:50:06+02:00", "who": "self", "action": "message", "ref": "fam:B07.5"}, {"at": "2026-08-04T22:10:40+02:00", "who": "self", "action": "message", "ref": "fam:B06.3"}], "open_asks": ["ask-b-boende"]},
+       {"thread": "fam:mamma-bankid", "level": "normal", "high": false, "tier": "later", "events": ["fam:B04.1"], "basis": ["authored", "self_acted_within_7d"], "evidence": [{"at": "2026-08-07T13:40:26+02:00", "who": "self", "action": "message", "ref": "fam:B08.2"}]},
+       {"thread": "fam:smilla-veterinar", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:A02.1", "fam:X02.1", "fam:A02.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-04T10:52:17+02:00", "who": "self", "action": "message", "ref": "fam:A02.3"}, {"at": "2026-08-05T08:07:12+02:00", "who": "self", "action": "message", "ref": "fam:A03.2"}], "open_asks": ["ask-a-boka"]}
+      ]
+    },
+    {
+     "frame": "f04",
+     "at": "2026-08-05T00:00:00+02:00",
+     "ignore": [
+       {"event": "fam:X22.1", "basis": ["authored", "chatter"]},
+       {"event": "fam:X21.1", "basis": ["authored", "photo"]},
+       {"event": "fam:X21.2", "basis": ["authored", "chatter"]},
+       {"event": "fam:X21.3", "basis": ["authored", "chatter"]},
+       {"event": "fam:N-grannar-02.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-grannar-02.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-grannar-02.3", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-grannar-02.4", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-01.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-01.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-01.3", "basis": ["authored", "group_chatter"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:mamma-stambyte", "level": "high", "high": true, "tier": "engaged", "events": ["fam:B06.1", "fam:B06.2", "fam:B07.2", "fam:B07.3", "fam:B07.4"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-04T21:30:12+02:00", "who": "self", "action": "message", "ref": "fam:B07.1"}, {"at": "2026-08-04T21:50:06+02:00", "who": "self", "action": "message", "ref": "fam:B07.5"}, {"at": "2026-08-04T22:10:40+02:00", "who": "self", "action": "message", "ref": "fam:B06.3"}], "open_asks": ["ask-b-boende"]},
+       {"thread": "fam:hemmasysslor", "level": "none", "high": false, "tier": "engaged", "events": ["fam:X22.1", "fam:X21.1", "fam:X21.2", "fam:X21.3"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-05T20:31:55+02:00", "who": "self", "action": "message", "ref": "fam:X05.5"}, {"at": "2026-08-05T21:50:02+02:00", "who": "self", "action": "message", "ref": "fam:X23.2"}]},
+       {"thread": "fam:n:grannar-bil", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-grannar-02.1", "fam:N-grannar-02.2", "fam:N-grannar-02.3", "fam:N-grannar-02.4"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:kraft-dryck", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-kraft-01.1", "fam:N-kraft-01.2", "fam:N-kraft-01.3"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f05",
+     "at": "2026-08-05T12:00:00+02:00",
+     "ignore": [
+       {"event": "fam:N-auto-04.1", "basis": ["authored", "reminder", "low_info:bot"]},
+       {"event": "fam:N-klass-02.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-02.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-02.3", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:A03.3", "basis": ["authored", "emoji", "low_info:empty"]},
+       {"event": "fam:A03.4", "basis": ["authored", "ack"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:mamma-stambyte", "level": "high", "high": true, "tier": "later", "events": ["fam:B18.1"], "basis": ["authored", "self_acted_within_7d"], "evidence": [{"at": "2026-08-09T21:10:00+02:00", "who": "self", "action": "call_log", "ref": "fam:B10.2"}, {"at": "2026-08-10T21:15:09+02:00", "who": "self", "action": "message", "ref": "fam:B11.3"}, {"at": "2026-08-11T13:00:40+02:00", "who": "self", "action": "message", "ref": "fam:B12.2"}], "open_asks": ["ask-b-boende"]},
+       {"thread": "fam:smilla-veterinar", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:A03.1", "fam:A03.3", "fam:A03.4"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-05T08:07:12+02:00", "who": "self", "action": "message", "ref": "fam:A03.2"}]},
+       {"thread": "fam:n:kalender", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-auto-04.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:klass-laddare", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-klass-02.1", "fam:N-klass-02.2", "fam:N-klass-02.3"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f06",
+     "at": "2026-08-06T00:00:00+02:00",
+     "ignore": [
+       {"event": "fam:X24.1", "basis": ["authored", "receipt", "low_info:bot"]},
+       {"event": "fam:X05.1", "basis": ["authored", "chatter"]},
+       {"event": "fam:X05.2", "basis": ["authored", "duplicate"]},
+       {"event": "fam:X05.3", "basis": ["authored", "chatter"]},
+       {"event": "fam:X05.4", "basis": ["authored", "chatter"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:cykeltur", "level": "low", "high": false, "tier": "engaged", "events": ["fam:C01.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-05T17:02:10+02:00", "who": "self", "action": "message", "ref": "fam:C01.2"}], "open_asks": ["ask-c-sondag"]},
+       {"thread": "fam:forradet", "level": "trace", "high": false, "tier": "engaged", "events": ["fam:X03.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-06T23:05:22+02:00", "who": "self", "action": "message", "ref": "fam:X06.2"}], "open_asks": ["ask-forrad"]},
+       {"thread": "fam:ture-feber", "level": "trace", "high": false, "tier": "later", "events": ["fam:X04.1"], "basis": ["authored", "self_acted_within_7d"], "evidence": [{"at": "2026-08-10T08:21:40+02:00", "who": "self", "action": "message", "ref": "fam:G04.2"}, {"at": "2026-08-12T08:02:31+02:00", "who": "self", "action": "message", "ref": "fam:G05.2"}, {"at": "2026-08-12T14:53:40+02:00", "who": "self", "action": "message", "ref": "fam:G01.2"}, {"at": "2026-08-12T15:55:31+02:00", "who": "self", "action": "message", "ref": "fam:G02.2"}]},
+       {"thread": "fam:hemmasysslor", "level": "none", "high": false, "tier": "engaged", "events": ["fam:X23.1", "fam:X24.1", "fam:X05.1", "fam:X05.2", "fam:X05.3", "fam:X05.4"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-05T20:31:55+02:00", "who": "self", "action": "message", "ref": "fam:X05.5"}, {"at": "2026-08-05T21:50:02+02:00", "who": "self", "action": "message", "ref": "fam:X23.2"}]}
+      ]
+    },
+    {
+     "frame": "f07",
+     "at": "2026-08-06T12:00:00+02:00",
+     "ignore": [
+       {"event": "fam:C05.1", "basis": ["authored", "link"]},
+       {"event": "fam:N-auto-01.1", "basis": ["authored", "list", "low_info:bot"]},
+       {"event": "fam:N-kraft-02.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-02.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-02.3", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-02.4", "basis": ["authored", "group_chatter", "low_info:empty"]},
+       {"event": "fam:X25.1", "basis": ["authored", "chatter"]},
+       {"event": "fam:X25.4", "basis": ["authored", "ack"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:joakim-prat", "level": "none", "high": false, "tier": "noise", "events": ["fam:C05.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:inkopslista", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-auto-01.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:kraft-hund", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-kraft-02.1", "fam:N-kraft-02.2", "fam:N-kraft-02.3", "fam:N-kraft-02.4"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:signe-vardag", "level": "none", "high": false, "tier": "engaged", "events": ["fam:X25.1", "fam:X25.4"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-06T11:30:00+02:00", "who": "self", "action": "swish_sent", "ref": "fam:X25.2"}, {"at": "2026-08-06T11:30:40+02:00", "who": "self", "action": "message", "ref": "fam:X25.3"}]}
+      ]
+    },
+    {
+     "frame": "f08",
+     "at": "2026-08-07T00:00:00+02:00",
+     "ignore": [
+       {"event": "fam:E02.1", "basis": ["authored", "duplicate", "low_info:empty"]},
+       {"event": "fam:X07.1", "basis": ["authored", "delivery", "low_info:bot"]},
+       {"event": "fam:N-grannar-03.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-grannar-03.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-03.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-03.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-03.3", "basis": ["authored", "group_chatter"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:flyg-14sep", "level": "high", "high": true, "tier": "engaged", "events": ["fam:E01.1", "fam:E01.2", "fam:E01.3", "fam:E02.1", "fam:E02.3"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-06T22:40:15+02:00", "who": "self", "action": "message", "ref": "fam:E02.2"}]},
+       {"thread": "fam:mamma-bankid", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:B19.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-07T13:40:26+02:00", "who": "self", "action": "message", "ref": "fam:B08.2"}]},
+       {"thread": "fam:forradet", "level": "low", "high": false, "tier": "engaged", "events": ["fam:X06.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-06T23:05:22+02:00", "who": "self", "action": "message", "ref": "fam:X06.2"}], "open_asks": ["ask-forrad"]},
+       {"thread": "fam:hemmasysslor", "level": "none", "high": false, "tier": "engaged", "events": ["fam:X07.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-07T11:02:40+02:00", "who": "self", "action": "message", "ref": "fam:X08.3"}]},
+       {"thread": "fam:n:grannar-studsmatta", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-grannar-03.1", "fam:N-grannar-03.2"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:klass-cykel", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-klass-03.1", "fam:N-klass-03.2", "fam:N-klass-03.3"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f09",
+     "at": "2026-08-07T12:00:00+02:00",
+     "ignore": [
+       {"event": "fam:X08.1", "basis": ["authored", "delivery", "low_info:bot"]},
+       {"event": "fam:X08.2", "basis": ["authored", "chatter"]},
+       {"event": "fam:N-klass-04.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-04.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-04.3", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-04.4", "basis": ["authored", "group_chatter", "low_info:empty"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:mamma-bankid", "level": "high", "high": true, "tier": "engaged", "events": ["fam:B08.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-07T13:40:26+02:00", "who": "self", "action": "message", "ref": "fam:B08.2"}]},
+       {"thread": "fam:kattvakt", "level": "low", "high": false, "tier": "engaged", "events": ["fam:A04.2", "fam:A04.3"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-07T11:30:48+02:00", "who": "self", "action": "message", "ref": "fam:A04.4"}, {"at": "2026-08-08T10:20:03+02:00", "who": "self", "action": "message", "ref": "fam:A05.2"}]},
+       {"thread": "fam:hemmasysslor", "level": "none", "high": false, "tier": "engaged", "events": ["fam:X08.1", "fam:X08.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-07T11:02:40+02:00", "who": "self", "action": "message", "ref": "fam:X08.3"}]},
+       {"thread": "fam:n:klass-loss", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-klass-04.1", "fam:N-klass-04.2", "fam:N-klass-04.3", "fam:N-klass-04.4"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f10",
+     "at": "2026-08-08T00:00:00+02:00",
+     "ignore": [
+       {"event": "fam:X10.1", "basis": ["authored", "forward"]},
+       {"event": "fam:X09.4", "basis": ["authored", "ack"]},
+       {"event": "fam:X27.1", "basis": ["authored", "receipt", "low_info:bot"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:stuga-resa", "level": "low", "high": false, "tier": "engaged", "events": ["fam:X09.1", "fam:X09.2", "fam:X09.4", "fam:X27.1", "fam:X26.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-07T17:45:39+02:00", "who": "self", "action": "message", "ref": "fam:X09.3"}, {"at": "2026-08-07T22:41:30+02:00", "who": "self", "action": "message", "ref": "fam:X26.2"}]},
+       {"thread": "fam:hemmasysslor", "level": "none", "high": false, "tier": "later", "events": ["fam:X10.1"], "basis": ["authored", "self_acted_within_7d"], "evidence": [{"at": "2026-08-10T17:45:30+02:00", "who": "self", "action": "message", "ref": "fam:X29.3"}, {"at": "2026-08-10T18:52:00+02:00", "who": "self", "action": "list_update", "ref": "fam:X29.4"}]}
+      ]
+    },
+    {
+     "frame": "f11",
+     "at": "2026-08-08T12:00:00+02:00",
+     "ignore": [
+       {"event": "fam:N-grannar-04.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-grannar-04.2", "basis": ["authored", "group_chatter"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:kattvakt", "level": "low", "high": false, "tier": "engaged", "events": ["fam:A05.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-08T10:20:03+02:00", "who": "self", "action": "message", "ref": "fam:A05.2"}, {"at": "2026-08-09T09:12:02+02:00", "who": "self", "action": "message", "ref": "fam:A14.2"}]},
+       {"thread": "fam:kraftskiva", "level": "low", "high": false, "tier": "untouched", "events": ["fam:F02.1"], "basis": ["authored", "no_action_7d"], "evidence": [], "open_asks": ["ask-f-antal"]},
+       {"thread": "fam:n:grannar-loppis", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-grannar-04.1", "fam:N-grannar-04.2"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f12",
+     "at": "2026-08-09T00:00:00+02:00",
+     "ignore": [
+       {"event": "fam:X28.1", "basis": ["authored", "spam", "low_info:bot"]},
+       {"event": "fam:N-auto-02.2", "basis": ["authored", "receipt", "low_info:bot"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:mamma-stambyte", "level": "high", "high": true, "tier": "engaged", "events": ["fam:B09.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-09T21:10:00+02:00", "who": "self", "action": "call_log", "ref": "fam:B10.2"}], "open_asks": ["ask-b-boende"]},
+       {"thread": "fam:bedrageri", "level": "none", "high": false, "tier": "noise", "events": ["fam:X28.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:kort", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-auto-02.2"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f13",
+     "at": "2026-08-09T12:00:00+02:00",
+     "ignore": [
+       {"event": "fam:C02.3", "basis": ["authored", "ack"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:cykeltur", "level": "low", "high": false, "tier": "engaged", "events": ["fam:C02.1", "fam:C02.3"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-09T09:30:55+02:00", "who": "self", "action": "message", "ref": "fam:C02.2"}], "open_asks": ["ask-c-lordag"]},
+       {"thread": "fam:kattvakt", "level": "none", "high": false, "tier": "engaged", "events": ["fam:A14.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-09T09:12:02+02:00", "who": "self", "action": "message", "ref": "fam:A14.2"}]}
+      ]
+    },
+    {
+     "frame": "f14",
+     "at": "2026-08-10T00:00:00+02:00",
+     "ignore": [
+       {"event": "fam:B20.1", "basis": ["authored", "photo"]},
+       {"event": "fam:N-klass-05.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-05.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-05.3", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-05.4", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-03.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-03.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-03.3", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-03.4", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:A06.1", "basis": ["authored", "duplicate", "low_info:bot"]},
+       {"event": "fam:X11.2", "basis": ["authored", "chatter"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:mamma-stambyte", "level": "high", "high": true, "tier": "engaged", "events": ["fam:B20.1", "fam:B10.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-09T21:10:00+02:00", "who": "self", "action": "call_log", "ref": "fam:B10.2"}, {"at": "2026-08-10T21:15:09+02:00", "who": "self", "action": "message", "ref": "fam:B11.3"}], "open_asks": ["ask-b-boende"]},
+       {"thread": "fam:smilla-veterinar", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:A06.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-10T12:30:47+02:00", "who": "self", "action": "message", "ref": "fam:A08.2"}]},
+       {"thread": "fam:stuga-resa", "level": "low", "high": false, "tier": "engaged", "events": ["fam:X11.1", "fam:X11.2", "fam:X11.3"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-09T18:45:12+02:00", "who": "self", "action": "message", "ref": "fam:X11.4"}]},
+       {"thread": "fam:n:klass-fest", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-klass-05.1", "fam:N-klass-05.2", "fam:N-klass-05.3", "fam:N-klass-05.4"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:kraft-allergi", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-kraft-03.1", "fam:N-kraft-03.2", "fam:N-kraft-03.3", "fam:N-kraft-03.4"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f15",
+     "at": "2026-08-10T12:00:00+02:00",
+     "ignore": [
+       {"event": "fam:N-forskola-01.1", "basis": ["authored", "broadcast_photo", "low_info:bot"]},
+       {"event": "fam:X12.1", "basis": ["authored", "chatter"]},
+       {"event": "fam:X12.2", "basis": ["authored", "duplicate"]},
+       {"event": "fam:A07.1", "basis": ["authored", "reminder", "low_info:bot"]},
+       {"event": "fam:A07.2", "basis": ["authored", "receipt", "low_info:bot"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:mamma-stambyte", "level": "high", "high": true, "tier": "engaged", "events": ["fam:B10.3", "fam:B11.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-10T21:15:09+02:00", "who": "self", "action": "message", "ref": "fam:B11.3"}], "open_asks": ["ask-b-boende"]},
+       {"thread": "fam:smilla-veterinar", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:A07.1", "fam:A07.2", "fam:A07.3", "fam:A08.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-10T12:30:47+02:00", "who": "self", "action": "message", "ref": "fam:A08.2"}]},
+       {"thread": "fam:ture-feber", "level": "low", "high": false, "tier": "engaged", "events": ["fam:G04.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-10T08:21:40+02:00", "who": "self", "action": "message", "ref": "fam:G04.2"}]},
+       {"thread": "fam:hemmasysslor", "level": "trace", "high": false, "tier": "engaged", "events": ["fam:X30.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-10T17:45:30+02:00", "who": "self", "action": "message", "ref": "fam:X29.3"}, {"at": "2026-08-10T18:52:00+02:00", "who": "self", "action": "list_update", "ref": "fam:X29.4"}]},
+       {"thread": "fam:n:forskola-bilder", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-forskola-01.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:signe-vardag", "level": "none", "high": false, "tier": "engaged", "events": ["fam:X12.1", "fam:X12.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-10T12:10:05+02:00", "who": "self", "action": "message", "ref": "fam:X12.3"}]}
+      ]
+    },
+    {
+     "frame": "f16",
+     "at": "2026-08-11T00:00:00+02:00",
+     "ignore": [
+       {"event": "fam:X29.2", "basis": ["authored", "list", "low_info:bot"]},
+       {"event": "fam:N-forskola-01.2", "basis": ["authored", "broadcast_photo", "low_info:bot"]},
+       {"event": "fam:N-klass-06.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-06.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-06.3", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-06.5", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:X12.4", "basis": ["authored", "ack", "low_info:ack"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:mamma-stambyte", "level": "high", "high": true, "tier": "engaged", "events": ["fam:B11.2", "fam:B11.4"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-10T21:15:09+02:00", "who": "self", "action": "message", "ref": "fam:B11.3"}, {"at": "2026-08-11T13:00:40+02:00", "who": "self", "action": "message", "ref": "fam:B12.2"}], "open_asks": ["ask-b-boende"]},
+       {"thread": "fam:flyg-14sep", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:E03.1", "fam:E03.3"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-10T19:40:31+02:00", "who": "self", "action": "message", "ref": "fam:E03.2"}]},
+       {"thread": "fam:smilla-veterinar", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:A08.3"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-11T16:20:31+02:00", "who": "self", "action": "message", "ref": "fam:A09.2"}, {"at": "2026-08-11T16:21:02+02:00", "who": "self", "action": "message", "ref": "fam:A09.3"}, {"at": "2026-08-11T16:37:00+02:00", "who": "self", "action": "call_log", "ref": "fam:A10.1"}, {"at": "2026-08-11T16:40:22+02:00", "who": "self", "action": "message", "ref": "fam:A10.3"}]},
+       {"thread": "fam:hemmasysslor", "level": "low", "high": false, "tier": "engaged", "events": ["fam:X29.1", "fam:X29.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-10T17:45:30+02:00", "who": "self", "action": "message", "ref": "fam:X29.3"}, {"at": "2026-08-10T18:52:00+02:00", "who": "self", "action": "list_update", "ref": "fam:X29.4"}]},
+       {"thread": "fam:skolstart", "level": "low", "high": false, "tier": "untouched", "events": ["fam:S01.1"], "basis": ["authored", "no_action_7d"], "evidence": [], "open_asks": ["ask-skola-signera"]},
+       {"thread": "fam:vattenlacka", "level": "low", "high": false, "tier": "engaged", "events": ["fam:D01.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-10T18:30:02+02:00", "who": "self", "action": "message", "ref": "fam:D01.2"}]},
+       {"thread": "fam:n:forskola-bilder", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-forskola-01.2"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:klass-lank", "level": "none", "high": false, "tier": "engaged", "events": ["fam:N-klass-06.1", "fam:N-klass-06.2", "fam:N-klass-06.3", "fam:N-klass-06.5"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-10T15:02:12+02:00", "who": "self", "action": "message", "ref": "fam:N-klass-06.4"}]},
+       {"thread": "fam:signe-vardag", "level": "none", "high": false, "tier": "later", "events": ["fam:X12.4"], "basis": ["authored", "self_acted_within_7d"], "evidence": [{"at": "2026-08-13T20:33:12+02:00", "who": "self", "action": "message", "ref": "fam:X14.2"}, {"at": "2026-08-14T13:25:40+02:00", "who": "self", "action": "message", "ref": "fam:X16.3"}]}
+      ]
+    },
+    {
+     "frame": "f17",
+     "at": "2026-08-11T12:00:00+02:00",
+     "ignore": [
+       {"event": "fam:N-forskola-01.3", "basis": ["authored", "broadcast_photo", "low_info:bot"]},
+       {"event": "fam:N-klass-07.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-07.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-07.3", "basis": ["authored", "group_chatter", "low_info:ack"]},
+       {"event": "fam:X31.2", "basis": ["authored", "chatter"]},
+       {"event": "fam:X31.3", "basis": ["authored", "chatter", "low_info:ack"]},
+       {"event": "fam:X31.4", "basis": ["authored", "duplicate", "low_info:bot"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:mamma-stambyte", "level": "high", "high": true, "tier": "engaged", "events": ["fam:B12.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-11T13:00:40+02:00", "who": "self", "action": "message", "ref": "fam:B12.2"}], "open_asks": ["ask-b-boende"]},
+       {"thread": "fam:signe-vardag", "level": "trace", "high": false, "tier": "later", "events": ["fam:X31.1", "fam:X31.2", "fam:X31.3", "fam:X31.4"], "basis": ["authored", "self_acted_within_7d"], "evidence": [{"at": "2026-08-13T20:33:12+02:00", "who": "self", "action": "message", "ref": "fam:X14.2"}, {"at": "2026-08-14T13:25:40+02:00", "who": "self", "action": "message", "ref": "fam:X16.3"}]},
+       {"thread": "fam:n:forskola-bilder", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-forskola-01.3"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:klass-fritids", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-klass-07.1", "fam:N-klass-07.2", "fam:N-klass-07.3"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f18",
+     "at": "2026-08-12T00:00:00+02:00",
+     "ignore": [
+       {"event": "fam:C06.1", "basis": ["authored", "chatter"]},
+       {"event": "fam:N-grannar-05.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-grannar-05.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-04.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-04.2", "basis": ["authored", "group_chatter", "low_info:empty"]},
+       {"event": "fam:N-kraft-04.3", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-04.4", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:H01.3", "basis": ["authored", "duplicate", "low_info:bot"]},
+       {"event": "fam:H01.4", "basis": ["authored", "duplicate", "low_info:bot"]},
+       {"event": "fam:A09.5", "basis": ["authored", "duplicate"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:mamma-stambyte", "level": "high", "high": true, "tier": "later", "events": ["fam:B12.3"], "basis": ["authored", "self_acted_within_7d"], "evidence": [{"at": "2026-08-14T12:30:44+02:00", "who": "self", "action": "message", "ref": "fam:B15.1"}], "open_asks": ["ask-b-boende"]},
+       {"thread": "fam:smilla-veterinar", "level": "high", "high": true, "tier": "engaged", "events": ["fam:A09.1", "fam:A09.4", "fam:A09.5", "fam:A10.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-11T16:20:31+02:00", "who": "self", "action": "message", "ref": "fam:A09.2"}, {"at": "2026-08-11T16:21:02+02:00", "who": "self", "action": "message", "ref": "fam:A09.3"}, {"at": "2026-08-11T16:37:00+02:00", "who": "self", "action": "call_log", "ref": "fam:A10.1"}, {"at": "2026-08-11T16:40:22+02:00", "who": "self", "action": "message", "ref": "fam:A10.3"}], "open_asks": ["ask-a-ring"]},
+       {"thread": "fam:signe-serier", "level": "low", "high": false, "tier": "engaged", "events": ["fam:H01.1", "fam:H01.3", "fam:H01.4", "fam:H02.2", "fam:H02.3"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-11T19:50:12+02:00", "who": "self", "action": "screen_time_approved", "ref": "fam:H01.2"}, {"at": "2026-08-11T21:05:30+02:00", "who": "self", "action": "message", "ref": "fam:H02.1"}, {"at": "2026-08-11T21:31:15+02:00", "who": "self", "action": "message", "ref": "fam:H02.4"}]},
+       {"thread": "fam:joakim-prat", "level": "none", "high": false, "tier": "noise", "events": ["fam:C06.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:grannar-sopor", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-grannar-05.1", "fam:N-grannar-05.2"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:kraft-visor", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-kraft-04.1", "fam:N-kraft-04.2", "fam:N-kraft-04.3", "fam:N-kraft-04.4"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f19",
+     "at": "2026-08-12T12:00:00+02:00",
+     "ignore": [
+       {"event": "fam:X32.2", "basis": ["authored", "bill_autopay", "low_info:bot"]},
+       {"event": "fam:N-forskola-01.4", "basis": ["authored", "broadcast_photo", "low_info:bot"]},
+       {"event": "fam:A11.1", "basis": ["authored", "system", "low_info:bot"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:smilla-veterinar", "level": "high", "high": true, "tier": "engaged", "events": ["fam:A11.1", "fam:A11.2", "fam:A15.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-12T12:15:02+02:00", "who": "self", "action": "message", "ref": "fam:A11.4"}, {"at": "2026-08-12T13:30:51+02:00", "who": "self", "action": "message", "ref": "fam:A11.5"}, {"at": "2026-08-12T16:30:40+02:00", "who": "self", "action": "message", "ref": "fam:A15.3"}, {"at": "2026-08-12T22:10:02+02:00", "who": "self", "action": "message", "ref": "fam:A16.1"}], "open_asks": ["ask-a-ring"]},
+       {"thread": "fam:aterkrav", "level": "low", "high": false, "tier": "engaged", "events": ["fam:R01.1", "fam:R01.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-12T14:20:31+02:00", "who": "self", "action": "message", "ref": "fam:R01.3"}], "open_asks": ["ask-aterkrav"]},
+       {"thread": "fam:ture-feber", "level": "low", "high": false, "tier": "engaged", "events": ["fam:G05.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-12T08:02:31+02:00", "who": "self", "action": "message", "ref": "fam:G05.2"}, {"at": "2026-08-12T14:53:40+02:00", "who": "self", "action": "message", "ref": "fam:G01.2"}, {"at": "2026-08-12T15:55:31+02:00", "who": "self", "action": "message", "ref": "fam:G02.2"}, {"at": "2026-08-13T08:15:31+02:00", "who": "self", "action": "message", "ref": "fam:G03.4"}]},
+       {"thread": "fam:hemmasysslor", "level": "none", "high": false, "tier": "noise", "events": ["fam:X32.2"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:forskola-bilder", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-forskola-01.4"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f20",
+     "at": "2026-08-13T00:00:00+02:00",
+     "ignore": [
+       {"event": "fam:X32.1", "basis": ["authored", "receipt", "low_info:bot"]},
+       {"event": "fam:F03.2", "basis": ["authored", "chatter"]},
+       {"event": "fam:N-grannar-06.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-auto-01.2", "basis": ["authored", "list", "low_info:bot"]},
+       {"event": "fam:N-klass-08.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-08.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-08.3", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-auto-03.1", "basis": ["authored", "broadcast", "low_info:bot"]},
+       {"event": "fam:A16.2", "basis": ["authored", "emoji", "low_info:empty"]},
+       {"event": "fam:G02.3", "basis": ["authored", "emoji", "low_info:empty"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:mamma-stambyte", "level": "high", "high": true, "tier": "later", "events": ["fam:B21.1"], "basis": ["authored", "self_acted_within_7d"], "evidence": [{"at": "2026-08-14T12:30:44+02:00", "who": "self", "action": "message", "ref": "fam:B15.1"}], "open_asks": ["ask-b-boende"]},
+       {"thread": "fam:smilla-veterinar", "level": "high", "high": true, "tier": "engaged", "events": ["fam:A11.3", "fam:A15.2", "fam:A16.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-12T12:15:02+02:00", "who": "self", "action": "message", "ref": "fam:A11.4"}, {"at": "2026-08-12T13:30:51+02:00", "who": "self", "action": "message", "ref": "fam:A11.5"}, {"at": "2026-08-12T16:30:40+02:00", "who": "self", "action": "message", "ref": "fam:A15.3"}, {"at": "2026-08-12T22:10:02+02:00", "who": "self", "action": "message", "ref": "fam:A16.1"}], "open_asks": ["ask-a-ring"]},
+       {"thread": "fam:kajsa-cykel", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:I01.1", "fam:I01.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-12T21:25:09+02:00", "who": "self", "action": "message", "ref": "fam:I01.3"}, {"at": "2026-08-13T11:40:02+02:00", "who": "self", "action": "message", "ref": "fam:I02.3"}], "open_asks": ["ask-i-broms"]},
+       {"thread": "fam:kraftskiva", "level": "normal", "high": false, "tier": "untouched", "events": ["fam:F03.1", "fam:F03.2"], "basis": ["authored", "no_action_7d"], "evidence": [], "open_asks": ["ask-f-antal"]},
+       {"thread": "fam:ture-feber", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:G01.1", "fam:G02.1", "fam:G02.3"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-12T14:53:40+02:00", "who": "self", "action": "message", "ref": "fam:G01.2"}, {"at": "2026-08-12T15:55:31+02:00", "who": "self", "action": "message", "ref": "fam:G02.2"}, {"at": "2026-08-13T08:15:31+02:00", "who": "self", "action": "message", "ref": "fam:G03.4"}, {"at": "2026-08-13T12:31:02+02:00", "who": "self", "action": "message", "ref": "fam:G06.3"}]},
+       {"thread": "fam:hemmasysslor", "level": "none", "high": false, "tier": "noise", "events": ["fam:X32.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:grannar-katt", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-grannar-06.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:inkopslista", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-auto-01.2"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:klass-samakning", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-klass-08.1", "fam:N-klass-08.2", "fam:N-klass-08.3"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:skola-schema", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-auto-03.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f21",
+     "at": "2026-08-13T12:00:00+02:00",
+     "ignore": [
+       {"event": "fam:I03.1", "basis": ["authored", "spam", "low_info:bot"]},
+       {"event": "fam:N-grannar-06.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-grannar-06.3", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-auto-01.3", "basis": ["authored", "list", "low_info:bot"]},
+       {"event": "fam:N-klass-09.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-09.2", "basis": ["authored", "group_chatter"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:ture-feber", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:G03.1", "fam:G03.2", "fam:G03.3"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-13T08:15:31+02:00", "who": "self", "action": "message", "ref": "fam:G03.4"}, {"at": "2026-08-13T12:31:02+02:00", "who": "self", "action": "message", "ref": "fam:G06.3"}, {"at": "2026-08-13T16:41:31+02:00", "who": "self", "action": "message", "ref": "fam:G07.2"}, {"at": "2026-08-14T07:31:02+02:00", "who": "self", "action": "message", "ref": "fam:G08.2"}], "open_asks": ["ask-vab"]},
+       {"thread": "fam:kajsa-cykel", "level": "low", "high": false, "tier": "engaged", "events": ["fam:I02.1", "fam:I02.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-13T11:40:02+02:00", "who": "self", "action": "message", "ref": "fam:I02.3"}]},
+       {"thread": "fam:bedrageri", "level": "none", "high": false, "tier": "noise", "events": ["fam:I03.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:grannar-katt", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-grannar-06.2", "fam:N-grannar-06.3"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:inkopslista", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-auto-01.3"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:klass-jacka", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-klass-09.1", "fam:N-klass-09.2"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f22",
+     "at": "2026-08-14T00:00:00+02:00",
+     "ignore": [
+       {"event": "fam:F04.3", "basis": ["authored", "ack", "low_info:ack"]},
+       {"event": "fam:F04.4", "basis": ["authored", "ack"]},
+       {"event": "fam:B22.1", "basis": ["authored", "ack"]},
+       {"event": "fam:N-kraft-05.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-05.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-05.3", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-05.4", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:X14.1", "basis": ["authored", "chatter"]},
+       {"event": "fam:X14.3", "basis": ["authored", "chatter"]},
+       {"event": "fam:G06.2", "basis": ["authored", "duplicate"]},
+       {"event": "fam:X13.1", "basis": ["authored", "broadcast", "low_info:bot"]},
+       {"event": "fam:G07.3", "basis": ["authored", "emoji", "low_info:empty"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:smilla-veterinar", "level": "high", "high": true, "tier": "engaged", "events": ["fam:A12.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-13T21:31:10+02:00", "who": "self", "action": "message", "ref": "fam:A12.3"}, {"at": "2026-08-14T08:02:00+02:00", "who": "self", "action": "call_log", "ref": "fam:A13.1"}, {"at": "2026-08-14T08:16:02+02:00", "who": "self", "action": "message", "ref": "fam:A13.3"}, {"at": "2026-08-14T08:20:31+02:00", "who": "self", "action": "message", "ref": "fam:A13.5"}], "open_asks": ["ask-a-ring"]},
+       {"thread": "fam:kajsa-cykel", "level": "low", "high": false, "tier": "untouched", "events": ["fam:I03.2"], "basis": ["authored", "no_action_7d"], "evidence": []},
+       {"thread": "fam:kraftskiva", "level": "low", "high": false, "tier": "untouched", "events": ["fam:F04.1", "fam:F04.2", "fam:F04.3", "fam:F04.4"], "basis": ["authored", "no_action_7d"], "evidence": []},
+       {"thread": "fam:ture-feber", "level": "low", "high": false, "tier": "engaged", "events": ["fam:G06.1", "fam:G06.2", "fam:X13.1", "fam:G07.1", "fam:G07.3"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-13T12:31:02+02:00", "who": "self", "action": "message", "ref": "fam:G06.3"}, {"at": "2026-08-13T16:41:31+02:00", "who": "self", "action": "message", "ref": "fam:G07.2"}, {"at": "2026-08-14T07:31:02+02:00", "who": "self", "action": "message", "ref": "fam:G08.2"}], "open_asks": ["ask-vab"]},
+       {"thread": "fam:mamma-varme", "level": "none", "high": false, "tier": "engaged", "events": ["fam:B13.1", "fam:B22.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-13T17:10:02+02:00", "who": "self", "action": "message", "ref": "fam:B13.2"}, {"at": "2026-08-13T19:30:00+02:00", "who": "self", "action": "call_log", "ref": "fam:B13.3"}]},
+       {"thread": "fam:n:kraft-mat", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-kraft-05.1", "fam:N-kraft-05.2", "fam:N-kraft-05.3", "fam:N-kraft-05.4"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:signe-vardag", "level": "none", "high": false, "tier": "engaged", "events": ["fam:X14.1", "fam:X14.3"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-13T20:33:12+02:00", "who": "self", "action": "message", "ref": "fam:X14.2"}, {"at": "2026-08-14T13:25:40+02:00", "who": "self", "action": "message", "ref": "fam:X16.3"}]}
+      ]
+    },
+    {
+     "frame": "f23",
+     "at": "2026-08-14T12:00:00+02:00",
+     "ignore": [
+       {"event": "fam:X33.1", "basis": ["authored", "photo"]},
+       {"event": "fam:N-forskola-01.5", "basis": ["authored", "broadcast_photo", "low_info:bot"]},
+       {"event": "fam:X34.1", "basis": ["authored", "report", "low_info:bot"]},
+       {"event": "fam:A13.4", "basis": ["authored", "ack", "low_info:bot"]},
+       {"event": "fam:A13.6", "basis": ["authored", "ack"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:mamma-stambyte", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:B14.1", "fam:B14.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-14T12:30:44+02:00", "who": "self", "action": "message", "ref": "fam:B15.1"}]},
+       {"thread": "fam:smilla-veterinar", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:A13.2", "fam:A13.4", "fam:A13.6"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-14T08:16:02+02:00", "who": "self", "action": "message", "ref": "fam:A13.3"}, {"at": "2026-08-14T08:20:31+02:00", "who": "self", "action": "message", "ref": "fam:A13.5"}]},
+       {"thread": "fam:signe-serier", "level": "low", "high": false, "tier": "noise", "events": ["fam:X34.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:ture-feber", "level": "low", "high": false, "tier": "engaged", "events": ["fam:G08.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-14T07:31:02+02:00", "who": "self", "action": "message", "ref": "fam:G08.2"}], "open_asks": ["ask-vab"]},
+       {"thread": "fam:hemmasysslor", "level": "none", "high": false, "tier": "noise", "events": ["fam:X33.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:forskola-bilder", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-forskola-01.5"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f24",
+     "at": "2026-08-15T00:00:00+02:00",
+     "ignore": [
+       {"event": "fam:C03.2", "basis": ["authored", "chatter"]},
+       {"event": "fam:X15.2", "basis": ["authored", "receipt", "low_info:bot"]},
+       {"event": "fam:N-forskola-01.6", "basis": ["authored", "broadcast_photo", "low_info:bot"]},
+       {"event": "fam:N-klass-10.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-10.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-10.3", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-auto-02.3", "basis": ["authored", "receipt", "low_info:bot"]},
+       {"event": "fam:N-kraft-06.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-06.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-06.3", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-06.4", "basis": ["authored", "group_chatter", "low_info:empty"]},
+       {"event": "fam:X16.1", "basis": ["authored", "chatter"]},
+       {"event": "fam:D02.2", "basis": ["authored", "chatter"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:vattenlacka", "level": "normal", "high": false, "tier": "engaged", "events": ["fam:D02.1", "fam:D02.2", "fam:D02.3"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-15T08:05:31+02:00", "who": "self", "action": "message", "ref": "fam:D03.3"}, {"at": "2026-08-15T08:10:00+02:00", "who": "self", "action": "call_log", "ref": "fam:D03.4"}, {"at": "2026-08-15T13:20:02+02:00", "who": "self", "action": "message", "ref": "fam:D05.2"}, {"at": "2026-08-15T13:40:55+02:00", "who": "self", "action": "message", "ref": "fam:D05.5"}]},
+       {"thread": "fam:cykeltur", "level": "low", "high": false, "tier": "engaged", "events": ["fam:C03.1", "fam:C03.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-15T08:40:20+02:00", "who": "self", "action": "message", "ref": "fam:C04.1"}], "open_asks": ["ask-c-lordag"]},
+       {"thread": "fam:flakt", "level": "low", "high": false, "tier": "engaged", "events": ["fam:X15.1", "fam:X15.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-14T16:12:40+02:00", "who": "self", "action": "message", "ref": "fam:X15.3"}]},
+       {"thread": "fam:mamma-stambyte", "level": "low", "high": false, "tier": "untouched", "events": ["fam:B15.2"], "basis": ["authored", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:forskola-bilder", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-forskola-01.6"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:klass-mentor", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-klass-10.1", "fam:N-klass-10.2", "fam:N-klass-10.3"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:kort", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-auto-02.3"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:kraft-avbud", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-kraft-06.1", "fam:N-kraft-06.2", "fam:N-kraft-06.3", "fam:N-kraft-06.4"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:signe-vardag", "level": "none", "high": false, "tier": "engaged", "events": ["fam:X16.1", "fam:X16.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-14T13:25:40+02:00", "who": "self", "action": "message", "ref": "fam:X16.3"}]}
+      ]
+    },
+    {
+     "frame": "f25",
+     "at": "2026-08-15T12:00:00+02:00",
+     "ignore": [
+       {"event": "fam:C04.2", "basis": ["authored", "ack"]},
+       {"event": "fam:X17.1", "basis": ["authored", "delivery", "low_info:bot"]},
+       {"event": "fam:N-auto-01.4", "basis": ["authored", "list", "low_info:bot"]},
+       {"event": "fam:D09.1", "basis": ["authored", "chatter"]},
+       {"event": "fam:D09.2", "basis": ["authored", "chatter"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:vattenlacka", "level": "high", "high": true, "tier": "engaged", "events": ["fam:D03.1", "fam:D03.2", "fam:D03.5", "fam:D09.1", "fam:D09.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-15T08:05:31+02:00", "who": "self", "action": "message", "ref": "fam:D03.3"}, {"at": "2026-08-15T08:10:00+02:00", "who": "self", "action": "call_log", "ref": "fam:D03.4"}, {"at": "2026-08-15T13:20:02+02:00", "who": "self", "action": "message", "ref": "fam:D05.2"}, {"at": "2026-08-15T13:40:55+02:00", "who": "self", "action": "message", "ref": "fam:D05.5"}]},
+       {"thread": "fam:cykeltur", "level": "none", "high": false, "tier": "noise", "events": ["fam:C04.2"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:flakt", "level": "none", "high": false, "tier": "noise", "events": ["fam:X17.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:inkopslista", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-auto-01.4"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f26",
+     "at": "2026-08-16T00:00:00+02:00",
+     "ignore": [
+       {"event": "fam:X35.1", "basis": ["authored", "receipt", "low_info:bot"]},
+       {"event": "fam:F06.1", "basis": ["authored", "duplicate", "low_info:bot"]},
+       {"event": "fam:B16.1", "basis": ["authored", "superseded"]},
+       {"event": "fam:N-klass-11.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-11.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-11.3", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:D06.2", "basis": ["authored", "chatter"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:vattenlacka", "level": "high", "high": true, "tier": "engaged", "events": ["fam:D04.1", "fam:D05.1", "fam:D05.3", "fam:D05.4", "fam:D05.6", "fam:D06.1", "fam:D06.2"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-15T13:20:02+02:00", "who": "self", "action": "message", "ref": "fam:D05.2"}, {"at": "2026-08-15T13:40:55+02:00", "who": "self", "action": "message", "ref": "fam:D05.5"}, {"at": "2026-08-16T09:48:31+02:00", "who": "self", "action": "message", "ref": "fam:D10.3"}, {"at": "2026-08-16T17:20:31+02:00", "who": "self", "action": "message", "ref": "fam:D07.2"}], "open_asks": ["ask-d-ror"]},
+       {"thread": "fam:kraftskiva", "level": "low", "high": false, "tier": "noise", "events": ["fam:F06.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:mamma-stambyte", "level": "low", "high": false, "tier": "noise", "events": ["fam:B16.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:kajsa-cykel", "level": "trace", "high": false, "tier": "untouched", "events": ["fam:I04.1"], "basis": ["authored", "no_action_7d"], "evidence": []},
+       {"thread": "fam:hemmasysslor", "level": "none", "high": false, "tier": "noise", "events": ["fam:X35.1"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:klass-idrott", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-klass-11.1", "fam:N-klass-11.2", "fam:N-klass-11.3"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f27",
+     "at": "2026-08-16T12:00:00+02:00",
+     "ignore": [
+       {"event": "fam:X36.1", "basis": ["authored", "chatter"]},
+       {"event": "fam:X36.2", "basis": ["authored", "emoji", "low_info:empty"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:vattenlacka", "level": "high", "high": true, "tier": "engaged", "events": ["fam:D10.1", "fam:D10.2", "fam:D11.1", "fam:D07.1", "fam:D10.4"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-16T09:48:31+02:00", "who": "self", "action": "message", "ref": "fam:D10.3"}, {"at": "2026-08-16T17:20:31+02:00", "who": "self", "action": "message", "ref": "fam:D07.2"}], "open_asks": ["ask-d-ror"]},
+       {"thread": "fam:hemmasysslor", "level": "none", "high": false, "tier": "noise", "events": ["fam:X36.1", "fam:X36.2"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    },
+    {
+     "frame": "f28",
+     "at": "2026-08-17T00:00:00+02:00",
+     "ignore": [
+       {"event": "fam:X18.1", "basis": ["authored", "chatter"]},
+       {"event": "fam:X18.2", "basis": ["authored", "list", "low_info:bot"]},
+       {"event": "fam:N-grannar-07.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-grannar-07.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-12.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-12.2", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-12.3", "basis": ["authored", "group_chatter", "low_info:empty"]},
+       {"event": "fam:N-klass-12.4", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-klass-12.5", "basis": ["authored", "group_chatter", "low_info:empty"]},
+       {"event": "fam:N-auto-02.4", "basis": ["authored", "receipt", "low_info:bot"]},
+       {"event": "fam:N-kraft-07.1", "basis": ["authored", "group_chatter"]},
+       {"event": "fam:N-kraft-07.2", "basis": ["authored", "group_chatter"]}
+      ],
+     "groups": [],
+     "items": [
+       {"thread": "fam:vattenlacka", "level": "high", "high": true, "tier": "untouched", "events": ["fam:D08.1", "fam:D08.2"], "basis": ["authored", "no_action_7d"], "evidence": [], "open_asks": ["ask-d-ror"]},
+       {"thread": "fam:kraftskiva", "level": "low", "high": false, "tier": "untouched", "events": ["fam:F05.1", "fam:F05.2"], "basis": ["authored", "no_action_7d"], "evidence": [], "open_asks": ["ask-f-swish"]},
+       {"thread": "fam:mamma-middag", "level": "low", "high": false, "tier": "untouched", "events": ["fam:B17.1"], "basis": ["authored", "no_action_7d"], "evidence": [], "open_asks": ["ask-mamma-middag"]},
+       {"thread": "fam:skolstart", "level": "low", "high": false, "tier": "untouched", "events": ["fam:S02.1"], "basis": ["authored", "no_action_7d"], "evidence": [], "open_asks": ["ask-skola-signera"]},
+       {"thread": "fam:smilla-veterinar", "level": "low", "high": false, "tier": "engaged", "events": ["fam:A17.1"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-08-16T20:20:00+02:00", "who": "self", "action": "reaction", "ref": "fam:A17.2"}]},
+       {"thread": "fam:mamma-73", "level": "trace", "high": false, "tier": "untouched", "events": ["fam:B23.1"], "basis": ["authored", "no_action_7d"], "evidence": [], "open_asks": ["ask-mamma-73"]},
+       {"thread": "fam:hemmasysslor", "level": "none", "high": false, "tier": "noise", "events": ["fam:X18.1", "fam:X18.2"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:grannar-fest", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-grannar-07.1", "fam:N-grannar-07.2"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:klass-forsta-dagen", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-klass-12.1", "fam:N-klass-12.2", "fam:N-klass-12.3", "fam:N-klass-12.4", "fam:N-klass-12.5"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:kort", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-auto-02.4"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
+       {"thread": "fam:n:kraft-regn", "level": "none", "high": false, "tier": "noise", "events": ["fam:N-kraft-07.1", "fam:N-kraft-07.2"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
+      ]
+    }
+   ]
+ }
 }

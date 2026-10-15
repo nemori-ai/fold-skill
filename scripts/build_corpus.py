@@ -78,7 +78,9 @@ ACK = re.compile(
     r"agreed|done|merged|fixed|same( here)?|me too|ping|bump|any (update|news|progress)s?( on this)?|"
     r"thank you( very much)?|awesome|perfect|excellent|yes|no|indeed|wow|congrats|congratulations|"
     r"good (catch|point|idea)|makes sense|sounds good|sgtm|wfm|ack|noted|closing|addressed|applied|updated|rebased|"
-    r"谢谢|收到|好的|好|嗯|在看了|同上)( [!.?]*)?[!.?~:)( ]*$")
+    r"谢谢|收到|好的|好|嗯|在看了|同上|"
+    r"tack( så mycket| snälla)?|tusen tack|ok(ej)?|japp|ja|nej|toppen|kanon|perfekt|absolut|precis|skönt|puh|ha(ha)+)"
+    r"( [!.?]*)?[!.?~:)( ]*$")
 
 
 def core_text(text: str | None) -> str:

@@ -4,16 +4,19 @@
   社区流    一个公开自然观察论坛（Discourse）：本人参与的话题、回复与提到本人的帖子、关注分类的全部帖子
   生活流    Stack Exchange 生活问答站：本人提出的问题收到的回答与评论（内容按 CC BY-SA 发布）
   订阅流    Substack 公开 newsletter、Enron 语料里的商业群发（整周平移）、由 SMHI 观测值生成的天气提醒（模板）
+  家庭流    作者编写的原创文本（corpus/composite/family/beats.json），由 family 子命令追加，不来自任何真实的人
 
 用法：
   python3 scripts/compose_corpus.py build              # 生成 frames.json 与 ids.json
   python3 scripts/compose_corpus.py labels             # 生成 labels.json（弱标注）
   python3 scripts/compose_corpus.py noise              # 生成 noise.json，并排打印 curl-bagder / composite / 手写情境
   python3 scripts/compose_corpus.py audit --sample 30  # 抽样打印改写后的输入，并扫描残留的真实名字
+  python3 scripts/compose_corpus.py family             # 把家庭流追加进现有 frames.json，更新 ids/noise/labels
 
 前置：curl-bagder 与 composite 的 raw/ 已由 fetch_corpus.py 抓好；Enron 压缩包已在 .local/cache/enron/。
 化名表、随机盐与各流的挑选只存本机 .local/composite/mapping.json：首次运行自动生成，之后的人工修补也写在
-那里，不入库。改写只用规则替换与人工修补，不用模型生成或改写文本。
+那里，不入库。改写只用规则替换与人工修补，不用模型生成或改写文本。家庭流例外：它是作者写的原创文本，
+不经过化名表，`family` 只需要现有的 frames.json 与入库的节拍表，`build` 重建前四条流后要再运行一次 `family`。
 """
 
 from __future__ import annotations
@@ -48,7 +51,7 @@ UTC = dt.timezone.utc
 BASE = ROOT / "corpus" / "composite"
 MAPPING = ROOT / ".local" / "composite" / "mapping.json"
 ZONE = ZoneInfo("Europe/Stockholm")
-STREAMS = ("work", "community", "life", "subscription")
+STREAMS = ("work", "community", "life", "subscription", "family")
 
 # 化名词表：只用来生成新名字，不含任何真实名字与化名的对应。
 ADJ = ("amber", "brisk", "calm", "dusky", "early", "fern", "gentle", "hazel", "ivory", "jolly", "keen", "lunar",
@@ -1237,6 +1240,10 @@ def life_actions(rw: Rewriter) -> tuple[dict, dict, dict]:
 
 def labels(high_per_frame: int) -> dict:
     corpus = load(BASE / "frames.json")
+    # 家庭流的标注由节拍表写定（family 子命令），这里只推前四条流；已有的 family 一节原样保留。
+    previous = load(BASE / "labels.json") if (BASE / "labels.json").exists() else {}
+    for frame in corpus["frames"]:
+        frame["events"] = [e for e in frame["events"] if e.get("stream") != "family"]
     rw = Rewriter(load_mapping())
     actions, links, outcome, direct = work_actions(rw)
     forum_act, forum_direct = community_actions(rw)
@@ -1251,7 +1258,7 @@ def labels(high_per_frame: int) -> dict:
     # 订阅流默认是噪音：newsletter、营销邮件与天气提醒都不需要本人行动。
     direct.update({e["id"]: "subscription" for e in events if e["stream"] == "subscription"})
     out_frames, totals = label_frames(corpus, actions, links, outcome, direct, high_per_frame)
-    per_stream = {s: collections.Counter() for s in STREAMS}
+    per_stream = {s: collections.Counter() for s in STREAMS if s != "family"}
     where = {}
     for frame in out_frames:
         for item in frame["items"]:
@@ -1294,6 +1301,8 @@ def labels(high_per_frame: int) -> dict:
         "cross_stream": cross,
         "frames": out_frames,
     }
+    if previous.get("family"):
+        result["family"] = previous["family"]
     save(BASE / "labels.json", result, lines=True)
     log(f"写入 {BASE / 'labels.json'}：" + "；".join(
         f"{s} {dict(sorted(c.items()))}" for s, c in per_stream.items()))
@@ -1322,9 +1331,76 @@ def noise() -> dict:
     return result
 
 
+FAMILY_PERSONA = ("家人通过 iMessage、短信与 WhatsApp 群联系他：伴侣 Kajsa、女儿 Signe（11 岁）、儿子 Ture（4 岁，上幼儿园）、"
+                  "母亲（通讯录里叫“Mamma”，独居外地）、妹妹 Ulrika；家里养一只猫 Smilla。家庭往来是瑞典语，由作者编写，不来自真实的人。")
+
+
+def family() -> dict:
+    """把家庭流追加进现有 frames.json：前四条流原样保留（不需要化名表与 raw/），家庭流按时间插入 28 帧。
+
+    同时重写 ids.json（前四条流的条目必须与原来逐条一致）、重算 noise.json，并把作者标注写成 labels.json 的 family 一节。
+    可以重复运行：先去掉已有的家庭流再插入。
+    """
+    import family_stream  # noqa: PLC0415
+
+    events = family_stream.write_render()
+    corpus = load(BASE / "frames.json")
+    backup = ROOT / ".local" / "composite" / "frames-v1.1.json"
+    frames = corpus["frames"]
+    for frame in frames:
+        frame["events"] = [e for e in frame["events"] if e.get("stream") != "family"]
+    if not backup.exists():
+        backup.parent.mkdir(parents=True, exist_ok=True)
+        save(backup, corpus)
+        log(f"备份不含家庭流的 frames.json → {backup}")
+    old_ids = load(BASE / "ids.json")
+    bounds = [(parse_time(f["signal"]["window"]["from"]), parse_time(f["signal"]["window"]["to"]), f) for f in frames]
+    for event in events:
+        at = parse_time(event["at"])
+        frame = next((f for lo, hi, f in bounds if lo <= at < hi), None)
+        if frame is None:
+            raise SystemExit(f"{event['id']} 不在窗口内：{event['at']}")
+        frame["events"].append(event)
+    for frame in frames:
+        frame["events"].sort(key=lambda e: (parse_time(e["at"]), e["id"]))
+        frame["title"] = re.sub(r"· \d+ 条输入$", f"· {len(frame['events'])} 条输入", frame["title"])
+        frame["signal"]["received"] = len(frame["events"])
+    counts = collections.Counter(e["stream"] for f in frames for e in f["events"])
+    total = sum(counts.values())
+    corpus["title"] = "混合人物两周：工作、社区爱好、生活问答、家庭往来与订阅噪音（真实公开数据化名改写，家庭流为原创）"
+    corpus["subtitle"] = (f"{corpus['source']['window']['start']} 至 {corpus['source']['window']['end']}（不含）· {total} 条输入"
+                          f"（其中家庭流 {counts['family']} 条为作者编写）· {len(frames)} 帧")
+    corpus["source"]["streams"] = {s: counts[s] for s in STREAMS if counts[s]}
+    corpus["source"]["family"] = "corpus/composite/family/README.md"
+    context = re.sub(r"家人通过 .*?不来自真实的人。", "", corpus["persona"]["context"])
+    corpus["persona"]["context"] = context.replace("订阅了几份 newsletter", FAMILY_PERSONA + "订阅了几份 newsletter", 1)
+    save(BASE / "frames.json", corpus)
+    import hashlib as _h  # noqa: PLC0415
+    ids_doc = {**{k: v for k, v in old_ids.items() if k != "events"}, "events": [
+        {"id": e["id"], "frame": f["id"], "stream": e["stream"], "kind": e.get("kind"), "at": e["at"],
+         "author_kind": e.get("author_kind"), "thread": e.get("thread"), "text_length": e["text_length"],
+         "text_sha1": _h.sha1(e["text"].encode()).hexdigest()[:12], "origin": e["origin"]}
+        for f in frames for e in f["events"]]}
+    before = [e for e in old_ids["events"] if e["stream"] != "family"]
+    after = [e for e in ids_doc["events"] if e["stream"] != "family"]
+    if before != after:
+        raise SystemExit("前四条流的 ids.json 条目与重建结果不一致，frames.json 可能不是入库清单对应的版本；未写入")
+    save(BASE / "ids.json", ids_doc, lines=True)
+    noise()
+    labels_path = BASE / "labels.json"
+    labels_doc = load(labels_path)
+    labels_doc["family"] = family_stream.labels(family_stream.load_beats(), frames)
+    save(labels_path, labels_doc, lines=True)
+    summary = labels_doc["family"]["summary"]
+    log(f"composite：{total} 条输入，家庭流 {counts['family']} 条（{counts['family'] / total:.1%}）；"
+        f"家庭流标注：应忽略 {summary['ignore_events']} 条，问题 {summary['asks']} 个（答 {summary['asks_answered']}、"
+        f"失效 {summary['asks_void']}、开着 {summary['asks_open']}）")
+    return corpus
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("command", choices=("build", "labels", "noise", "audit"))
+    parser.add_argument("command", choices=("build", "labels", "noise", "audit", "family"))
     parser.add_argument("--high-per-frame", type=int, default=3)
     parser.add_argument("--write-ids", action="store_true")
     parser.add_argument("--sample", type=int, default=30)
@@ -1338,6 +1414,8 @@ def main() -> int:
         noise()
     elif args.command == "audit":
         audit(args.sample, args.seed)
+    elif args.command == "family":
+        family()
     return 0
 
 

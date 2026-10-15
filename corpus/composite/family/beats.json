@@ -1,0 +1,5488 @@
+{
+ "source": "composite/family",
+ "status": "作者编写的家庭流节拍表：事实与标注的唯一来源。人物、事件与文字都是原创，Enron 私人往来只作仿写参考。",
+ "doc": "corpus/composite/family/README.md",
+ "window": {
+  "start": "2026-08-03",
+  "end": "2026-08-17",
+  "timezone": "Europe/Stockholm"
+ },
+ "levels": [
+  "critical",
+  "high",
+  "normal",
+  "low",
+  "trace",
+  "none"
+ ],
+ "channels": {
+  "kajsa": {
+   "channel": "iMessage · Kajsa",
+   "medium": "chat"
+  },
+  "familj": {
+   "channel": "iMessage · Familjen",
+   "medium": "group"
+  },
+  "signe": {
+   "channel": "iMessage · Signe",
+   "medium": "chat"
+  },
+  "mamma": {
+   "channel": "SMS · Mamma",
+   "medium": "sms"
+  },
+  "rost": {
+   "channel": "Röstbrevlåda",
+   "medium": "voicemail"
+  },
+  "telefon": {
+   "channel": "Telefon",
+   "medium": "call_log"
+  },
+  "syskon": {
+   "channel": "WhatsApp · Syskon",
+   "medium": "group"
+  },
+  "goran": {
+   "channel": "E-post",
+   "medium": "email"
+  },
+  "post": {
+   "channel": "E-post",
+   "medium": "email"
+  },
+  "joakim": {
+   "channel": "WhatsApp · Joakim Ek",
+   "medium": "chat"
+  },
+  "kraft": {
+   "channel": "WhatsApp · Kräftskiva 22/8 🦞",
+   "medium": "group"
+  },
+  "klass": {
+   "channel": "WhatsApp · Föräldrar 6B",
+   "medium": "group"
+  },
+  "grannar": {
+   "channel": "WhatsApp · Grannar Tallstigen",
+   "medium": "group"
+  },
+  "gunnel": {
+   "channel": "SMS · Gunnel granne",
+   "medium": "sms"
+  },
+  "klinik": {
+   "channel": "SMS · Djurkliniken Kvarnbacken",
+   "medium": "sms"
+  },
+  "forskola": {
+   "channel": "Förskoleappen · Ekorren",
+   "medium": "app"
+  },
+  "skola": {
+   "channel": "Skolappen · Klass 6B",
+   "medium": "app"
+  },
+  "bank": {
+   "channel": "Bankappen",
+   "medium": "app"
+  },
+  "forsakring": {
+   "channel": "Trygghem Försäkring",
+   "medium": "app"
+  },
+  "ror": {
+   "channel": "SMS · Rörfixarna Söder",
+   "medium": "sms"
+  },
+  "budbil": {
+   "channel": "SMS · Budbilen",
+   "medium": "sms"
+  },
+  "spam": {
+   "channel": "SMS · Paketservice",
+   "medium": "sms"
+  },
+  "spam_bankid": {
+   "channel": "SMS · BankID-info",
+   "medium": "sms"
+  },
+  "kalender": {
+   "channel": "Kalender",
+   "medium": "app"
+  },
+  "lista": {
+   "channel": "Inköpslistan",
+   "medium": "app"
+  },
+  "skarmtid": {
+   "channel": "Skärmtid",
+   "medium": "app"
+  },
+  "brev": {
+   "channel": "Digital brevlåda",
+   "medium": "app"
+  }
+ },
+ "people": {
+  "jonas": {
+   "name": "Jonas Berglund",
+   "author_kind": "self",
+   "role": "本人"
+  },
+  "kajsa": {
+   "name": "Kajsa",
+   "author_kind": "human",
+   "role": "同居伴侣 Kajsa Wallin，手术室护士"
+  },
+  "signe": {
+   "name": "Signe",
+   "author_kind": "human",
+   "role": "女儿，11 岁"
+  },
+  "mamma": {
+   "name": "Mamma",
+   "author_kind": "human",
+   "role": "母亲 Birgitta Berglund，72 岁"
+  },
+  "ulrika": {
+   "name": "Ulrika",
+   "author_kind": "human",
+   "role": "妹妹 Ulrika Berglund"
+  },
+  "goran": {
+   "name": "Göran Wallin",
+   "author_kind": "human",
+   "role": "Kajsa 的父亲"
+  },
+  "joakim": {
+   "name": "Joakim Ek",
+   "author_kind": "human",
+   "role": "老朋友"
+  },
+  "sanna": {
+   "name": "Sanna Ek",
+   "author_kind": "human",
+   "role": "Joakim 的伴侣"
+  },
+  "henrik": {
+   "name": "Henrik Sjöberg",
+   "author_kind": "human",
+   "role": "派对客人"
+  },
+  "lisen": {
+   "name": "Lisen Hedlund",
+   "author_kind": "human",
+   "role": "派对客人"
+  },
+  "emelie": {
+   "name": "Emelie Sundin",
+   "author_kind": "human",
+   "role": "派对客人"
+  },
+  "mans": {
+   "name": "Måns Wikström",
+   "author_kind": "human",
+   "role": "派对客人"
+  },
+  "tove": {
+   "name": "Tove Engström",
+   "author_kind": "human",
+   "role": "派对客人"
+  },
+  "gunnel": {
+   "name": "Gunnel granne",
+   "author_kind": "human",
+   "role": "邻居 Gunnel Nordin"
+  },
+  "klinik": {
+   "name": "Djurkliniken Kvarnbacken",
+   "author_kind": "bot",
+   "role": "兽医诊所的系统短信"
+  },
+  "klinik_p": {
+   "name": "Djurkliniken Kvarnbacken",
+   "author_kind": "human",
+   "role": "兽医诊所的护士"
+  },
+  "linnea": {
+   "name": "Linnea (Ekorren)",
+   "author_kind": "human",
+   "role": "幼儿园老师"
+  },
+  "forskola": {
+   "name": "Förskolan Humlan · Ekorren",
+   "author_kind": "automation",
+   "role": "幼儿园群发"
+  },
+  "skola": {
+   "name": "Klass 6B · mentor",
+   "author_kind": "automation",
+   "role": "学校平台群发"
+  },
+  "skolsys": {
+   "name": "Skolappen",
+   "author_kind": "bot",
+   "role": "学校平台系统提醒"
+  },
+  "bank": {
+   "name": "Bankappen",
+   "author_kind": "bot",
+   "role": "银行 App"
+  },
+  "forsakring": {
+   "name": "Trygghem Försäkring",
+   "author_kind": "bot",
+   "role": "保险公司"
+  },
+  "ror": {
+   "name": "Rörfixarna Söder",
+   "author_kind": "bot",
+   "role": "水管公司派单短信"
+  },
+  "ronny": {
+   "name": "Ronny, Rörfixarna",
+   "author_kind": "human",
+   "role": "水管工"
+  },
+  "budbil": {
+   "name": "Budbilen",
+   "author_kind": "bot",
+   "role": "快递"
+  },
+  "spam": {
+   "name": "Paketservice",
+   "author_kind": "bot",
+   "role": "诈骗短信"
+  },
+  "spam_bankid": {
+   "name": "BankID-info",
+   "author_kind": "bot",
+   "role": "冒充 BankID 的诈骗短信"
+  },
+  "kalender": {
+   "name": "Kalender",
+   "author_kind": "bot",
+   "role": "共享日历"
+  },
+  "lista": {
+   "name": "Inköpslistan",
+   "author_kind": "bot",
+   "role": "共享购物清单"
+  },
+  "skarmtid": {
+   "name": "Skärmtid",
+   "author_kind": "bot",
+   "role": "屏幕使用时间"
+  },
+  "telefon": {
+   "name": "Telefon",
+   "author_kind": "bot",
+   "role": "手机通话记录"
+  },
+  "rost": {
+   "name": "Röstbrevlåda",
+   "author_kind": "bot",
+   "role": "语音信箱转写"
+  },
+  "cykelbutik": {
+   "name": "Cykelbutiken",
+   "author_kind": "bot",
+   "role": "自行车店"
+  },
+  "elbutik": {
+   "name": "Elbutiken",
+   "author_kind": "bot",
+   "role": "电器店"
+  },
+  "asa": {
+   "name": "~Åsa L",
+   "author_kind": "human",
+   "role": "家长"
+  },
+  "emir": {
+   "name": "~Emir",
+   "author_kind": "human",
+   "role": "家长"
+  },
+  "frida": {
+   "name": "~Frida",
+   "author_kind": "human",
+   "role": "家长"
+  },
+  "par": {
+   "name": "~Pär K",
+   "author_kind": "human",
+   "role": "家长"
+  },
+  "malena": {
+   "name": "~Malena",
+   "author_kind": "human",
+   "role": "家长"
+  },
+  "kalle": {
+   "name": "~Kalle",
+   "author_kind": "human",
+   "role": "家长"
+  },
+  "annelie": {
+   "name": "~Annelie B",
+   "author_kind": "human",
+   "role": "家长"
+  },
+  "fredrik": {
+   "name": "~Fredrik",
+   "author_kind": "human",
+   "role": "家长"
+  },
+  "josefine": {
+   "name": "~Josefine",
+   "author_kind": "human",
+   "role": "家长"
+  },
+  "pontus": {
+   "name": "~Pontus",
+   "author_kind": "human",
+   "role": "家长"
+  },
+  "liselott": {
+   "name": "~Liselott",
+   "author_kind": "human",
+   "role": "家长"
+  },
+  "yusuf": {
+   "name": "~Yusuf",
+   "author_kind": "human",
+   "role": "家长"
+  },
+  "annika": {
+   "name": "~Annika",
+   "author_kind": "human",
+   "role": "家长"
+  },
+  "kristoffer": {
+   "name": "~Kristoffer",
+   "author_kind": "human",
+   "role": "家长"
+  },
+  "nadia": {
+   "name": "~Nadia",
+   "author_kind": "human",
+   "role": "家长"
+  },
+  "leif": {
+   "name": "~Leif",
+   "author_kind": "human",
+   "role": "邻居"
+  },
+  "stig": {
+   "name": "~Stig",
+   "author_kind": "human",
+   "role": "邻居"
+  },
+  "lotta": {
+   "name": "~Lotta",
+   "author_kind": "human",
+   "role": "邻居"
+  },
+  "bengt": {
+   "name": "~Bengt N",
+   "author_kind": "human",
+   "role": "邻居"
+  },
+  "majvor": {
+   "name": "~Majvor",
+   "author_kind": "human",
+   "role": "邻居"
+  },
+  "brev": {
+   "name": "Digital brevlåda",
+   "author_kind": "bot",
+   "role": "数字信箱"
+  }
+ },
+ "items": {
+  "fam:smilla-veterinar": {
+   "line": "A",
+   "title": "猫 Smilla 看兽医、吃药、药量",
+   "kind": "要去办",
+   "cross": [
+    "qa:pets:q16452"
+   ]
+  },
+  "fam:mamma-stambyte": {
+   "line": "B",
+   "title": "母亲九月换水管期间住哪",
+   "kind": "要决定",
+   "cross": []
+  },
+  "fam:mamma-bankid": {
+   "line": "B",
+   "title": "母亲的 BankID 用不了，回执交不了",
+   "kind": "要去办",
+   "merge": "fam:mamma-stambyte",
+   "cross": []
+  },
+  "fam:cykeltur": {
+   "line": "C",
+   "title": "和 Joakim 去骑车",
+   "kind": "不了了之",
+   "cross": [
+    "qa:bicycles:q749337"
+   ]
+  },
+  "fam:vattenlacka": {
+   "line": "D",
+   "title": "车道下的主水管漏水",
+   "kind": "要决定",
+   "cross": [
+    "qa:diy:q703714",
+    "qa:diy:q383508",
+    "qa:money:q897112"
+   ]
+  },
+  "fam:flyg-14sep": {
+   "line": "E",
+   "title": "9 月 14 日那趟航班几点到家",
+   "kind": "等他答复",
+   "cross": [
+    "qa:travel:q321223"
+   ]
+  },
+  "fam:kraftskiva": {
+   "line": "F",
+   "title": "Joakim 家的小龙虾派对",
+   "kind": "报人数",
+   "cross": [
+    "qa:cooking:q784539"
+   ]
+  },
+  "fam:kattvakt": {
+   "line": "A",
+   "title": "托邻居周末喂猫",
+   "kind": "一次性",
+   "merge": "fam:smilla-veterinar",
+   "cross": [
+    "qa:pets:q58635"
+   ]
+  },
+  "fam:ture-feber": {
+   "line": "-",
+   "title": "Ture 发烧被接回、请护理假",
+   "kind": "一次性",
+   "cross": []
+  },
+  "fam:signe-serier": {
+   "line": "-",
+   "title": "Signe 夜里看网上漫画",
+   "kind": "一次性",
+   "cross": [
+    "qa:parenting:q68615"
+   ]
+  },
+  "fam:kajsa-cykel": {
+   "line": "-",
+   "title": "Kajsa 的通勤车后刹与新车",
+   "kind": "一次性",
+   "cross": [
+    "qa:bicycles:q131725",
+    "qa:bicycles:q188332"
+   ]
+  },
+  "fam:skolstart": {
+   "line": "-",
+   "title": "Signe 开学与要签的文件",
+   "kind": "要去办",
+   "cross": []
+  },
+  "fam:aterkrav": {
+   "line": "-",
+   "title": "退单的钱到账",
+   "kind": "一次性",
+   "cross": [
+    "qa:travel:q723334"
+   ]
+  },
+  "fam:mamma-varme": {
+   "line": "B",
+   "title": "热浪里母亲那边没风扇",
+   "kind": "一次性",
+   "cross": []
+  },
+  "fam:flakt": {
+   "line": "-",
+   "title": "给 Ture 买风扇",
+   "kind": "一次性",
+   "cross": [
+    "qa:diy:q300671"
+   ]
+  },
+  "fam:stuga-resa": {
+   "line": "-",
+   "title": "去小屋接人、卸车",
+   "kind": "一次性",
+   "cross": []
+  },
+  "fam:forradet": {
+   "line": "-",
+   "title": "棚屋：铁皮顶与 Göran 说要帮忙抬高",
+   "kind": "不了了之",
+   "cross": [
+    "qa:diy:q814000",
+    "qa:diy:q637273"
+   ]
+  },
+  "fam:hemmasysslor": {
+   "line": "-",
+   "title": "家务小事（浇番茄、收快递）",
+   "kind": "琐事",
+   "cross": []
+  },
+  "fam:signe-vardag": {
+   "line": "-",
+   "title": "Signe 白天一个人在家的零碎请求",
+   "kind": "琐事",
+   "cross": []
+  },
+  "fam:mamma-middag": {
+   "line": "B",
+   "title": "母亲想下周日来吃饭",
+   "kind": "等他答复",
+   "cross": []
+  },
+  "fam:mamma-73": {
+   "line": "B",
+   "title": "母亲 9 月 30 日满 73 岁",
+   "kind": "不了了之",
+   "cross": []
+  },
+  "fam:bedrageri": {
+   "line": "-",
+   "title": "诈骗短信（假快递关税、假 BankID 续期）",
+   "kind": "噪音",
+   "cross": []
+  },
+  "fam:joakim-prat": {
+   "line": "-",
+   "title": "Joakim 发来的链接与播客",
+   "kind": "琐事",
+   "cross": []
+  }
+ },
+ "beats": [
+  {
+   "id": "A01",
+   "item": "fam:smilla-veterinar",
+   "gist": "Kajsa 从小屋连发：猫打喷嚏只吃湿粮，让他约兽医；顺带要他浇番茄。他回“今天办”。",
+   "level": "normal",
+   "ask": {
+    "id": "ask-a-boka",
+    "q": "给 Smilla 约兽医",
+    "options": [
+     "网上预约",
+     "打电话"
+    ],
+    "due": null
+   },
+   "messages": [
+    {
+     "id": "fam:A01.1",
+     "at": "2026-08-03T07:58:12+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "God morgon! Har du gett Smilla mat?"
+    },
+    {
+     "id": "fam:A01.2",
+     "at": "2026-08-03T07:58:40+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Hon nös hela tiden i fredags och åt bara blötmaten. Hon brukar ju älska torrfodret"
+    },
+    {
+     "id": "fam:A01.3",
+     "at": "2026-08-03T07:59:31+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Kan du ringa veterinären? Eller boka på nätet, Kvarnbacken har tider på morgnarna"
+    },
+    {
+     "id": "fam:A01.4",
+     "at": "2026-08-03T08:00:05+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Och vattna tomaterna på altanen 🍅 annars dör de",
+     "item": "fam:hemmasysslor"
+    },
+    {
+     "id": "fam:A01.5",
+     "at": "2026-08-03T08:41:22+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ok, gör det idag"
+    }
+   ]
+  },
+  {
+   "id": "B01",
+   "item": "fam:mamma-stambyte",
+   "gist": "母亲打电话没打通，留言：楼里秋天要换水管，不知道怎么办，让他回电。",
+   "level": "normal",
+   "messages": [
+    {
+     "id": "fam:B01.1",
+     "at": "2026-08-03T09:04:10+02:00",
+     "ch": "telefon",
+     "who": "telefon",
+     "kind": "missed_call",
+     "template": "missed_call",
+     "params": {
+      "who": "Mamma",
+      "count": 2
+     },
+     "ignore": "system"
+    },
+    {
+     "id": "fam:B01.2",
+     "at": "2026-08-03T09:05:02+02:00",
+     "ch": "rost",
+     "who": "rost",
+     "kind": "voicemail",
+     "template": "voicemail",
+     "params": {
+      "who": "Mamma",
+      "secs": 48,
+      "text": "Hej Jonas det är mamma. Jag fick ett brev från föreningen om stam bytet, de ska byta alla rör i hela huset i höst och jag förstår inte riktigt vad jag ska göra med... ja. Det är något papper man ska skicka in. Ring mig när du har tid. Puss."
+     }
+    }
+   ]
+  },
+  {
+   "id": "F01",
+   "item": "fam:kraftskiva",
+   "gist": "Joakim 建了小龙虾派对群：22 日周六，带孩子来，周三 12 日前报人数。",
+   "level": "low",
+   "ask": {
+    "id": "ask-f-antal",
+    "q": "派对回几个人（周三 12 日前）",
+    "options": [
+     "4 人",
+     "不去"
+    ],
+    "due": "08-12"
+   },
+   "messages": [
+    {
+     "id": "fam:F01.1",
+     "at": "2026-08-03T10:31:00+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "system",
+     "template": "wa_created",
+     "params": {
+      "who": "Joakim Ek",
+      "group": "Kräftskiva 22/8 🦞"
+     },
+     "ignore": "system"
+    },
+    {
+     "id": "fam:F01.2",
+     "at": "2026-08-03T10:31:02+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "system",
+     "template": "wa_added",
+     "params": {
+      "who": "Joakim Ek"
+     },
+     "ignore": "system"
+    },
+    {
+     "id": "fam:F01.3",
+     "at": "2026-08-03T10:33:47+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Tjena allihop! Kräftskiva hos oss lördag 22/8 från kl 17. Barn välkomna, det blir lekar i trädgården och tipsrunda 🦞 Skriv här hur många ni blir så vi vet hur mycket kräftor vi ska beställa. Senast onsdag 12/8!"
+    },
+    {
+     "id": "fam:F01.4",
+     "at": "2026-08-03T10:35:10+02:00",
+     "ch": "kraft",
+     "who": "sanna",
+     "kind": "message",
+     "text": "🦞🦞🦞",
+     "ignore": "emoji"
+    },
+    {
+     "id": "fam:F01.5",
+     "at": "2026-08-03T10:52:33+02:00",
+     "ch": "kraft",
+     "who": "henrik",
+     "kind": "message",
+     "text": "Vi kommer! 2 vuxna + 1"
+    },
+    {
+     "id": "fam:F01.6",
+     "at": "2026-08-03T11:40:09+02:00",
+     "ch": "kraft",
+     "who": "lisen",
+     "kind": "message",
+     "text": "Låter toppen! Återkommer, lilla A kanske har fotbollscup den helgen"
+    }
+   ]
+  },
+  {
+   "id": "X19",
+   "item": "fam:hemmasysslor",
+   "gist": "Göran 发来小屋的照片（三张），问候。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X19.1",
+     "at": "2026-08-03T11:20:00+02:00",
+     "ch": "goran",
+     "who": "goran",
+     "kind": "email",
+     "text": "Hej! Här kommer några bilder från bryggan. Barnen badar varje dag fast vattnet är kallt. Hälsningar Göran\n\n[3 bilagor: IMG_2231.jpg, IMG_2234.jpg, IMG_2240.jpg]",
+     "subject": "Bilder från stugan",
+     "ignore": "photo"
+    }
+   ]
+  },
+  {
+   "id": "B02",
+   "item": "fam:mamma-stambyte",
+   "gist": "他下午回母亲短信说晚上打；晚上没打。母亲九点多发来：不要紧，信放在桌上等一起看。",
+   "level": "normal",
+   "messages": [
+    {
+     "id": "fam:B02.1",
+     "at": "2026-08-03T17:05:40+02:00",
+     "ch": "mamma",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Hej mamma, såg att du ringt. Ringer ikväll!"
+    },
+    {
+     "id": "fam:B02.2",
+     "at": "2026-08-03T21:44:18+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "Du ringde inte. Det gör inget, du har så mycket. Jag lägger brevet på köksbordet så kan vi läsa det tillsammans nästa gång. Grannen säger att det blir oljud hela hösten. Kram mamma"
+    }
+   ]
+  },
+  {
+   "id": "X01",
+   "item": "fam:hemmasysslor",
+   "gist": "家庭群里 Kajsa 发 Ture 钓到小鱼的照片，Signe 吐槽，他点了个心。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X01.1",
+     "at": "2026-08-03T18:30:51+02:00",
+     "ch": "familj",
+     "who": "kajsa",
+     "kind": "photo",
+     "text": "[Bild] Ture fick sin första abborre!! 🐟",
+     "ignore": "photo"
+    },
+    {
+     "id": "fam:X01.2",
+     "at": "2026-08-03T18:33:02+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "den var typ 3 cm",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X01.3",
+     "at": "2026-08-03T18:33:05+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "😂",
+     "ignore": "emoji"
+    },
+    {
+     "id": "fam:X01.4",
+     "at": "2026-08-03T19:02:44+02:00",
+     "ch": "familj",
+     "who": "jonas",
+     "kind": "reaction",
+     "text": "Gillade ”[Bild] Ture fick sin första abborre!! 🐟”"
+    }
+   ]
+  },
+  {
+   "id": "X20",
+   "item": "fam:hemmasysslor",
+   "gist": "Kajsa 睡前：Ture 又睡在她床上了；他回了一颗心。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X20.1",
+     "at": "2026-08-03T21:32:10+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Godnatt ❤️ Ture somnade i min säng igen",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X20.2",
+     "at": "2026-08-03T23:48:02+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "reaction",
+     "text": "Gillade ”Godnatt ❤️ Ture somnade i min säng igen”"
+    }
+   ]
+  },
+  {
+   "id": "B03",
+   "item": "fam:mamma-stambyte",
+   "gist": "母亲早上六点长短信：第 38 周起换水管六周，三选一，14 日前回执；不想住别人的公寓，问能否住他们家一段，附通告照片。",
+   "level": "high",
+   "ask": {
+    "id": "ask-b-boende",
+    "q": "母亲九月能不能来住、住多久",
+    "options": [
+     "住我们家",
+     "去临时公寓",
+     "各住一段"
+    ],
+    "due": "08-14"
+   },
+   "messages": [
+    {
+     "id": "fam:B03.1",
+     "at": "2026-08-04T06:12:30+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "God morgon Jonas. Jag har inte sovit så bra. Brevet från föreningen säger att stambytet börjar vecka 38 och håller på i sex veckor och man ska välja om man vill ha en evakueringslägenhet i huset bredvid eller bo hos släkt eller bo kvar och duscha i en vagn på gården. Svaret ska in senast den 14 augusti. Jag vill inte bo i någon annans lägenhet med andras saker. Kan jag kanske vara hos er en del av tiden? Jag kan hjälpa till med Ture. Prata med Kajsa. Jag skickar en bild på brevet. Kram mamma"
+    },
+    {
+     "id": "fam:B03.2",
+     "at": "2026-08-04T06:14:02+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "photo",
+     "text": "[Bild] BRF LÖNNEN 4 – INFORMATION OM STAMBYTE\nArbetena i ert trapphus startar måndag 14 september (v. 38) och pågår ca 6 veckor. Under denna tid saknas vatten och avlopp i lägenheten.\nVälj ett alternativ:\n1. Evakueringslägenhet (Lönnvägen 6, möblerad)\n2. Eget boende hos anhöriga\n3. Kvarboende med tillgång till dusch- och toalettvagn på gården\nSvarstalongen lämnas till styrelsen eller via föreningens webb (BankID) senast 14 augusti.\nStyrelsen"
+    }
+   ]
+  },
+  {
+   "id": "B04",
+   "item": "fam:mamma-bankid",
+   "gist": "母亲第二条：新手机做不了 BankID，银行说要重新申请；回执要么 BankID 网上交，要么交纸条。",
+   "level": "normal",
+   "note": "与 B03 同一件事的一部分，应合并。",
+   "messages": [
+    {
+     "id": "fam:B04.1",
+     "at": "2026-08-04T06:20:55+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "Det är min nya telefon som inte vill göra BankID. Banken säger att jag måste beställa ett nytt. Jag förstår inte varför det gamla inte följer med. Svaret till föreningen ska man skicka med BankID eller lämna lappen till styrelsen"
+    }
+   ]
+  },
+  {
+   "id": "A02",
+   "item": "fam:smilla-veterinar",
+   "gist": "Kajsa 早上问约了没；一小时后只发“??”；他快十一点才回“现在约”，其实没约。",
+   "level": "normal",
+   "misplaced": "Kajsa 的“??”是对同一问题的重复催促",
+   "messages": [
+    {
+     "id": "fam:A02.1",
+     "at": "2026-08-04T07:31:09+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Bokade du?"
+    },
+    {
+     "id": "fam:A02.2",
+     "at": "2026-08-04T08:15:44+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "??",
+     "ignore": "duplicate"
+    },
+    {
+     "id": "fam:A02.3",
+     "at": "2026-08-04T10:52:17+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Nej sorry, gör det nu"
+    }
+   ]
+  },
+  {
+   "id": "X02",
+   "item": "fam:smilla-veterinar",
+   "gist": "共享购物清单：Kajsa 远程加了猫湿粮和牛奶。",
+   "level": "normal",
+   "messages": [
+    {
+     "id": "fam:X02.1",
+     "at": "2026-08-04T07:45:00+02:00",
+     "ch": "lista",
+     "who": "lista",
+     "kind": "list_update",
+     "template": "list_add",
+     "params": {
+      "who": "Kajsa",
+      "items": [
+       "kattmat (blöt, påsar)",
+       "mjölk"
+      ]
+     },
+     "ignore": "list"
+    }
+   ]
+  },
+  {
+   "id": "B05",
+   "item": "fam:mamma-stambyte",
+   "gist": "他回母亲：今晚和 Kajsa 说，BankID 可以用护照在 App 里办，晚上打电话。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:B05.1",
+     "at": "2026-08-04T09:30:02+02:00",
+     "ch": "mamma",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Hej! Jag pratar med Kajsa ikväll. BankID fixar vi, det går att beställa i appen med passet. Ringer dig ikväll"
+    }
+   ]
+  },
+  {
+   "id": "B06",
+   "item": "fam:mamma-stambyte",
+   "gist": "妹妹 Ulrika 在兄妹群：母亲打电话给她，听起来很累；她家一居室，没法接母亲。他夜里才回。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:B06.1",
+     "at": "2026-08-04T12:40:21+02:00",
+     "ch": "syskon",
+     "who": "ulrika",
+     "kind": "message",
+     "text": "Har mamma pratat med dig om stambytet? Hon ringde mig i går och lät helt slut"
+    },
+    {
+     "id": "fam:B06.2",
+     "at": "2026-08-04T12:41:03+02:00",
+     "ch": "syskon",
+     "who": "ulrika",
+     "kind": "message",
+     "text": "Jag kan ju inte ha henne här, vi har en etta och Pelle jobbar hemifrån"
+    },
+    {
+     "id": "fam:B06.3",
+     "at": "2026-08-04T22:10:40+02:00",
+     "ch": "syskon",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ja. Pratar med Kajsa"
+    }
+   ]
+  },
+  {
+   "id": "X22",
+   "item": "fam:hemmasysslor",
+   "gist": "Kajsa：爸爸问你要不要鲈鱼放冰箱 😂",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X22.1",
+     "at": "2026-08-04T16:02:40+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Pappa undrar om du vill ha abborrar till frysen 😂",
+     "ignore": "chatter"
+    }
+   ]
+  },
+  {
+   "id": "X21",
+   "item": "fam:hemmasysslor",
+   "gist": "Signe 在家庭群发自己游泳的照片：水 19 度；Kajsa：勇敢！",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X21.1",
+     "at": "2026-08-04T18:40:31+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "photo",
+     "text": "[Bild]",
+     "ignore": "photo"
+    },
+    {
+     "id": "fam:X21.2",
+     "at": "2026-08-04T18:40:50+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "vattnet var 19 grader!!!",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X21.3",
+     "at": "2026-08-04T18:52:12+02:00",
+     "ch": "familj",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Modigt! 🥶",
+     "ignore": "chatter"
+    }
+   ]
+  },
+  {
+   "id": "B07",
+   "item": "fam:mamma-stambyte",
+   "gist": "晚上他向 Kajsa 转述母亲的请求；Kajsa：六周太长，回家再说。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:B07.1",
+     "at": "2026-08-04T21:30:12+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Mamma undrar om hon kan bo hos oss under stambytet. Sex veckor från v 38"
+    },
+    {
+     "id": "fam:B07.2",
+     "at": "2026-08-04T21:42:50+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Hela tiden??"
+    },
+    {
+     "id": "fam:B07.3",
+     "at": "2026-08-04T21:42:58+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Jag älskar din mamma men sex veckor"
+    },
+    {
+     "id": "fam:B07.4",
+     "at": "2026-08-04T21:43:31+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Kan vi prata när vi är hemma"
+    },
+    {
+     "id": "fam:B07.5",
+     "at": "2026-08-04T21:50:06+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ja"
+    }
+   ]
+  },
+  {
+   "id": "B18",
+   "item": "fam:mamma-stambyte",
+   "gist": "母亲清晨又一条：楼上邻居说选临时公寓的人会分到最差的那套；她更不想去了。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:B18.1",
+     "at": "2026-08-05T06:31:20+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "God morgon. Det har inte regnat här heller. Grannen på trean säger att de som tar evakueringslägenheten får den sämsta, den mot parkeringen, och att man inte får ta med sina egna möbler. Jag vet inte om det stämmer. Jag vill helst inte dit. Kram mamma"
+    }
+   ]
+  },
+  {
+   "id": "A03",
+   "item": "fam:smilla-veterinar",
+   "gist": "他早上在网上约了 10 日 10:15，诊所发确认短信；他告诉 Kajsa，Kajsa 回赞。",
+   "level": "normal",
+   "answers": "ask-a-boka",
+   "messages": [
+    {
+     "id": "fam:A03.1",
+     "at": "2026-08-05T08:05:40+02:00",
+     "ch": "klinik",
+     "who": "klinik",
+     "kind": "notification",
+     "template": "vet_booking",
+     "params": {
+      "pet": "Smilla",
+      "when": "mån 10 aug kl 10:15"
+     }
+    },
+    {
+     "id": "fam:A03.2",
+     "at": "2026-08-05T08:07:12+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Bokat mån 10:15 på Kvarnbacken"
+    },
+    {
+     "id": "fam:A03.3",
+     "at": "2026-08-05T08:30:02+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "👍",
+     "ignore": "emoji"
+    },
+    {
+     "id": "fam:A03.4",
+     "at": "2026-08-05T08:31:15+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Tack ❤️",
+     "ignore": "ack"
+    }
+   ]
+  },
+  {
+   "id": "X23",
+   "item": "fam:hemmasysslor",
+   "gist": "Kajsa：别忘了倒垃圾，周三收；他晚上回“弄好了”。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:X23.1",
+     "at": "2026-08-05T12:20:31+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Glöm inte soporna, de hämtar onsdag morgon"
+    },
+    {
+     "id": "fam:X23.2",
+     "at": "2026-08-05T21:50:02+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Fixat"
+    }
+   ]
+  },
+  {
+   "id": "X04",
+   "item": "fam:ture-feber",
+   "gist": "幼儿园群发：10 日恢复开园，带备用衣服、遮阳帽和写名字的水壶。",
+   "level": "trace",
+   "messages": [
+    {
+     "id": "fam:X04.1",
+     "at": "2026-08-05T14:00:00+02:00",
+     "ch": "forskola",
+     "who": "forskola",
+     "kind": "broadcast",
+     "text": "Hej alla föräldrar! Välkomna tillbaka måndag 10/8 ☀️ Vi öppnar 7.00. Glöm inte extrakläder, solhatt och en vattenflaska märkt med namn. Vi ser fram emot att ses! /Ekorren"
+    }
+   ]
+  },
+  {
+   "id": "C01",
+   "item": "fam:cykeltur",
+   "gist": "Joakim 问新车的咔哒声修好没，约周日去骑砂石路；他说周日也许，家人那天回来。",
+   "level": "low",
+   "ask": {
+    "id": "ask-c-sondag",
+    "q": "周日和 Joakim 去骑车吗",
+    "options": [
+     "去",
+     "改天"
+    ],
+    "due": "08-09"
+   },
+   "messages": [
+    {
+     "id": "fam:C01.1",
+     "at": "2026-08-05T16:40:33+02:00",
+     "ch": "joakim",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Har du fått bukt med klickandet på Cuben? Annars kan vi lyssna på den på söndag. Grusrundan i reservatet?"
+    },
+    {
+     "id": "fam:C01.2",
+     "at": "2026-08-05T17:02:10+02:00",
+     "ch": "joakim",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Klickar fortfarande 😑 Söndag kanske, familjen kommer hem då"
+    }
+   ]
+  },
+  {
+   "id": "X24",
+   "item": "fam:hemmasysslor",
+   "gist": "刷卡通知：超市 412 克朗。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X24.1",
+     "at": "2026-08-05T18:12:00+02:00",
+     "ch": "bank",
+     "who": "bank",
+     "kind": "card_purchase",
+     "template": "card_purchase",
+     "params": {
+      "amount": "412",
+      "merchant": "MATBUTIKEN SODER"
+     },
+     "ignore": "receipt"
+    }
+   ]
+  },
+  {
+   "id": "X03",
+   "item": "fam:forradet",
+   "gist": "Göran 发邮件：听说他想把棚屋抬高，自己有千斤顶，九月可以来帮忙。他没回。",
+   "level": "trace",
+   "ask": {
+    "id": "ask-forrad",
+    "q": "Göran 九月来帮忙抬棚屋，要不要",
+    "options": [
+     "要",
+     "不用"
+    ],
+    "due": null
+   },
+   "messages": [
+    {
+     "id": "fam:X03.1",
+     "at": "2026-08-05T19:02:00+02:00",
+     "ch": "goran",
+     "who": "goran",
+     "kind": "email",
+     "text": "Hej Jonas!\n\nKajsa sa att du funderar på att höja förrådet så att du kan stå upprätt därinne. Jag har två domkrafter och lite virke över efter bryggan. Jag kan komma upp en helg i september om du vill, säg bara till.\n\nHälsningar\nGöran",
+     "subject": "Förrådet"
+    }
+   ]
+  },
+  {
+   "id": "X05",
+   "item": "fam:hemmasysslor",
+   "gist": "Signe 在家庭群里连喊爸爸，问她的二手网店包裹到了没；他回没有。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X05.1",
+     "at": "2026-08-05T20:10:01+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "pappa",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X05.2",
+     "at": "2026-08-05T20:10:04+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "pappa",
+     "ignore": "duplicate"
+    },
+    {
+     "id": "fam:X05.3",
+     "at": "2026-08-05T20:10:19+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "kan du kolla om mitt paket kommit",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X05.4",
+     "at": "2026-08-05T20:10:30+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "det är från vinted",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X05.5",
+     "at": "2026-08-05T20:31:55+02:00",
+     "ch": "familj",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Inget paket här"
+    }
+   ]
+  },
+  {
+   "id": "X25",
+   "item": "fam:signe-vardag",
+   "gist": "Signe 在家庭群：爸爸 Swish 200 给我，要去集市；他中午转了，银行通知。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X25.1",
+     "at": "2026-08-06T09:12:30+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "pappa kan du swisha 200 till mig vi ska gå på marknaden",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X25.2",
+     "at": "2026-08-06T11:30:00+02:00",
+     "ch": "bank",
+     "who": "jonas",
+     "kind": "swish_sent",
+     "template": "swish_sent",
+     "params": {
+      "who": "Signe",
+      "amount": "200"
+     }
+    },
+    {
+     "id": "fam:X25.3",
+     "at": "2026-08-06T11:30:40+02:00",
+     "ch": "familj",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Swishat"
+    },
+    {
+     "id": "fam:X25.4",
+     "at": "2026-08-06T11:31:02+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "tack 💕",
+     "ignore": "ack"
+    }
+   ]
+  },
+  {
+   "id": "C05",
+   "item": "fam:joakim-prat",
+   "gist": "Joakim 发了一辆砂石车的打折链接；他没回。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:C05.1",
+     "at": "2026-08-06T10:02:11+02:00",
+     "ch": "joakim",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Kolla, din drömcykel på rea 😏 https://cykelbutiken.example/gravel-carbon-2026",
+     "ignore": "link"
+    }
+   ]
+  },
+  {
+   "id": "E01",
+   "item": "fam:flyg-14sep",
+   "gist": "最忙的一天，13 点 Kajsa 问 9 月 14 日几点到家：母亲想知道那天要不要来，她 15 日早班，他那晚必须在家。",
+   "level": "high",
+   "ask": {
+    "id": "ask-e-landar",
+    "q": "9 月 14 日几点落地到家",
+    "options": null,
+    "due": null
+   },
+   "messages": [
+    {
+     "id": "fam:E01.1",
+     "at": "2026-08-06T13:05:10+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Din mamma frågar vilken dag du kommer hem i september, hon vill veta om hon ska komma den 14:e"
+    },
+    {
+     "id": "fam:E01.2",
+     "at": "2026-08-06T13:05:48+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Och jag har tidigt pass den 15:e så du måste vara hemma på kvällen"
+    },
+    {
+     "id": "fam:E01.3",
+     "at": "2026-08-06T13:06:02+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "När landar du?"
+    }
+   ]
+  },
+  {
+   "id": "X07",
+   "item": "fam:hemmasysslor",
+   "gist": "快递：Signe 的包裹明天 9–12 点送到。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X07.1",
+     "at": "2026-08-06T15:20:00+02:00",
+     "ch": "budbil",
+     "who": "budbil",
+     "kind": "notification",
+     "template": "delivery_eta",
+     "params": {
+      "from": "Vinted",
+      "when": "imorgon 9–12"
+     },
+     "ignore": "delivery"
+    }
+   ]
+  },
+  {
+   "id": "E02",
+   "item": "fam:flyg-14sep",
+   "gist": "17 点 Kajsa 只发“??”；22:40 他才回：航班改了经停，大概 19 点落地，在看改签。Kajsa：那你自己告诉你妈。",
+   "level": "high",
+   "answers": "ask-e-landar",
+   "misplaced": "Kajsa 的“??”是重复催促；他给的时间后来被修正",
+   "messages": [
+    {
+     "id": "fam:E02.1",
+     "at": "2026-08-06T17:12:30+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "??",
+     "ignore": "duplicate"
+    },
+    {
+     "id": "fam:E02.2",
+     "at": "2026-08-06T22:40:15+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Sorry galen dag. Flyget är ändrat, mellanlandning. Landar typ 19 om det håller. Kollar ombokning"
+    },
+    {
+     "id": "fam:E02.3",
+     "at": "2026-08-06T22:52:07+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Ok. Säg det till din mamma själv då 😅"
+    }
+   ]
+  },
+  {
+   "id": "B19",
+   "item": "fam:mamma-stambyte",
+   "gist": "母亲晚上：明天去银行问 BankID。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:B19.1",
+     "at": "2026-08-06T19:40:12+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "Jag går till banken imorgon och frågar om BankID. Kram",
+     "item": "fam:mamma-bankid"
+    }
+   ]
+  },
+  {
+   "id": "X06",
+   "item": "fam:forradet",
+   "gist": "晚上阵风，Kajsa 想起棚屋的铁皮顶春天松过；他快半夜才回“顶还在”。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:X06.1",
+     "at": "2026-08-06T20:31:40+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Blåser det mycket hemma? Plåttaket på förrådet lossnade ju i våras"
+    },
+    {
+     "id": "fam:X06.2",
+     "at": "2026-08-06T23:05:22+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Taket sitter"
+    }
+   ]
+  },
+  {
+   "id": "B08",
+   "item": "fam:mamma-bankid",
+   "gist": "母亲去了银行：护照五月过期，要先去税务局办身份证，两周，14 日前赶不上。他回：那就把纸条交给理事会，周末和 Kajsa 定。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:B08.1",
+     "at": "2026-08-07T09:10:05+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "Jag var på banken. De sa att jag ska beställa BankID i appen med passet men mitt pass gick ut i maj. Då måste jag gå till Skatteverket och göra ett id-kort och det tar två veckor. Då hinner jag inte till den 14:e. Vad gör jag? Kram mamma"
+    },
+    {
+     "id": "fam:B08.2",
+     "at": "2026-08-07T13:40:26+02:00",
+     "ch": "mamma",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Lämna lappen till styrelsen istället, det går också. Vi bestämmer med Kajsa i helgen"
+    }
+   ]
+  },
+  {
+   "id": "A04",
+   "item": "fam:kattvakt",
+   "gist": "他托邻居 Gunnel 周末喂猫；Gunnel 答应，问猫要不要吃药；他说还没有，周一看兽医。",
+   "level": "low",
+   "misplaced": "Gunnel 在看兽医之前就问药，答案要到周一才有",
+   "messages": [
+    {
+     "id": "fam:A04.1",
+     "at": "2026-08-07T09:40:11+02:00",
+     "ch": "gunnel",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Hej Gunnel! Skulle du kunna ge Smilla mat lör–sön? Jag åker till stugan ikväll. Nyckeln på vanliga stället. Blötmat i kylen, en halv påse morgon och kväll"
+    },
+    {
+     "id": "fam:A04.2",
+     "at": "2026-08-07T10:15:30+02:00",
+     "ch": "gunnel",
+     "who": "gunnel",
+     "kind": "message",
+     "text": "Absolut! Ingen fara 😊"
+    },
+    {
+     "id": "fam:A04.3",
+     "at": "2026-08-07T10:16:02+02:00",
+     "ch": "gunnel",
+     "who": "gunnel",
+     "kind": "message",
+     "text": "Ska hon ha några mediciner?"
+    },
+    {
+     "id": "fam:A04.4",
+     "at": "2026-08-07T11:30:48+02:00",
+     "ch": "gunnel",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Nej inte än, veterinär på måndag"
+    }
+   ]
+  },
+  {
+   "id": "X08",
+   "item": "fam:hemmasysslor",
+   "gist": "包裹放在门口；Signe 连问到了没；他答在门口。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X08.1",
+     "at": "2026-08-07T10:30:00+02:00",
+     "ch": "budbil",
+     "who": "budbil",
+     "kind": "notification",
+     "template": "delivered",
+     "params": {
+      "what": "ditt paket",
+      "where": "vid dörren"
+     },
+     "ignore": "delivery"
+    },
+    {
+     "id": "fam:X08.2",
+     "at": "2026-08-07T10:45:12+02:00",
+     "ch": "signe",
+     "who": "signe",
+     "kind": "message",
+     "text": "har det kommit????",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X08.3",
+     "at": "2026-08-07T11:02:40+02:00",
+     "ch": "signe",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ja vid dörren"
+    }
+   ]
+  },
+  {
+   "id": "X10",
+   "item": "fam:hemmasysslor",
+   "gist": "Göran 转发一封老人与电脑的笑话邮件（层层转发）。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X10.1",
+     "at": "2026-08-07T15:10:00+02:00",
+     "ch": "goran",
+     "who": "goran",
+     "kind": "email",
+     "text": "Den här fick jag av Kjelle. Skrattade gott!\n\n---------- Vidarebefordrat meddelande ----------\nFrån: Kjelle\nÄmne: VB: VB: Pensionärens datorproblem\n\nEn pensionär ringer supporten: ”Min dator säger att jag ska trycka på valfri tangent. Var sitter Valfri?” Teknikern andas djupt. ”Det är vilken tangent som helst.” Pensionären tystnar länge. ”Då tar jag Enter, den är störst.”\n\nSkicka vidare till alla som någon gång suttit i telefonkö! 😂",
+     "subject": "VB: VB: VB: Pensionärens datorproblem",
+     "ignore": "forward"
+    }
+   ]
+  },
+  {
+   "id": "X09",
+   "item": "fam:stuga-resa",
+   "gist": "Kajsa：几点出发？带她的电脑充电器和 Ture 的绿龙玩偶，别带猫；他说 19 点，工作。Kajsa 翻白眼。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:X09.1",
+     "at": "2026-08-07T16:30:20+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Kör du vid 18? Ta med laddaren till min dator och Tures gosedjur, den gröna draken!! Han har gråtit två kvällar"
+    },
+    {
+     "id": "fam:X09.2",
+     "at": "2026-08-07T16:31:02+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Och ta INTE med Smilla"
+    },
+    {
+     "id": "fam:X09.3",
+     "at": "2026-08-07T17:45:39+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Kör 19, jobbet"
+    },
+    {
+     "id": "fam:X09.4",
+     "at": "2026-08-07T17:47:10+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Ok 🙄",
+     "ignore": "ack"
+    }
+   ]
+  },
+  {
+   "id": "X27",
+   "item": "fam:stuga-resa",
+   "gist": "刷卡：加油。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:X27.1",
+     "at": "2026-08-07T22:38:00+02:00",
+     "ch": "bank",
+     "who": "bank",
+     "kind": "card_purchase",
+     "template": "card_purchase",
+     "params": {
+      "amount": "687",
+      "merchant": "BENSINSTATIONEN E18"
+     },
+     "ignore": "receipt"
+    }
+   ]
+  },
+  {
+   "id": "X26",
+   "item": "fam:stuga-resa",
+   "gist": "22:40 Kajsa：你到哪了？他：在加油站，20 分钟。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:X26.1",
+     "at": "2026-08-07T22:40:10+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Var är du?"
+    },
+    {
+     "id": "fam:X26.2",
+     "at": "2026-08-07T22:41:30+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Svängde av vid macken, 20 min"
+    }
+   ]
+  },
+  {
+   "id": "A05",
+   "item": "fam:kattvakt",
+   "gist": "Gunnel 发照片：猫吃过了，但在阳台番茄盆里刨土，她扫了扫。他道谢。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:A05.1",
+     "at": "2026-08-08T10:05:44+02:00",
+     "ch": "gunnel",
+     "who": "gunnel",
+     "kind": "photo",
+     "text": "[Bild] God morgon! Smilla har ätit och mår bra. Men hon har grävt i tomatkrukorna på altanen 😬 Jord överallt, jag sopade lite"
+    },
+    {
+     "id": "fam:A05.2",
+     "at": "2026-08-08T10:20:03+02:00",
+     "ch": "gunnel",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Tack!! Förlåt för besväret"
+    }
+   ]
+  },
+  {
+   "id": "F02",
+   "item": "fam:kraftskiva",
+   "gist": "Joakim 在群里提醒：周三前报人数，列出已报的几家。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:F02.1",
+     "at": "2026-08-08T11:00:15+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Påminnelse: svara senast onsdag hur många ni blir! Hittills: Henrik 3, Måns 5, Tove 2 + hund 🐕"
+    }
+   ]
+  },
+  {
+   "id": "X28",
+   "item": "fam:bedrageri",
+   "gist": "钓鱼短信冒充 BankID：今天到期，点链接续期（与母亲的 BankID 无关）。",
+   "level": "none",
+   "note": "诈骗短信，不应与母亲的 BankID 合并，也不应生成待办。",
+   "messages": [
+    {
+     "id": "fam:X28.1",
+     "at": "2026-08-08T13:44:00+02:00",
+     "ch": "spam_bankid",
+     "who": "spam_bankid",
+     "kind": "sms",
+     "template": "smishing_bankid",
+     "params": {},
+     "ignore": "spam"
+    }
+   ]
+  },
+  {
+   "id": "B09",
+   "item": "fam:mamma-stambyte",
+   "gist": "母亲晚上问小屋怎么样、替她问候 Göran，“你们商量了吗”。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:B09.1",
+     "at": "2026-08-08T19:30:40+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "Hej! Hur är det i stugan? Hälsa Göran. Har ni pratat? Kram"
+    }
+   ]
+  },
+  {
+   "id": "C02",
+   "item": "fam:cykeltur",
+   "gist": "Joakim 早上问今天骑不骑；他说从小屋回城、晚上发 rc1，下周六；Joakim 说成交。",
+   "level": "low",
+   "ask": {
+    "id": "ask-c-lordag",
+    "q": "下周六（15 日）和 Joakim 骑车",
+    "options": [
+     "去",
+     "取消"
+    ],
+    "due": "08-15"
+   },
+   "answers": "ask-c-sondag",
+   "messages": [
+    {
+     "id": "fam:C02.1",
+     "at": "2026-08-09T08:50:02+02:00",
+     "ch": "joakim",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Kör vi idag? Sol hela dagen"
+    },
+    {
+     "id": "fam:C02.2",
+     "at": "2026-08-09T09:30:55+02:00",
+     "ch": "joakim",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Kan inte, åker hem från stugan och släpper rc1 ikväll. Nästa lördag?"
+    },
+    {
+     "id": "fam:C02.3",
+     "at": "2026-08-09T09:31:20+02:00",
+     "ch": "joakim",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Deal 🚴",
+     "ignore": "ack"
+    }
+   ]
+  },
+  {
+   "id": "A14",
+   "item": "fam:kattvakt",
+   "gist": "Gunnel：猫吃过了，钥匙放回花盆里了；他道谢。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:A14.1",
+     "at": "2026-08-09T09:00:40+02:00",
+     "ch": "gunnel",
+     "who": "gunnel",
+     "kind": "message",
+     "text": "Smilla har ätit, allt bra. Nyckeln är tillbaka i krukan 🙂"
+    },
+    {
+     "id": "fam:A14.2",
+     "at": "2026-08-09T09:12:02+02:00",
+     "ch": "gunnel",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Tusen tack Gunnel!"
+    }
+   ]
+  },
+  {
+   "id": "B20",
+   "item": "fam:mamma-stambyte",
+   "gist": "Ulrika 在兄妹群发自家孩子的照片。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:B20.1",
+     "at": "2026-08-09T15:20:31+02:00",
+     "ch": "syskon",
+     "who": "ulrika",
+     "kind": "photo",
+     "text": "[Bild] Kusinerna hälsar!",
+     "ignore": "photo"
+    }
+   ]
+  },
+  {
+   "id": "X11",
+   "item": "fam:stuga-resa",
+   "gist": "回城后家庭群里 Kajsa：车还是满的；Signe：不是我装的；Kajsa：Jonas。他：十分钟。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:X11.1",
+     "at": "2026-08-09T18:20:10+02:00",
+     "ch": "familj",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Bilen är fortfarande full. Bara så ni vet."
+    },
+    {
+     "id": "fam:X11.2",
+     "at": "2026-08-09T18:21:00+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "inte jag som packade",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X11.3",
+     "at": "2026-08-09T18:21:30+02:00",
+     "ch": "familj",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Jonas."
+    },
+    {
+     "id": "fam:X11.4",
+     "at": "2026-08-09T18:45:12+02:00",
+     "ch": "familj",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Kommer, 10 min"
+    }
+   ]
+  },
+  {
+   "id": "A06",
+   "item": "fam:smilla-veterinar",
+   "gist": "Kajsa 把兽医预约放进共享日历（与诊所确认重复）。",
+   "level": "normal",
+   "messages": [
+    {
+     "id": "fam:A06.1",
+     "at": "2026-08-09T20:00:00+02:00",
+     "ch": "kalender",
+     "who": "kalender",
+     "kind": "invite",
+     "template": "calendar_invite",
+     "params": {
+      "who": "Kajsa",
+      "title": "Smilla veterinär",
+      "when": "mån 10 aug 10:15–10:45"
+     },
+     "ignore": "duplicate"
+    }
+   ]
+  },
+  {
+   "id": "B10",
+   "item": "fam:mamma-stambyte",
+   "gist": "母亲晚上：到家了吗，有力气就打电话。他打了 24 分钟。次晨母亲：谢谢聊天，等 Kajsa 的意见。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:B10.1",
+     "at": "2026-08-09T20:30:11+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "Är ni hemma nu? Ring när ni orkar."
+    },
+    {
+     "id": "fam:B10.2",
+     "at": "2026-08-09T21:10:00+02:00",
+     "ch": "telefon",
+     "who": "jonas",
+     "kind": "call_log",
+     "template": "call_out",
+     "params": {
+      "who": "Mamma",
+      "min": 24
+     }
+    },
+    {
+     "id": "fam:B10.3",
+     "at": "2026-08-10T06:40:30+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "Tack för pratstunden. Jag förstår att det är mycket för er nu. Jag väntar på vad Kajsa säger. Kram mamma"
+    }
+   ]
+  },
+  {
+   "id": "B11",
+   "item": "fam:mamma-stambyte",
+   "gist": "母亲早上又问商量了没（“抱歉我唠叨”）。晚上 Kajsa 对他说：两周可以，六周不行；他问能不能这样告诉母亲，Kajsa：你说。他没说。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:B11.1",
+     "at": "2026-08-10T07:05:12+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "Har ni pratat om stambytet? Förlåt att jag tjatar. Kram mamma"
+    },
+    {
+     "id": "fam:B11.2",
+     "at": "2026-08-10T21:00:40+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Jag har tänkt på din mamma. Två veckor går. Inte sex."
+    },
+    {
+     "id": "fam:B11.3",
+     "at": "2026-08-10T21:15:09+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ok. Kan vi säga så till henne?"
+    },
+    {
+     "id": "fam:B11.4",
+     "at": "2026-08-10T21:16:30+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Du säger det"
+    }
+   ]
+  },
+  {
+   "id": "G04",
+   "item": "fam:ture-feber",
+   "gist": "Kajsa 复工第一天早上：Ture 的水壶和备用衣服在门厅，8:15 前送到；他回送到了。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:G04.1",
+     "at": "2026-08-10T07:40:12+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Tures vattenflaska och extrakläder står i hallen. Lämna senast 8.15, han ska ha keps!"
+    },
+    {
+     "id": "fam:G04.2",
+     "at": "2026-08-10T08:21:40+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Lämnad ✅"
+    }
+   ]
+  },
+  {
+   "id": "A07",
+   "item": "fam:smilla-veterinar",
+   "gist": "看兽医：刷卡 1290 克朗；诊所发就诊摘要：牙龈炎、疑上呼吸道感染，恩诺沙星每天半片（25 mg）七天。",
+   "level": "normal",
+   "messages": [
+    {
+     "id": "fam:A07.1",
+     "at": "2026-08-10T09:15:00+02:00",
+     "ch": "kalender",
+     "who": "kalender",
+     "kind": "reminder",
+     "template": "calendar_reminder",
+     "params": {
+      "title": "Smilla veterinär",
+      "when": "om 1 timme"
+     },
+     "ignore": "reminder"
+    },
+    {
+     "id": "fam:A07.2",
+     "at": "2026-08-10T10:58:21+02:00",
+     "ch": "bank",
+     "who": "bank",
+     "kind": "card_purchase",
+     "template": "card_purchase",
+     "params": {
+      "amount": "1 290",
+      "merchant": "DJURKLINIKEN KVARNBA"
+     },
+     "ignore": "receipt"
+    },
+    {
+     "id": "fam:A07.3",
+     "at": "2026-08-10T11:05:00+02:00",
+     "ch": "klinik",
+     "who": "klinik",
+     "kind": "notification",
+     "template": "vet_summary",
+     "params": {
+      "pet": "Smilla",
+      "findings": "Gingivit och misstänkt övre luftvägsinfektion",
+      "drug": "Enrofloxacin 50 mg",
+      "dose": "en halv tablett (25 mg) en gång dagligen i 7 dagar"
+     }
+    }
+   ]
+  },
+  {
+   "id": "X30",
+   "item": "fam:hemmasysslor",
+   "gist": "Göran 邮件：谢谢来访，Ture 把帽子落下了，他寄过去。",
+   "level": "trace",
+   "messages": [
+    {
+     "id": "fam:X30.1",
+     "at": "2026-08-10T09:30:00+02:00",
+     "ch": "goran",
+     "who": "goran",
+     "kind": "email",
+     "text": "Hej! Tack för besöket, det var fint att se er alla. Ture glömde sin keps på verandan, jag skickar den med posten. Hälsningar Göran",
+     "subject": "Kepsen"
+    }
+   ]
+  },
+  {
+   "id": "A08",
+   "item": "fam:smilla-veterinar",
+   "gist": "Kajsa 问看得怎样；他报：牙龈加呼吸道，抗生素半片七天，1290 克朗。Kajsa：用肝酱裹着喂。",
+   "level": "normal",
+   "messages": [
+    {
+     "id": "fam:A08.1",
+     "at": "2026-08-10T11:40:02+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Hur gick det med Smilla?"
+    },
+    {
+     "id": "fam:A08.2",
+     "at": "2026-08-10T12:30:47+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Tandkött + luftvägar. Antibiotika en halv tablett om dagen i 7 dagar. 1290 kr 😬"
+    },
+    {
+     "id": "fam:A08.3",
+     "at": "2026-08-10T12:33:10+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Stackarn. Ge den i leverpastej så äter hon den"
+    }
+   ]
+  },
+  {
+   "id": "X12",
+   "item": "fam:signe-vardag",
+   "gist": "Signe 一个人在家，中午问吃什么、连喊爸爸——他就在隔壁书房。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X12.1",
+     "at": "2026-08-10T11:55:10+02:00",
+     "ch": "signe",
+     "who": "signe",
+     "kind": "message",
+     "text": "vad finns det att äta",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X12.2",
+     "at": "2026-08-10T11:55:40+02:00",
+     "ch": "signe",
+     "who": "signe",
+     "kind": "message",
+     "text": "pappa",
+     "ignore": "duplicate"
+    },
+    {
+     "id": "fam:X12.3",
+     "at": "2026-08-10T12:10:05+02:00",
+     "ch": "signe",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Pasta i kylen. Jag sitter i arbetsrummet 😄"
+    },
+    {
+     "id": "fam:X12.4",
+     "at": "2026-08-10T12:10:30+02:00",
+     "ch": "signe",
+     "who": "signe",
+     "kind": "message",
+     "text": "ok",
+     "ignore": "ack"
+    }
+   ]
+  },
+  {
+   "id": "S01",
+   "item": "fam:skolstart",
+   "gist": "学校平台发开学信：19 日 9 点礼堂集合，带体育包；18 日前用 BankID 在 App 里签“数字工具同意书”。",
+   "level": "low",
+   "ask": {
+    "id": "ask-skola-signera",
+    "q": "18 日前用 BankID 签 Signe 的数字工具同意书",
+    "options": [
+     "签"
+    ],
+    "due": "08-18"
+   },
+   "messages": [
+    {
+     "id": "fam:S01.1",
+     "at": "2026-08-10T14:02:00+02:00",
+     "ch": "skola",
+     "who": "skola",
+     "kind": "broadcast",
+     "text": "Välkommen till läsåret 2026/2027! Första skoldagen är onsdag 19 augusti. Vi samlas kl 9.00 i aulan och går sedan till klassrummet. Ta med gympapåse och vattenflaska. Vårdnadshavare ombeds signera ”Medgivande digitala verktyg” i appen med BankID senast tisdag 18/8. Hälsningar mentorerna i 6B"
+    }
+   ]
+  },
+  {
+   "id": "X29",
+   "item": "fam:hemmasysslor",
+   "gist": "Kajsa：能买菜吗，清单更新了；他好；一小时后清单显示他勾掉 9 样。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:X29.1",
+     "at": "2026-08-10T17:20:02+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Kan du handla? Listan är uppdaterad"
+    },
+    {
+     "id": "fam:X29.2",
+     "at": "2026-08-10T17:21:00+02:00",
+     "ch": "lista",
+     "who": "lista",
+     "kind": "list_update",
+     "template": "list_add",
+     "params": {
+      "who": "Kajsa",
+      "items": [
+       "leverpastej",
+       "kattmat (blöt)",
+       "bananer",
+       "pasta",
+       "falukorv"
+      ]
+     },
+     "ignore": "list"
+    },
+    {
+     "id": "fam:X29.3",
+     "at": "2026-08-10T17:45:30+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ok"
+    },
+    {
+     "id": "fam:X29.4",
+     "at": "2026-08-10T18:52:00+02:00",
+     "ch": "lista",
+     "who": "jonas",
+     "kind": "list_update",
+     "template": "list_check",
+     "params": {
+      "who": "Jonas",
+      "count": 9
+     }
+    }
+   ]
+  },
+  {
+   "id": "D01",
+   "item": "fam:vattenlacka",
+   "gist": "Gunnel 短信：他家车道边、信箱旁边是湿的，问是不是浇了水。他回“👍 谢谢周末帮忙”——回错了对象。",
+   "level": "low",
+   "note": "两周几乎没下雨，车道湿本身就不对；对照天气提醒才看得出。",
+   "misplaced": "他的回复谢的是周末喂猫，没有回应车道湿的事",
+   "messages": [
+    {
+     "id": "fam:D01.1",
+     "at": "2026-08-10T17:50:33+02:00",
+     "ch": "gunnel",
+     "who": "gunnel",
+     "kind": "message",
+     "text": "Hej! Såg att det är blött vid kanten på er uppfart, vid brevlådan. Har ni vattnat? Bara så ni vet 🙂"
+    },
+    {
+     "id": "fam:D01.2",
+     "at": "2026-08-10T18:30:02+02:00",
+     "ch": "gunnel",
+     "who": "jonas",
+     "kind": "message",
+     "text": "👍 tack för hjälpen i helgen!"
+    }
+   ]
+  },
+  {
+   "id": "E03",
+   "item": "fam:flyg-14sep",
+   "gist": "Kajsa 问改签了没；他说问答站上说只是技术经停、同一架飞机，19:40 落地；Kajsa：那 14 日晚上对你妈不合适。",
+   "level": "normal",
+   "misplaced": "他 8/6 说“大概 19 点”，这里修正为 19:40",
+   "messages": [
+    {
+     "id": "fam:E03.1",
+     "at": "2026-08-10T19:22:00+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Har du bokat om flyget?"
+    },
+    {
+     "id": "fam:E03.2",
+     "at": "2026-08-10T19:40:31+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Nej, det är bara en teknisk mellanlandning, samma plan. Landar 19:40"
+    },
+    {
+     "id": "fam:E03.3",
+     "at": "2026-08-10T19:41:50+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Ok. Då säger jag till din mamma att 14:e kväll är dåligt"
+    }
+   ]
+  },
+  {
+   "id": "X31",
+   "item": "fam:signe-vardag",
+   "gist": "Kajsa 在家庭群告诉 Signe：牙医来电，9 月 2 日 14 点；Signe：一定要去吗；Kajsa：要。随后日历邀请。",
+   "level": "trace",
+   "messages": [
+    {
+     "id": "fam:X31.1",
+     "at": "2026-08-11T07:05:31+02:00",
+     "ch": "familj",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Signe: tandläkaren ringde, du har tid 2/9 kl 14"
+    },
+    {
+     "id": "fam:X31.2",
+     "at": "2026-08-11T07:20:02+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "måste jag",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X31.3",
+     "at": "2026-08-11T07:21:40+02:00",
+     "ch": "familj",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Ja",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X31.4",
+     "at": "2026-08-11T07:22:00+02:00",
+     "ch": "kalender",
+     "who": "kalender",
+     "kind": "invite",
+     "template": "calendar_invite",
+     "params": {
+      "who": "Kajsa",
+      "title": "Signe tandläkare",
+      "when": "ons 2 sep 14:00–14:45"
+     },
+     "ignore": "duplicate"
+    }
+   ]
+  },
+  {
+   "id": "B12",
+   "item": "fam:mamma-stambyte",
+   "gist": "Ulrika 上午问定了没，母亲说在等他们；他中午回：Kajsa 想两周住我们家，其余去临时公寓，还没告诉母亲。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:B12.1",
+     "at": "2026-08-11T10:30:15+02:00",
+     "ch": "syskon",
+     "who": "ulrika",
+     "kind": "message",
+     "text": "Har ni bestämt något? Mamma säger att hon väntar på er"
+    },
+    {
+     "id": "fam:B12.2",
+     "at": "2026-08-11T13:00:40+02:00",
+     "ch": "syskon",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Kajsa tänker två veckor hos oss, resten i evakueringslägenheten. Har inte sagt det till mamma än"
+    },
+    {
+     "id": "fam:B12.3",
+     "at": "2026-08-11T13:05:02+02:00",
+     "ch": "syskon",
+     "who": "ulrika",
+     "kind": "message",
+     "text": "Säg det då!! Hon sover inte"
+    }
+   ]
+  },
+  {
+   "id": "C06",
+   "item": "fam:joakim-prat",
+   "gist": "Joakim 问上次发的加密播客听了没。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:C06.1",
+     "at": "2026-08-11T12:44:02+02:00",
+     "ch": "joakim",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Hörde du podden om kryptering jag skickade? Avsnitt 3 är galet bra",
+     "ignore": "chatter"
+    }
+   ]
+  },
+  {
+   "id": "A09",
+   "item": "fam:smilla-veterinar",
+   "gist": "15:52 Kajsa 问给猫吃药了没；他说猫在床上吐了一次，他又给了半片，第一颗找不到，怀疑喂了两次；Kajsa：打给诊所，现在！",
+   "level": "high",
+   "ask": {
+    "id": "ask-a-ring",
+    "q": "怀疑给猫喂了双倍抗生素：打给诊所，还是先观察",
+    "options": [
+     "打给诊所",
+     "先观察"
+    ],
+    "due": null
+   },
+   "messages": [
+    {
+     "id": "fam:A09.1",
+     "at": "2026-08-11T15:52:08+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Har du gett Smilla tabletten idag?"
+    },
+    {
+     "id": "fam:A09.2",
+     "at": "2026-08-11T16:20:31+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Hon spottade ut den på sängen, jag gav en ny halv. Men nu hittar jag inte den första. Tänk om hon inte spottade ut den"
+    },
+    {
+     "id": "fam:A09.3",
+     "at": "2026-08-11T16:21:02+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Har hon fått dubbelt då?"
+    },
+    {
+     "id": "fam:A09.4",
+     "at": "2026-08-11T16:24:40+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "RING KLINIKEN"
+    },
+    {
+     "id": "fam:A09.5",
+     "at": "2026-08-11T16:24:45+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Nu",
+     "ignore": "duplicate"
+    }
+   ]
+  },
+  {
+   "id": "A10",
+   "item": "fam:smilla-veterinar",
+   "gist": "他 16:37 打诊所，已过电话时段，自动短信说下个工作日回电；他告诉 Kajsa 留了言。",
+   "level": "high",
+   "misplaced": "Kajsa 让他打电话时，他其实已经要打了；答复要到第二天",
+   "messages": [
+    {
+     "id": "fam:A10.1",
+     "at": "2026-08-11T16:37:00+02:00",
+     "ch": "telefon",
+     "who": "jonas",
+     "kind": "call_log",
+     "template": "call_out",
+     "params": {
+      "who": "Djurkliniken Kvarnbacken",
+      "min": 1
+     }
+    },
+    {
+     "id": "fam:A10.2",
+     "at": "2026-08-11T16:38:10+02:00",
+     "ch": "klinik",
+     "who": "klinik",
+     "kind": "notification",
+     "template": "clinic_closed",
+     "params": {}
+    },
+    {
+     "id": "fam:A10.3",
+     "at": "2026-08-11T16:40:22+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "De har telefontid till 16. Lämnade ett meddelande, de ringer imorgon"
+    }
+   ]
+  },
+  {
+   "id": "H01",
+   "item": "fam:signe-serier",
+   "gist": "晚上 Signe 连发三次屏幕时间申请（浏览器）；他批了第一次，然后去看她在读什么。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:H01.1",
+     "at": "2026-08-11T19:48:00+02:00",
+     "ch": "skarmtid",
+     "who": "skarmtid",
+     "kind": "screen_time_request",
+     "template": "screen_time_request",
+     "params": {
+      "who": "Signe",
+      "app": "Safari",
+      "minutes": 15
+     }
+    },
+    {
+     "id": "fam:H01.2",
+     "at": "2026-08-11T19:50:12+02:00",
+     "ch": "skarmtid",
+     "who": "jonas",
+     "kind": "screen_time_approved",
+     "template": "screen_time_approved",
+     "params": {
+      "who": "Signe",
+      "app": "Safari",
+      "minutes": 15
+     }
+    },
+    {
+     "id": "fam:H01.3",
+     "at": "2026-08-11T19:56:30+02:00",
+     "ch": "skarmtid",
+     "who": "skarmtid",
+     "kind": "screen_time_request",
+     "template": "screen_time_request",
+     "params": {
+      "who": "Signe",
+      "app": "Safari",
+      "minutes": 15
+     },
+     "ignore": "duplicate"
+    },
+    {
+     "id": "fam:H01.4",
+     "at": "2026-08-11T20:03:41+02:00",
+     "ch": "skarmtid",
+     "who": "skarmtid",
+     "kind": "screen_time_request",
+     "template": "screen_time_request",
+     "params": {
+      "who": "Signe",
+      "app": "Safari",
+      "minutes": 30
+     },
+     "ignore": "duplicate"
+    }
+   ]
+  },
+  {
+   "id": "H02",
+   "item": "fam:signe-serier",
+   "gist": "他问 Kajsa：Signe 在网上看一部漫画，有张挺露骨的图，要不要禁；Kajsa：什么图？明天和她谈，别直接禁。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:H02.1",
+     "at": "2026-08-11T21:05:30+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Signe läste en serie på nätet, en spionserie, med en ganska grov bild. Ska vi stoppa det?"
+    },
+    {
+     "id": "fam:H02.2",
+     "at": "2026-08-11T21:20:02+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Vad för bild?"
+    },
+    {
+     "id": "fam:H02.3",
+     "at": "2026-08-11T21:20:40+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Prata med henne imorgon, inte förbud direkt. Hon blir bara bättre på att gömma"
+    },
+    {
+     "id": "fam:H02.4",
+     "at": "2026-08-11T21:31:15+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ok"
+    }
+   ]
+  },
+  {
+   "id": "G05",
+   "item": "fam:ture-feber",
+   "gist": "Kajsa 早上：今天上到 19 点，下午有手术，你去接 Ture？他：好。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:G05.1",
+     "at": "2026-08-12T07:30:02+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Jag jobbar till 19 idag, operation på eftermiddagen. Kan du hämta Ture?"
+    },
+    {
+     "id": "fam:G05.2",
+     "at": "2026-08-12T08:02:31+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ja"
+    }
+   ]
+  },
+  {
+   "id": "X32",
+   "item": "fam:hemmasysslor",
+   "gist": "刷卡：外卖。数字信箱：新邮件（七月电费账单，31 日到期）。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X32.1",
+     "at": "2026-08-12T19:40:00+02:00",
+     "ch": "bank",
+     "who": "bank",
+     "kind": "card_purchase",
+     "template": "card_purchase",
+     "params": {
+      "amount": "318",
+      "merchant": "HAMTMAT PIZZERIA"
+     },
+     "ignore": "receipt"
+    },
+    {
+     "id": "fam:X32.2",
+     "at": "2026-08-12T08:30:00+02:00",
+     "ch": "brev",
+     "who": "brev",
+     "kind": "notification",
+     "template": "einvoice",
+     "params": {
+      "sender": "Elbolaget",
+      "amount": "1 214",
+      "due": "31/8"
+     },
+     "ignore": "bill_autopay"
+    }
+   ]
+  },
+  {
+   "id": "A11",
+   "item": "fam:smilla-veterinar",
+   "gist": "诊所 9:42 回电他没接到，留了语音；中午 Kajsa 问打来没，他说没有——其实有留言，一小时后才发现。",
+   "level": "high",
+   "misplaced": "他先说没打来，其实答复早已在语音信箱里",
+   "messages": [
+    {
+     "id": "fam:A11.1",
+     "at": "2026-08-12T09:42:00+02:00",
+     "ch": "telefon",
+     "who": "telefon",
+     "kind": "missed_call",
+     "template": "missed_call",
+     "params": {
+      "who": "Djurkliniken Kvarnbacken",
+      "count": 1
+     },
+     "ignore": "system"
+    },
+    {
+     "id": "fam:A11.2",
+     "at": "2026-08-12T09:43:10+02:00",
+     "ch": "rost",
+     "who": "rost",
+     "kind": "voicemail",
+     "template": "voicemail",
+     "params": {
+      "who": "Djurkliniken Kvarnbacken",
+      "secs": 22,
+      "text": "Hej det är Pia från djurkliniken Kvarn backen, jag ringer angående Smilla. Ring gärna tillbaka till oss mellan åtta och fyra. Hej hej."
+     }
+    },
+    {
+     "id": "fam:A11.3",
+     "at": "2026-08-12T12:10:44+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Ringde de?"
+    },
+    {
+     "id": "fam:A11.4",
+     "at": "2026-08-12T12:15:02+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Nej inget"
+    },
+    {
+     "id": "fam:A11.5",
+     "at": "2026-08-12T13:30:51+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Åh, de hade lämnat ett meddelande i morse. Ringer imorgon"
+    }
+   ]
+  },
+  {
+   "id": "A15",
+   "item": "fam:smilla-veterinar",
+   "gist": "母亲在兄妹群外打来留言问猫怎么样；Ulrika 转述成“妈妈以为猫瞎了”；他澄清：猫没事，只是剂量的担心。",
+   "level": "high",
+   "misplaced": "消息经母亲、妹妹两道转述后走了样",
+   "messages": [
+    {
+     "id": "fam:A15.1",
+     "at": "2026-08-12T10:20:00+02:00",
+     "ch": "rost",
+     "who": "rost",
+     "kind": "voicemail",
+     "template": "voicemail",
+     "params": {
+      "who": "Mamma",
+      "secs": 19,
+      "text": "Hej det är mamma igen. Jag ville bara höra hur det är med Smilla. Ring inte om du är upptagen. Hej."
+     }
+    },
+    {
+     "id": "fam:A15.2",
+     "at": "2026-08-12T16:02:12+02:00",
+     "ch": "syskon",
+     "who": "ulrika",
+     "kind": "message",
+     "text": "Mamma ringde om Smilla?? Hon tror att katten är blind"
+    },
+    {
+     "id": "fam:A15.3",
+     "at": "2026-08-12T16:30:40+02:00",
+     "ch": "syskon",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Nej hon mår bra! Bara oro för dosen. Ringer kliniken"
+    }
+   ]
+  },
+  {
+   "id": "R01",
+   "item": "fam:aterkrav",
+   "gist": "银行通知：退单裁定，4120 克朗退回卡里；Kajsa 问春天她那张票的钱回来没；他说回来了。",
+   "level": "low",
+   "ask": {
+    "id": "ask-aterkrav",
+    "q": "Kajsa 问春天那张票的钱回来没",
+    "options": null,
+    "due": null
+   },
+   "answers": "ask-aterkrav",
+   "messages": [
+    {
+     "id": "fam:R01.1",
+     "at": "2026-08-12T11:20:00+02:00",
+     "ch": "bank",
+     "who": "bank",
+     "kind": "notification",
+     "template": "chargeback_done",
+     "params": {
+      "amount": "4 120"
+     }
+    },
+    {
+     "id": "fam:R01.2",
+     "at": "2026-08-12T11:45:20+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Fick vi pengarna för min biljett från i våras??"
+    },
+    {
+     "id": "fam:R01.3",
+     "at": "2026-08-12T14:20:31+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ja! Kortbolaget gav oss rätt"
+    }
+   ]
+  },
+  {
+   "id": "G01",
+   "item": "fam:ture-feber",
+   "gist": "14:50 幼儿园老师：Ture 发烧 38.4，请尽快来接；Kajsa 在手术室；他 14:53 回“20 分钟到”。",
+   "level": "critical",
+   "ask": {
+    "id": "ask-ture-hamta",
+    "q": "Ture 发烧，能马上去接吗",
+    "options": [
+     "去接"
+    ],
+    "due": "08-12"
+   },
+   "answers": "ask-ture-hamta",
+   "messages": [
+    {
+     "id": "fam:G01.1",
+     "at": "2026-08-12T14:50:12+02:00",
+     "ch": "forskola",
+     "who": "linnea",
+     "kind": "message",
+     "text": "Hej! Ture har feber, 38,4. Han är trött och vill bara ligga. Kan någon hämta så snart som möjligt? /Linnea"
+    },
+    {
+     "id": "fam:G01.2",
+     "at": "2026-08-12T14:53:40+02:00",
+     "ch": "forskola",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Jag kommer om 20 min"
+    }
+   ]
+  },
+  {
+   "id": "G02",
+   "item": "fam:ture-feber",
+   "gist": "Kajsa 下手术才看到，问接了没；他说接了，在沙发上睡。",
+   "level": "normal",
+   "messages": [
+    {
+     "id": "fam:G02.1",
+     "at": "2026-08-12T15:40:05+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Såg nu! Hämtade du?"
+    },
+    {
+     "id": "fam:G02.2",
+     "at": "2026-08-12T15:55:31+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ja, han sover på soffan"
+    },
+    {
+     "id": "fam:G02.3",
+     "at": "2026-08-12T15:56:02+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "❤️",
+     "ignore": "emoji"
+    }
+   ]
+  },
+  {
+   "id": "F03",
+   "item": "fam:kraftskiva",
+   "gist": "报名截止日，Joakim 在群里点名还没回的几家，包括 Jonas 和 Kajsa；他没回。",
+   "level": "normal",
+   "messages": [
+    {
+     "id": "fam:F03.1",
+     "at": "2026-08-12T18:00:31+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Sista dagen att svara! Saknar Jonas & Kajsa, Emelie, Lisen 🦞"
+    },
+    {
+     "id": "fam:F03.2",
+     "at": "2026-08-12T18:02:10+02:00",
+     "ch": "kraft",
+     "who": "lisen",
+     "kind": "message",
+     "text": "Vi kommer 2! Cupen blev inställd",
+     "ignore": "chatter"
+    }
+   ]
+  },
+  {
+   "id": "I01",
+   "item": "fam:kajsa-cykel",
+   "gist": "Kajsa：通勤车后刹在下坡又完全不灵，差点冲进路口；周末他修还是送修？他说周末修，八成是油路进气。",
+   "level": "normal",
+   "ask": {
+    "id": "ask-i-broms",
+    "q": "Kajsa 的后刹：周末自己修还是送修",
+    "options": [
+     "自己修",
+     "送修"
+    ],
+    "due": "08-15"
+   },
+   "answers": "ask-i-broms",
+   "messages": [
+    {
+     "id": "fam:I01.1",
+     "at": "2026-08-12T18:35:20+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Bakbromsen tog inte alls i backen idag igen. Nästan rakt ut i korsningen"
+    },
+    {
+     "id": "fam:I01.2",
+     "at": "2026-08-12T18:35:51+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Kan du kolla den i helgen eller ska jag lämna in den?"
+    },
+    {
+     "id": "fam:I01.3",
+     "at": "2026-08-12T21:25:09+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Kollar i helgen, det är nog luft i systemet"
+    }
+   ]
+  },
+  {
+   "id": "B21",
+   "item": "fam:mamma-stambyte",
+   "gist": "母亲的长短信顺带转述：Ulrika 要换工作了，你听说了吗？还问猫。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:B21.1",
+     "at": "2026-08-12T19:15:44+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "Har du hört att Ulrika ska byta jobb? Hon berättade i telefon. Till ett större företag i stan, mer pengar men längre resa. Jag tycker det låter bra men hon verkar trött. Hur mår Smilla? Kram mamma"
+    }
+   ]
+  },
+  {
+   "id": "A16",
+   "item": "fam:smilla-veterinar",
+   "gist": "他晚上告诉 Kajsa：药裹在肝酱里，猫吃了。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:A16.1",
+     "at": "2026-08-12T22:10:02+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Gav Smilla tabletten i leverpastej, hon åt den direkt"
+    },
+    {
+     "id": "fam:A16.2",
+     "at": "2026-08-12T22:14:31+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "👏",
+     "ignore": "emoji"
+    }
+   ]
+  },
+  {
+   "id": "G03",
+   "item": "fam:ture-feber",
+   "gist": "Ture 还烧；Kajsa 在家庭群里：今天 Jonas 在家看孩子，别忘了申报护理假。Signe 问能不能去 Tyra 家，他说午饭后。",
+   "level": "normal",
+   "ask": {
+    "id": "ask-vab",
+    "q": "申报今天的护理假（VAB）",
+    "options": [
+     "申报"
+    ],
+    "due": null
+   },
+   "messages": [
+    {
+     "id": "fam:G03.1",
+     "at": "2026-08-13T07:10:12+02:00",
+     "ch": "familj",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Ture har fortfarande 38. Jonas är hemma med honom idag. Glöm inte anmäla vab!"
+    },
+    {
+     "id": "fam:G03.2",
+     "at": "2026-08-13T07:30:02+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "får jag gå till tyra då"
+    },
+    {
+     "id": "fam:G03.3",
+     "at": "2026-08-13T07:30:40+02:00",
+     "ch": "familj",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Fråga pappa"
+    },
+    {
+     "id": "fam:G03.4",
+     "at": "2026-08-13T08:15:31+02:00",
+     "ch": "familj",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ja efter lunch"
+    }
+   ]
+  },
+  {
+   "id": "I02",
+   "item": "fam:kajsa-cykel",
+   "gist": "Kajsa：受够了刹车，已经订了一辆新通勤车，下周到；附订单截图。他：好吧，其实我能修好的。",
+   "level": "low",
+   "voids": "ask-i-broms",
+   "messages": [
+    {
+     "id": "fam:I02.1",
+     "at": "2026-08-13T09:30:10+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Jag orkar inte med bromsen. Har beställt en ny pendlarcykel, kommer nästa vecka"
+    },
+    {
+     "id": "fam:I02.2",
+     "at": "2026-08-13T09:30:44+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "photo",
+     "text": "[Bild] Orderbekräftelse Cykelbutiken – Pendelcykel 8 vxl, skivbromsar, 9 990 kr"
+    },
+    {
+     "id": "fam:I02.3",
+     "at": "2026-08-13T11:40:02+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ok! Fast jag hade fixat den 😅"
+    }
+   ]
+  },
+  {
+   "id": "I03",
+   "item": "fam:kajsa-cykel",
+   "gist": "同一天来一条假快递短信（要付 29 克朗关税的链接），下午才来真的配送通知：18 日 17–21 点送车。",
+   "level": "low",
+   "note": "诈骗短信不应生成待办；真配送通知是 Kajsa 新车的。",
+   "messages": [
+    {
+     "id": "fam:I03.1",
+     "at": "2026-08-13T10:12:00+02:00",
+     "ch": "spam",
+     "who": "spam",
+     "kind": "sms",
+     "template": "smishing",
+     "params": {},
+     "item": "fam:bedrageri",
+     "ignore": "spam"
+    },
+    {
+     "id": "fam:I03.2",
+     "at": "2026-08-13T13:02:00+02:00",
+     "ch": "budbil",
+     "who": "budbil",
+     "kind": "notification",
+     "template": "delivery_eta",
+     "params": {
+      "from": "Cykelbutiken",
+      "when": "tis 18/8 kl 17–21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "F04",
+   "item": "fam:kraftskiva",
+   "gist": "Joakim 私信：你们来吗，今晚要订小龙虾；他没回。半小时后 Kajsa 在群里替全家报了 4 人；Joakim 私信说 Kajsa 回了。",
+   "level": "low",
+   "voids": "ask-f-antal",
+   "misplaced": "私信里的问题由 Kajsa 在群里回答",
+   "messages": [
+    {
+     "id": "fam:F04.1",
+     "at": "2026-08-13T12:05:22+02:00",
+     "ch": "joakim",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Kommer ni på lördag 22? Måste beställa kräftorna ikväll"
+    },
+    {
+     "id": "fam:F04.2",
+     "at": "2026-08-13T12:30:15+02:00",
+     "ch": "kraft",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Förlåt sent svar! Vi kommer 4 st (2+2) 🦞"
+    },
+    {
+     "id": "fam:F04.3",
+     "at": "2026-08-13T12:31:00+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Toppen!",
+     "ignore": "ack"
+    },
+    {
+     "id": "fam:F04.4",
+     "at": "2026-08-13T12:32:10+02:00",
+     "ch": "joakim",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Kajsa svarade 👍",
+     "ignore": "ack"
+    }
+   ]
+  },
+  {
+   "id": "G06",
+   "item": "fam:ture-feber",
+   "gist": "中午 Signe 在家庭群：Ture 吐了，爸爸快来——他就在书房；他回“来了”。",
+   "level": "normal",
+   "messages": [
+    {
+     "id": "fam:G06.1",
+     "at": "2026-08-13T12:30:20+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "ture spydde"
+    },
+    {
+     "id": "fam:G06.2",
+     "at": "2026-08-13T12:30:24+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "pappa kom",
+     "ignore": "duplicate"
+    },
+    {
+     "id": "fam:G06.3",
+     "at": "2026-08-13T12:31:02+02:00",
+     "ch": "familj",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Kommer"
+    }
+   ]
+  },
+  {
+   "id": "X13",
+   "item": "fam:ture-feber",
+   "gist": "幼儿园群发高温提醒：早上涂防晒、带帽子（Ture 今天在家）。",
+   "level": "normal",
+   "messages": [
+    {
+     "id": "fam:X13.1",
+     "at": "2026-08-13T13:00:00+02:00",
+     "ch": "forskola",
+     "who": "forskola",
+     "kind": "broadcast",
+     "text": "Värmebölja de närmaste dagarna! Smörj in barnen på morgonen och skicka med keps eller solhatt. Vi är mest i skuggan och dricker mycket vatten. /Ekorren",
+     "ignore": "broadcast"
+    }
+   ]
+  },
+  {
+   "id": "B13",
+   "item": "fam:mamma-varme",
+   "gist": "Ulrika：要到 28 度，母亲家没风扇，谁打个电话；他说晚上打，19:30 打了 12 分钟。",
+   "level": "low",
+   "ask": {
+    "id": "ask-mamma-varme",
+    "q": "热浪里给母亲打个电话",
+    "options": [
+     "打"
+    ],
+    "due": "08-13"
+   },
+   "answers": "ask-mamma-varme",
+   "messages": [
+    {
+     "id": "fam:B13.1",
+     "at": "2026-08-13T14:30:44+02:00",
+     "ch": "syskon",
+     "who": "ulrika",
+     "kind": "message",
+     "text": "Det ska bli 28 grader. Mamma har ingenting i lägenheten, inte ens en fläkt. Kan nån av oss ringa henne?"
+    },
+    {
+     "id": "fam:B13.2",
+     "at": "2026-08-13T17:10:02+02:00",
+     "ch": "syskon",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ringer ikväll"
+    },
+    {
+     "id": "fam:B13.3",
+     "at": "2026-08-13T19:30:00+02:00",
+     "ch": "telefon",
+     "who": "jonas",
+     "kind": "call_log",
+     "template": "call_out",
+     "params": {
+      "who": "Mamma",
+      "min": 12
+     }
+    }
+   ]
+  },
+  {
+   "id": "G07",
+   "item": "fam:ture-feber",
+   "gist": "Kajsa 下午问 Ture 怎样；他说好些了，37.6，吃了冰淇淋。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:G07.1",
+     "at": "2026-08-13T16:30:10+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Hur är han?"
+    },
+    {
+     "id": "fam:G07.2",
+     "at": "2026-08-13T16:41:31+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Bättre, 37,6. Åt glass"
+    },
+    {
+     "id": "fam:G07.3",
+     "at": "2026-08-13T16:42:02+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "❤️",
+     "ignore": "emoji"
+    }
+   ]
+  },
+  {
+   "id": "B22",
+   "item": "fam:mamma-varme",
+   "gist": "通话后母亲：谢谢电话，按你说的披了湿毛巾 😊",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:B22.1",
+     "at": "2026-08-13T20:05:10+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "Tack för samtalet. Jag har blöta handdukar på mig som du sa 😊 Kram",
+     "ignore": "ack"
+    }
+   ]
+  },
+  {
+   "id": "X14",
+   "item": "fam:signe-vardag",
+   "gist": "Signe 晚上问能不能在 Tyra 家过夜；他推给妈妈；Kajsa：不行，快开学了，你在那儿待了一整天。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X14.1",
+     "at": "2026-08-13T20:30:00+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "kan jag sova över hos tyra",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X14.2",
+     "at": "2026-08-13T20:33:12+02:00",
+     "ch": "familj",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Fråga mamma"
+    },
+    {
+     "id": "fam:X14.3",
+     "at": "2026-08-13T20:40:31+02:00",
+     "ch": "familj",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Nej, skolan börjar snart och du har varit där hela dagen",
+     "ignore": "chatter"
+    }
+   ]
+  },
+  {
+   "id": "A12",
+   "item": "fam:smilla-veterinar",
+   "gist": "21:15 他把问答站上“猫每天超过 5 mg/kg 可能失明”的回答转给 Kajsa，Smilla 吃的约 7；Kajsa：明早八点整就打。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:A12.1",
+     "at": "2026-08-13T21:15:40+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Läs det här: någon skriver att över 5 mg/kg om dagen kan ge blindhet hos katter. Smilla får ungefär 7"
+    },
+    {
+     "id": "fam:A12.2",
+     "at": "2026-08-13T21:30:02+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Herregud. Ring imorgon kl 8 prick"
+    },
+    {
+     "id": "fam:A12.3",
+     "at": "2026-08-13T21:31:10+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ja"
+    }
+   ]
+  },
+  {
+   "id": "G08",
+   "item": "fam:ture-feber",
+   "gist": "Kajsa 早上在群里：Ture 不烧了，但按规定再在家一天；今天她在家，你可以上班。他：谢谢。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:G08.1",
+     "at": "2026-08-14T07:20:40+02:00",
+     "ch": "familj",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Ture är feberfri men ska vara hemma en dag till enligt reglerna. Jag är hemma idag, du kan jobba"
+    },
+    {
+     "id": "fam:G08.2",
+     "at": "2026-08-14T07:31:02+02:00",
+     "ch": "familj",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Tack ❤️"
+    }
+   ]
+  },
+  {
+   "id": "A13",
+   "item": "fam:smilla-veterinar",
+   "gist": "8 点他打诊所 6 分钟；诊所短信：从今天剂量减到四分之一片（12.5 mg）再吃两天，24 日 9:30 复诊，回 JA 确认；他回 JA，并告诉 Kajsa。",
+   "level": "normal",
+   "answers": "ask-a-ring",
+   "messages": [
+    {
+     "id": "fam:A13.1",
+     "at": "2026-08-14T08:02:00+02:00",
+     "ch": "telefon",
+     "who": "jonas",
+     "kind": "call_log",
+     "template": "call_out",
+     "params": {
+      "who": "Djurkliniken Kvarnbacken",
+      "min": 6
+     }
+    },
+    {
+     "id": "fam:A13.2",
+     "at": "2026-08-14T08:15:00+02:00",
+     "ch": "klinik",
+     "who": "klinik_p",
+     "kind": "message",
+     "text": "Djurkliniken Kvarnbacken: Enligt samtal idag sänks Smillas dos till en kvarts tablett (12,5 mg) en gång dagligen, två dagar till. En enstaka extra dos ger sannolikt inga besvär, men hör av er direkt om hon verkar se dåligt eller går in i saker. Återbesök bokat mån 24 aug kl 09:30. Svara JA för att bekräfta tiden."
+    },
+    {
+     "id": "fam:A13.3",
+     "at": "2026-08-14T08:16:02+02:00",
+     "ch": "klinik",
+     "who": "jonas",
+     "kind": "message",
+     "text": "JA"
+    },
+    {
+     "id": "fam:A13.4",
+     "at": "2026-08-14T08:16:10+02:00",
+     "ch": "klinik",
+     "who": "klinik",
+     "kind": "notification",
+     "template": "vet_confirmed",
+     "params": {},
+     "ignore": "ack"
+    },
+    {
+     "id": "fam:A13.5",
+     "at": "2026-08-14T08:20:31+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ringt. Lägre dos nu, en kvarts tablett två dagar till. En extra dos är troligen inte farlig men vi ska hålla koll på synen. Återbesök 24/8"
+    },
+    {
+     "id": "fam:A13.6",
+     "at": "2026-08-14T08:24:02+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Puh ❤️",
+     "ignore": "ack"
+    }
+   ]
+  },
+  {
+   "id": "X33",
+   "item": "fam:hemmasysslor",
+   "gist": "Göran 邮件发来一条梭子鱼的照片。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X33.1",
+     "at": "2026-08-14T09:12:00+02:00",
+     "ch": "goran",
+     "who": "goran",
+     "kind": "email",
+     "text": "Gäddan! 4,2 kg. Fick den vid vassen i morse.\n\n[1 bilaga: IMG_2301.jpg]\n\nHälsningar Göran",
+     "subject": "Gädda",
+     "ignore": "photo"
+    }
+   ]
+  },
+  {
+   "id": "X34",
+   "item": "fam:signe-serier",
+   "gist": "屏幕时间周报：Signe 每天平均 4 小时 12 分（+18%）。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:X34.1",
+     "at": "2026-08-14T10:00:00+02:00",
+     "ch": "skarmtid",
+     "who": "skarmtid",
+     "kind": "report",
+     "template": "screen_time_report",
+     "params": {
+      "who": "Signe",
+      "avg": "4 tim 12 min",
+      "delta": "+18 %"
+     },
+     "ignore": "report"
+    }
+   ]
+  },
+  {
+   "id": "B14",
+   "item": "fam:mamma-stambyte",
+   "gist": "10:50 Ulrika 先在群里说：母亲自己把回执交了，选了临时公寓。11:05 母亲本人才来短信：选了隔壁 6 号的临时公寓，你们事多，别操心，可以周末来。",
+   "level": "normal",
+   "voids": "ask-b-boende",
+   "misplaced": "妹妹转述的结果先于母亲本人的消息到达",
+   "messages": [
+    {
+     "id": "fam:B14.1",
+     "at": "2026-08-14T10:50:30+02:00",
+     "ch": "syskon",
+     "who": "ulrika",
+     "kind": "message",
+     "text": "Mamma ringde. Hon har lämnat lappen själv 🙈 tog evakueringslägenheten"
+    },
+    {
+     "id": "fam:B14.2",
+     "at": "2026-08-14T11:05:12+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "Hej Jonas. Jag har lämnat svarslappen till styrelsen idag. Jag tar evakueringslägenheten på nummer 6, det är bara att gå över gården. Ni har så mycket nu. Jag kan komma till er en helg istället. Ni behöver inte oroa er. Kram mamma"
+    }
+   ]
+  },
+  {
+   "id": "B15",
+   "item": "fam:mamma-stambyte",
+   "gist": "他中午回母亲：本来想让你住我们家两周，还想吗？傍晚母亲：谢谢，以后再说，现在已经定了。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:B15.1",
+     "at": "2026-08-14T12:30:44+02:00",
+     "ch": "mamma",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Mamma! Vi hade tänkt att du skulle bo hos oss två veckor. Vill du det fortfarande?"
+    },
+    {
+     "id": "fam:B15.2",
+     "at": "2026-08-14T18:40:20+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "Det är snällt. Vi tar det sen. Nu är det bestämt. Kram"
+    }
+   ]
+  },
+  {
+   "id": "X16",
+   "item": "fam:signe-vardag",
+   "gist": "Signe：和 Tyra 及她妈妈去湖边游泳，“行吗？”；他说可以，手机开着。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X16.1",
+     "at": "2026-08-14T13:10:02+02:00",
+     "ch": "signe",
+     "who": "signe",
+     "kind": "message",
+     "text": "vi ska bada vid sjön med tyra o hennes mamma",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X16.2",
+     "at": "2026-08-14T13:10:09+02:00",
+     "ch": "signe",
+     "who": "signe",
+     "kind": "message",
+     "text": "okej?"
+    },
+    {
+     "id": "fam:X16.3",
+     "at": "2026-08-14T13:25:40+02:00",
+     "ch": "signe",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Ok, ha mobilen på"
+    }
+   ]
+  },
+  {
+   "id": "X15",
+   "item": "fam:flakt",
+   "gist": "Kajsa：Ture 热得睡不着，回来路上买台风扇？他说已经在网上订了，明天到；电器店订单确认。",
+   "level": "low",
+   "ask": {
+    "id": "ask-flakt",
+    "q": "给 Ture 买台风扇",
+    "options": null,
+    "due": "08-14"
+   },
+   "answers": "ask-flakt",
+   "messages": [
+    {
+     "id": "fam:X15.1",
+     "at": "2026-08-14T16:00:10+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Ture kan inte sova i värmen. Köp en fläkt på vägen hem?"
+    },
+    {
+     "id": "fam:X15.2",
+     "at": "2026-08-14T16:12:00+02:00",
+     "ch": "post",
+     "who": "elbutik",
+     "kind": "order",
+     "template": "order_confirm",
+     "params": {
+      "shop": "Elbutiken",
+      "what": "Bordsfläkt 30 cm",
+      "price": "349",
+      "when": "lör 15/8"
+     },
+     "subject": "Orderbekräftelse",
+     "ignore": "receipt"
+    },
+    {
+     "id": "fam:X15.3",
+     "at": "2026-08-14T16:12:40+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Beställt, kommer imorgon"
+    }
+   ]
+  },
+  {
+   "id": "C03",
+   "item": "fam:cykeltur",
+   "gist": "Joakim 本想私信问明早九点骑不骑，发错到了派对群；随后自嘲发错群。他没回。",
+   "level": "low",
+   "misplaced": "骑车的事发错到了派对群",
+   "messages": [
+    {
+     "id": "fam:C03.1",
+     "at": "2026-08-14T19:45:10+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Kör vi 9 imorgon Jonas?"
+    },
+    {
+     "id": "fam:C03.2",
+     "at": "2026-08-14T19:46:02+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Fel tråd 😅",
+     "ignore": "chatter"
+    }
+   ]
+  },
+  {
+   "id": "D02",
+   "item": "fam:vattenlacka",
+   "gist": "街坊群：有人问今晚水压是不是低；有人说正常；Gunnel 说 14 号（他家）车道边湿了一整周。",
+   "level": "normal",
+   "messages": [
+    {
+     "id": "fam:D02.1",
+     "at": "2026-08-14T20:15:30+02:00",
+     "ch": "grannar",
+     "who": "leif",
+     "kind": "message",
+     "text": "Någon mer som har dåligt vattentryck ikväll?"
+    },
+    {
+     "id": "fam:D02.2",
+     "at": "2026-08-14T20:22:02+02:00",
+     "ch": "grannar",
+     "who": "majvor",
+     "kind": "message",
+     "text": "Nej normalt här",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:D02.3",
+     "at": "2026-08-14T20:25:44+02:00",
+     "ch": "grannar",
+     "who": "gunnel",
+     "kind": "message",
+     "text": "Det har varit blött vid nr 14:s uppfart hela veckan. Kanske en läcka?"
+    }
+   ]
+  },
+  {
+   "id": "D03",
+   "item": "fam:vattenlacka",
+   "gist": "7:50 Kajsa：水表在转，家里没开水龙头；“Gunnel 是不是说过车道湿？”他：周一说过，我忘了，打水管急修。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:D03.1",
+     "at": "2026-08-15T07:50:12+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Vattenmätaren snurrar fast inga kranar är på. Jag har kollat toaletterna"
+    },
+    {
+     "id": "fam:D03.2",
+     "at": "2026-08-15T07:51:02+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Sa inte Gunnel nåt om att det var blött vid uppfarten?"
+    },
+    {
+     "id": "fam:D03.3",
+     "at": "2026-08-15T08:05:31+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Jo i måndags. Jag glömde. Ringer rörjouren"
+    },
+    {
+     "id": "fam:D03.4",
+     "at": "2026-08-15T08:10:00+02:00",
+     "ch": "telefon",
+     "who": "jonas",
+     "kind": "call_log",
+     "template": "call_out",
+     "params": {
+      "who": "Rörfixarna Söder",
+      "min": 3
+     }
+    },
+    {
+     "id": "fam:D03.5",
+     "at": "2026-08-15T08:25:00+02:00",
+     "ch": "ror",
+     "who": "ror",
+     "kind": "notification",
+     "template": "plumber_eta",
+     "params": {
+      "window": "11–13",
+      "fee": "1 450"
+     }
+    }
+   ]
+  },
+  {
+   "id": "C04",
+   "item": "fam:cykeltur",
+   "gist": "8:40 他取消今天的骑车：漏水了；Joakim：哎，下回。之后再没提。",
+   "level": "none",
+   "voids": "ask-c-lordag",
+   "messages": [
+    {
+     "id": "fam:C04.1",
+     "at": "2026-08-15T08:40:20+02:00",
+     "ch": "joakim",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Sorry, måste ställa in idag. Vattenläcka 😩"
+    },
+    {
+     "id": "fam:C04.2",
+     "at": "2026-08-15T08:52:02+02:00",
+     "ch": "joakim",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Aj! 👍 en annan gång",
+     "ignore": "ack"
+    }
+   ]
+  },
+  {
+   "id": "D09",
+   "item": "fam:vattenlacka",
+   "gist": "Signe 在家庭群：淋浴怎么没水；Kajsa：总阀关了一半，快点洗。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:D09.1",
+     "at": "2026-08-15T10:30:31+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "varför kommer det typ inget vatten i duschen",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:D09.2",
+     "at": "2026-08-15T10:33:02+02:00",
+     "ch": "familj",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Huvudkranen är strypt. Duscha snabbt",
+     "ignore": "chatter"
+    }
+   ]
+  },
+  {
+   "id": "X17",
+   "item": "fam:flakt",
+   "gist": "风扇送到。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X17.1",
+     "at": "2026-08-15T11:31:00+02:00",
+     "ch": "budbil",
+     "who": "budbil",
+     "kind": "notification",
+     "template": "delivered",
+     "params": {
+      "what": "din order från Elbutiken",
+      "where": "i brevlådan"
+     },
+     "ignore": "delivery"
+    }
+   ]
+  },
+  {
+   "id": "D04",
+   "item": "fam:vattenlacka",
+   "gist": "12:40 水管工 Ronny 报价：铜管在车道下裂了，整根挖开换 PEM 约 6.8 万克朗（ROT 前），或免挖破管穿新管约 4.1 万；周一前定才能排周二；总阀已关一半。",
+   "level": "high",
+   "ask": {
+    "id": "ask-d-ror",
+    "q": "主水管：整根挖开换（约 6.8 万）还是免挖（约 4.1 万）；周一前答复才能排周二",
+    "options": [
+     "整根换",
+     "免挖"
+    ],
+    "due": "08-17"
+   },
+   "messages": [
+    {
+     "id": "fam:D04.1",
+     "at": "2026-08-15T12:40:31+02:00",
+     "ch": "ror",
+     "who": "ronny",
+     "kind": "message",
+     "text": "Hej Jonas, som sagt: kopparledningen under uppfarten har spruckit, ca 12 m från tomtgränsen. Två alternativ:\n1) Gräva upp och byta hela ledningen till PEM, ca 68 000 kr inkl moms före ROT.\n2) Schaktfritt, ny ledning dras genom den gamla (rörspräckning), ca 41 000 kr.\nVi kan börja tisdag om ni bestämmer er senast måndag. Huvudkranen är strypt till hälften så länge. Mvh Ronny"
+    }
+   ]
+  },
+  {
+   "id": "D05",
+   "item": "fam:vattenlacka",
+   "gist": "Kajsa 问水管工怎么说；他报两个价；Kajsa：全换，不想挖两次；他：车道明年反正要重做，到时再挖；Kajsa：那之前一直漏？他没再回。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:D05.1",
+     "at": "2026-08-15T13:10:20+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Vad sa han?"
+    },
+    {
+     "id": "fam:D05.2",
+     "at": "2026-08-15T13:20:02+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "68 eller 41 tusen. Måste svara på måndag"
+    },
+    {
+     "id": "fam:D05.3",
+     "at": "2026-08-15T13:21:10+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Herregud"
+    },
+    {
+     "id": "fam:D05.4",
+     "at": "2026-08-15T13:22:31+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Vi tar hela, jag vill inte gräva två gånger"
+    },
+    {
+     "id": "fam:D05.5",
+     "at": "2026-08-15T13:40:55+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Men uppfarten ska ju göras om ändå nästa år, då kan vi gräva då"
+    },
+    {
+     "id": "fam:D05.6",
+     "at": "2026-08-15T13:45:12+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Och fram till dess läcker det?"
+    }
+   ]
+  },
+  {
+   "id": "D06",
+   "item": "fam:vattenlacka",
+   "gist": "他报了保险，保险 App：已受理，三个工作日内有人联系，自付额按条款。街坊群有人问 14 号是不是来了水管公司。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:D06.1",
+     "at": "2026-08-15T14:30:00+02:00",
+     "ch": "forsakring",
+     "who": "forsakring",
+     "kind": "notification",
+     "template": "claim_received",
+     "params": {
+      "case": "26-48213"
+     }
+    },
+    {
+     "id": "fam:D06.2",
+     "at": "2026-08-15T15:02:31+02:00",
+     "ch": "grannar",
+     "who": "leif",
+     "kind": "message",
+     "text": "Rörfirma hos nr 14? 😮",
+     "ignore": "chatter"
+    }
+   ]
+  },
+  {
+   "id": "X35",
+   "item": "fam:hemmasysslor",
+   "gist": "刷卡：建材店 1 189 克朗（斜切锯？）。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X35.1",
+     "at": "2026-08-15T15:20:00+02:00",
+     "ch": "bank",
+     "who": "bank",
+     "kind": "card_purchase",
+     "template": "card_purchase",
+     "params": {
+      "amount": "1 189",
+      "merchant": "BYGGVARUHUSET"
+     },
+     "ignore": "receipt"
+    }
+   ]
+  },
+  {
+   "id": "I04",
+   "item": "fam:kajsa-cykel",
+   "gist": "Kajsa：旧车的刹车别忘了，修好可以卖掉。他没回。",
+   "level": "trace",
+   "messages": [
+    {
+     "id": "fam:I04.1",
+     "at": "2026-08-15T16:02:12+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Glöm inte bromsen på min gamla cykel, vi kan sälja den sen"
+    }
+   ]
+  },
+  {
+   "id": "B16",
+   "item": "fam:mamma-stambyte",
+   "gist": "Ulrika 下午问“妈妈搬家的事怎么样了”——其实九月才搬，问题已经定了。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:B16.1",
+     "at": "2026-08-15T17:00:10+02:00",
+     "ch": "syskon",
+     "who": "ulrika",
+     "kind": "message",
+     "text": "Hur går det med mamma och flytten?",
+     "ignore": "superseded"
+    }
+   ]
+  },
+  {
+   "id": "F06",
+   "item": "fam:kraftskiva",
+   "gist": "Kajsa 把派对放进共享日历。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:F06.1",
+     "at": "2026-08-15T19:10:00+02:00",
+     "ch": "kalender",
+     "who": "kalender",
+     "kind": "invite",
+     "template": "calendar_invite",
+     "params": {
+      "who": "Kajsa",
+      "title": "Kräftskiva hos Joakim & Sanna",
+      "when": "lör 22 aug 17:00"
+     },
+     "ignore": "duplicate"
+    }
+   ]
+  },
+  {
+   "id": "D10",
+   "item": "fam:vattenlacka",
+   "gist": "Gunnel 问漏水怎么样了，她家有旧管线图；他：是车道下的铜管，明天定。Joakim 也问漏水，他没回。母亲从 Ulrika 那儿听说了也来问。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:D10.1",
+     "at": "2026-08-16T08:10:22+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "Har ni fått läckan lagad? Ulrika sa något om vatten. Kram"
+    },
+    {
+     "id": "fam:D10.2",
+     "at": "2026-08-16T09:30:10+02:00",
+     "ch": "gunnel",
+     "who": "gunnel",
+     "kind": "message",
+     "text": "Hur gick det med vattnet? Vi har kvar gamla ritningar på ledningarna i gatan om ni behöver"
+    },
+    {
+     "id": "fam:D10.3",
+     "at": "2026-08-16T09:48:31+02:00",
+     "ch": "gunnel",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Tack! Det är kopparröret under uppfarten. Vi bestämmer imorgon"
+    },
+    {
+     "id": "fam:D10.4",
+     "at": "2026-08-16T11:20:02+02:00",
+     "ch": "joakim",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Hur gick det med läckan?"
+    }
+   ]
+  },
+  {
+   "id": "X36",
+   "item": "fam:hemmasysslor",
+   "gist": "周日早上 Kajsa：十分钟后吃煎饼！Signe 点赞。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X36.1",
+     "at": "2026-08-16T09:10:02+02:00",
+     "ch": "familj",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Pannkakor om 10 min!",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X36.2",
+     "at": "2026-08-16T09:10:40+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "👍",
+     "ignore": "emoji"
+    }
+   ]
+  },
+  {
+   "id": "D11",
+   "item": "fam:vattenlacka",
+   "gist": "保险 App：已指派理赔员。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:D11.1",
+     "at": "2026-08-16T10:05:00+02:00",
+     "ch": "forsakring",
+     "who": "forsakring",
+     "kind": "notification",
+     "template": "claim_assigned",
+     "params": {
+      "case": "26-48213"
+     }
+    }
+   ]
+  },
+  {
+   "id": "D07",
+   "item": "fam:vattenlacka",
+   "gist": "Kajsa 上午长消息算账：水管四到七万、自付额、新车、兽医、派对；要做一份真的预算，不要他那个从不打开的表；今天就把水管定了。他傍晚只回“在弄预算”。",
+   "level": "high",
+   "misplaced": "他回了预算，没回水管的决定",
+   "messages": [
+    {
+     "id": "fam:D07.1",
+     "at": "2026-08-16T10:30:44+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Jag satt och räknade. Rören 41–68 tusen, självrisken 3 000, cykeln 9 990, veterinären 1 290 plus återbesöket, plus kräftskivan. Vi måste göra en budget på riktigt nu, inte ditt kalkylark som du aldrig öppnar. Och jag vill att vi bestämmer rören idag."
+    },
+    {
+     "id": "fam:D07.2",
+     "at": "2026-08-16T17:20:31+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "message",
+     "text": "Kollar budgetgrejen nu"
+    }
+   ]
+  },
+  {
+   "id": "F05",
+   "item": "fam:kraftskiva",
+   "gist": "Joakim：每位成人 Swish 250 克朗，周五前；随后一条 Swish 收款请求 500 克朗。",
+   "level": "low",
+   "ask": {
+    "id": "ask-f-swish",
+    "q": "派对：Swish 给 Joakim 500 克朗（周五前）",
+    "options": [
+     "付"
+    ],
+    "due": "08-21"
+   },
+   "messages": [
+    {
+     "id": "fam:F05.1",
+     "at": "2026-08-16T12:00:10+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Swisha 250 kr/vuxen till mig senast fredag så delar vi på kräftorna 🙏"
+    },
+    {
+     "id": "fam:F05.2",
+     "at": "2026-08-16T12:01:30+02:00",
+     "ch": "bank",
+     "who": "bank",
+     "kind": "swish_request",
+     "template": "swish_request",
+     "params": {
+      "who": "Joakim Ek",
+      "amount": "500",
+      "msg": "Kräftor 22/8"
+     }
+    }
+   ]
+  },
+  {
+   "id": "B23",
+   "item": "fam:mamma-73",
+   "gist": "Ulrika：母亲 9 月 30 日满 73 岁，要不要一起做点什么？他没回。",
+   "level": "trace",
+   "ask": {
+    "id": "ask-mamma-73",
+    "q": "母亲 9 月 30 日生日，和 Ulrika 一起做点什么",
+    "options": null,
+    "due": null
+   },
+   "messages": [
+    {
+     "id": "fam:B23.1",
+     "at": "2026-08-16T14:40:31+02:00",
+     "ch": "syskon",
+     "who": "ulrika",
+     "kind": "message",
+     "text": "Mamma fyller 73 den 30/9. Ska vi göra något ihop? Typ en middag eller en resa till Åland?"
+    }
+   ]
+  },
+  {
+   "id": "X18",
+   "item": "fam:hemmasysslor",
+   "gist": "Signe：牛奶没了；购物清单上她加了牛奶、薯片、冰淇淋。",
+   "level": "none",
+   "messages": [
+    {
+     "id": "fam:X18.1",
+     "at": "2026-08-16T16:40:02+02:00",
+     "ch": "familj",
+     "who": "signe",
+     "kind": "message",
+     "text": "vi har slut på mjölk",
+     "ignore": "chatter"
+    },
+    {
+     "id": "fam:X18.2",
+     "at": "2026-08-16T16:41:00+02:00",
+     "ch": "lista",
+     "who": "lista",
+     "kind": "list_update",
+     "template": "list_add",
+     "params": {
+      "who": "Signe",
+      "items": [
+       "mjölk",
+       "chips",
+       "glass"
+      ]
+     },
+     "ignore": "list"
+    }
+   ]
+  },
+  {
+   "id": "S02",
+   "item": "fam:skolstart",
+   "gist": "学校平台提醒：Signe 的数字工具同意书还没签，18 日前签。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:S02.1",
+     "at": "2026-08-16T18:00:00+02:00",
+     "ch": "skola",
+     "who": "skolsys",
+     "kind": "reminder",
+     "template": "school_reminder",
+     "params": {
+      "doc": "Medgivande digitala verktyg",
+      "who": "Signe Berglund",
+      "due": "tis 18/8"
+     }
+    }
+   ]
+  },
+  {
+   "id": "D08",
+   "item": "fam:vattenlacka",
+   "gist": "18:05 水管工提醒：最晚明早 10 点答复才能保住周二；22:40 Kajsa：回复水管工了吗？窗口结束时没有答复。",
+   "level": "high",
+   "messages": [
+    {
+     "id": "fam:D08.1",
+     "at": "2026-08-16T18:05:12+02:00",
+     "ch": "ror",
+     "who": "ronny",
+     "kind": "message",
+     "text": "Hej igen. Glöm inte att höra av dig senast imorgon kl 10 om ni vill ha tisdagens tid. /Ronny"
+    },
+    {
+     "id": "fam:D08.2",
+     "at": "2026-08-16T22:40:02+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Har du svarat rörkillen?"
+    }
+   ]
+  },
+  {
+   "id": "B17",
+   "item": "fam:mamma-middag",
+   "gist": "母亲：下周日来你们家吃饭？我带苹果蛋糕。他没回。",
+   "level": "low",
+   "ask": {
+    "id": "ask-mamma-middag",
+    "q": "母亲下周日（23 日）来吃饭？",
+    "options": [
+     "来",
+     "改天"
+    ],
+    "due": null
+   },
+   "messages": [
+    {
+     "id": "fam:B17.1",
+     "at": "2026-08-16T19:02:31+02:00",
+     "ch": "mamma",
+     "who": "mamma",
+     "kind": "message",
+     "text": "Söndagsmiddag nästa helg hos er? Jag tar med äppelkaka. Kram"
+    }
+   ]
+  },
+  {
+   "id": "A17",
+   "item": "fam:smilla-veterinar",
+   "gist": "晚上 Kajsa：Smilla 吃完最后一片了；他点赞。",
+   "level": "low",
+   "messages": [
+    {
+     "id": "fam:A17.1",
+     "at": "2026-08-16T20:15:10+02:00",
+     "ch": "kajsa",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Smilla har ätit sin sista tablett 🎉"
+    },
+    {
+     "id": "fam:A17.2",
+     "at": "2026-08-16T20:20:00+02:00",
+     "ch": "kajsa",
+     "who": "jonas",
+     "kind": "reaction",
+     "text": "Gillade ”Smilla har ätit sin sista tablett 🎉”"
+    }
+   ]
+  }
+ ],
+ "noise": [
+  {
+   "id": "N-klass-01",
+   "thread": "fam:n:klass-forsta-dagen",
+   "topic": "班级家长群：开学到底是 18 还是 19 号，说法不一",
+   "messages": [
+    {
+     "id": "fam:N-klass-01.1",
+     "at": "2026-08-03T20:15:31+02:00",
+     "ch": "klass",
+     "who": "asa",
+     "kind": "message",
+     "text": "Hej alla! Hoppas ni haft en fin sommar ☀️ Vet någon när första dagen är? Det står olika på skolans sida",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-01.2",
+     "at": "2026-08-03T20:19:02+02:00",
+     "ch": "klass",
+     "who": "emir",
+     "kind": "message",
+     "text": "19/8 tror jag",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-01.3",
+     "at": "2026-08-03T20:22:40+02:00",
+     "ch": "klass",
+     "who": "frida",
+     "kind": "message",
+     "text": "Det stod 18:e i vårens brev",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-01.4",
+     "at": "2026-08-03T20:31:12+02:00",
+     "ch": "klass",
+     "who": "par",
+     "kind": "message",
+     "text": "Det är 19:e kl 9 i aulan, fick sms från fritids",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-01.5",
+     "at": "2026-08-03T20:32:05+02:00",
+     "ch": "klass",
+     "who": "asa",
+     "kind": "message",
+     "text": "Tack! 🙏",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-klass-02",
+   "thread": "fam:n:klass-laddare",
+   "topic": "班级家长群：谁有多余的 Chromebook 充电器",
+   "messages": [
+    {
+     "id": "fam:N-klass-02.1",
+     "at": "2026-08-05T09:40:12+02:00",
+     "ch": "klass",
+     "who": "malena",
+     "kind": "message",
+     "text": "Någon som har en extra laddare till skolans Chromebook? Vår har försvunnit under sommaren 🙈",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-02.2",
+     "at": "2026-08-05T10:02:31+02:00",
+     "ch": "klass",
+     "who": "kalle",
+     "kind": "message",
+     "text": "Det är USB-C, funkar med de flesta mobilladdare",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-02.3",
+     "at": "2026-08-05T10:03:10+02:00",
+     "ch": "klass",
+     "who": "malena",
+     "kind": "message",
+     "text": "Åh tack!",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-klass-03",
+   "thread": "fam:n:klass-cykel",
+   "topic": "班级家长群：出售 24 寸旧自行车",
+   "messages": [
+    {
+     "id": "fam:N-klass-03.1",
+     "at": "2026-08-06T18:20:44+02:00",
+     "ch": "klass",
+     "who": "annelie",
+     "kind": "message",
+     "text": "Säljer en 24-tums cykel, blå, 7 växlar, 600 kr. Passar runt 140–155 cm. PM:a!",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-03.2",
+     "at": "2026-08-06T18:45:02+02:00",
+     "ch": "klass",
+     "who": "fredrik",
+     "kind": "message",
+     "text": "Är den kvar?",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-03.3",
+     "at": "2026-08-06T19:10:31+02:00",
+     "ch": "klass",
+     "who": "annelie",
+     "kind": "message",
+     "text": "Såld, sorry!",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-klass-04",
+   "thread": "fam:n:klass-loss",
+   "topic": "班级家长群：夏令营传来头虱提醒",
+   "messages": [
+    {
+     "id": "fam:N-klass-04.1",
+     "at": "2026-08-07T08:02:10+02:00",
+     "ch": "klass",
+     "who": "josefine",
+     "kind": "message",
+     "text": "Varning: det har varit löss på sommarlägret som flera i klassen var på. Kolla gärna innan skolstart 🪲",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-04.2",
+     "at": "2026-08-07T08:05:44+02:00",
+     "ch": "klass",
+     "who": "pontus",
+     "kind": "message",
+     "text": "Tack för infon",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-04.3",
+     "at": "2026-08-07T08:30:02+02:00",
+     "ch": "klass",
+     "who": "liselott",
+     "kind": "message",
+     "text": "Luskam finns på apoteket, den metallen är bäst",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-04.4",
+     "at": "2026-08-07T09:12:31+02:00",
+     "ch": "klass",
+     "who": "josefine",
+     "kind": "message",
+     "text": "👍",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-klass-05",
+   "thread": "fam:n:klass-fest",
+   "topic": "班级家长群：九月办班级聚会的提议与投票",
+   "messages": [
+    {
+     "id": "fam:N-klass-05.1",
+     "at": "2026-08-09T19:30:20+02:00",
+     "ch": "klass",
+     "who": "yusuf",
+     "kind": "message",
+     "text": "Ska vi ha en klassfest i september så barnen kommer in i det igen? Typ grillning i parken",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-05.2",
+     "at": "2026-08-09T19:35:02+02:00",
+     "ch": "klass",
+     "who": "annika",
+     "kind": "message",
+     "text": "Gärna! Helg funkar bäst för oss",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-05.3",
+     "at": "2026-08-09T19:40:10+02:00",
+     "ch": "klass",
+     "who": "yusuf",
+     "kind": "poll",
+     "text": "Omröstning: Vilken dag passar?\n• Lör 5/9\n• Sön 6/9\n• Lör 12/9",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-05.4",
+     "at": "2026-08-09T20:02:31+02:00",
+     "ch": "klass",
+     "who": "kristoffer",
+     "kind": "message",
+     "text": "Lör 12 blir fotbollscup för många",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-klass-06",
+   "thread": "fam:n:klass-lank",
+   "topic": "班级家长群：开学信里的链接打不开；他回了开学时间",
+   "messages": [
+    {
+     "id": "fam:N-klass-06.1",
+     "at": "2026-08-10T14:20:31+02:00",
+     "ch": "klass",
+     "who": "nadia",
+     "kind": "message",
+     "text": "Har ni fått brevet? Länken till medgivandet funkar inte för mig",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-06.2",
+     "at": "2026-08-10T14:25:02+02:00",
+     "ch": "klass",
+     "who": "emir",
+     "kind": "message",
+     "text": "Man måste vara inloggad i appen först, sen funkar den",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-06.3",
+     "at": "2026-08-10T14:31:40+02:00",
+     "ch": "klass",
+     "who": "nadia",
+     "kind": "message",
+     "text": "Ah! Tack",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-06.4",
+     "at": "2026-08-10T15:02:12+02:00",
+     "ch": "klass",
+     "who": "jonas",
+     "kind": "message",
+     "text": "19/8 kl 9 i aulan enligt brevet"
+    },
+    {
+     "id": "fam:N-klass-06.5",
+     "at": "2026-08-10T15:05:30+02:00",
+     "ch": "klass",
+     "who": "asa",
+     "kind": "message",
+     "text": "Perfekt, då vet vi 😊",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-klass-07",
+   "thread": "fam:n:klass-fritids",
+   "topic": "班级家长群：课后托管（fritids）的时间表",
+   "messages": [
+    {
+     "id": "fam:N-klass-07.1",
+     "at": "2026-08-11T08:40:02+02:00",
+     "ch": "klass",
+     "who": "liselott",
+     "kind": "message",
+     "text": "Vet någon om fritids öppnar redan 17/8 eller först när skolan börjar?",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-07.2",
+     "at": "2026-08-11T09:15:44+02:00",
+     "ch": "klass",
+     "who": "par",
+     "kind": "message",
+     "text": "17:e, men man måste ha anmält schema i appen",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-07.3",
+     "at": "2026-08-11T09:16:10+02:00",
+     "ch": "klass",
+     "who": "liselott",
+     "kind": "message",
+     "text": "Tack!!",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-klass-08",
+   "thread": "fam:n:klass-samakning",
+   "topic": "班级家长群：去足球训练拼车",
+   "messages": [
+    {
+     "id": "fam:N-klass-08.1",
+     "at": "2026-08-12T17:02:31+02:00",
+     "ch": "klass",
+     "who": "pontus",
+     "kind": "message",
+     "text": "Någon som kör till fotbollen på torsdagar i höst och vill samåka? Vi bor vid skolan",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-08.2",
+     "at": "2026-08-12T17:30:12+02:00",
+     "ch": "klass",
+     "who": "kristoffer",
+     "kind": "message",
+     "text": "Vi kan köra varannan vecka!",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-08.3",
+     "at": "2026-08-12T17:31:02+02:00",
+     "ch": "klass",
+     "who": "pontus",
+     "kind": "message",
+     "text": "Toppen, hörs privat",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-klass-09",
+   "thread": "fam:n:klass-jacka",
+   "topic": "班级家长群：六月丢的外套",
+   "messages": [
+    {
+     "id": "fam:N-klass-09.1",
+     "at": "2026-08-13T10:10:44+02:00",
+     "ch": "klass",
+     "who": "frida",
+     "kind": "message",
+     "text": "Någon som råkat få med sig en grön regnjacka strl 152 från avslutningen i juni? Står Vide i lappen",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-09.2",
+     "at": "2026-08-13T11:42:02+02:00",
+     "ch": "klass",
+     "who": "malena",
+     "kind": "message",
+     "text": "Kollar i vår hall!",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-klass-10",
+   "thread": "fam:n:klass-mentor",
+   "topic": "班级家长群：新班主任是谁",
+   "messages": [
+    {
+     "id": "fam:N-klass-10.1",
+     "at": "2026-08-14T21:05:31+02:00",
+     "ch": "klass",
+     "who": "annika",
+     "kind": "message",
+     "text": "Vet någon vem som blir ny mentor? Det stod bara ”mentorerna” i brevet",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-10.2",
+     "at": "2026-08-14T21:12:02+02:00",
+     "ch": "klass",
+     "who": "kalle",
+     "kind": "message",
+     "text": "Hörde att det blir en ny lärare från en annan skola",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-10.3",
+     "at": "2026-08-14T21:20:40+02:00",
+     "ch": "klass",
+     "who": "yusuf",
+     "kind": "message",
+     "text": "Vi får se på onsdag 🙂",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-klass-11",
+   "thread": "fam:n:klass-idrott",
+   "topic": "班级家长群：第一天有没有体育课",
+   "messages": [
+    {
+     "id": "fam:N-klass-11.1",
+     "at": "2026-08-15T18:02:12+02:00",
+     "ch": "klass",
+     "who": "nadia",
+     "kind": "message",
+     "text": "Har de idrott första dagen? Ska de ha med gympakläder?",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-11.2",
+     "at": "2026-08-15T18:10:31+02:00",
+     "ch": "klass",
+     "who": "liselott",
+     "kind": "message",
+     "text": "Det stod gympapåse i brevet så ja",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-11.3",
+     "at": "2026-08-15T18:11:02+02:00",
+     "ch": "klass",
+     "who": "nadia",
+     "kind": "message",
+     "text": "Missade det 🙈",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-klass-12",
+   "thread": "fam:n:klass-forsta-dagen",
+   "topic": "班级家长群：班主任确认 19 日 9 点；一串道谢",
+   "messages": [
+    {
+     "id": "fam:N-klass-12.1",
+     "at": "2026-08-16T19:30:20+02:00",
+     "ch": "klass",
+     "who": "par",
+     "kind": "message",
+     "text": "Mentorn bekräftade nyss i appen: onsdag 9.00 i aulan. Ses där!",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-12.2",
+     "at": "2026-08-16T19:31:02+02:00",
+     "ch": "klass",
+     "who": "asa",
+     "kind": "message",
+     "text": "Tack Pär!",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-12.3",
+     "at": "2026-08-16T19:32:10+02:00",
+     "ch": "klass",
+     "who": "annelie",
+     "kind": "message",
+     "text": "👍",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-12.4",
+     "at": "2026-08-16T19:33:31+02:00",
+     "ch": "klass",
+     "who": "fredrik",
+     "kind": "message",
+     "text": "Tack 🙏",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-klass-12.5",
+     "at": "2026-08-16T19:40:02+02:00",
+     "ch": "klass",
+     "who": "emir",
+     "kind": "message",
+     "text": "❤️",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-grannar-01",
+   "thread": "fam:n:grannar-hjalm",
+   "topic": "街坊群：回收站捡到一顶黄头盔",
+   "messages": [
+    {
+     "id": "fam:N-grannar-01.1",
+     "at": "2026-08-03T19:12:20+02:00",
+     "ch": "grannar",
+     "who": "lotta",
+     "kind": "message",
+     "text": "Någon som tappat en gul cykelhjälm vid återvinningen? Den hänger på staketet",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-grannar-01.2",
+     "at": "2026-08-03T20:40:02+02:00",
+     "ch": "grannar",
+     "who": "stig",
+     "kind": "message",
+     "text": "Inte vår",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-grannar-02",
+   "thread": "fam:n:grannar-bil",
+   "topic": "街坊群：一辆可疑的白色面包车",
+   "messages": [
+    {
+     "id": "fam:N-grannar-02.1",
+     "at": "2026-08-04T14:30:44+02:00",
+     "ch": "grannar",
+     "who": "bengt",
+     "kind": "message",
+     "text": "Vit skåpbil har stått och kört sakta fram och tillbaka på gatan i en halvtimme. Någon som vet vem det är?",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-grannar-02.2",
+     "at": "2026-08-04T14:41:02+02:00",
+     "ch": "grannar",
+     "who": "majvor",
+     "kind": "message",
+     "text": "Det är fönsterputsarna till nr 3 tror jag",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-grannar-02.3",
+     "at": "2026-08-04T14:45:31+02:00",
+     "ch": "grannar",
+     "who": "bengt",
+     "kind": "message",
+     "text": "Ok då är det lugnt 👍",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-grannar-02.4",
+     "at": "2026-08-04T15:10:12+02:00",
+     "ch": "grannar",
+     "who": "leif",
+     "kind": "message",
+     "text": "Bra att vi håller koll!",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-grannar-03",
+   "thread": "fam:n:grannar-studsmatta",
+   "topic": "街坊群：阵风把 9 号的蹦床吹跑了",
+   "messages": [
+    {
+     "id": "fam:N-grannar-03.1",
+     "at": "2026-08-06T20:42:31+02:00",
+     "ch": "grannar",
+     "who": "lotta",
+     "kind": "message",
+     "text": "Studsmattan hos nr 9 flög iväg in på gatan 😱 Den ligger vid busskuren nu",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-grannar-03.2",
+     "at": "2026-08-06T20:50:02+02:00",
+     "ch": "grannar",
+     "who": "stig",
+     "kind": "message",
+     "text": "Vi hjälper till att bära tillbaka",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-grannar-04",
+   "thread": "fam:n:grannar-loppis",
+   "topic": "街坊群：周日小区跳蚤市场",
+   "messages": [
+    {
+     "id": "fam:N-grannar-04.1",
+     "at": "2026-08-08T09:20:12+02:00",
+     "ch": "grannar",
+     "who": "majvor",
+     "kind": "message",
+     "text": "Gårdsloppis hos oss på söndag 10–14! Barnkläder, böcker och en gammal gräsklippare",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-grannar-04.2",
+     "at": "2026-08-08T10:02:40+02:00",
+     "ch": "grannar",
+     "who": "lotta",
+     "kind": "message",
+     "text": "Kommer!",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-grannar-05",
+   "thread": "fam:n:grannar-sopor",
+   "topic": "街坊群：本周垃圾改到周四收",
+   "messages": [
+    {
+     "id": "fam:N-grannar-05.1",
+     "at": "2026-08-11T18:30:02+02:00",
+     "ch": "grannar",
+     "who": "stig",
+     "kind": "message",
+     "text": "Sophämtningen är flyttad till torsdag den här veckan enligt kommunen",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-grannar-05.2",
+     "at": "2026-08-11T18:41:31+02:00",
+     "ch": "grannar",
+     "who": "majvor",
+     "kind": "message",
+     "text": "Tack för att du säger till!",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-grannar-06",
+   "thread": "fam:n:grannar-katt",
+   "topic": "街坊群：有人家的灰猫走丢（不是 Smilla）",
+   "messages": [
+    {
+     "id": "fam:N-grannar-06.1",
+     "at": "2026-08-12T21:02:10+02:00",
+     "ch": "grannar",
+     "who": "bengt",
+     "kind": "message",
+     "text": "Vår katt Sigge har inte kommit hem sedan i går. Grå med vit tass. Hör av er om ni ser honom 🙏",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-grannar-06.2",
+     "at": "2026-08-13T07:40:44+02:00",
+     "ch": "grannar",
+     "who": "bengt",
+     "kind": "message",
+     "text": "Han är hemma! Hade varit instängd i ett garage 🙈",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-grannar-06.3",
+     "at": "2026-08-13T07:45:02+02:00",
+     "ch": "grannar",
+     "who": "lotta",
+     "kind": "message",
+     "text": "Skönt! ❤️",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-grannar-07",
+   "thread": "fam:n:grannar-fest",
+   "topic": "街坊群：提醒 29 日的街坊烧烤",
+   "messages": [
+    {
+     "id": "fam:N-grannar-07.1",
+     "at": "2026-08-16T16:20:31+02:00",
+     "ch": "grannar",
+     "who": "lotta",
+     "kind": "message",
+     "text": "Påminnelse: gatufest med grill lördag 29/8 från 16! Ta med något till knytkalaset",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-grannar-07.2",
+     "at": "2026-08-16T16:31:02+02:00",
+     "ch": "grannar",
+     "who": "leif",
+     "kind": "message",
+     "text": "Vi tar med tältet om det regnar",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-kraft-01",
+   "thread": "fam:n:kraft-dryck",
+   "topic": "派对群：喝什么的投票与回应",
+   "messages": [
+    {
+     "id": "fam:N-kraft-01.1",
+     "at": "2026-08-04T12:10:02+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "poll",
+     "text": "Omröstning: Vad vill ni dricka?\n• 🍺 Öl\n• 🍷 Vin\n• 🧃 Alkoholfritt",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-01.2",
+     "at": "2026-08-04T12:30:31+02:00",
+     "ch": "kraft",
+     "who": "mans",
+     "kind": "message",
+     "text": "Alla tre 😂",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-01.3",
+     "at": "2026-08-04T13:02:10+02:00",
+     "ch": "kraft",
+     "who": "tove",
+     "kind": "message",
+     "text": "Vi kommer! 2 vuxna",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-kraft-02",
+   "thread": "fam:n:kraft-hund",
+   "topic": "派对群：能带狗吗；人数更正",
+   "messages": [
+    {
+     "id": "fam:N-kraft-02.1",
+     "at": "2026-08-06T09:40:12+02:00",
+     "ch": "kraft",
+     "who": "mans",
+     "kind": "message",
+     "text": "Vi blir 2 vuxna + 3 barn!",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-02.2",
+     "at": "2026-08-06T09:45:40+02:00",
+     "ch": "kraft",
+     "who": "tove",
+     "kind": "message",
+     "text": "Får vi ta med hunden?",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-02.3",
+     "at": "2026-08-06T10:02:02+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Hunden är välkommen om den inte äter kräftorna 😄",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-02.4",
+     "at": "2026-08-06T10:03:30+02:00",
+     "ch": "kraft",
+     "who": "sanna",
+     "kind": "message",
+     "text": "🐕❤️",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-kraft-03",
+   "thread": "fam:n:kraft-allergi",
+   "topic": "派对群：坚果过敏、谁借桌椅",
+   "messages": [
+    {
+     "id": "fam:N-kraft-03.1",
+     "at": "2026-08-09T16:10:44+02:00",
+     "ch": "kraft",
+     "who": "tove",
+     "kind": "message",
+     "text": "En sak: vår minsta är nötallergisk, kan vi tänka på det med efterrätten?",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-03.2",
+     "at": "2026-08-09T16:20:02+02:00",
+     "ch": "kraft",
+     "who": "sanna",
+     "kind": "message",
+     "text": "Självklart! Vi kör nötfritt hela kvällen",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-03.3",
+     "at": "2026-08-09T16:22:31+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Någon som kan låna ut ett bord och några stolar? Vi blir fler än vi trodde",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-03.4",
+     "at": "2026-08-09T17:05:10+02:00",
+     "ch": "kraft",
+     "who": "henrik",
+     "kind": "message",
+     "text": "Vi har ett hopfällbart bord, tar med det",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-kraft-04",
+   "thread": "fam:n:kraft-visor",
+   "topic": "派对群：敬酒歌 PDF、戴帽子的着装要求",
+   "messages": [
+    {
+     "id": "fam:N-kraft-04.1",
+     "at": "2026-08-11T20:30:02+02:00",
+     "ch": "kraft",
+     "who": "sanna",
+     "kind": "message",
+     "text": "Klädkod: hattar! 🎩👒",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-04.2",
+     "at": "2026-08-11T20:31:44+02:00",
+     "ch": "kraft",
+     "who": "henrik",
+     "kind": "message",
+     "text": "😂😂",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-04.3",
+     "at": "2026-08-11T20:40:31+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "file",
+     "text": "[Dokument] Snapsvisor_2026.pdf",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-04.4",
+     "at": "2026-08-11T20:45:02+02:00",
+     "ch": "kraft",
+     "who": "mans",
+     "kind": "message",
+     "text": "Nu börjar vi öva 🎶",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-kraft-05",
+   "thread": "fam:n:kraft-mat",
+   "topic": "派对群：各家带什么；Kajsa 说带一个奶酪派",
+   "messages": [
+    {
+     "id": "fam:N-kraft-05.1",
+     "at": "2026-08-13T19:10:10+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Vi fixar kräftor och bröd. Om några kan ta med en paj eller sallad vore det toppen",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-05.2",
+     "at": "2026-08-13T19:20:44+02:00",
+     "ch": "kraft",
+     "who": "henrik",
+     "kind": "message",
+     "text": "Vi tar med en tårta",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-05.3",
+     "at": "2026-08-13T19:31:02+02:00",
+     "ch": "kraft",
+     "who": "kajsa",
+     "kind": "message",
+     "text": "Vi tar med västerbottenpaj!",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-05.4",
+     "at": "2026-08-13T19:40:31+02:00",
+     "ch": "kraft",
+     "who": "lisen",
+     "kind": "message",
+     "text": "Sallad från oss 🥗",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-kraft-06",
+   "thread": "fam:n:kraft-avbud",
+   "topic": "派对群：Emelie 一家来不了；小龙虾订好了",
+   "messages": [
+    {
+     "id": "fam:N-kraft-06.1",
+     "at": "2026-08-14T12:02:10+02:00",
+     "ch": "kraft",
+     "who": "emelie",
+     "kind": "message",
+     "text": "Vi kommer tyvärr inte, svärmor fyller år samma dag 😕 Ha det så kul!",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-06.2",
+     "at": "2026-08-14T12:05:31+02:00",
+     "ch": "kraft",
+     "who": "sanna",
+     "kind": "message",
+     "text": "Åh tråkigt! Nästa år!",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-06.3",
+     "at": "2026-08-14T17:30:02+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Kräftorna beställda! 6 kg 🦞",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-06.4",
+     "at": "2026-08-14T17:31:10+02:00",
+     "ch": "kraft",
+     "who": "mans",
+     "kind": "message",
+     "text": "🦞🦞",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-kraft-07",
+   "thread": "fam:n:kraft-regn",
+   "topic": "派对群：下雨怎么办",
+   "messages": [
+    {
+     "id": "fam:N-kraft-07.1",
+     "at": "2026-08-16T13:10:44+02:00",
+     "ch": "kraft",
+     "who": "tove",
+     "kind": "message",
+     "text": "Regnplan om det blir som i fjol? 🌧️",
+     "ignore": "group_chatter"
+    },
+    {
+     "id": "fam:N-kraft-07.2",
+     "at": "2026-08-16T13:20:02+02:00",
+     "ch": "kraft",
+     "who": "joakim",
+     "kind": "message",
+     "text": "Vi lånar grannens partytält, det ska gå",
+     "ignore": "group_chatter"
+    }
+   ]
+  },
+  {
+   "id": "N-forskola-01",
+   "thread": "fam:n:forskola-bilder",
+   "topic": "幼儿园 App 的照片动态（每天几条）",
+   "messages": [
+    {
+     "id": "fam:N-forskola-01.1",
+     "at": "2026-08-10T10:30:00+02:00",
+     "ch": "forskola",
+     "who": "forskola",
+     "kind": "photo",
+     "text": "[Bild] Första dagen tillbaka! Vi har målat med vattenfärg 🎨",
+     "ignore": "broadcast_photo"
+    },
+    {
+     "id": "fam:N-forskola-01.2",
+     "at": "2026-08-10T15:10:00+02:00",
+     "ch": "forskola",
+     "who": "forskola",
+     "kind": "photo",
+     "text": "[Bild] Eftermiddagsfika i skuggan 🍉",
+     "ignore": "broadcast_photo"
+    },
+    {
+     "id": "fam:N-forskola-01.3",
+     "at": "2026-08-11T11:20:00+02:00",
+     "ch": "forskola",
+     "who": "forskola",
+     "kind": "photo",
+     "text": "[Bild] Vi letade småkryp i parken och hittade en stor skalbagge!",
+     "ignore": "broadcast_photo"
+    },
+    {
+     "id": "fam:N-forskola-01.4",
+     "at": "2026-08-12T10:05:00+02:00",
+     "ch": "forskola",
+     "who": "forskola",
+     "kind": "photo",
+     "text": "[Bild] Vattenlek på gården 💦",
+     "ignore": "broadcast_photo"
+    },
+    {
+     "id": "fam:N-forskola-01.5",
+     "at": "2026-08-14T11:00:00+02:00",
+     "ch": "forskola",
+     "who": "forskola",
+     "kind": "photo",
+     "text": "[Bild] Vi har byggt en koja av filtar inomhus när det var som varmast",
+     "ignore": "broadcast_photo"
+    },
+    {
+     "id": "fam:N-forskola-01.6",
+     "at": "2026-08-14T15:30:00+02:00",
+     "ch": "forskola",
+     "who": "forskola",
+     "kind": "broadcast",
+     "text": "Trevlig helg allihop! Nästa vecka börjar vi med utflykter på tisdagar, mer info kommer. /Ekorren",
+     "ignore": "broadcast_photo"
+    }
+   ]
+  },
+  {
+   "id": "N-auto-01",
+   "thread": "fam:n:inkopslista",
+   "topic": "购物清单的增删",
+   "messages": [
+    {
+     "id": "fam:N-auto-01.1",
+     "at": "2026-08-06T07:30:00+02:00",
+     "ch": "lista",
+     "who": "lista",
+     "kind": "list_update",
+     "template": "list_add",
+     "params": {
+      "who": "Kajsa",
+      "items": [
+       "solkräm barn",
+       "myggmedel"
+      ]
+     },
+     "ignore": "list"
+    },
+    {
+     "id": "fam:N-auto-01.2",
+     "at": "2026-08-12T18:10:00+02:00",
+     "ch": "lista",
+     "who": "lista",
+     "kind": "list_update",
+     "template": "list_add",
+     "params": {
+      "who": "Kajsa",
+      "items": [
+       "Alvedon barn",
+       "glass",
+       "saft"
+      ]
+     },
+     "ignore": "list"
+    },
+    {
+     "id": "fam:N-auto-01.3",
+     "at": "2026-08-13T09:05:00+02:00",
+     "ch": "lista",
+     "who": "lista",
+     "kind": "list_update",
+     "template": "list_check",
+     "params": {
+      "who": "Kajsa",
+      "count": 3
+     },
+     "ignore": "list"
+    },
+    {
+     "id": "fam:N-auto-01.4",
+     "at": "2026-08-15T09:40:00+02:00",
+     "ch": "lista",
+     "who": "lista",
+     "kind": "list_update",
+     "template": "list_add",
+     "params": {
+      "who": "Signe",
+      "items": [
+       "schampo",
+       "tandkräm"
+      ]
+     },
+     "ignore": "list"
+    }
+   ]
+  },
+  {
+   "id": "N-auto-02",
+   "thread": "fam:n:kort",
+   "topic": "银行刷卡通知",
+   "messages": [
+    {
+     "id": "fam:N-auto-02.1",
+     "at": "2026-08-03T16:44:00+02:00",
+     "ch": "bank",
+     "who": "bank",
+     "kind": "card_purchase",
+     "template": "card_purchase",
+     "params": {
+      "amount": "129",
+      "merchant": "APOTEKET"
+     },
+     "ignore": "receipt"
+    },
+    {
+     "id": "fam:N-auto-02.2",
+     "at": "2026-08-08T17:02:00+02:00",
+     "ch": "bank",
+     "who": "bank",
+     "kind": "card_purchase",
+     "template": "card_purchase",
+     "params": {
+      "amount": "96",
+      "merchant": "GLASSKIOSKEN"
+     },
+     "ignore": "receipt"
+    },
+    {
+     "id": "fam:N-auto-02.3",
+     "at": "2026-08-14T18:25:00+02:00",
+     "ch": "bank",
+     "who": "bank",
+     "kind": "card_purchase",
+     "template": "card_purchase",
+     "params": {
+      "amount": "534",
+      "merchant": "MATBUTIKEN SODER"
+     },
+     "ignore": "receipt"
+    },
+    {
+     "id": "fam:N-auto-02.4",
+     "at": "2026-08-16T15:12:00+02:00",
+     "ch": "bank",
+     "who": "bank",
+     "kind": "card_purchase",
+     "template": "card_purchase",
+     "params": {
+      "amount": "245",
+      "merchant": "MATBUTIKEN SODER"
+     },
+     "ignore": "receipt"
+    }
+   ]
+  },
+  {
+   "id": "N-auto-03",
+   "thread": "fam:n:skola-schema",
+   "topic": "学校平台：新课表已发布",
+   "messages": [
+    {
+     "id": "fam:N-auto-03.1",
+     "at": "2026-08-12T16:00:00+02:00",
+     "ch": "skola",
+     "who": "skolsys",
+     "kind": "notification",
+     "template": "school_schedule",
+     "params": {
+      "klass": "6B"
+     },
+     "ignore": "broadcast"
+    }
+   ]
+  },
+  {
+   "id": "N-auto-04",
+   "thread": "fam:n:kalender",
+   "topic": "日历提醒：周三收垃圾",
+   "messages": [
+    {
+     "id": "fam:N-auto-04.1",
+     "at": "2026-08-05T07:00:00+02:00",
+     "ch": "kalender",
+     "who": "kalender",
+     "kind": "reminder",
+     "template": "calendar_reminder",
+     "params": {
+      "title": "Sophämtning",
+      "when": "idag"
+     },
+     "ignore": "reminder"
+    }
+   ]
+  }
+ ]
+}

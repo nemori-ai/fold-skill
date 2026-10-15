@@ -843,7 +843,7 @@ LANGUAGE_NOTE = ("用户的工作语言是英文，输入多为英文。整理�
 SELF_NOTE = ("本轮输入里 `self: true` 的事件是用户本人发出的：任何渠道里他的评论、评审、关闭与合并、帖子、提问与回复、邮件。"
              "它们相当于用户自己的动作与回复，用来判断哪些事已经处理、他关心什么，不是等他处理的来信。")
 STREAM_NOTE = ("输入的 `stream` 是宿主按来源给的粗分类：work（工作）、community（社区与爱好）、life（生活琐事）、"
-               "subscription（订阅、营销与提醒）。它只说明从哪条渠道来，不代表重要性。")
+               "family（家人、朋友、邻居与家务相关的通知）、subscription（订阅、营销与提醒）。它只说明从哪条渠道来，不代表重要性。")
 
 
 def estimate_tokens(text: str) -> int:
@@ -897,6 +897,8 @@ def free_persona(corpus: dict, override: str | None) -> dict:
     if override is not None:
         persona["context"] = override
     persona["language"] = LANGUAGE_NOTE
+    if any(e.get("stream") == "family" for f in corpus["frames"] for e in f["events"]):
+        persona["language"] += "家人、朋友与邻居之间的往来是瑞典语，同样用中文整理，人名与原话保留原文。"
     persona["self_events"] = SELF_NOTE
     if any(e.get("stream") for f in corpus["frames"] for e in f["events"][:1]):
         persona["streams"] = STREAM_NOTE

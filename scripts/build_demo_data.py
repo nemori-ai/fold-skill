@@ -176,6 +176,14 @@ def apply_edits(batch: dict, ops: list[dict], frame_id: str) -> dict:
 
 def load(name: str):
     corpus = json.loads((ROOT / "corpus" / name / "frames.json").read_text(encoding="utf-8"))
+    # 家庭流（2026-10-15 追加，见 corpus/composite/family/README.md）不在演示所依据的那次自由运行里：
+    # 重跑之前演示不收它，帧的条数也还原为不含家庭流时的数字。
+    for frame in corpus["frames"]:
+        kept = [e for e in frame["events"] if e.get("stream") != "family"]
+        if len(kept) != len(frame["events"]):
+            frame["events"] = kept
+            frame["signal"]["received"] = len(kept)
+            frame["title"] = re.sub(r"· \d+ 条输入$", f"· {len(kept)} 条输入", frame.get("title", ""))
     data_dir = ROOT / "prototype" / "data" / name
     agent = json.loads((data_dir / "agent-batches.json").read_text(encoding="utf-8"))
     edits_path = data_dir / "edits.json"

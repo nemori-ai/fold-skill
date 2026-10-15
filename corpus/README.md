@@ -4,7 +4,7 @@
 
 [原型情境](../prototype/data/story/scenario.mjs)的 37 帧、112 条输入由作者手写：每条都有信息量，没有重复、机器人、半截话或互相矛盾，时间也整齐。真实世界里替一个人工作的 Agent 收到的是另一种东西：机器人通知、“谢谢”和“有进展吗”、重复报告、迟到的回复、几个渠道对同一件事的不同说法，以及其中少数真正要紧的事。这里收集一份这样的输入，不清洗，量化它和手写情境差在哪里，并用这个人后来实际做了什么推出弱标注。
 
-手写情境继续保留：它有逐帧的完整批次，适合 teacher-forced 对比；真实语料是第二个基准，检验 Agent 在噪音里的取舍。只有工作还不够像一个人的收件箱，[composite](#混合人物composite) 把 curl-bagder 的工作流与几位真实的人公开的社区、生活与订阅数据拼成一个化名人物的两周。
+手写情境继续保留：它有逐帧的完整批次，适合 teacher-forced 对比；真实语料是第二个基准，检验 Agent 在噪音里的取舍。只有工作还不够像一个人的收件箱，[composite](#混合人物composite) 把 curl-bagder 的工作流与几位真实的人公开的社区、生活与订阅数据拼成一个化名人物的两周，再加上作者编写的家庭往来。
 
 ## 来源调查与选择
 
@@ -53,13 +53,13 @@
 
 | 项 | 内容 |
 | --- | --- |
-| 人 | 化名人物 Jonas Berglund，斯德哥尔摩，开源传输库 skarv 的维护者；由多位真实的人的公开数据拼成（工作 1 位、论坛 1 位、问答 34 位提问者，另有订阅的作者），设定见 [MIX.md](composite/MIX.md#人物)。 |
-| 窗口 | 与 curl-bagder 相同：2026-08-03 至 08-17（Europe/Stockholm），28 帧、2829 条。 |
-| 各流 | 工作 1676（curl-bagder 全部输入）、社区 738（iNaturalist 公开论坛）、生活 326（Stack Exchange 八个生活站点的 34 个问题）、订阅 89（Substack newsletter、Enron 营销群发、SMHI 天气提醒）。工作占 59%。 |
+| 人 | 化名人物 Jonas Berglund，斯德哥尔摩，开源传输库 skarv 的维护者；由多位真实的人的公开数据拼成（工作 1 位、论坛 1 位、问答 34 位提问者，另有订阅的作者），家人与朋友由作者编写，设定见 [MIX.md](composite/MIX.md#人物)。 |
+| 窗口 | 与 curl-bagder 相同：2026-08-03 至 08-17（Europe/Stockholm），28 帧、3217 条。 |
+| 各流 | 工作 1676（curl-bagder 全部输入）、社区 738（iNaturalist 公开论坛）、生活 326（Stack Exchange 八个生活站点的 34 个问题）、订阅 89（Substack newsletter、Enron 营销群发、SMHI 天气提醒）、家庭 388（作者编写的瑞典语家人、朋友、邻居往来与家务通知）。工作占 52%。 |
 | 改写 | 项目、仓库、账号、人名、邮件列表、域名与各类编号按一张本机化名表一致替换，只用规则，不用模型；每条输入带原始记录 ID 的加盐摘要 `origin`。化名不是匿名，正文仍可被搜索到。 |
 | 跨流的事 | 6 件，挑选时间或话题真实重合的线程得到，不手写。 |
-| 未启用 | Enron 私人往来作为家庭流的方案被权限拦截，待用户决定，见 [MIX.md](composite/MIX.md#家庭往来为什么还没有)。 |
-| 用到哪里 | 第一次自由运行见[自由运行评测](../docs/evaluations/free-run-composite-2026-10-15.md)；运行结果经人工打磨成原型的默认演示数据，见 [POLISH.md](../prototype/data/composite/POLISH.md)。 |
+| 家庭流 | 2026-10-15 用户决定：参考真实数据仿写，不用真实内容，形式不限于邮件。人物、事件与文字都是原创，Enron 私人往来只作语气参考，与它没有共同的专名、没有 8 词以上的重合；节拍表、成品与标注入库，见 [family/README.md](composite/family/README.md)。 |
+| 用到哪里 | 第一次自由运行见[自由运行评测](../docs/evaluations/free-run-composite-2026-10-15.md)，那时还没有家庭流；运行结果经人工打磨成原型的默认演示数据，见 [POLISH.md](../prototype/data/composite/POLISH.md)。含家庭流的自由运行尚未重跑。 |
 
 ## 许可与入库范围
 
@@ -91,6 +91,7 @@ composite 另用到 Stack Exchange（CC BY-SA 4.0）、SMHI 观测（CC BY 4.0�
 .venv/bin/python scripts/compose_corpus.py build           # 需要上面两个来源的 raw/ 与本机化名表
 .venv/bin/python scripts/compose_corpus.py labels
 .venv/bin/python scripts/compose_corpus.py noise
+.venv/bin/python scripts/compose_corpus.py family          # 追加作者编写的家庭流，只需现有 frames.json 与入库的节拍表
 ```
 
 [scripts/fetch_corpus.py](../scripts/fetch_corpus.py) 按来源时区解释 `--start/--end`，抓取范围是窗口前 1 天到窗口后 `--followup-days` 天；`--only github,lists` 只重抓部分流，`raw/meta.json` 记录每个流的条数、抓取时间与替换的电话号码数。CMU 压缩包本次下载的 SHA-256 为 `b3da1b3fe0369ec3140bb4fbce94702c33b7da810ec15d718b3fadf5cd748ca7`。
@@ -123,6 +124,7 @@ composite 另用到 Stack Exchange（CC BY-SA 4.0）、SMHI 观测（CC BY 4.0�
 | curl-bagder | 28 | 400 | 74 | 1271 条中 409 条（强依据 264） | 47 组 |
 | enron-steffes-j | 28（24 帧有标注） | 399 | 36 | 504 封中 337 封（其中删除 322） | 无 |
 | composite | 28 | 934 | 76 | 2324 条中 501 条（强依据 354，其中订阅 89） | 47 组，另列跨流的事 6 件 |
+| composite 家庭流（作者写定） | 28 | 144 | 20 | 310 条中 185 条 | 1 组；另列问题 19 个 |
 
 ## 文件
 
@@ -139,4 +141,6 @@ composite 另用到 Stack Exchange（CC BY-SA 4.0）、SMHI 观测（CC BY 4.0�
 | [composite/MIX.md](composite/MIX.md) | 混合人物的设定、各流来源与条数、改写规则、跨流的事与许可 |
 | [composite/NOISE.md](composite/NOISE.md) | 混合人物的噪音画像，与 curl-bagder、手写情境并排 |
 | [composite/LABELS.md](composite/LABELS.md) | 混合人物各流的弱标注规则、覆盖与跨流的事 |
+| [composite/family/](composite/family/README.md) | 作者编写的家庭流：节拍表、成品、不可回溯检查与合成方法 |
+| [scripts/family_stream.py](../scripts/family_stream.py) | 家庭流的渲染、标注与不可回溯检查 |
 | `<source>/ids.json`、`noise.json`、`labels.json` | 可入库的输入清单、统计与弱标注 |
