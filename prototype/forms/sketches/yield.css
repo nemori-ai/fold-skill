@@ -1,0 +1,127 @@
+/* 04 让位图（完整版）. Rows are absolutely placed and never move; a frame change only reveals or hides rows. */
+.st-figure { overflow: hidden; }
+.y-head { position: absolute; left: 0; right: 0; top: 0; height: 30px; font-size: 12.5px; }
+.y-head > b, .y-head > span { position: absolute; top: 0; font-weight: 600; white-space: nowrap; }
+.y-h-spine { text-align: center; font: 10px var(--sans) !important; color: var(--ink-2); top: 2px !important; }
+.y-scale { position: absolute; left: 0; right: 0; bottom: 2px; height: 10px; }
+.y-scale i { position: absolute; bottom: 0; width: 1px; height: 4px; background: var(--ink-3); }
+.y-scale span { position: absolute; bottom: 4px; transform: translateX(-50%); font: 8.5px var(--mono); color: var(--ink-3); }
+
+.y-rows { position: absolute; inset: 0; }
+.y-row { position: absolute; left: 0; right: 0; top: 0; display: grid; grid-template-columns: var(--when) var(--resp) var(--wing) var(--spine) var(--wing) minmax(0, 1fr); align-items: center; }
+.y-row.is-dayfirst::before { content: ""; position: absolute; left: 0; right: 0; top: 0; border-top: 1px solid var(--line); }
+.y-when { display: flex; align-items: baseline; gap: 4px; height: 100%; padding-top: 2px; cursor: pointer; align-items: center; }
+.y-when b { font: 600 14px/1 var(--mono); min-width: 18px; }
+.y-when span { font-size: 9.5px; color: var(--ink-2); }
+.y-when time { margin-left: auto; padding-right: 6px; font: 10.5px var(--mono); color: var(--ink-2); transition: color 120ms; }
+.y-when:hover time { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
+.y-row.is-current .y-when time { color: var(--ink); font-weight: 600; }
+.y-resp { display: flex; justify-content: center; gap: 1px; }
+.y-ans, .y-ann { font-size: 13px; line-height: 1; cursor: pointer; border-radius: 3px; padding: 1px 2px; }
+.y-ans sub { font: 8.5px var(--mono); }
+.y-ans:hover { background: var(--ink); color: var(--paper); }
+.y-ann { cursor: default; color: var(--ink-2); }
+.y-key-ans { font-weight: 400; margin-right: 5px; }
+
+.y-wing { display: flex; height: 100%; align-items: center; }
+.y-l { justify-content: flex-end; }
+.y-fill { display: flex; height: var(--bar); }
+.y-l .y-fill { flex-direction: row-reverse; }
+
+.y-seg, .y-rest { position: relative; flex: none; height: var(--bar); cursor: pointer; transition: opacity 100ms linear; }
+.y-seg { display: flex; align-items: center; justify-content: center; background: var(--c); box-shadow: inset -1px 0 0 var(--paper); }
+.y-l .y-seg { box-shadow: inset 1px 0 0 var(--paper); }
+.y-seg::after, .y-sub::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; pointer-events: none;
+  background: repeating-linear-gradient(90deg, transparent 0 calc(var(--u) - 1px), rgb(255 255 255 / .5) calc(var(--u) - 1px) var(--u)); }
+.y-seg em, .y-sub em { font: normal 600 var(--font, 11px)/1 var(--sans); color: #fff; white-space: nowrap; pointer-events: none; letter-spacing: .01em; }
+.y-seg em.is-light { color: var(--ink-2); font-weight: 500; }
+.y-free { background: transparent; box-shadow: none !important; outline: 1px dashed var(--ink-3); outline-offset: -1px; }
+.y-free::after { background: repeating-linear-gradient(90deg, transparent 0 calc(var(--u) - 1px), var(--line) calc(var(--u) - 1px) var(--u)); }
+
+.y-rest { background: var(--faint); box-shadow: inset 0 0 0 1px var(--line); transition: opacity 100ms linear, background-color 220ms, box-shadow 220ms; }
+.y-rest > b { position: absolute; inset: 0 0 4px; display: flex; align-items: center; justify-content: center; font: 500 10.5px/1 var(--sans); color: var(--ink-2); white-space: nowrap; pointer-events: none; transition: opacity 140ms; }
+.y-subs { position: absolute; inset: 0; display: flex; align-items: flex-end; }
+.y-l .y-subs { flex-direction: row-reverse; }
+.y-sub { position: relative; flex: none; height: 4px; display: flex; align-items: center; justify-content: center; background: var(--c); box-shadow: inset -1px 0 0 var(--faint); transition: height 240ms var(--st-ease), opacity 100ms linear; }
+.y-sub::after { opacity: 0; transition: opacity 160ms; }
+.y-sub em { opacity: 0; transition: opacity 120ms; }
+.y-rest:not(.is-open) .y-sub { pointer-events: none; }
+.y-rest.is-open { background: transparent; box-shadow: none; }
+.y-rest.is-open > b { opacity: 0; }
+.y-rest.is-open .y-sub { height: 100%; box-shadow: inset -1px 0 0 var(--paper); }
+.y-l .y-rest.is-open .y-sub { box-shadow: inset 1px 0 0 var(--paper); }
+.y-rest.is-open .y-sub::after, .y-rest.is-open .y-sub em { opacity: 1; transition-delay: 150ms; }
+.y-rest:hover:not(.is-open) { box-shadow: inset 0 0 0 1px var(--ink-3); }
+
+.y-spine { position: relative; height: 100%; display: grid; place-items: center; }
+.y-spine span { position: relative; z-index: 1; padding: 0 3px; background: var(--paper); font: 11px var(--mono); }
+.y-row.is-quiet .y-spine span { color: var(--ink-3); }
+.y-still, .y-flow { position: absolute; left: 4px; right: 4px; top: 50%; height: 1px; }
+.y-still { background: var(--line); }
+.y-flow { background: var(--ink-3); transform-origin: left center; transform: scaleX(0); }
+
+.y-note { min-width: 0; padding-left: 14px; display: flex; flex-direction: column; justify-content: center; line-height: 1.2; }
+.y-t { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink-2); }
+.y-g { font-size: 10px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.y-row.is-current .y-t { color: var(--ink); font-weight: 600; }
+
+/* Future rows: only the time remains, faint, so the two weeks keep their shape. */
+.y-row .y-wing, .y-row .y-spine, .y-row .y-note, .y-row .y-resp { transition: opacity 160ms linear, visibility 0s; }
+.y-row.is-future .y-wing, .y-row.is-future .y-spine, .y-row.is-future .y-note, .y-row.is-future .y-resp { opacity: 0; visibility: hidden; transition: opacity 160ms linear, visibility 0s linear 160ms; }
+.y-row.is-future .y-when { opacity: .4; }
+
+/* A new round sweeps left to right: the givers from their outer end to the spine, then the takers out from the spine. */
+.y-row.enter .y-l .y-fill { animation: y-sweep 220ms var(--st-ease) var(--d, 0ms) both; }
+.y-row.enter .y-flow { animation: y-flow 240ms linear calc(var(--d, 0ms) + 150ms) both; }
+.y-row.enter .y-spine span { animation: y-num 220ms ease-out calc(var(--d, 0ms) + 170ms) both; }
+.y-row.enter .y-r .y-fill { animation: y-sweep 260ms var(--st-ease) calc(var(--d, 0ms) + 230ms) both; }
+.y-row.enter .y-note, .y-row.enter .y-resp { animation: y-fade 260ms ease-out calc(var(--d, 0ms) + 320ms) both; }
+@keyframes y-sweep { from { clip-path: inset(-4px 100% -4px 0); } to { clip-path: inset(-4px 0 -4px 0); } }
+@keyframes y-flow { 0% { transform: scaleX(0); opacity: 1; } 65% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+@keyframes y-num { from { opacity: 0; transform: translateX(-5px); } }
+@keyframes y-fade { from { opacity: 0; transform: translateX(-4px); } }
+
+.y-now { position: absolute; left: -6px; right: -4px; top: 0; border: 1.3px solid var(--ink); border-radius: 3px; pointer-events: none; transition: transform 320ms var(--st-ease); }
+
+
+/* Focus: one item lit in every round; same-round counterparts stay in colour, the rest recede. */
+.is-focus .y-seg, .is-focus .y-sub, .is-focus .y-rest { opacity: .18; }
+.is-focus .y-rest.has-lit, .is-focus .y-rest.is-peer { opacity: 1; }
+.is-focus .y-rest.has-lit .y-sub:not(.is-lit):not(.is-peer) { opacity: .25; }
+.is-focus .is-lit, .is-focus .is-peer { opacity: 1; }
+.is-focus .y-seg.is-lit, .is-focus .y-sub.is-lit { z-index: 2; outline: 1.6px solid var(--ink); outline-offset: 0; }
+.y-seg:focus-visible, .y-sub:focus-visible, .y-rest:focus-visible, .y-ans:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; z-index: 3; }
+
+/* Side panel */
+.y-eq { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; margin: 2px 0 6px !important; }
+.y-eq b { font-size: 15px; }
+.y-eq span { color: var(--ink-2); }
+.y-eq small { flex-basis: 100%; color: var(--ink-2); font-size: 11px; }
+.y-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.y-cols h4 { margin-top: 6px; }
+.y-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 4px; align-items: baseline; padding: 2px 0; }
+.y-list li span { grid-column: 1; font: 10px var(--mono); color: var(--ink-2); }
+.y-list li b { grid-row: 1; grid-column: 2; font: 600 11px var(--mono); }
+.y-answers li { display: block; }
+.y-answers button { border: 0; background: none; padding: 2px 0; text-align: left; font-size: 12px; line-height: 1.5; color: var(--ink); }
+.y-answers button:hover { text-decoration: underline; }
+.y-chip { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; cursor: pointer; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.y-chip::before { content: ""; flex: none; width: 9px; height: 9px; border-radius: 2px; background: var(--c); }
+.y-chip-free { cursor: default; color: var(--ink-2); }
+.y-chip-free::before { background: transparent; outline: 1px dashed var(--ink-3); outline-offset: -1px; }
+.y-chip:hover { text-decoration: underline; text-underline-offset: 2px; }
+.y-title-chip { display: inline-block; width: 11px; height: 11px; margin-right: 7px; border-radius: 2px; background: var(--c); vertical-align: 0; }
+.y-exch li { display: grid; grid-template-columns: auto 1fr; gap: 1px 8px; padding: 4px 0; border-top: 1px solid var(--faint); }
+.y-exch li.is-later { opacity: .5; }
+.y-exch li.is-now time { font-weight: 600; color: var(--ink); }
+.y-exch button { border: 0; background: none; padding: 0; }
+.y-exch time { font: 10.5px var(--mono); color: var(--ink-2); }
+.y-exch b { font: 600 11px var(--mono); }
+.y-dir { grid-column: 1; font-size: 10.5px; color: var(--ink-2); }
+.y-peers { grid-column: 2; display: flex; flex-wrap: wrap; gap: 2px 8px; }
+.y-peers .y-chip { font-size: 11.5px; }
+.y-peer { display: inline-flex; align-items: baseline; gap: 3px; white-space: nowrap; }
+.y-peer small { font: 10px var(--mono); color: var(--ink-2); }
+.y-answer p { font-size: 12.5px; }
+.y-answer time { font: 10.5px var(--mono); color: var(--ink-2); }
+.y-fine { font-size: 11px; }

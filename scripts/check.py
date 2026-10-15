@@ -27,8 +27,17 @@ REQUIRED = (
     "conformance/cases/04-patch-and-subtree.yaml",
     "conformance/cases/05-operation-boundaries.yaml",
     "conformance/cases/06-state-overview.yaml",
+    "skill/SKILL.md",
     "Makefile",
     "scripts/check.py",
+    "scripts/run_cases.py",
+    "scripts/eval_judgment.py",
+    "scripts/export-scenario.mjs",
+    "corpus/README.md",
+    "scripts/fetch_corpus.py",
+    "scripts/build_corpus.py",
+    "scripts/label_corpus.py",
+    "scripts/compose_corpus.py",
     ".editorconfig",
     ".gitattributes",
     ".gitignore",
@@ -83,8 +92,9 @@ def main() -> int:
         return 1
 
     errors = [f"缺少启动文件：{name}" for name in REQUIRED if not (ROOT / name).is_file()]
-    documents = [ROOT / "README.md", ROOT / "AGENTS.md"]
+    documents = [ROOT / "README.md", ROOT / "AGENTS.md", ROOT / "skill" / "SKILL.md"]
     documents.extend(sorted((ROOT / "docs").rglob("*.md")))
+    documents.extend(sorted((ROOT / "corpus").rglob("*.md")))
     maintained = [
         path for path in documents
         if path.is_file() and not path.is_relative_to(ROOT / "docs" / "reference")
@@ -99,7 +109,7 @@ def main() -> int:
         return 1
 
     print(f"启动检查通过：{len(REQUIRED)} 个文件齐全，{len(maintained)} 份维护中文档链接与格式有效。")
-    print("原始草案按原件保留；当前没有产品功能测试。")
+    print("原始草案按原件保留；内存内核的用例断言由 make test 运行。")
     return 0
 
 

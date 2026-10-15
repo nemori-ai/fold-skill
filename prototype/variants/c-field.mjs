@@ -1,10 +1,11 @@
-// C · 流动形态 — the drop field. A WebGL2 fragment shader shades up to 16
-// drops on one canvas; drops in the same group are joined with a smooth union
-// whose blend radius the caller animates (only explicit merges ever get one),
-// every other drop is composited on its own, so unrelated drops never fuse.
-// A Canvas2D fallback draws the same drops as shaded circles and bridges.
-// The layout solver below places drops once per transition.
-export const MAX_DROPS = 16;
+// C · 流动形态 — the drop field. A WebGL2 fragment shader shades up to 24
+// bodies on one canvas (drops of 3 shares or more, deferred bodies resting at the
+// bottom, and bodies on their way to or from the bead string); drops in the same
+// group are joined with a smooth union whose blend radius the caller animates
+// (only explicit merges ever get one), every other drop is composited on its own,
+// so unrelated drops never fuse. A Canvas2D fallback draws the same drops as shaded
+// circles and bridges. The layout solver below places drops once per state change.
+export const MAX_DROPS = 24;
 const ACCENT = [0.81, 0.29, 0.17];
 
 const VERT = `#version 300 es

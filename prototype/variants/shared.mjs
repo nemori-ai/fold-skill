@@ -1,14 +1,16 @@
-import { scenario } from '../scenario.mjs?v=feedback-loop-1';
+import { scenario, notice } from '../scenario.mjs?v=feedback-loop-1';
 import { replayScenario, projectState, getItem, diffStates } from '../engine.mjs?v=feedback-loop-1';
 
 // All three visual experiments read the same replay. Only their encoding differs.
-export { scenario, getItem };
+export { scenario, notice, getItem };
+/** How the forms name the person: a short given name when the dataset has one. */
+export const personName = scenario.persona?.short || scenario.persona?.name || '你';
 export const records = replayScenario(scenario);
 export const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const kindLabel = {'needs-you':'需要你','in-progress':'进行中',done:'已完成',fyi:'知会'};
 export const statusLabel = {active:'当前关注',withdrawn:'已撤下',merged:'已合并'};
-const dates = new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',month:'numeric',day:'numeric',weekday:'short'});
-const times = new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit',hour12:false});
+const dates = new Intl.DateTimeFormat('zh-CN',{timeZone:scenario.timeZone||'Asia/Shanghai',month:'numeric',day:'numeric',weekday:'short'});
+const times = new Intl.DateTimeFormat('zh-CN',{timeZone:scenario.timeZone||'Asia/Shanghai',hour:'2-digit',minute:'2-digit',hour12:false});
 export const formatDate = value => dates.format(new Date(value));
 export const formatTime = value => times.format(new Date(value));
 export function allItems(state) {

@@ -9,12 +9,17 @@
 //    from a calm near-square toward the board's own proportions as the layer fills.
 // 3. Gutters are inserted between neighbouring strips and papers. Every paper keeps its size;
 //    only its position moves, so the blank area is exactly (budget - used) shares.
+//
+// layoutFill() uses the same strip search edge to edge with the blank as the last entry; the original
+// treemap uses it so that a one-share question never becomes a sliver.
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const EPSILON = 0.5;
 const TARGET = Math.log(1.25);
 
 function paperCost(share, width, height) {
+  // A strip that ran out of room: never the best layout, and never NaN (NaN would disable pruning).
+  if (!(width > EPSILON && height > EPSILON)) return 1e9;
   const skew = Math.log(width / height) - TARGET;
   // Tall, narrow papers break Chinese lines sooner than wide ones.
   const shape = skew < 0 ? skew * 1.35 : skew;
@@ -47,7 +52,7 @@ function partition(entries, width, height, areaPerShare) {
           const step = index - start;
           const rect = vertical ? { id: entries[index].id, x, y: y + offset, width: thickness, height: length, ax, ay: ay + step }
             : { id: entries[index].id, x: x + offset, y, width: length, height: thickness, ax: ax + step, ay };
-          rowCost += paperCost(entries[index].share, rect.width, rect.height);
+          rowCost += paperCost(entries[index].share, rect.width, rect.height) * (entries[index].costWeight ?? 1);
           rects.push(rect); offset += length;
         }
         if (vertical) search(end, x + thickness, y, w - thickness, h, cost + rowCost, ax + 1, ay);
@@ -106,4 +111,22 @@ export function layoutPapers(items, budget, width, height) {
       width: cell.width, height: cell.height });
   }
   return result;
+}
+
+/** Edge-to-edge strips in rank order, blank last: every rectangle has exactly share / budget of the area. */
+export function layoutFill(items, budget, width, height) {
+  if (![budget, width, height].every(value => Number.isFinite(value) && value > 0)) {
+    throw new Error('Board layout needs a positive budget, width, and height.');
+  }
+  const entries = items.filter(item => item.status === undefined || item.status === 'active').map(item => ({ id: item.id, share: item.share }));
+  if (entries.some(entry => !Number.isFinite(entry.share) || entry.share <= 0)) throw new Error('Invalid share.');
+  const used = entries.reduce((sum, entry) => sum + entry.share, 0);
+  if (used > budget) throw new Error('Board layout exceeds its budget.');
+  // The blank carries no text, so its shape barely counts.
+  if (used < budget) entries.push({ id: '__blank__', share: budget - used, isBlank: true, costWeight: 0.12 });
+  const shares = new Map(entries.map(entry => [entry.id, entry]));
+  return partition(entries, width, height, width * height / budget).map(cell => ({
+    id: cell.id, share: shares.get(cell.id).share, isBlank: Boolean(shares.get(cell.id).isBlank),
+    x: cell.x, y: cell.y, width: cell.width, height: cell.height,
+  }));
 }

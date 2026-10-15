@@ -2,6 +2,7 @@
 # event_seq 计所有落地记录；revision 只随业务变化或新批注确认增加。
 # 重复判定比较命令、actor 与完整业务载荷，不比较 now；重试回传原执行时间和结果。
 # state_unchanged 指业务状态与批注状态，不包括日志及快照缓存的记录游标。
+# last_checked_at 来自最近的 checked 记录；commit 与 acknowledge 不更新它。
 # fault / restart / receipt_received / snapshot_revision 是未来运行器的故障断言，非 CLI 参数或回执字段。
 
 budget: 64
@@ -34,6 +35,7 @@ steps:
       revision: r1
       events_appended: 1
       state_unchanged: true
+      last_checked_at: "2026-10-09T09:05:00+08:00"
       items:
         draft: {updated_at: "2026-10-09T09:00:00+08:00", share: 12, rank: 1}
       events_contain:
@@ -101,6 +103,7 @@ steps:
       batch_status: committed
       revision: r2
       events_appended: 1
+      last_checked_at: "2026-10-09T09:06:00+08:00"   # 仅确认不是 checked，保留上一轮检查时间。
       annotation_status: {ann-1: acknowledged}
       annotation_bound_to: {ann-1: r2}
       pending_annotations: []

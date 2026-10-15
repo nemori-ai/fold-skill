@@ -1,0 +1,107 @@
+/* 03 来源矩阵（完整版）. Rows and columns are keyed elements that glide to new positions; cells redraw only when their content changes. */
+.st-figure { overflow: hidden; }
+.pv-top { position: absolute; left: 0; right: 0; top: 0; height: 18px; font-size: 12px; }
+.pv-top b { position: absolute; top: 0; font-weight: 600; white-space: nowrap; }
+.pv-top small { font-weight: 400; font-size: 10.5px; color: var(--ink-3); margin-left: 4px; }
+.pv-h-src { left: 0; }
+.pv-h-tally { right: 0; width: var(--tally); }
+.pv-heads { position: absolute; left: 0; right: 0; top: 0; height: var(--head); border-bottom: 1px solid var(--ink); pointer-events: none; }
+.pv-head { position: absolute; left: 0; top: 0; height: var(--head); padding: 4px 4px 0 5px; display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; pointer-events: auto; cursor: pointer; border-left: 1px solid var(--line);
+  transition: transform 320ms var(--st-ease), opacity 200ms linear, background-color 120ms; }
+.pv-head b { font-size: 10.5px; line-height: 1.2; font-weight: 600; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.pv-head small { font: 9.5px var(--mono); color: var(--ink-2); white-space: nowrap; }
+.pv-head i { display: block; height: 3px; margin: 2px 0 4px; border-radius: 1px; }
+.pv-head.is-agg b { color: var(--ink-2); font-weight: 500; }
+.pv-head.is-agg { padding-bottom: 9px; }
+.pv-head[data-col="rest"] { border-left: 1px solid var(--ink-3); }
+.pv-cell[data-col="rest"] svg, .pv-cell[data-col="none"] svg { opacity: .55; }
+.pv-head.is-born, .pv-head.is-gone { opacity: 0; }
+.pv-head:hover, .pv-head.is-on { background: var(--faint); }
+
+.pv-body { position: absolute; left: 0; right: 0; top: calc(var(--head) + 4px); bottom: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
+.pv-inner { position: relative; transition: height 260ms var(--st-ease); }
+.pv-row { position: absolute; left: 0; right: 0; top: 0; display: grid; grid-template-columns: var(--label) minmax(0, 1fr) var(--tally); align-items: center;
+  transition: transform 320ms var(--st-ease), opacity 200ms linear; }
+.pv-row.is-born { opacity: 0; }
+.pv-row.is-gone { opacity: 0; pointer-events: none; }
+.pv-row::before { content: ""; position: absolute; inset: 1px 0; border-radius: 3px; background: var(--ink); opacity: 0; pointer-events: none; transition: opacity 100ms linear; }
+.pv-row:hover::before, .pv-row.is-on::before { opacity: .04; }
+.pv-label { display: flex; align-items: baseline; gap: 6px; min-width: 0; padding-left: 14px; height: 100%; align-items: center; cursor: pointer; white-space: nowrap; overflow: hidden; }
+.pv-label b { font-weight: 500; font-size: 12px; flex: none; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+.pv-label span { font-size: 10px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; }
+.pv-label b.pv-you { font-weight: 650; }
+.pv-group .pv-label { padding-left: 0; }
+.pv-group .pv-label b { font-size: 11px; letter-spacing: .08em; color: var(--ink-2); font-weight: 600; }
+.pv-group { border-top: 1px solid var(--line); }
+.pv-group.is-folded .pv-label b { color: var(--ink); }
+.pv-rest .pv-label { padding-left: 0; }
+.pv-restname { color: var(--ink-2); }
+.pv-row.is-tail .pv-label { padding-left: 24px; }
+.pv-row.is-tail .pv-label b { font-size: 11.5px; color: var(--ink-2); }
+.pv-fold { flex: none; width: 14px; height: 16px; padding: 0; border: 0; background: none; color: var(--ink-2); font-size: 10px; line-height: 1; border-radius: 3px; }
+.pv-fold:hover { background: var(--faint); color: var(--ink); }
+.pv-more-btn { margin-left: 24px; border: 0; background: none; padding: 0; font-size: 11px; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
+
+.pv-cells { position: relative; height: 100%; }
+.pv-cell { position: absolute; left: 0; top: 0; height: 100%; padding: 2px 5px; cursor: pointer; border-radius: 3px;
+  transition: transform 320ms var(--st-ease), opacity 160ms linear, background-color 100ms linear; background: var(--faint); background-clip: content-box; }
+.pv-cell svg { display: block; overflow: visible; }
+.pv-cell.is-born { opacity: 0; }
+.pv-base { stroke: var(--line); }
+.pv-more { font: 8.5px var(--mono); fill: var(--ink-2); }
+.pv-cell rect.is-new { transform-box: fill-box; transform-origin: 50% 100%; animation: pv-rise 320ms var(--st-ease) both; }
+@keyframes pv-rise { from { transform: scaleY(0); } }
+.pv-cell svg.is-fresh { animation: pv-fade 240ms ease-out both; }
+@keyframes pv-fade { from { opacity: .2; } }
+.pv-cell:hover, .pv-cell.is-on { background-color: color-mix(in oklch, var(--ink) 10%, var(--faint)); }
+
+.pv-tally { display: flex; align-items: center; gap: 6px; padding-left: 10px; height: 100%; }
+.pv-prop { position: relative; height: 7px; flex: none; }
+.pv-prop i { position: absolute; top: 0; height: 100%; transition: left 300ms var(--st-ease), width 300ms var(--st-ease); }
+.pv-tally b { font: 500 10.5px var(--mono); }
+.pv-tally small { font: 9.5px var(--mono); color: var(--ink-3); }
+.pv-group .pv-prop { height: 9px; }
+
+/* Focus: one row, one column, or their crossing; everything else recedes. */
+.has-focus .pv-row:not(.is-on):not(.is-feeder) .pv-cell:not(.is-on):not(.is-fed) { opacity: .28; }
+.has-focus .pv-row:not(.is-on):not(.is-feeder) .pv-label { opacity: .45; }
+.has-focus .pv-head:not(.is-on):not(.is-fed):not(.is-agg) { opacity: .45; }
+.pv-cell.is-on { outline: 1.5px solid var(--ink); outline-offset: -1px; }
+.pv-label:focus-visible, .pv-cell:focus-visible, .pv-head:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+
+/* Side panel */
+.pv-groups li { display: grid; grid-template-columns: 52px 1fr 70px; gap: 6px; align-items: center; padding: 3px 0; }
+.pv-groups b { font-size: 12px; font-weight: 600; }
+.pv-groups small { font: 10px var(--mono); color: var(--ink-2); text-align: right; }
+.pv-prop-s { display: flex; height: 8px; position: static; }
+.pv-prop-s i { position: static; height: 100%; }
+.pv-used { background: var(--ink); } .pv-duplicate { background: var(--ink-2); } .pv-deferred { background: var(--ink-3); } .pv-noise { background: var(--line); } .pv-unjudged { background: var(--faint); }
+.pv-top5 li { display: flex; flex-direction: column; padding: 3px 0; border-top: 1px solid var(--faint); }
+.pv-top5 small { color: var(--ink-2); font-size: 11px; }
+.pv-chip { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; font-size: 12px; }
+.pv-chip::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--c); }
+.pv-chip:hover, .pv-chip:focus-visible { text-decoration: underline; text-underline-offset: 2px; }
+.pv-chips { display: flex; flex-wrap: wrap; gap: 3px 10px; }
+.pv-cn { display: inline-flex; align-items: baseline; gap: 3px; white-space: nowrap; }
+.pv-chips small { font: 10px var(--mono); color: var(--ink-2); }
+.pv-title-chip { display: inline-block; width: 11px; height: 11px; margin-right: 7px; border-radius: 2px; background: var(--c); }
+.pv-counts { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; color: var(--ink-2); }
+.pv-counts b { font-size: 14px; color: var(--ink); }
+.pv-feeders li { display: grid; grid-template-columns: 1fr auto auto; gap: 4px; padding: 2px 0; border-top: 1px solid var(--faint); }
+.pv-feeders b { font: 600 11px var(--mono); }
+.pv-feeders small { font: 10px var(--mono); color: var(--ink-3); }
+.pv-inputs li { padding: 6px 0; border-top: 1px solid var(--faint); }
+.pv-inputs li > div { display: flex; gap: 6px; align-items: baseline; }
+.pv-inputs time { font: 10.5px var(--mono); color: var(--ink-2); }
+.pv-inputs small { color: var(--ink-3); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-inputs p { margin: 2px 0; font-size: 12px; }
+.pv-d { font-size: 10.5px; padding: 0 4px; border-radius: 3px; border: 1px solid var(--line); color: var(--ink-2); }
+.pv-d-used { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.pv-roots { display: flex; flex-wrap: wrap; gap: 2px 8px; }
+.pv-acts li { position: relative; padding: 2px 0 2px 12px; }
+.pv-acts li::before { content: "↩"; position: absolute; left: 0; color: var(--ink-2); }
+
+/* Scope switch: fade out, redraw in place, fade in. */
+.pv-body, .pv-heads { transition: opacity 130ms linear; }
+.is-swapping .pv-body, .is-swapping .pv-heads { opacity: 0; }
+.no-glide .pv-row, .no-glide .pv-head, .no-glide .pv-cell, .no-glide .pv-inner { transition: none !important; }

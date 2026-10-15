@@ -1,6 +1,7 @@
 # 首切片操作边界：这些是设计验收材料，尚未执行产品运行时测试。
 # detail-of 不支持；merge 仅接收同层 active 叶子，且来源不能有历史子树。
 # 每步从真实提交的状态继续；失败不写日志、不占用 batch_id、不改变 revision。
+# 信息契约未命名错误码的约束（缺 reason、同批重复改写、未知批注、层预算）只核对目标、字段与数值。
 
 budget: 64
 actor: assistant
@@ -267,3 +268,148 @@ steps:
         payment:
           title: 方案报价与实施日期均已确认但付款节点仍待双方核对
           updated_at: "2026-10-09T10:11:00+08:00"
+
+  - name: 降档必须写明 reason，缺少时整批拒绝
+    now: "2026-10-09T10:13:00+08:00"
+    commit:
+      batch_id: boundaries-downgrade-no-reason
+      declarations:
+        - {id: comparison, relation: supersedes:comparison, weight: normal, kind: fyi}
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {field: reason, item: comparison}
+      revision: r6
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false
+
+  - name: 显式份额覆盖必须同时写明 reason
+    now: "2026-10-09T10:14:00+08:00"
+    commit:
+      batch_id: boundaries-share-no-reason
+      declarations:
+        - {id: comparison, relation: supersedes:comparison, weight: high, kind: fyi, share: 10}
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {field: reason, item: comparison}
+      revision: r6
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false
+
+  - name: 新建条目带显式份额时同样需要 reason
+    now: "2026-10-09T10:14:30+08:00"
+    commit:
+      batch_id: boundaries-new-share-no-reason
+      declarations:
+        - {id: memo, title: 方案备忘, summary: 新收到的补充说明。, weight: low, kind: fyi, share: 2}
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {field: reason, item: memo}
+      revision: r6
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false
+
+  - name: 撤下必须写明 reason
+    now: "2026-10-09T10:15:00+08:00"
+    commit:
+      batch_id: boundaries-withdraw-no-reason
+      declarations:
+        - {id: payment, relation: withdraw}
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {field: reason, item: payment}
+      revision: r6
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false
+
+  - name: 对已合并的旧 ID 写入返回后继，不当成可恢复的撤下
+    now: "2026-10-09T10:16:00+08:00"
+    commit:
+      batch_id: boundaries-write-merged
+      declarations:
+        - {id: leaf-a, relation: supersedes:leaf-a, weight: normal, kind: fyi, summary: 甲报价更新为 190。}
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {code: item_merged, item: leaf-a, merged_into: comparison}
+      revision: r6
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false
+
+  - name: 确认不存在的批注时整批拒绝，不默默忽略
+    now: "2026-10-09T10:17:00+08:00"
+    commit: {batch_id: boundaries-ack-unknown, declarations: [], acknowledges: [ann-9]}
+    expect:
+      accepted: false
+      error: {annotation: ann-9}
+      revision: r6
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false
+
+  - name: 同一批两个声明改写同一条目时整批拒绝
+    now: "2026-10-09T10:18:00+08:00"
+    commit:
+      batch_id: boundaries-duplicate-declaration
+      declarations:
+        - {id: payment, relation: supersedes:payment, weight: trace, kind: in-progress, summary: 甲版本说明。}
+        - {id: payment, relation: supersedes:payment, weight: trace, kind: in-progress, summary: 乙版本说明。}
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {item: payment}
+      revision: r6
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false
+
+  - name: 子层单独计算预算，超额时同样整批拒绝
+    now: "2026-10-09T10:19:00+08:00"
+    commit:
+      batch_id: boundaries-child-budget
+      declarations:
+        - id: parent
+          relation: supersedes:parent
+          weight: high
+          kind: in-progress
+          children:
+            - {id: part-a, title: 方案丙甲段, summary: 待确认。, weight: critical, kind: needs-you}
+            - {id: part-b, title: 方案丙乙段, summary: 待确认。, weight: critical, kind: needs-you}
+            - {id: part-c, title: 方案丙丙段, summary: 待确认。, weight: high, kind: in-progress}
+            - {id: part-d, title: 方案丙丁段, summary: 待确认。, weight: normal, kind: fyi}
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {constraint: layer_budget, layer: parent, budget: 64, declared: 66, over: 2}
+      revision: r6
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false
+
+  - name: children 列表不能把已有条目改挂到另一层
+    now: "2026-10-09T10:20:00+08:00"
+    commit:
+      batch_id: boundaries-move-into-children
+      declarations:
+        - id: parent
+          relation: supersedes:parent
+          weight: high
+          kind: in-progress
+          children:
+            - {id: payment, relation: supersedes:payment, weight: trace, kind: in-progress}
+      acknowledges: []
+    expect:
+      accepted: false
+      error: {code: unsupported_move, item: payment}
+      revision: r6
+      events_appended: 0
+      state_unchanged: true
+      batch_id_recorded: false

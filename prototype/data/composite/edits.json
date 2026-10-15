@@ -1,0 +1,957 @@
+{
+  "title": "Jonas 的两周",
+  "subtitle": "8月3日—16日 · skarv 维护、自然论坛、家里的琐事与订阅 · 化名改写的真实公开数据",
+  "persona": {
+    "name": "Jonas Berglund",
+    "role": "开源网络传输库 skarv 的创始人与首席维护者 · 斯德哥尔摩",
+    "context": "每天处理 skarv 的 issue、PR、评审与 CI，维护邮件列表，在 Mastodon 与博客上和社区交流；业余在一个自然观察论坛上发帖、关注“自然闲谈”分类；家里有房子要修、孩子要带、自行车要修，常在生活问答站上提问；订阅了几份 newsletter，手机上有天气提醒。各流来自不同真实的人的公开数据，人名、账号、项目与链接均已化名。",
+    "accounts": {
+      "github": "jberglund",
+      "mastodon": "@jonasb@mastodon.social",
+      "forum": "jonasbe",
+      "qa": "Jonas B.",
+      "email": "jonas@berglund.example"
+    },
+    "short": "Jonas"
+  },
+  "source": {
+    "corpus": "corpus/composite/MIX.md",
+    "polish": "prototype/data/composite/POLISH.md"
+  },
+  "initial_title": "还没有整理过任何输入",
+  "initial_narrative": "8 月 3 日零点。Fold 刚接入 Jonas 的 GitHub 通知、邮件列表、Mastodon、自然论坛、生活问答与订阅邮件，状态是空的。",
+  "chapters": [
+    {
+      "id": "reopen",
+      "from": "f00",
+      "to": "f04",
+      "title": "8月3—4日 · 漏洞报告重开与 NDEBUG 之争"
+    },
+    {
+      "id": "busiest",
+      "from": "f05",
+      "to": "f10",
+      "title": "8月5—8日 · 最忙的一天撞上航班改经停"
+    },
+    {
+      "id": "freeze",
+      "from": "f11",
+      "to": "f15",
+      "title": "8月8—10日 · rc1 与功能冻结"
+    },
+    {
+      "id": "cat",
+      "from": "f16",
+      "to": "f21",
+      "title": "8月11—13日 · 猫的药量与 NTLM 复用"
+    },
+    {
+      "id": "heat",
+      "from": "f22",
+      "to": "f26",
+      "title": "8月14—16日 · 热浪、空调与车道下的水管"
+    },
+    {
+      "id": "sunday",
+      "from": "f27",
+      "to": "f28",
+      "title": "8月16日 · 周日收尾"
+    }
+  ],
+  "categories": {
+    "pr-13350-etag": {"short": "etag 修复"},
+    "ci-master-urls": {"short": "master CI"},
+    "qa-dog-water": {"short": "狗多饮"},
+    "bliss-ended": {"short": "漏洞报告"},
+    "issue-13466-kerberos": {"short": "Kerberos"},
+    "bench-13465": {"short": "基准测试"},
+    "pr-13016-ratelimit": {"short": "限速 burst"},
+    "pr-13295-pretty": {"short": "pretty 输出"},
+    "qa-old-tree": {"short": "老树"},
+    "work-done-0803": {"short": "8/3 合并"},
+    "pr-13473-expire": {"short": "定时器重构"},
+    "www-611-nav": {"short": "网站菜单"},
+    "pr-13475-mbedtls": {"short": "mbedTLS 校验"},
+    "qa-life-0803": {"short": "车响与墙钉"},
+    "pr-13476-awslc": {"short": "AWS-LC"},
+    "issue-13481-ndebug": {"short": "NDEBUG"},
+    "work-done-0804": {"short": "8/4 合并"},
+    "pr-13482-vdns": {"short": "vdns"},
+    "talk-invite-thread": {"short": "邀约报销"},
+    "ml-win-loopback-rto": {"short": "回环延迟"},
+    "forum-chickadee-names": {"short": "山雀起名"},
+    "qa-heat-pump": {"short": "热泵除湿"},
+    "h2-push-deprecate": {"short": "push 弃用"},
+    "qa-shed-lift": {"short": "抬高棚屋"},
+    "work-done-0805": {"short": "8/5 合并"},
+    "pr-13492-testnames": {"short": "测试名长度"},
+    "qa-chain-lock": {"short": "链条快扣"},
+    "pr-13500-cookie-psl": {"short": "cookie PSL"},
+    "issue-13174-cares": {"short": "IPv6 解析"},
+    "qa-hex-bit-roof": {"short": "屋面螺丝"},
+    "work-0806-own-prs": {"short": "8/6 合并"},
+    "qa-flight-lca": {"short": "航班经停"},
+    "typo-check-13509": {"short": "拼写检查"},
+    "work-0807-own-prs": {"short": "8/7 合并"},
+    "pr-13516-ffi": {"short": "setopt 包装"},
+    "issue-13518-edns": {"short": "EDNS"},
+    "ml-psl-runtime": {"short": "PSL 运行时"},
+    "qa-led-bulbs": {"short": "LED 灯泡"},
+    "pr-13519-pc": {"short": "libskarv.pc"},
+    "qa-cat-pots": {"short": "猫与花盆"},
+    "qa-shellfish-stock": {"short": "贝壳汤"},
+    "release-8-22-rc1": {"short": "8.22 rc1"},
+    "md-windows-security": {"short": "Windows 安全"},
+    "pr-13521-debugassert": {"short": "DEBUGASSERT"},
+    "qa-towel-bar": {"short": "毛巾杆"},
+    "work-0809-own": {"short": "8/9 合并"},
+    "qa-hat-brim": {"short": "骑行帽檐"},
+    "pr-13528-ntlm-reuse": {"short": "NTLM 复用"},
+    "pr-12088-openssl": {"short": "openssl 类型"},
+    "work-0810-own": {"short": "8/10 合并"},
+    "issue-13529-share-uaf": {"short": "共享池 UAF"},
+    "pr-13383-stdin": {"short": "stdin 中继"},
+    "qa-roadtrip-stops": {"short": "公路旅行"},
+    "md-c-comments": {"short": "c-comments"},
+    "qa-boy-aim": {"short": "男孩如厕"},
+    "qa-phytophthora": {"short": "果树疫霉"},
+    "pr-13530-guards": {"short": "header 守卫"},
+    "pr-13538-sigv4": {"short": "SigV4 测试"},
+    "issue-13539-ipv6": {"short": "IPv6 回退"},
+    "work-0811-own": {"short": "8/11 合并"},
+    "qa-cat-enro": {"short": "猫的药量"},
+    "others-prs-0811": {"short": "他人 PR"},
+    "qa-life-0811": {"short": "气嘴与车架"},
+    "pr-13547-progress": {"short": "progress 清理"},
+    "work-0812-own": {"short": "8/12 合并"},
+    "qa-chargeback": {"short": "汉莎退单"},
+    "qa-brake": {"short": "后刹排气"},
+    "qa-induction": {"short": "电磁炉"},
+    "issue-13567-sspi-reuse": {"short": "复用防护"},
+    "work-0813-own": {"short": "8/13 合并"},
+    "qa-brake-pads": {"short": "换刹车片"},
+    "pr-13537-leak": {"short": "SSPI 泄漏"},
+    "qa-floor-level": {"short": "地面找平"},
+    "work-0814-own": {"short": "8/14 合并"},
+    "issue-13586-upload": {"short": "上传卡住"},
+    "issue-13587-ftps": {"short": "FTPS 计时"},
+    "pr-13229-ntop": {"short": "错误日志"},
+    "qa-feta": {"short": "自制 feta"},
+    "forum-enough-people": {"short": "邀新人"},
+    "qa-ac-range": {"short": "空调 30°C"},
+    "work-0815-own": {"short": "8/15 合并"},
+    "qa-copper-line": {"short": "主水管"},
+    "forum-mystery-ids": {"short": "物种鉴定"},
+    "qa-bike-repair-price": {"short": "修车价"},
+    "qa-mitre-saw": {"short": "斜切锯"},
+    "ci-bsd-speedup": {"short": "BSD CI 提速"},
+    "qa-ceiling-streak": {"short": "天花板凸线"},
+    "qa-budget-variable": {"short": "开支预算"},
+    "qa-driveway-asphalt": {"short": "沥青车道"}
+  },
+  "frames": {
+    "f01": {
+      "title": "漏洞报告重开，#13350 点名等复审",
+      "narrative": "周一上午 62 条。漏洞报告的暂停结束、博客已发，社区在讨论收费与 AI 分流；lichen71 补好 #13350 后点名请他再看。他在问答站问一条 8 岁拉布拉多为什么狂喝水——人物设定里养的是猫，这是拼接语料的接缝。",
+      "batch": []
+    },
+    "f02": {
+      "title": "master CI 多平台变红",
+      "narrative": "周一下午到夜里 115 条。master 在 Windows 与 non-native 上失败，#13473 请他评审；同期几份 newsletter 讲 LLM 安全的威胁模型，Agent 都按订阅判为噪音。",
+      "batch": []
+    },
+    "f03": {
+      "title": "NDEBUG 之争，等他拍板",
+      "narrative": "#13481 上他和 windy-drift 意见相左，hardy_birch 求一个解法；问答站上他回了水碗直径 23–25 cm，那条提问的回路就此关上。",
+      "batch": []
+    },
+    "f04": {
+      "title": "他开 #13484：debug 构建 undef NDEBUG",
+      "narrative": "他开 #13484 让 DEBUGBUILD 时 undef NDEBUG，等于对 #13481 作出了选择，CI 五项全败；vdns 的 PR 请他评审；论坛上他答应凑满名字再批量添加。这一帧第一次提交超预算被退回。",
+      "batch": []
+    },
+    "f05": {
+      "title": "vdns 合并，征询 HTTP/2 push 弃用",
+      "narrative": "他批准并合并 #13482；在邮件列表与 Mastodon 上问谁还在用 HTTP/2 server push；问答站上他问怎样把金属棚屋抬高两英尺。",
+      "batch": []
+    },
+    "f06": {
+      "title": "回环连接提速，山雀名字投票",
+      "narrative": "他按 Ugo 的提议开 #13494，让 Windows 上被拒绝的回环连接快些失败；论坛上另开的投票帖被版主合并；车异响与链条快扣都有了回答。",
+      "batch": []
+    },
+    "f07": {
+      "title": "#13500 cookie 修复排到 12 份",
+      "narrative": "Agent 把 #13500 的 PSL cookie 修复排到 12 份；第一次提交的摘要超过 60 字被退回，第二次改对。",
+      "batch": []
+    },
+    "f08": {
+      "title": "最忙的一天，航班改经拉纳卡",
+      "narrative": "这 12 小时 188 条，工作占 109 条，他合并了 7 个自己的 PR。中午他在问答站说：9 月 14 日特拉维夫飞慕尼黑的直飞改成经停拉纳卡，转机只有 50 分钟。Agent 记成知会，打磨时升为等你。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "qa-flight-lca",
+          "set": {
+            "kind": "needs-you",
+            "weight": "normal"
+          },
+          "why": "9 月 14 日的航班改成经停、转机只有 50 分钟，评论在问航班号；生活里要他决定的事被记成知会、给 3 份"
+        },
+        {
+          "op": "patch",
+          "id": "pr-13500-cookie-psl",
+          "set": {
+            "weight": "low"
+          },
+          "why": "已合并的事占 6 份；降为 3 份，给航班让位（下一帧 Agent 自己也降到 3 份）"
+        }
+      ]
+    },
+    "f09": {
+      "title": "补了航班信息，#13513 接替 #13484",
+      "narrative": "他按评论的要求补了行程，追问是不是同机技术经停；windy-drift 开 #13513 统一报错，他关掉自己的 #13484。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "qa-flight-lca",
+          "set": {
+            "kind": "needs-you"
+          },
+          "why": "同上：等答者判断前，他仍要决定是否改签"
+        }
+      ]
+    },
+    "f10": {
+      "title": "可以改签当天晚些的直飞",
+      "narrative": "答者都说同一航班号多半同一架飞机；Greta 提醒 LH 当天晚些有直飞，可以请他们改签。Agent 降到 1 份，打磨时保留为等你，并登记“约时间打给 LH”。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "qa-flight-lca",
+          "set": {
+            "kind": "needs-you",
+            "weight": "low",
+            "title": "LH 航班：可改签当天晚些的直飞"
+          },
+          "why": "答案指向“多半同机”，但 Greta 给了改签晚班直飞的选项，这仍是他的决定；Agent 降到 trace 并在下一帧撤下"
+        },
+        {
+          "op": "add",
+          "declaration": {
+            "id": "pr-13016-ratelimit",
+            "relation": "withdraw",
+            "reason": "一周多没有进展，也没有在等谁回复，撤下以释放份额。"
+          },
+          "why": "给保留的航班腾份额：把一周没有动静的痕迹提前撤下（Agent 在 f17 才撤，理由相同）"
+        },
+        {
+          "op": "add",
+          "declaration": {
+            "id": "qa-shed-lift",
+            "relation": "withdraw",
+            "reason": "三天没有新动静，建议都已记录，也没有待回复的承诺；撤下以释放份额。"
+          },
+          "why": "同上（Agent 在 f13 才撤，理由相同）"
+        }
+      ]
+    },
+    "f11": {
+      "title": "周六上午：汤底与花盆里的猫",
+      "narrative": "工作只有 17 条。他问贝壳熬汤要不要连壳打碎、怎样不让猫在花盆里排便；Agent 把两个问题并成一件，打磨时拆开。master CI 有人在修，从这一帧起降为进行中。",
+      "batch": [
+        {
+          "op": "drop",
+          "id": "qa-flight-lca",
+          "why": "撤下理由是“两天无动静”，可改签的选项还开着；改为保留"
+        },
+        {
+          "op": "replace",
+          "id": "qa-life-0808",
+          "declaration": {
+            "id": "qa-shellfish-stock",
+            "relation": "new",
+            "title": "提问：贝壳熬汤要不要连壳打碎",
+            "summary": "你问熬虾壳虾头高汤时，是该打碎后过滤，还是像以前那样煎煮后滤掉。待回答。",
+            "weight": "trace",
+            "kind": "in-progress",
+            "reason": "他今天新提的生活问题，在等回答。",
+            "sources": [
+              {
+                "channel": "问答 · Seasoned Advice",
+                "ref": "event:qa:cooking:q784539"
+              }
+            ]
+          },
+          "why": "Agent 把两个不相关的提问并成一件（qa-life-0808），拆成两件"
+        },
+        {
+          "op": "add",
+          "declaration": {
+            "id": "qa-cat-pots",
+            "relation": "new",
+            "title": "提问：怎样不让猫在花盆里排便",
+            "summary": "你问家里的猫总在室内花盆里排便，怎样制止。待回答。",
+            "weight": "trace",
+            "kind": "in-progress",
+            "reason": "他今天新提的生活问题，在等回答；和家里的猫有关。",
+            "sources": [
+              {
+                "channel": "问答 · Pets",
+                "ref": "event:qa:pets:q58635"
+              }
+            ]
+          },
+          "why": "同上，拆出的第二件"
+        },
+        {
+          "op": "patch",
+          "id": "ci-master-urls",
+          "set": {
+            "kind": "in-progress",
+            "weight": "normal"
+          },
+          "why": "master 长期红，但 hardy_birch 等人在修（#13514、#13580），他的动作是评审与合并修复；两周都占 12 份、标“等你”会把真正要他决定的事挤下去"
+        }
+      ]
+    },
+    "f12": {
+      "title": "8.22.0-rc1 发布，功能冻结",
+      "narrative": "他发了 rc1，9 月 2 日正式版前只修 bug；#13295 是新功能，要等冻结之后再审。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "ci-master-urls",
+          "set": {
+            "kind": "in-progress",
+            "weight": "normal"
+          },
+          "why": "同 f11：有人在修的长期 CI 失败按进行中、6 份"
+        }
+      ]
+    },
+    "f13": {
+      "title": "确认只是技术经停",
+      "narrative": "dawn_quail 答：同一航班号、不换飞机，只是经停；航班这件事降回知会。Mastodon 上有人提议不再为 Windows 提供安全支持。这一帧提交两次超长被退回，第三次才接受。",
+      "batch": [
+        {
+          "op": "drop",
+          "id": "qa-shed-lift",
+          "why": "已在 f10 撤下"
+        },
+        {
+          "op": "add",
+          "declaration": {
+            "id": "qa-flight-lca",
+            "relation": "supersedes:qa-flight-lca",
+            "title": "LH 航班改经拉纳卡：只是技术经停",
+            "summary": "dawn_quail 答：同一航班号、不换飞机，只是经停；9月14日照常，晚班直飞仍可改签。",
+            "weight": "trace",
+            "kind": "fyi",
+            "reason": "问题已答清，不必再等他决定；行程在一个月后，留一份备查。",
+            "sources": [
+              {
+                "channel": "问答 · Travel",
+                "ref": "event:qa:travel:a939158",
+                "quote": "It's not a layover, it's a technical stop"
+              }
+            ]
+          },
+          "why": "Agent 已撤下这件事，看不到 f13 的新回答；补一次改写，降回知会"
+        }
+      ]
+    },
+    "f14": {
+      "title": "NDEBUG 落定，#13473 排队",
+      "narrative": "他批准 #13513，#13473 等它合并后再合；问答站上有人请他澄清，汤底说的是虾蟹这类甲壳，还是也包括贝类。",
+      "batch": [
+        {
+          "op": "replace",
+          "id": "qa-life-0808",
+          "declaration": {
+            "id": "qa-shellfish-stock",
+            "relation": "supersedes:qa-shellfish-stock",
+            "title": "汤底：被问是指甲壳类还是贝类",
+            "summary": "wildaspen 问你说的是虾蟹这类甲壳，还是也包括贝类（贝壳难打碎），待你澄清。",
+            "weight": "trace",
+            "kind": "needs-you",
+            "reason": "有人请他澄清问题范围，澄清后更容易得到回答。",
+            "sources": [
+              {
+                "channel": "问答 · Seasoned Advice",
+                "ref": "event:qa:cooking:c703786",
+                "quote": "Perhaps you mean crustaceans"
+              }
+            ]
+          },
+          "why": "拆分后的对应改写"
+        },
+        {
+          "op": "patch",
+          "id": "ci-master-urls",
+          "set": {
+            "kind": "in-progress",
+            "weight": "normal"
+          },
+          "why": "同 f11：有人在修的长期 CI 失败按进行中、6 份"
+        }
+      ]
+    },
+    "f15": {
+      "title": "#13528 NTLM 复用请他评审",
+      "narrative": "周日中午 59 条。hardy_birch 改了 Negotiate/NTLM 连接复用的匹配，点名请他评审；#12088 也问他是否还要改动。",
+      "batch": [
+        {
+          "op": "replace",
+          "id": "qa-life-0808",
+          "declaration": {
+            "id": "qa-cat-pots",
+            "relation": "supersedes:qa-cat-pots",
+            "title": "猫与花盆：有人荐柑橘皮",
+            "summary": "新回答：在花盆土面撒柑橘皮驱猫。",
+            "weight": "trace",
+            "kind": "in-progress",
+            "reason": "有了第一个回答，是否管用要他试过才知道。",
+            "sources": [
+              {
+                "channel": "问答 · Pets",
+                "ref": "event:qa:pets:a24358"
+              }
+            ]
+          },
+          "why": "拆分后的对应改写"
+        },
+        {
+          "op": "patch",
+          "id": "ci-master-urls",
+          "set": {
+            "kind": "in-progress",
+            "weight": "normal"
+          },
+          "why": "同 f11：有人在修的长期 CI 失败按进行中、6 份"
+        }
+      ]
+    },
+    "f16": {
+      "title": "#13514 合并，master 仍红",
+      "narrative": "他合并 DoH 修复 #13514 与 #13473，批准 #13528；问答站上新问公路旅行的停靠点和果树疫霉，Tilda 问他只要美国的方案吗。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "ci-master-urls",
+          "set": {
+            "kind": "in-progress",
+            "weight": "normal"
+          },
+          "why": "同 f11：有人在修的长期 CI 失败按进行中、6 份"
+        }
+      ]
+    },
+    "f17": {
+      "title": "评审排队：#13528、#13530",
+      "narrative": "hardy_birch 再次请他评审 #13528 与 #13530；#13537 的 Kerberos 修复等报告者测试；性能测量的图表在 Mastodon 上晒出来。",
+      "batch": [
+        {
+          "op": "drop",
+          "id": "pr-13016-ratelimit",
+          "why": "已在 f10 撤下"
+        },
+        {
+          "op": "patch",
+          "id": "ci-master-urls",
+          "set": {
+            "kind": "in-progress",
+            "weight": "normal"
+          },
+          "why": "同 f11：有人在修的长期 CI 失败按进行中、6 份"
+        }
+      ]
+    },
+    "f18": {
+      "title": "猫可能吃了双倍抗生素",
+      "narrative": "下午四点他在问答站说，怀疑给 3.6 kg 的猫喂了双倍恩诺沙星；同一小时里有十几条工作输入在等。Agent 给了 6 份，打磨时登记“打给兽医，还是先观察”。他还问了要不要禁止女儿看某套漫画。",
+      "batch": [
+        {
+          "op": "replace",
+          "id": "qa-life-0808",
+          "declaration": {
+            "id": "qa-shellfish-stock",
+            "relation": "supersedes:qa-shellfish-stock",
+            "title": "甲壳汤底：Jarl 答打碎更浓但易苦",
+            "summary": "Jarl 答：打碎壳味更浓、色更深，但易苦浊，硬壳多半只添粉感；wildaspen 的追问仍待你澄清。",
+            "weight": "trace",
+            "kind": "needs-you",
+            "reason": "有了实质回答；请他澄清的问题仍未回。",
+            "sources": [
+              {
+                "channel": "问答 · Seasoned Advice",
+                "ref": "event:qa:cooking:a300879"
+              }
+            ]
+          },
+          "why": "拆分后的对应改写"
+        },
+        {
+          "op": "patch",
+          "id": "ci-master-urls",
+          "set": {
+            "kind": "in-progress",
+            "weight": "normal"
+          },
+          "why": "同 f11：有人在修的长期 CI 失败按进行中、6 份"
+        }
+      ]
+    },
+    "f19": {
+      "title": "性能测量页上线",
+      "narrative": "skarv 的性能页每 20 分钟跑一次；Kerberos 补丁对报告者有效；论坛这 12 小时 55 条，Agent 全判为噪音。",
+      "batch": []
+    },
+    "f20": {
+      "title": "合并 #13528，后刹时软时硬",
+      "narrative": "这一帧工作 128 条，他合并了 10 个 PR；问答站上又问了汉莎退单、电磁炉转换盘和后刹排气，说周末自己排。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "ci-master-urls",
+          "set": {
+            "kind": "in-progress",
+            "weight": "normal"
+          },
+          "why": "同 f11：有人在修的长期 CI 失败按进行中、6 份"
+        }
+      ]
+    },
+    "f21": {
+      "title": "#13567：复用防护可被绕过",
+      "narrative": "hazel_thistle 报告 #13528 的防护能被连接池健康探测绕过，Agent 给到 12 份；他订的通勤车要换刹车片，问要不要拆轮。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "ci-master-urls",
+          "set": {
+            "kind": "in-progress",
+            "weight": "normal"
+          },
+          "why": "同 f11：有人在修的长期 CI 失败按进行中、6 份"
+        }
+      ]
+    },
+    "f22": {
+      "title": "热浪第一天：药量超过禁忌",
+      "narrative": "SMHI 发出高温提醒（26.4 °C）。pebble74 指出猫的日剂量超过 5 mg/kg 有突发失明风险，Agent 把这件事升到 12 份；#13572 修复 #13567，请他评审。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "ci-master-urls",
+          "set": {
+            "kind": "in-progress",
+            "weight": "normal"
+          },
+          "why": "同 f11：有人在修的长期 CI 失败按进行中、6 份"
+        }
+      ]
+    },
+    "f23": {
+      "title": "#13572 批准，Windows CI 疑镜像",
+      "narrative": "他批准 #13572；Windows 失败疑因 runner 镜像换了 Perl，#13580 待合；地暖找平有人问他用哪种做法。气温 28 °C。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "ci-master-urls",
+          "set": {
+            "kind": "in-progress",
+            "weight": "normal"
+          },
+          "why": "同 f11：有人在修的长期 CI 失败按进行中、6 份"
+        }
+      ]
+    },
+    "f24": {
+      "title": "#13586 上传卡在 65KB",
+      "narrative": "嵌入式 NetBSD 上读回调约 65KB 后不再被调用，他和 Edith 都没复现；#13587 的 FTPS 计时偏大他亲自复现了。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "ci-master-urls",
+          "set": {
+            "kind": "in-progress",
+            "weight": "normal"
+          },
+          "why": "同 f11：有人在修的长期 CI 失败按进行中、6 份"
+        }
+      ]
+    },
+    "f25": {
+      "title": "周六：空调最高只能设 30°C",
+      "narrative": "第三天高温。他问三星空调能不能设到 32–35 °C；Agent 只给 1 份，打磨时登记“推到哪天再看”。他合并 #13592 修好 FTPS 计时。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "ci-master-urls",
+          "set": {
+            "kind": "in-progress",
+            "weight": "normal"
+          },
+          "why": "同 f11：有人在修的长期 CI 失败按进行中、6 份"
+        }
+      ]
+    },
+    "f26": {
+      "title": "车道下的主水管在漏",
+      "narrative": "周六下午他问铜水管裂口能不能补：水管工要整根换 40 英尺，回答提到顶管免挖。Agent 只给 3 份，打磨时升为 6 份并登记二选一。#13596 请他评审。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "ci-master-urls",
+          "set": {
+            "kind": "in-progress",
+            "weight": "normal"
+          },
+          "why": "同 f11：有人在修的长期 CI 失败按进行中、6 份"
+        },
+        {
+          "op": "patch",
+          "id": "qa-copper-line",
+          "set": {
+            "weight": "normal"
+          },
+          "why": "车道下的主水管正在漏水、要在整根换与免挖之间决定，Agent 只给 3 份，低于同帧几件评审"
+        },
+        {
+          "op": "patch",
+          "id": "qa-ac-range",
+          "set": {
+            "summary": "Maja Zeller 答：Sensibo、Tado 控制器按自带传感器控温；calm_kelp 建议问三星。"
+          },
+          "why": "v1 把这条回答误署成本人（Jonas B.），Agent 照写了“Jonas B.名下新答”；按 v1.1 的署名改"
+        }
+      ]
+    },
+    "f27": {
+      "title": "周日，论坛上的讨论",
+      "narrative": "他在论坛问热门帖是不是该邀请新人，约 25 条回复看法不一；果树疫霉被问土壤与排水。降了 0.6 mm 雨，热浪结束。",
+      "batch": []
+    },
+    "f28": {
+      "title": "两周结束：还开着的问题",
+      "narrative": "猫的药量、车道下的水管、#13350 的复审与 Tilda 的提问都还没有回音；他新问了预算表、天花板上的深色凸线与沥青车道厚度。",
+      "batch": []
+    }
+  },
+  "asks": [
+    {
+      "item": "pr-13350-etag",
+      "frame": "f01",
+      "template": "review",
+      "prompt": "#13350 补上了 fclose 返回值检查，点名请你再看：批准合并吗？",
+      "short": "#13350 复审：批准合并？",
+      "subject": {
+        "label": "合并 skarv/skarv#13350",
+        "url": "https://github.com/skarv/skarv/pull/13350"
+      }
+    },
+    {
+      "item": "ci-master-urls",
+      "frame": "f01",
+      "until": "f11",
+      "expects": "choose",
+      "prompt": "master 上的 CI 失败还没人查，谁来看？",
+      "short": "master CI 红了谁来查？",
+      "actions": [
+        {
+          "id": "take",
+          "label": "我来查",
+          "meaning": "act",
+          "recommended": true
+        },
+        {
+          "id": "handoff",
+          "label": "交给别人",
+          "meaning": "decide"
+        },
+        {
+          "id": "comment",
+          "label": "回一句",
+          "meaning": "input",
+          "input": {
+            "type": "text"
+          }
+        }
+      ]
+    },
+    {
+      "item": "qa-dog-water",
+      "frame": "f01",
+      "until": "f03",
+      "template": "answer",
+      "prompt": "Pavel 问水碗有多大，回一句尺寸？",
+      "short": "水碗多大？回一句尺寸"
+    },
+    {
+      "item": "pr-13473-expire",
+      "frame": "f02",
+      "template": "review",
+      "prompt": "hardy_birch 的 expire 定时器重构请你评审：批准还是要求修改？",
+      "short": "#13473 定时器重构：批准？",
+      "subject": {
+        "label": "合并 skarv/skarv#13473",
+        "url": "https://github.com/skarv/skarv/pull/13473"
+      }
+    },
+    {
+      "item": "issue-13481-ndebug",
+      "frame": "f03",
+      "until": "f09",
+      "expects": "choose",
+      "prompt": "debug 构建遇到 NDEBUG 怎么办：直接报错，还是 undef 掉？",
+      "short": "NDEBUG：报错/undef？",
+      "actions": [
+        {
+          "id": "error",
+          "label": "#error 报错",
+          "meaning": "decide"
+        },
+        {
+          "id": "undef",
+          "label": "undef NDEBUG",
+          "meaning": "decide"
+        },
+        {
+          "id": "comment",
+          "label": "回一句",
+          "meaning": "input",
+          "input": {
+            "type": "text"
+          }
+        }
+      ]
+    },
+    {
+      "item": "pr-13482-vdns",
+      "frame": "f04",
+      "template": "review",
+      "prompt": "vdns 只搬了 DNS 文件、改了 include，windy-drift 已 LGTM：批准合并吗？",
+      "short": "vdns 搬迁：批准合并？",
+      "subject": {
+        "label": "合并 skarv/skarv#13482",
+        "url": "https://github.com/skarv/skarv/pull/13482"
+      }
+    },
+    {
+      "item": "forum-chickadee-names",
+      "frame": "f04",
+      "template": "confirm",
+      "prompt": "你说凑满 5 个名字就批量加进去并通知大家，加好了吗？",
+      "short": "山雀名字加好了吗？"
+    },
+    {
+      "item": "qa-flight-lca",
+      "frame": "f08",
+      "until": "f10",
+      "template": "answer",
+      "prompt": "windyknoll 问航班日期和航班号，补一句？",
+      "short": "航班号和日期，补一句？"
+    },
+    {
+      "item": "qa-flight-lca",
+      "frame": "f10",
+      "until": "f13",
+      "template": "schedule",
+      "prompt": "LH 当天晚些有直飞：约个时间打给 LH 问改签？",
+      "short": "约时间打给 LH 改签？",
+      "due_at": "2026-09-13T18:00:00+02:00"
+    },
+    {
+      "item": "pr-13295-pretty",
+      "frame": "f12",
+      "template": "defer",
+      "prompt": "#13295 是新功能，冻结期不能合：复审推到什么时候？",
+      "short": "#13295 复审推到哪天？"
+    },
+    {
+      "item": "qa-shellfish-stock",
+      "frame": "f14",
+      "template": "answer",
+      "prompt": "wildaspen 问你说的是虾蟹这类甲壳，还是也包括贝类？",
+      "short": "汤底：指甲壳还是贝类？"
+    },
+    {
+      "item": "pr-13528-ntlm-reuse",
+      "frame": "f15",
+      "template": "review",
+      "prompt": "hardy_birch 改了 NTLM 连接复用的匹配，空用户名不再复用：批准吗？",
+      "short": "NTLM 复用修复：批准？",
+      "subject": {
+        "label": "合并 skarv/skarv#13528",
+        "url": "https://github.com/skarv/skarv/pull/13528"
+      }
+    },
+    {
+      "item": "qa-roadtrip-stops",
+      "frame": "f16",
+      "template": "answer",
+      "prompt": "Tilda 问你只要美国境内的方案吗？回一句？",
+      "short": "Tilda 问：只要美国境内？",
+      "link_source": false
+    },
+    {
+      "item": "qa-cat-enro",
+      "frame": "f18",
+      "until": "f22",
+      "expects": "choose",
+      "prompt": "怀疑给猫多喂了一倍恩诺沙星：打给兽医，还是先观察？",
+      "short": "猫多喂了药：打给兽医？",
+      "actions": [
+        {
+          "id": "vet",
+          "label": "打给兽医",
+          "meaning": "act",
+          "recommended": true
+        },
+        {
+          "id": "watch",
+          "label": "先观察",
+          "meaning": "decide"
+        },
+        {
+          "id": "comment",
+          "label": "回一句",
+          "meaning": "input",
+          "input": {
+            "type": "text"
+          }
+        }
+      ]
+    },
+    {
+      "item": "qa-brake",
+      "frame": "f20",
+      "template": "schedule",
+      "prompt": "你说周末自己给后刹排气，定个时间？",
+      "short": "后刹排气定哪天？",
+      "due_at": "2026-08-16T20:00:00+02:00"
+    },
+    {
+      "item": "issue-13567-sspi-reuse",
+      "frame": "f22",
+      "template": "review",
+      "prompt": "#13572 改用管理句柄做健康探测，堵上 #13567 的复用绕过：批准吗？",
+      "short": "#13572 堵复用绕过：批准？",
+      "subject": {
+        "label": "合并 skarv/skarv#13572",
+        "url": "https://github.com/skarv/skarv/pull/13572"
+      }
+    },
+    {
+      "item": "qa-cat-enro",
+      "frame": "f22",
+      "expects": "choose",
+      "prompt": "按 Merck 的说法这个剂量有突然失明的风险：现在打给兽医？",
+      "short": "猫药量超标：现在打兽医？",
+      "actions": [
+        {
+          "id": "vet",
+          "label": "打给兽医",
+          "meaning": "act",
+          "recommended": true
+        },
+        {
+          "id": "watch",
+          "label": "先观察",
+          "meaning": "decide"
+        },
+        {
+          "id": "comment",
+          "label": "回一句",
+          "meaning": "input",
+          "input": {
+            "type": "text"
+          }
+        }
+      ],
+      "due_at": "2026-08-14T17:00:00+02:00"
+    },
+    {
+      "item": "qa-ac-range",
+      "frame": "f25",
+      "template": "defer",
+      "prompt": "热浪里空调最高只能设 30°C：控制器的事推到哪天再看？",
+      "short": "空调控制器推到哪天？"
+    },
+    {
+      "item": "qa-copper-line",
+      "frame": "f26",
+      "expects": "choose",
+      "prompt": "车道下的主水管在漏：照水管工说整根换，还是先问顶管免挖？",
+      "short": "主水管：整根换还是免挖？",
+      "actions": [
+        {
+          "id": "replace",
+          "label": "整根换",
+          "meaning": "decide"
+        },
+        {
+          "id": "bore",
+          "label": "问顶管免挖",
+          "meaning": "decide",
+          "recommended": true
+        },
+        {
+          "id": "comment",
+          "label": "回一句",
+          "meaning": "input",
+          "input": {
+            "type": "text"
+          }
+        }
+      ]
+    },
+    {
+      "item": "issue-13587-ftps",
+      "frame": "f26",
+      "template": "review",
+      "prompt": "#13596 修好 --ssl-reqd 时的重复计时，报告者实测有效：批准合并吗？",
+      "short": "#13596 计时修复：批准？",
+      "subject": {
+        "label": "合并 skarv/skarv#13596",
+        "url": "https://github.com/skarv/skarv/pull/13596"
+      }
+    }
+  ],
+  "feedback": {
+    "gh-t:skarv/skarv#13484": [
+      {
+        "ask": "@item",
+        "target": "issue-13481-ndebug",
+        "action": "undef",
+        "meaning": "decide",
+        "via": "source"
+      }
+    ]
+  },
+  "sketchFrames": {
+    "lineage": "f28",
+    "provenance": "f28",
+    "notation": "f22",
+    "timing": "f26",
+    "yield": "f22"
+  },
+  "sketchNotes": {
+    "lineage": "选最后一帧：只画两周里累计份额最多的 12 件，看得到 master CI 在 8/8 从 12 份降到 6 份、航班被保留到 8/9 后降回知会。",
+    "provenance": "选最后一帧：两周 2808 条输入里，社区 738 条几乎都没进任何事项，订阅一条也没有。",
+    "notation": "选 8/14 零点：热浪第一天，猫的药量升到 12 份，#13572 请他评审，这一轮的声明最密。",
+    "timing": "选 8/16 零点：猫、水管、#13350、Tilda 的提问同时开着，航班的两个问题已先后关上。",
+    "yield": "选 8/14 零点：猫的药量从 6 份升到 12 份，看它从哪些事项那里拿到份额。"
+  },
+  "corpus_version": {
+    "run": "v1（sha256 8fc68096…，自由运行看到的版本）",
+    "demo": "v1.1（sha256 7c60cb32…，演示正文、署名与链接）"
+  },
+  "renamed_events": {
+    "blog:27551": "blog:21867",
+    "blog:27549": "blog:22782",
+    "blog:27550": "blog:17803",
+    "blog:27547": "blog:80518"
+  }
+}

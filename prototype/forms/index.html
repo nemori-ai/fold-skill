@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fold · 更多表达形式</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%232c4c3b'/%3E%3Cpath d='M11 10h19L20 20v11h-9z' fill='%23ececdf'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="forms.css">
+</head>
+<body>
+<main class="fg">
+  <div class="fg-kicker">FOLD · 表达形式探索</div>
+  <h1>为这份状态的结构发明形式</h1>
+  <p class="fg-lead">A/B/C/D 各自围绕状态本身发明了一种结构：空间、时间、流体、首页。第一轮试过把状态搬进现成载体（表盘、耳机、报纸、小票、聊天窗……），载体眼熟，结构却没有新东西，八个已撤下（现已恢复为可运行页面、未打磨，放在页尾）。留下的两周小倍数是唯一回答“注意力在两周里怎样移动”的形式；腕上一瞥是用户后来决定保留的，回答“有没有等我回应的事”。第二轮的五张图各自回答一种别处看不见的关系：同一件事的改写史、回应路径的开闭、谁在推动哪件事、份额从谁让给谁、每轮整理的组成。它们起初是单帧草图，现在都已做成完整版：可逐帧、悬停与固定、打开详情。这些形式都在真实数据上打磨过，打磨记录见概念卡开头。</p>
+  <p class="fg-links"><a href="../all.html"><b>全部原型合在一页 →</b></a> · <a data-notes="CONCEPTS" href="CONCEPTS.md">概念卡与两轮结论</a> · <a data-notes="INSPIRATION" href="INSPIRATION.md">灵感来源</a> · <a href="respond.html">回应组件</a> · <a href="../index.html?variant=a&amp;frame=14">回到 A/B/C/D</a></p>
+  <h2 class="fg-section">第二轮：复盘图 <small>先问它让人看见了哪一种别处看不见的关系；完整版，可逐帧</small></h2>
+  <div class="fg-grid" id="fg-sketches"></div>
+  <h2 class="fg-section">第一轮留下的形式</h2>
+  <div class="fg-grid" id="fg-grid"></div>
+  <h2 class="fg-section">第一轮，已撤下 <small>从第一轮分支恢复，只做了能在两个数据集下运行的最小适配，未打磨</small></h2>
+  <div class="fg-grid" id="fg-withdrawn"></div>
+  <p class="fg-note" id="fg-note"></p>
+</main>
+<script type="module">
+  import { forms, withdrawn, sketches, notesHref } from './catalog.mjs';
+  import { withDataset, keepDataset, datasetNotice } from '../data/select.mjs';
+  import { scenario } from '../scenario.mjs';
+  keepDataset();
+  document.getElementById('fg-note').textContent = `${datasetNotice()} 这些形式都没有选定。`;
+  const go = href => esc(withDataset(href));
+  document.querySelectorAll('[data-notes]').forEach(a => { a.href = notesHref(a.dataset.notes); });
+  const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // Each card shows the live page at its default frame, scaled down; the whole card links to it.
+  const card = f => `<article class="fg-card">
+    <div class="fg-thumb fs-theme-${f.theme}"><iframe src="${go(`${f.id}.html?frame=${f.frame}&card=0`)}" title="${esc(f.name)}缩略" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></div>
+    <div class="fg-text"><header><b>${String(f.no).padStart(2, '0')}</b><h2><a class="fg-link" href="${go(`${f.id}.html?frame=${f.frame}`)}">${esc(f.name)}</a></h2></header>
+    <p>${esc(f.tagline)}</p>
+    <div class="fg-meta"><span>${esc(f.carrier)}</span><span>${esc(f.scene)}</span><span>${esc(f.usage)}</span></div>
+    <pre>${esc(f.skeleton)}</pre>
+    <div class="fg-channel">${esc(f.channel)}</div>
+    <div class="fg-enter">进入 →</div></div></article>`;
+  document.getElementById('fg-grid').innerHTML = forms.map(card).join('');
+  document.getElementById('fg-withdrawn').innerHTML = withdrawn.map(card).join('');
+  // Round-two pages started as single-frame sketches and are now full pages with frame navigation;
+  // the thumbnail is the page itself at its default frame.
+  document.getElementById('fg-sketches').innerHTML = sketches.map(f => `<article class="fg-card">
+    <div class="fg-thumb"><iframe src="${go(`sketches/${f.id}.html`)}" title="${esc(f.name)}缩略" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></div>
+    <div class="fg-text"><header><b>${String(f.no).padStart(2, '0')}</b><h2><a class="fg-link" href="${go(`sketches/${f.id}.html`)}">${esc(f.name)}</a></h2></header>
+    <p>${esc(f.relation)}</p>
+    <div class="fg-meta"><span>默认帧 ${esc(scenario.sketchFrames?.[f.id] || f.frame)}</span><span>${esc(f.color)}</span><span>完整版 · 可逐帧</span></div>
+    <div class="fg-enter">进入 →</div></div></article>`).join('');
+  const fit = () => document.querySelectorAll('.fg-thumb').forEach(t => t.style.setProperty('--s', t.clientWidth / 1440));
+  new ResizeObserver(fit).observe(document.querySelector('.fg'));
+</script>
+</body>
+</html>

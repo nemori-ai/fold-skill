@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fold · 全部原型</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%232c4c3b'/%3E%3Cpath d='M11 10h19L20 20v11h-9z' fill='%23ececdf'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="forms/forms.css">
+  <style>
+    /* One long page: every prototype embedded live, one section each, stepped together from the bar. */
+    html { scroll-padding-top: 64px; }
+    body { background: var(--paper); }
+    .aa-bar { gap: 14px; }
+    .aa-bar .fs-name { font-size: 14px; }
+    .aa-bar .fs-nav { flex: 1 1 260px; }
+    .aa-bar .fs-when { min-width: 0; }
+    .aa-bar .fs-title { max-width: 34vw; }
+    .aa-bar .fs-ticks { flex: 0 1 auto; overflow: hidden; }
+    .aa-bar .fs-ticks button.is-day { margin-left: 3px; }
+    .aa-free .fs-date, .aa-free .fs-title { color: var(--ink-2); font-weight: 400; }
+    .aa-reset { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; height: 30px; padding: 0 10px; font-size: 12.5px; white-space: nowrap; }
+    .aa-reset[hidden] { display: none; }
+    .aa-data { display: flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; flex: none; }
+    .aa-data button { border: 0; background: var(--surface); height: 30px; padding: 0 10px; font-size: 12.5px; white-space: nowrap; }
+    .aa-data button + button { border-left: 1px solid var(--line); }
+    .aa-data button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+    .aa-toc { position: relative; flex: none; }
+    .aa-toc summary { list-style: none; display: flex; align-items: center; gap: 4px; height: 30px; padding: 0 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+    .aa-toc summary::-webkit-details-marker { display: none; }
+    .aa-toc[open] summary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+    .aa-toc nav { position: absolute; right: 0; top: 36px; z-index: 20; width: 300px; max-height: calc(100vh - 80px); overflow: auto; padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 14px 40px rgb(0 0 0 / .14); }
+    .aa-toc h3 { margin: 8px 8px 4px; font-size: 11px; font-weight: 600; color: var(--ink-2); letter-spacing: .06em; }
+    .aa-toc a { display: flex; gap: 8px; padding: 5px 8px; border-radius: 6px; color: var(--ink); text-decoration: none; font-size: 13px; }
+    .aa-toc a:hover, .aa-toc a:focus-visible { background: var(--paper); }
+    .aa-toc a b { font: 600 11px/20px var(--mono); color: var(--ink-2); min-width: 18px; }
+
+    .aa { max-width: 1480px; margin: 0 auto; padding: 28px 20px 80px; }
+    .aa-kicker { font: 12px var(--mono); color: var(--ink-2); letter-spacing: .08em; }
+    .aa h1 { margin: 6px 0 10px; font-size: 28px; letter-spacing: .01em; }
+    .aa-lead { max-width: 860px; margin: 0 0 6px; line-height: 1.75; }
+    .aa-notice { max-width: 860px; margin: 0; font-size: 12.5px; color: var(--ink-2); }
+    .aa-group { margin: 44px 0 0; padding-top: 14px; border-top: 2px solid var(--ink); }
+    .aa-group h2 { margin: 0; font-size: 18px; }
+    .aa-group p { margin: 4px 0 0; max-width: 860px; color: var(--ink-2); font-size: 13px; line-height: 1.7; }
+    .aa-sec { margin-top: 30px; }
+    .aa-head { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 4px 12px; align-items: start; margin-bottom: 10px; }
+    .aa-no { font: 600 20px/1.3 var(--mono); color: var(--ink-2); }
+    .aa-head h3 { margin: 0; font-size: 19px; line-height: 1.3; }
+    .aa-head h3 small { margin-left: 8px; font: 500 11px var(--mono); color: var(--vermilion); letter-spacing: .04em; vertical-align: 2px; }
+    .aa-see { margin: 3px 0 0; max-width: 900px; line-height: 1.65; }
+    .aa-meta { margin: 3px 0 0; font-size: 12.5px; color: var(--ink-2); }
+    .aa-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; padding-top: 2px; white-space: nowrap; }
+    .aa-side a { font-size: 13px; }
+    .aa-at { font: 11px var(--mono); color: var(--ink-2); }
+    .aa-at.is-behind { color: var(--vermilion); }
+    .aa-frame { position: relative; width: 100%; height: 820px; margin: 0 auto; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+    .aa-frame.is-phone { max-width: 1040px; }
+    .aa-frame.is-watch { max-width: 1120px; height: 760px; }
+    .aa-frame.is-long { height: 900px; }
+    .aa-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
+    .aa-frame .aa-wait { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-2); font-size: 13px; pointer-events: none; }
+    .aa-frame.is-loaded .aa-wait { display: none; }
+    .aa-foot { margin-top: 48px; font-size: 12.5px; color: var(--ink-2); }
+
+    @media (max-width: 1100px) {
+      .aa-bar { height: auto; flex-wrap: wrap; padding: 8px 14px; row-gap: 8px; }
+      .aa-bar .fs-ticks { order: 9; flex-basis: 100%; }
+      .aa-bar .fs-title { max-width: 60vw; }
+      html { scroll-padding-top: 110px; }
+    }
+    @media (max-width: 640px) {
+      .aa { padding: 20px 16px 60px; }
+      .aa-head { grid-template-columns: 32px minmax(0, 1fr); }
+      .aa-side { grid-column: 2; align-items: flex-start; }
+      .aa-frame { height: 640px; }
+      .aa-bar .fs-name { display: none; }
+      html { scroll-padding-top: 140px; }
+    }
+  </style>
+</head>
+<body class="fs-page">
+<header class="fs-bar aa-bar">
+  <a class="fs-home" href="forms/index.html" title="形式画廊">← 画廊</a>
+  <span class="fs-name">全部原型</span>
+  <div class="fs-nav" id="aa-nav"><button data-step="-1" aria-label="上一帧（←）" title="上一帧（←）">‹</button>
+    <div class="fs-when"><span class="fs-date" id="aa-date"></span><span class="fs-title" id="aa-title"></span></div>
+    <button data-step="1" aria-label="下一帧（→）" title="下一帧（→）">›</button></div>
+  <div class="fs-ticks" id="aa-ticks" role="group" aria-label="选择帧"></div>
+  <button class="aa-reset" id="aa-reset" type="button" title="回到各页自己的默认帧" hidden>各页默认帧</button>
+  <div class="aa-data" id="aa-data" role="group" aria-label="数据集"></div>
+  <details class="aa-toc" id="aa-toc"><summary>目录 ▾</summary><nav aria-label="跳到某个原型"></nav></details>
+</header>
+<main class="aa">
+  <div class="aa-kicker">FOLD · 全部原型</div>
+  <h1>同一份回放，全部表达形式合在一页</h1>
+  <p class="aa-lead">每一节是实时运行的原型页，不是截图。顶栏选一帧，所有页面一起切到那一刻；没有选帧时，各页停在自己的默认帧。数据集切换后整页按新数据重新载入。页面往下滚才加载，每一节右上角写着它此刻所在的帧，并可单独打开。</p>
+  <p class="aa-notice" id="aa-notice"></p>
+  <div id="aa-sections"></div>
+  <p class="aa-foot">这些形式都没有选定。<a href="forms/index.html">形式画廊</a> · <a data-notes="CONCEPTS" href="forms/CONCEPTS.md">概念卡与两轮结论</a></p>
+</main>
+<script type="module">
+  import { scenario, dataset } from './scenario.mjs';
+  import { datasets, defaultDataset, datasetNotice } from './data/select.mjs';
+  import { forms, withdrawn, sketches } from './forms/catalog.mjs';
+
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const frames = scenario.frames;
+  const zone = scenario.timeZone || 'Asia/Shanghai';
+  const dateFmt = new Intl.DateTimeFormat('zh-CN', { timeZone: zone, month: 'numeric', day: 'numeric', weekday: 'short' });
+  const timeFmt = new Intl.DateTimeFormat('zh-CN', { timeZone: zone, hour: '2-digit', minute: '2-digit', hour12: false });
+  const dayTime = at => `${dateFmt.format(new Date(at))} ${timeFmt.format(new Date(at))}`;
+  // Markdown notes: the local preview serves them as files, the documentation site as pages (as catalog.notesHref).
+  const local = location.port === '4173' || location.protocol === 'file:';
+  const notes = path => (local ? `forms/${path}.md` : `/prototype-notes/forms/${path}`);
+  document.querySelectorAll('[data-notes]').forEach(a => { a.href = notes(a.dataset.notes); });
+
+  // Sections in reading order. `see` is what the form lets you see and `answers` the responses it carries, both
+  // taken from the README「十二种形式」table and catalog.mjs, not written here. `frame` is the entry frame per
+  // dataset: composite follows the README entries, the story uses the concept cards' default; pages without one
+  // (the round-two review pages, the response kit) open at their own default.
+  const card = id => forms.find(f => f.id === id) || withdrawn.find(f => f.id === id);
+  const sketch = id => sketches.find(f => f.id === id);
+  const at = (composite, story = 14) => ({ composite, story });
+  const README = {
+    original: ['在电脑前掌握两周局面，顺手处理工作评审', 'approve（格子里直接批准或要求修改）；其余在详情里作答', 'spatial'],
+    a: ['桌前，生活急事要当场二选一', 'choose、稍后；也能批准、定时间、回一句', 'spatial'],
+    b: ['期限落在此刻之后的哪里，谁先到', 'schedule、choose，任何事项都可稍后提醒', 'temporal'],
+    c: ['可以推后的事沉下去，到点浮起', 'defer；其余用回应组件', 'temporal'],
+    d: ['离开半天回来，先答最急的 3 件', 'approve、choose 一键；confirm、reply、schedule、defer', 'home'],
+    watch: ['抬腕两秒：要不要现在掏手机', 'confirm 与两项的 choose；其余转到手机', 'home'],
+    multiples: ['复盘两周注意力怎样移动', '不承载作答；黑点标出此刻开着的问题', 'review-a'],
+    lineage: ['追一件事的来龙去脉：改名、撤下、并入', '不承载作答；标出问题的开与闭', 'review-a'],
+    timing: ['我欠了谁什么回应，开了多久', '不承载作答；所有类型的开闭与期限', 'review-a'],
+    provenance: ['某件事背后是谁在推动', '不承载作答', 'review-b'],
+    yield: ['一件事变大，份额从谁那里来', '不承载作答；作答之后份额让给了谁', 'review-b'],
+    notation: ['每一轮整理读了多少、丢了多少、动了几件', '不承载作答；每轮登记、失效与答掉的问题', 'review-b'],
+  };
+  const desk = (id, name, href, frame) => ({ id, name, href, embed: { embed: 1 }, frame, see: README[id][0], answers: README[id][1], notes: README[id][2] });
+  const groups = [
+    { title: '原版与四个方案', note: '原版树图与 A/B/C/D 共用一套回放与底栏；这里隐藏了它们之间的方案切换栏，其余与单独打开一致。', sections: [
+      desk('original', '原版树图', 'index.html', at(26)),
+      desk('a', 'A 空间排布', 'index.html?variant=a', at(26)),
+      desk('b', 'B 时间展开', 'index.html?variant=b', at(26)),
+      desk('c', 'C 流动形态', 'index.html?variant=c', at(25)),
+      { ...desk('d', 'D 手机首页', 'index.html?variant=d', at(26)), size: 'is-phone' },
+    ] },
+    { title: '第一轮留下的形式', note: '概念卡收起（card=0），页头的帧导航与“状态”仍可用。', sections: [
+      { id: 'watch', name: card('watch').name, href: 'forms/watch.html', embed: { card: 0 }, frame: at(26), see: card('watch').tagline, answers: README.watch[1], notes: README.watch[2], size: 'is-watch' },
+      { id: 'multiples', name: card('multiples').name, href: 'forms/multiples.html', embed: { card: 0 }, frame: at(26), see: card('multiples').tagline, answers: README.multiples[1], notes: README.multiples[2] },
+    ] },
+    { title: '第二轮：复盘图', note: '五张图各自回答一种别处看不见的关系；未选帧时停在各自的默认帧。', sections: ['lineage', 'timing', 'provenance', 'yield', 'notation'].map(id => (
+      { id, name: sketch(id).name, href: `forms/sketches/${id}.html`, frame: null, see: sketch(id).relation, answers: README[id][1], notes: README[id][2] })) },
+    { title: '回应组件', note: '', sections: [
+      { id: 'respond', name: '回应组件页', href: 'forms/respond.html', frame: null, see: '按 ask.expects 逐类演示六种回应控件，并列出与 event.feedback 同形的反馈记录；顶栏选帧时改的是它的回放时刻。', answers: 'confirm、choose、reply、schedule、approve、defer', size: 'is-long' },
+    ] },
+    { title: '第一轮，已撤下', note: '八个形式按第一轮分支的代码恢复，只做了能在两个数据集下运行的最小适配，没有打磨，也没有按真实数据重新设计；为什么撤下见 CONCEPTS.md 的第一轮结论。', withdrawn: true, sections: withdrawn.map(f => (
+      { id: f.id, name: f.name, href: `forms/${f.id}.html`, embed: { card: 0 }, frame: null, see: f.tagline, answers: `${f.carrier} · ${f.usage}`, withdrawn: true })) },
+  ];
+  const sections = groups.flatMap(g => g.sections);
+  sections.forEach((s, i) => { s.no = String(i + 1).padStart(2, '0'); });
+
+  // ---------- frame choice, kept in the address bar ----------
+  const params = new URLSearchParams(location.search);
+  const requested = params.get('frame');
+  let selected = requested != null && /^\d+$/.test(requested) ? Math.min(frames.length - 1, Number(requested)) : null;
+
+  function srcOf(section, { embed = true, frame = selected } = {}) {
+    const url = new URL(section.href, location.href);
+    if (embed) for (const [k, v] of Object.entries(section.embed || {})) url.searchParams.set(k, v);
+    if (dataset !== defaultDataset) url.searchParams.set('data', dataset);
+    const f = frame ?? section.frame?.[dataset] ?? null;
+    if (f != null) url.searchParams.set('frame', f);
+    else url.searchParams.delete('frame');
+    return `${url.pathname}${url.search}`;
+  }
+
+  // ---------- page ----------
+  document.getElementById('aa-notice').textContent = `${datasets[dataset].label}。${datasetNotice()}`;
+  document.getElementById('aa-sections').innerHTML = groups.map(g => `<div class="aa-group"><h2>${esc(g.title)}</h2>${g.note ? `<p>${esc(g.note)}</p>` : ''}</div>
+    ${g.sections.map(s => `<section class="aa-sec" id="s-${s.id}" aria-labelledby="h-${s.id}">
+      <header class="aa-head"><div class="aa-no">${s.no}</div>
+        <div><h3 id="h-${s.id}">${esc(s.name)}${s.withdrawn ? '<small>第一轮 · 已撤下 · 未打磨</small>' : ''}</h3>
+          <p class="aa-see">${esc(s.see)}</p>
+          <p class="aa-meta">${s.withdrawn ? '载体与用法' : '承载的回应'}：${esc(s.answers)}${s.notes ? ` · 打磨记录 <a href="${esc(notes(`polish/${s.notes}`))}">${s.notes}.md</a>` : ''}</p></div>
+        <div class="aa-side"><a class="aa-open" href="${esc(srcOf(s, { embed: false }))}" target="_blank" rel="noopener">单独打开 ↗</a><span class="aa-at" aria-live="off"></span></div></header>
+      <div class="aa-frame ${s.size || ''}"><div class="aa-wait">滚到这里时载入…</div>
+        <iframe src="${esc(srcOf(s))}" title="${esc(s.name)}" loading="lazy"></iframe></div></section>`).join('')}`).join('');
+  document.querySelector('#aa-toc nav').innerHTML = groups.map(g => `<h3>${esc(g.title)}</h3>${g.sections.map(s => `<a href="#s-${s.id}"><b>${s.no}</b>${esc(s.name)}</a>`).join('')}`).join('');
+  for (const s of sections) {
+    s.el = document.getElementById(`s-${s.id}`);
+    s.iframe = s.el.querySelector('iframe');
+    s.label = s.el.querySelector('.aa-at');
+    s.open = s.el.querySelector('.aa-open');
+    s.loaded = false; s.ready = false; s.at = null; s.visible = false; s.follows = null; s.parked = false; s.pending = false;
+    s.iframe.addEventListener('load', () => {
+      if (s.parked) return;
+      s.loaded = true;
+      s.el.querySelector('.aa-frame').classList.add('is-loaded');
+      // A page that never reports its frame does not follow; it is reloaded at the chosen frame instead.
+      clearTimeout(s.waiting);
+      s.waiting = setTimeout(() => { if (!s.ready) { s.follows = false; paintLabel(s); } }, 5000);
+    });
+  }
+
+  // ---------- toolbar ----------
+  const ticks = document.getElementById('aa-ticks');
+  ticks.innerHTML = frames.map((f, i) => `<button data-frame="${i}" class="${i && dateFmt.format(new Date(frames[i - 1].at)) !== dateFmt.format(new Date(f.at)) ? 'is-day' : ''}" title="${esc(`${dayTime(f.at)} · ${f.id} · ${f.title}`)}" aria-label="${esc(`${dayTime(f.at)} ${f.id}`)}"></button>`).join('');
+  document.getElementById('aa-data').innerHTML = Object.entries(datasets).map(([name, d]) => `<button type="button" data-set="${name}" aria-pressed="${name === dataset}" title="${esc(d.label)}">${name}</button>`).join('');
+  function paintBar() {
+    const nav = document.getElementById('aa-nav');
+    nav.classList.toggle('aa-free', selected == null);
+    if (selected == null) {
+      document.getElementById('aa-date').textContent = `${frames.length} 帧 · ${dayTime(frames[0].at)} – ${dayTime(frames.at(-1).at)}`;
+      document.getElementById('aa-title').textContent = '未选帧：各页停在自己的默认帧';
+    } else {
+      const f = frames[selected];
+      document.getElementById('aa-date').textContent = `${dayTime(f.at)} · ${f.id}`;
+      document.getElementById('aa-title').textContent = f.title;
+    }
+    ticks.querySelectorAll('[data-frame]').forEach(b => b.classList.toggle('is-on', Number(b.dataset.frame) === selected));
+    document.getElementById('aa-reset').hidden = selected == null;
+  }
+  function paintLabel(s) {
+    const f = s.at == null ? null : frames[s.at];
+    s.label.textContent = s.parked ? '离得远，已卸载；滚回来时重新载入' : f ? `此刻 ${f.id} · ${dayTime(f.at)}` : s.follows === false ? '不随顶栏原地切帧，切帧时重新载入' : '';
+    s.label.classList.toggle('is-behind', Boolean(f) && selected != null && s.at !== selected);
+    s.label.title = f ? f.title : '';
+  }
+
+  // ---------- keeping every page on the chosen frame ----------
+  const post = s => s.iframe.contentWindow?.postMessage({ fold: 'go', frame: selected }, location.origin === 'null' ? '*' : location.origin);
+  // `pending`: a frame chosen in the bar that this page has not been sent yet. Stepping inside one page is left alone.
+  function sync(s) {
+    if (selected == null || s.parked || !s.pending) return;
+    if (s.ready) { if (s.visible) { s.pending = false; if (s.at !== selected) post(s); } }
+    else if (!s.loaded) { if (s.srcFor !== selected) { s.srcFor = selected; s.iframe.src = srcOf(s); } }   // opens at the chosen frame; its first report confirms
+    else if (s.follows === false && s.visible) { s.pending = false; s.loaded = false; s.iframe.src = srcOf(s); }
+    // loaded but not reporting yet: stays pending until its first report
+  }
+  function choose(index) {
+    selected = Math.max(0, Math.min(frames.length - 1, index));
+    const q = new URLSearchParams(location.search);
+    q.set('frame', selected);
+    history.replaceState(null, '', `?${q}`);
+    paintBar();
+    for (const s of sections) { s.pending = true; sync(s); paintLabel(s); s.open.href = srcOf(s, { embed: false }); }
+  }
+  addEventListener('message', event => {
+    if (location.origin !== 'null' && event.origin !== location.origin) return;
+    if (event.data?.fold !== 'at' || !Number.isInteger(event.data.frame)) return;
+    const s = sections.find(x => x.iframe.contentWindow === event.source);
+    if (!s) return;
+    const first = !s.ready;
+    s.ready = true; s.follows = true; s.at = event.data.frame;
+    paintLabel(s);
+    if (first) sync(s);
+  });
+  // Only pages near the viewport step at once; the others catch up when scrolled to, so stepping stays light.
+  const watcher = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      const s = sections.find(x => x.el === entry.target);
+      s.visible = entry.isIntersecting;
+      if (s.visible) sync(s);
+    }
+  }, { rootMargin: '300px 0px' });
+  sections.forEach(s => watcher.observe(s.el));
+  // Every page replays the whole dataset (about 20 MB each). Pages far from the viewport are unloaded and
+  // reloaded at the chosen frame when you come back, so scrolling through all of them never keeps all alive.
+  const keeper = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      const s = sections.find(x => x.el === entry.target);
+      if (entry.isIntersecting && s.parked) {
+        s.parked = false; s.pending = selected != null; s.srcFor = selected;
+        s.iframe.src = srcOf(s);
+      } else if (!entry.isIntersecting && s.loaded && !s.parked) {
+        s.parked = true;
+        Object.assign(s, { loaded: false, ready: false, at: null });
+        clearTimeout(s.waiting);
+        s.el.querySelector('.aa-frame').classList.remove('is-loaded');
+        s.iframe.src = 'about:blank';
+      }
+      paintLabel(s);
+    }
+  }, { rootMargin: '2400px 0px' });
+  sections.forEach(s => keeper.observe(s.el));
+
+  // ---------- controls ----------
+  const base = () => selected ?? sections.find(s => s.at != null)?.at ?? 0;
+  document.querySelector('.aa-bar').addEventListener('click', event => {
+    const b = event.target.closest('button');
+    if (!b) return;
+    if (b.dataset.step) choose(base() + Number(b.dataset.step));
+    else if (b.dataset.frame) choose(Number(b.dataset.frame));
+    else if (b.dataset.set && b.dataset.set !== dataset) {
+      // Frame numbers differ between datasets: the new one opens at each page's default.
+      const q = new URLSearchParams();
+      if (b.dataset.set !== defaultDataset) q.set('data', b.dataset.set);
+      location.href = `${location.pathname}${String(q) ? `?${q}` : ''}${location.hash}`;
+    } else if (b.id === 'aa-reset') {
+      const q = new URLSearchParams(location.search);
+      q.delete('frame');
+      location.href = `${location.pathname}${String(q) ? `?${q}` : ''}${location.hash}`;
+    }
+  });
+  const toc = document.getElementById('aa-toc');
+  toc.addEventListener('click', event => { if (event.target.closest('a')) toc.open = false; });
+  document.addEventListener('pointerdown', event => { if (toc.open && !event.target.closest('#aa-toc')) toc.open = false; });
+  document.addEventListener('keydown', event => {
+    if (event.target.matches?.('input,textarea,select,[contenteditable]') || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); choose(base() + (event.key === 'ArrowLeft' ? -1 : 1)); }
+    if (event.key === 'Escape') toc.open = false;
+  });
+  paintBar();
+  window.foldAll = { sections, choose, get selected() { return selected; } };
+</script>
+</body>
+</html>

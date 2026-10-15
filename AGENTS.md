@@ -1,14 +1,16 @@
 # 在 Fold 仓库中协作
 
-本文件面向建设 Fold 的开发 Agent。未来的 `SKILL.md` 面向使用 Fold 汇报工作的 Agent，两者职责不同；当前仓库尚无可安装的 Fold skill。
+本文件面向建设 Fold 的开发 Agent。[skill/SKILL.md](skill/SKILL.md) 面向使用 Fold 汇报工作的 Agent，两者职责不同；它现在是第二版判断指引，配套 CLI 尚未实现，目前用于判断评测与自由运行。
 
 ![AGENTS.md 指导开发 Agent 建设 Fold，未来 SKILL.md 指导使用者整理汇报，后者尚未实现](docs/assets/illustrations/16-two-agent-guides.png)
 
-*开发协作约定与产品使用指引分别服务不同角色。*
+*开发协作约定与产品使用指引分别服务不同角色。图绘于 SKILL.md 起草之前，“尚未实现”现指配套 CLI。*
 
 ## 当前阶段与阅读入口
 
-首切片设计基线已完成，产品待实现。首切片是 US-01 单 Agent 本地闭环，范围与实施顺序见 [docs/decisions.md](docs/decisions.md)。后续以用户的新任务为准。
+首切片阶段 1（内存内核、文字简报与用例运行器）已实现，本地存储、CLI 与概览渲染器待实现。首切片是 US-01 单 Agent 本地闭环，范围与实施顺序见 [docs/decisions.md](docs/decisions.md)。后续以用户的新任务为准。
+
+阶段之外有三条并行工作，到 2026-10-15 的进展记在决策记录的实施顺序表末尾：判断评测（SKILL.md 第二版，三次真实模型评测，见[评测索引](docs/evaluations/README.md)）；真实语料（[corpus/](corpus/README.md)，原文只在本机重建）；演示数据与十二种表达形式（[prototype/](prototype/README.md)）。各处撞到的问题集中在[未决问题](docs/decisions.md#未决问题)，其中 Enron 私人往来与改写文本的公开许可待用户决定，决定之前不运行 `npm run deploy`。[小册子](docs/brief/index.html)是给人快速阅读的图文说明，不是规范出处。
 
 开始工作时读 [README.md](README.md) 和 [docs/decisions.md](docs/decisions.md)，再按任务读取对应规范。用 [conformance/cases](conformance/cases) 检验实现；运行器通过部分内存断言，不代表产品 CLI 已完成。
 
@@ -23,6 +25,9 @@
 | 模块依赖、持久化记录、锁、写入次序、快照与恢复 | [架构](docs/architecture.md) |
 | 首切片范围、实施顺序、尚未决定及后续切片的问题 | [决策记录](docs/decisions.md) |
 | Agent 怎样组织上下文、估计和使用工具，以及怎样评价判断质量 | [Skill 设计](docs/skill-design.md) |
+| 判断评测的设置、指标口径与结论 | [评测报告](docs/evaluations/README.md)，每份报告只对自己的设置有效 |
+| 真实语料的来源、许可、化名改写与弱标注规则 | [真实语料说明](corpus/README.md) |
+| 演示数据先行的回应路径、反馈与调用信号形态（契约未接纳） | [原型说明·演示数据](prototype/README.md#演示数据) |
 
 [产品方向](docs/product.md)解释价值，[用户故事](docs/user-stories.md)展示体验，[形式模型](docs/formal-model.md)帮助检查关系；它们不另建一套行为契约。发现冲突时修正规范出处，并同步相关示例与用例，不通过临时特判让测试表面通过。
 
@@ -48,8 +53,18 @@
 ## 当前命令
 
 ```sh
-make setup  # 创建本地 Python 虚拟环境，不安装第三方依赖
+make setup  # 创建本地 Python 虚拟环境，不安装第三方依赖；需要 3.11+，系统 python3 较旧时加 PYTHON=python3.12
 make check  # 检查启动文件、用例文件、文档链接与基础格式
+make test   # 用内存内核运行 conformance/cases
+make prototype  # 本地原型，http://127.0.0.1:4173
+npm run site:build  # 文档与原型体验站（含小册子）构建到 dist/；不要运行 npm run deploy，公开许可待用户决定
+python3 scripts/eval_judgment.py --dry-run --frames f01     # 生成判断评测提示，不调用模型
+python3 scripts/eval_judgment.py --frames f01,f05 --report  # 用真实模型评测，产生调用费用
+python3 scripts/eval_judgment.py --runner codex --frames f01 --report  # 改用 codex exec（默认 gpt-6.1-sol），用登录账号的额度
+python3 scripts/eval_judgment.py --free-run --corpus corpus/composite/frames.json --dry-run  # 真实语料自由运行：先估算费用，去掉 --dry-run 才调用模型；frames.json 只在本机重建
+.venv/bin/python scripts/build_demo_data.py composite --report  # 由自由运行批次与 edits.json 重放出演示数据
+node scripts/shoot-forms.mjs --base http://127.0.0.1:4173   # 原型各形式截图与报错检查（需先启动原型服务与本机 Chrome）
+.venv/bin/python scripts/build_corpus.py all curl-bagder    # 真实语料切帧与噪音统计；需要本机 raw/，先用 fetch_corpus.py 抓取，见 corpus/README.md
 ```
 
 详见[工作环境说明](docs/development.md)。产品 CLI 实现后，再增加相应运行与测试命令。
