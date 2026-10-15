@@ -59,7 +59,7 @@ python3 scripts/eval_judgment.py --rescore .local/eval/<run-id> --report   # 用
 
 `--runner codex` 改用 `codex exec`，默认模型 `gpt-6.1-sol`，消耗登录账号的额度而不按次计费。codex 没有与 `--system-prompt` 对应的命令行参数，脚本默认把同一份系统提示与用户提示原文用分节标题合成一条消息；codex 自带的基础指令仍在，这是与 `claude -p` 的已知差异。codex 是带工具的 Agent，每次调用在 `run_dir/codex/` 下新建空工作目录，并以 `-s read-only`、`--ephemeral`、`--skip-git-repo-check`、`--ignore-user-config` 隔离；另外关掉项目说明加载（否则会沿目录向上读到仓库根的 `AGENTS.md`）、环境上下文（否则注入真实日期与路径）、网页搜索以及 shell、code mode 等工具。完整参数记在 `meta.json` 的 `invocation`。每次调用的事件流、最后消息与 stderr 留在 `run_dir/codex/`，token 用量写进每帧结果与 `summary.json`；遇到速率或额度限制、登录失效时立即停止，已完成的帧照常计分，之后用同一 `--run-id` 加 `--resume` 续跑其余帧。`--skill` 指定被测的 SKILL.md，用于新旧版本对照；`--codex-system instructions` 改用 `model_instructions_file` 传系统提示（替换 codex 自带的基础指令），用来检验合成方式的影响。
 
-四份评测报告各是什么、用了多少费用，见[评测索引](evaluations/README.md)：[判断评测报告](evaluations/judgment-run-2026-10-14.md)、[换用 Codex 的对照评测](evaluations/judgment-run-codex-2026-10-15.md)、[混合语料自由运行](evaluations/free-run-composite-2026-10-15.md)与[含家庭流的第二次自由运行](evaluations/free-run-composite-v2-2026-10-15.md)。teacher-forced 评测只比较判断与作者的编排，自由运行只与弱标注对照，都不是正确答案；指标分别列出，不合成总分。
+五份评测报告各是什么、用了多少费用，见[评测索引](evaluations/README.md)：[判断评测报告](evaluations/judgment-run-2026-10-14.md)、[换用 Codex 的对照评测](evaluations/judgment-run-codex-2026-10-15.md)、[混合语料自由运行](evaluations/free-run-composite-2026-10-15.md)、[含家庭流的第二次自由运行](evaluations/free-run-composite-v2-2026-10-15.md)与[换回第一次背景的第三次自由运行](evaluations/free-run-composite-v3-2026-10-15.md)。teacher-forced 评测只比较判断与作者的编排，自由运行只与弱标注对照，都不是正确答案；指标分别列出，不合成总分。
 
 ## 真实语料
 

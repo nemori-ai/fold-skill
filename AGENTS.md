@@ -10,7 +10,7 @@
 
 首切片阶段 1（内存内核、文字简报与用例运行器）已实现，本地存储、CLI 与概览渲染器待实现。首切片是 US-01 单 Agent 本地闭环，范围与实施顺序见 [docs/decisions.md](docs/decisions.md)。后续以用户的新任务为准。
 
-阶段之外有三条并行工作，到 2026-10-15 的进展记在决策记录的实施顺序表末尾：判断评测（SKILL.md 第二版，四次真实模型评测，含家庭流的自由运行已跑，见[评测索引](docs/evaluations/README.md)）；真实语料（[corpus/](corpus/README.md)，原文只在本机重建）；演示数据与十二种表达形式（[prototype/](prototype/README.md)）。各处撞到的问题集中在[未决问题](docs/decisions.md#未决问题)，改写文本的公开许可与家庭流的做法都已于 2026-10-15 由用户决定：照现状公开（署名缺口记在 SOURCES.md）；家庭流参考真实数据仿写、不用真实内容。[小册子](docs/brief/index.html)是给人快速阅读的图文说明，不是规范出处。
+阶段之外有三条并行工作，到 2026-10-15 的进展记在决策记录的实施顺序表末尾：判断评测（SKILL.md 第二版，五次真实模型评测，含家庭流的自由运行已跑两次、可区分家庭流与背景的影响，见[评测索引](docs/evaluations/README.md)）；真实语料（[corpus/](corpus/README.md)，原文只在本机重建）；演示数据与十二种表达形式（[prototype/](prototype/README.md)）。各处撞到的问题集中在[未决问题](docs/decisions.md#未决问题)，改写文本的公开许可与家庭流的做法都已于 2026-10-15 由用户决定：照现状公开（署名缺口记在 SOURCES.md）；家庭流参考真实数据仿写、不用真实内容。[小册子](docs/brief/index.html)是给人快速阅读的图文说明，不是规范出处。
 
 开始工作时读 [README.md](README.md) 和 [docs/decisions.md](docs/decisions.md)，再按任务读取对应规范。用 [conformance/cases](conformance/cases) 检验实现；运行器通过部分内存断言，不代表产品 CLI 已完成。
 

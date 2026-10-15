@@ -418,7 +418,7 @@ td.r,th.r{text-align:right}
   </header>
   <div class="body">
     <p>逐帧评测每帧都从作者的状态出发，只看这一帧怎么判。四次运行换了模型、Harness 与指引版本。哪些输入该用、哪些是噪音，四次几乎一致；档位与 kind 的分歧更大，同一配置重跑也会变。提交被退回的原因因模型而异：一个漏列子项，一个把可选字段写成 null。</p>
-    <p>自由运行让 Agent 维护自己的状态两周。跑了两次，都没有失控，同一组输入大多进了同一件事，订阅与社区帖都被压下。第二次加入了家庭流：家里六条线的结构几乎都对，份额却普遍高一档。每个条件都只跑了一次。</p>
+    <p>自由运行让 Agent 维护自己的状态两周。跑了三次，都没有失控，同一组输入大多进了同一件事，订阅与社区帖都被压下。后两次加入了家庭流：家里六条线的结构几乎都对，份额普遍偏高；两次的结构几乎相同，差在档位。每个条件都只跑了一次。</p>
     <div class="visual">
       <p class="tbl-cap">逐帧评测：手写情境 36 帧、112 条输入，与作者编排对比</p>
       <table>
@@ -433,22 +433,22 @@ td.r,th.r{text-align:right}
         </tbody>
       </table>
       <p class="small" style="margin:6px 0 16px">Opus = claude-opus-5-5，Haiku = claude-haiku-5-5，Sol = Codex 下的 gpt-6.1-sol；一版、二版指 SKILL.md 的版本。</p>
-      <p class="tbl-cap">自由运行：混合语料 28 帧，前四条流与弱标注对照</p>
+      <p class="tbl-cap">自由运行：混合语料 28 帧（第一次 2829 条，后两次加家庭流共 3217 条），前四条流与弱标注对照</p>
       <table>
-        <thead><tr><th>对照</th><th class="r">第一次 · 2829 条</th><th class="r">第二次 · 3217 条</th></tr></thead>
+        <thead><tr><th>对照</th><th class="r">第一次</th><th class="r">第二次</th><th class="r">第三次</th></tr></thead>
         <tbody>
-          <tr><td>提交（看到回执后都改对）</td><td class="r">28 / 28；退回 5 次</td><td class="r">28 / 28；退回 3 次</td></tr>
-          <tr><td>判为噪音的输入，与他后来的行为不矛盾</td><td class="r">0.89</td><td class="r">0.882</td></tr>
-          <tr><td>有强依据该忽略的输入被忽略（召回）</td><td class="r">0.277</td><td class="r">0.26</td></tr>
-          <tr><td>同组输入进了同一根层事项</td><td class="r">0.983</td><td class="r">1.0</td></tr>
-          <tr><td>同帧事项的成对排序与弱档位一致（平局记半）</td><td class="r">0.661</td><td class="r">0.603</td></tr>
-          <tr><td>家庭流：按作者档成对排序一致（平局记半）</td><td class="r">—</td><td class="r">0.827</td></tr>
+          <tr><td>28 帧都提交成功；首次被退回（看到回执后都改对）</td><td class="r">5 次</td><td class="r">3 次</td><td class="r">3 次</td></tr>
+          <tr><td>判为噪音的输入，与他后来的行为不矛盾</td><td class="r">0.89</td><td class="r">0.882</td><td class="r">0.858</td></tr>
+          <tr><td>有强依据该忽略的输入被忽略（召回）</td><td class="r">0.277</td><td class="r">0.26</td><td class="r">0.297</td></tr>
+          <tr><td>同组输入进了同一根层事项</td><td class="r">0.983</td><td class="r">1.0</td><td class="r">0.981</td></tr>
+          <tr><td>同帧事项的成对排序与弱档位一致（平局记半）</td><td class="r">0.661</td><td class="r">0.603</td><td class="r">0.642</td></tr>
+          <tr><td>家庭流：按作者档成对排序一致（平局记半）</td><td class="r">—</td><td class="r">0.827</td><td class="r">0.823</td></tr>
         </tbody>
       </table>
-      <p class="small" style="margin-top:6px">召回低，多是 CI 失败、评审与关闭通知被引用进事项或判为暂缓，没有被丢掉。第二次的同组一致到 1.0，但被引用的输入少，可比的对从 726 降到 293；排序一致下降，主要来自两件都是 0 份的平局。家庭流对照的是作者写定的标注。</p>
+      <p class="small" style="margin-top:6px">召回低，多是 CI 失败、评审与关闭通知被引用进事项或判为暂缓，没有被丢掉。第二次的同组一致到 1.0，但被引用的输入少，可比的对从 726 降到 293；排序一致下降，主要来自两件都是 0 份的平局。第三次与第一次只差家庭流、与第二次只差用户背景，各项多落在前两次之间。家庭流对照的是作者写定的标注。</p>
     </div>
   </div>
-  <footer class="foot"><span>数字出处：<code>docs/evaluations/judgment-run-codex-2026-10-15.md</code>（Harness 对比表）、<code>docs/evaluations/free-run-composite-2026-10-15.md</code> 与 <code>free-run-composite-v2-2026-10-15.md</code>（与弱标注对照）</span><span class="pn">05 / 16</span></footer>
+  <footer class="foot"><span>数字出处：<code>docs/evaluations/judgment-run-codex-2026-10-15.md</code>（Harness 对比表）、<code>docs/evaluations/free-run-composite-*.md</code> 三份（与弱标注对照）</span><span class="pn">05 / 16</span></footer>
 </section>
 
 <!-- 06 -->
@@ -456,7 +456,7 @@ td.r,th.r{text-align:right}
   <header>
     <div class="kicker">FOLD / 06</div>
     <h1>它判错的不是格式，而是取舍</h1>
-    <p class="lead">两次自由运行都守住了格式与预算；错在注意力往哪边偏，以及少数事实。</p>
+    <p class="lead">三次自由运行都守住了格式与预算；错在注意力往哪边偏，以及少数事实。</p>
   </header>
   <div class="body">
     <p>第一次，工作里的事更容易拿到份额，生活里要他决定的事常被压低。加入家庭流之后反了过来：家里的事普遍高一档，工作与生活问答被挤到根层边上。</p>
@@ -492,19 +492,22 @@ td.r,th.r{text-align:right}
       <div class="sharebar" role="img" aria-label="第二次：家庭 37.7 份，工作 20.3 份，生活 2.6 份，其余 3.4 份">
         <span style="width:58.9%;background:#a2479a">第二次 · 家庭 37.7</span><span style="width:31.7%;background:#4f7fa8">工作 20.3</span><span style="width:4.1%;background:#c9824f"></span><span style="width:5.3%;background:#9a948a"></span>
       </div>
+      <div class="sharebar" role="img" aria-label="第三次：家庭 31.3 份，工作 25.0 份，生活 4.5 份，其余 3.2 份">
+        <span style="width:48.9%;background:#a2479a">第三次 · 家庭 31.3</span><span style="width:39.1%;background:#4f7fa8">工作 25.0</span><span style="width:7.0%;background:#c9824f"></span><span style="width:5.0%;background:#9a948a"></span>
+      </div>
       <table style="margin-top:12px">
-        <thead><tr><th>同一批前四条流的输入</th><th class="r">第一次</th><th class="r">第二次</th></tr></thead>
+        <thead><tr><th>同一批前四条流的输入</th><th class="r">第一次</th><th class="r">第二次</th><th class="r">第三次</th></tr></thead>
         <tbody>
-          <tr><td>他人发来的生活输入，被采用（共 245 条）</td><td class="r">227</td><td class="r">130</td></tr>
-          <tr><td>他后来有行动的工作事项帧，被纳入（共 200 个）</td><td class="r">110</td><td class="r">79</td></tr>
-          <tr><td>其中拿到 6 份以上</td><td class="r">49</td><td class="r">29</td></tr>
-          <tr><td>他人发来的工作输入，判为暂缓</td><td class="r">388</td><td class="r">671</td></tr>
+          <tr><td>他人发来的生活输入，被采用（共 245 条）</td><td class="r">227</td><td class="r">130</td><td class="r">168</td></tr>
+          <tr><td>他后来有行动的工作事项帧，被纳入（共 200 个）</td><td class="r">110</td><td class="r">79</td><td class="r">85</td></tr>
+          <tr><td>其中拿到 6 份以上</td><td class="r">49</td><td class="r">29</td><td class="r">36</td></tr>
+          <tr><td>他人发来的工作输入，判为暂缓</td><td class="r">388</td><td class="r">671</td><td class="r">489</td></tr>
         </tbody>
       </table>
-      <figcaption>第二次的生活 2.6 份未标字；其余是社区、订阅与留白。家里有 12 帧把母亲住哪排到 24 份，作者标的是 12 份。差别同时来自语料、写进背景的家人名字与随机性，要用同一份背景重跑才能分开。</figcaption>
+      <figcaption>后两次的生活份额（2.6、4.5）未标字；其余是社区、订阅与留白。第三次的语料同第二次、背景同第一次：工作与生活的减少八成多随家庭流本身出现。第二次多出的家庭份额几乎都来自母亲住哪那一件，它有 12 帧排到 24 份；第三次与作者一样，一直是 12 份。</figcaption>
     </figure>
   </div>
-  <footer class="foot"><span>数字出处：<code>prototype/data/composite/POLISH.md</code>（新旧两次运行、最常见的几类错误、逐帧修正）、两份自由运行报告</span><span class="pn">06 / 16</span></footer>
+  <footer class="foot"><span>数字出处：<code>prototype/data/composite/POLISH.md</code>（新旧两次运行、最常见的几类错误、逐帧修正）、三份自由运行报告</span><span class="pn">06 / 16</span></footer>
 </section>
 
 <!-- 07 -->
@@ -761,9 +764,9 @@ td.r,th.r{text-align:right}
       <div class="rung todo" role="listitem"><span class="mark">8</span><div>让人读文字简报与首页<small>回来以后，能不能很快认出要自己处理的事</small></div><span class="st">待做 · 最终问题</span></div>
       <div class="rung todo" role="listitem"><span class="mark">7</span><div>等义改写、相关背景改变与观测缺口的对照<small>无关变化下是否稳定，相关变化下能否调整</small></div><span class="st">待做</span></div>
       <div class="rung todo" role="listitem"><span class="mark">6</span><div>挑少数帧由人写完整批次，作为锚点<small>弱标注本身偏差多大</small></div><span class="st">待做</span></div>
-      <div class="rung todo" role="listitem"><span class="mark">5</span><div>同一份语料与背景重复自由运行，再换背景写法或流的顺序<small>份额偏向工作还是家里，是模型倾向、背景写法还是指引</small></div><span class="st">待做</span></div>
+      <div class="rung todo" role="listitem"><span class="mark">5</span><div>同一份语料与背景重复自由运行，再换背景写法或流的顺序<small>换过一次背景：份额偏向家里主要随家庭流本身；同条件重复还没有</small></div><span class="st">待做 · 换过一次背景</span></div>
       <div class="rung todo" role="listitem"><span class="mark">4</span><div>SKILL.md 第三版<small>重复提醒怎样判、拆出子项后父项怎样写、null 的反例</small></div><span class="st">待写</span></div>
-      <div class="rung done" role="listitem"><span class="mark">3</span><div>混合语料上自由运行两周，不失控<small>两次都 28 帧全部提交；同组输入 98% 以上进同一件事</small></div><span class="st">已有 · 两次，语料不同</span></div>
+      <div class="rung done" role="listitem"><span class="mark">3</span><div>混合语料上自由运行两周，不失控<small>三次都 28 帧全部提交；同组输入 98% 以上进同一件事</small></div><span class="st">已有 · 三次，条件各不同</span></div>
       <div class="rung done" role="listitem"><span class="mark">2</span><div>逐帧判断与作者编排大体一致<small>处置 86–91%；同一配置重跑，抽查帧约 15% 档位不同</small></div><span class="st">已有 · 四次运行</span></div>
       <div class="rung done" role="listitem"><span class="mark">1</span><div>内核守住预算、回执与幂等<small>用例运行器在内存内核上逐步断言</small></div><span class="st">已有 · <code>make test</code></span></div>
     </div>
@@ -784,7 +787,7 @@ td.r,th.r{text-align:right}
       <h3>依据</h3>
       <ul>
         <li>产品与规范：<code>docs/product.md</code>、<code>docs/decisions.md</code>、<code>docs/information-contract.md</code></li>
-        <li>评测：<code>docs/evaluations/README.md</code> 与它列出的四份报告</li>
+        <li>评测：<code>docs/evaluations/README.md</code> 与它列出的五份报告</li>
         <li>语料：<code>corpus/README.md</code>、<code>corpus/composite/MIX.md</code>、<code>NOISE.md</code>、<code>LABELS.md</code></li>
         <li>演示数据：<code>prototype/data/composite/POLISH.md</code>、<code>SOURCES.md</code></li>
         <li>形式：<code>prototype/README.md</code>、<code>prototype/forms/CONCEPTS.md</code>、<code>prototype/forms/polish/</code> 五份打磨记录</li>
@@ -800,6 +803,7 @@ td.r,th.r{text-align:right}
           <tr><td>Haiku 逐帧评测，手写情境全量</td><td class="r">0.29 美元</td></tr>
           <tr><td>Opus 自由运行，混合语料两周（第一次）</td><td class="r">24.50 美元</td></tr>
           <tr><td>Opus 自由运行，混合语料加家庭流两周（第二次）</td><td class="r">23.23 美元</td></tr>
+          <tr><td>Opus 自由运行，加家庭流、换回第一次的背景（第三次）</td><td class="r">22.87 美元</td></tr>
           <tr><td>Codex 下的 Sol：两次全量运行，另两组 12 帧对照</td><td class="r">订阅额度，不按次计费</td></tr>
         </tbody>
       </table>
