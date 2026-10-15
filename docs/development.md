@@ -143,7 +143,7 @@ node scripts/export-all.mjs --out .local/export/all.html && node scripts/shoot-f
 
 发布前运行 `make check` 和 `npm run site:build`，并核对文档链接、公式、流程图、搜索及原型交互。站点构建成功不等于产品 CLI 的持久化与完整验收已经完成。
 
-默认演示数据与小册子的截图含化名改写的真实公开文本，`npm run site:build` 会把它们一起放进 `dist/`。公开许可由用户决定（见[演示数据的来源与许可](../prototype/data/composite/SOURCES.md#公开之前)），在此之前不运行 `npm run deploy`。
+默认演示数据与小册子的截图含化名改写的真实公开文本，`npm run site:build` 会把它们一起放进 `dist/`。2026-10-15 用户决定照现状公开，来源、许可与已知的署名缺口见[演示数据的来源与许可](../prototype/data/composite/SOURCES.md#公开与许可)；`npm run deploy` 只在用户指示时运行。
 
 ## 小册子
 

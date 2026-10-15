@@ -107,7 +107,7 @@
 | SKILL.md 第三版 | 待写。至少三处：duplicate 的判别问句让重复提醒落进 `used`；拆出子项后父项标题不应重复子项（f23 六次运行全部一事两写）；`null` 与降档漏写 `reason` 的反例。回执写明触发规则可一并考虑。 | [Codex 对照评测：第二版指引](evaluations/judgment-run-codex-2026-10-15.md#第二版指引在-sol-上改善了什么)；[自由运行的三类错误](../prototype/data/composite/POLISH.md#最常见的三类错误) |
 | 自由运行的方差 | 未做。混合语料跑过两次，但第二次加了家庭流、换了用户背景，不是重复运行；第一次生活流份额偏低，第二次家庭流拿走近六成根层、工作与生活都被压低，是模型倾向、指引写法还是背景所致，需要同条件重复运行、换人物背景或调换流的顺序。根层份额要不要按流设下限、或由宿主在业务用途里说明，也还没有定。人工锚点批次也还没写。 | [第一次](evaluations/free-run-composite-2026-10-15.md#还没有回答的问题)；[第二次](evaluations/free-run-composite-v2-2026-10-15.md#还没有回答的问题) |
 | Enron 私人往来是否作为家庭流 | 已决（2026-10-15 用户决定）：参考真实数据仿写，不用真实内容，形式不限于邮件。Enron 私人往来只在本机作语气参考；家庭流 388 条（瑞典语）由作者编写，与参考邮件没有共同专名，与整个 Enron 语料没有 8 词以上的重合，节拍表与成品入库。含家庭流的自由运行已于 2026-10-15 重跑，见[第二次自由运行](evaluations/free-run-composite-v2-2026-10-15.md)；演示数据是否改用这次运行，以[原型说明](../prototype/README.md)为准；生活流里与这家不符的提问这一版不挪。 | [家庭流说明](../corpus/composite/family/README.md)；[MIX.md](../corpus/composite/MIX.md#家庭往来) |
-| 混合语料改写文本的公开许可 | 待用户决定。演示数据与小册子截图含化名改写的真实公开文本，站点构建会一起发布；决定之前不运行 `npm run deploy`。Stack Exchange 的 CC BY-SA 署名在化名后无法满足。 | [演示数据的来源与许可](../prototype/data/composite/SOURCES.md#公开之前)；[MIX.md 许可与入库](../corpus/composite/MIX.md#许可与入库) |
+| 混合语料改写文本的公开许可 | 已决（2026-10-15 用户决定）：演示数据与小册子截图照现状随站点公开，站点已发布。Stack Exchange 的 CC BY-SA 署名在化名后无法满足，作为已知缺口记在来源说明里；若收到来源方异议，切回 `story` 数据集并从构建中排除 `data/composite/`。 | [演示数据的来源与许可](../prototype/data/composite/SOURCES.md#公开与许可)；[MIX.md 许可与入库](../corpus/composite/MIX.md#许可与入库) |
 
 ## 原稿中不再作为默认实现要求的内容
 
