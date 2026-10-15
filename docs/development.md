@@ -59,7 +59,7 @@ python3 scripts/eval_judgment.py --rescore .local/eval/<run-id> --report   # 用
 
 `--runner codex` 改用 `codex exec`，默认模型 `gpt-6.1-sol`，消耗登录账号的额度而不按次计费。codex 没有与 `--system-prompt` 对应的命令行参数，脚本默认把同一份系统提示与用户提示原文用分节标题合成一条消息；codex 自带的基础指令仍在，这是与 `claude -p` 的已知差异。codex 是带工具的 Agent，每次调用在 `run_dir/codex/` 下新建空工作目录，并以 `-s read-only`、`--ephemeral`、`--skip-git-repo-check`、`--ignore-user-config` 隔离；另外关掉项目说明加载（否则会沿目录向上读到仓库根的 `AGENTS.md`）、环境上下文（否则注入真实日期与路径）、网页搜索以及 shell、code mode 等工具。完整参数记在 `meta.json` 的 `invocation`。每次调用的事件流、最后消息与 stderr 留在 `run_dir/codex/`，token 用量写进每帧结果与 `summary.json`；遇到速率或额度限制、登录失效时立即停止，已完成的帧照常计分，之后用同一 `--run-id` 加 `--resume` 续跑其余帧。`--skill` 指定被测的 SKILL.md，用于新旧版本对照；`--codex-system instructions` 改用 `model_instructions_file` 传系统提示（替换 codex 自带的基础指令），用来检验合成方式的影响。
 
-三份评测报告各是什么、用了多少费用，见[评测索引](evaluations/README.md)：[判断评测报告](evaluations/judgment-run-2026-10-14.md)、[换用 Codex 的对照评测](evaluations/judgment-run-codex-2026-10-15.md)与[混合语料自由运行](evaluations/free-run-composite-2026-10-15.md)。teacher-forced 评测只比较判断与作者的编排，自由运行只与弱标注对照，都不是正确答案；指标分别列出，不合成总分。
+四份评测报告各是什么、用了多少费用，见[评测索引](evaluations/README.md)：[判断评测报告](evaluations/judgment-run-2026-10-14.md)、[换用 Codex 的对照评测](evaluations/judgment-run-codex-2026-10-15.md)、[混合语料自由运行](evaluations/free-run-composite-2026-10-15.md)与[含家庭流的第二次自由运行](evaluations/free-run-composite-v2-2026-10-15.md)。teacher-forced 评测只比较判断与作者的编排，自由运行只与弱标注对照，都不是正确答案；指标分别列出，不合成总分。
 
 ## 真实语料
 
@@ -87,9 +87,11 @@ python3 scripts/eval_judgment.py --free-run --corpus <frames.json> --rescore .lo
 python3 scripts/eval_judgment.py --free-run --corpus corpus/composite/frames.json --persona-context "<人物设定>" --text-cap 1000 --dry-run
 ```
 
-每帧把 SKILL.md、用户背景（附输出语言与“本人事件”的说明）、上一帧提交后的状态、本帧输入与宿主信号交给模型。输入只交 `id / channel / from / at / subject / url / text`、`self`（是否本人）与语料带有时的 `stream`（work / community / life / subscription，用户背景里附一句说明），不交由公开资料推断的作者类别与 `origin`；每帧超过 60 条或 2 万字符时把单条正文截到 1500 字符并记原长，不删条目，`--text-cap` 把这个长度收紧（估算超出预算时用）。`--persona-context` 换掉语料自带的人物背景。批次经内存内核提交，被拒绝时带回执重试，最多 3 次，仍被拒绝则该帧记 skipped、沿用上一帧状态。因为状态逐帧前传，帧只能顺序运行；`--frames` 只决定跑到哪一帧为止，`--resume` 先按记录重放已接受的批次再继续。每帧落盘提示、原始响应、回执、提交后的 state、token 与费用；累计费用达到 `--max-cost`（默认 40 美元）后不再开始新的一帧。`--dry-run` 按上次全量运行拟合的单价估算费用，状态增长用写明的假设。
+每帧把 SKILL.md、用户背景（附输出语言与“本人事件”的说明）、上一帧提交后的状态、本帧输入与宿主信号交给模型。输入只交 `id / channel / from / at / subject / url / text`、`self`（是否本人）与语料带有时的 `stream`（work / community / life / family / subscription，用户背景里附一句说明；语料含家庭流时，输出语言的说明另加一句瑞典语往来也用中文整理），不交由公开资料推断的作者类别与 `origin`；每帧超过 60 条或 2 万字符时把单条正文截到 1500 字符并记原长，不删条目，`--text-cap` 把这个长度收紧（估算超出预算时用）。`--persona-context` 换掉语料自带的人物背景。批次经内存内核提交，被拒绝时带回执重试，最多 3 次，仍被拒绝则该帧记 skipped、沿用上一帧状态。因为状态逐帧前传，帧只能顺序运行；`--frames` 只决定跑到哪一帧为止，`--resume` 先按记录重放已接受的批次再继续。每帧落盘提示、原始响应、回执、提交后的 state、token 与费用；累计费用达到 `--max-cost`（默认 40 美元）后不再开始新的一帧。`--dry-run` 按上次全量运行拟合的单价估算费用，状态增长用写明的假设。
 
-自由运行不做作者对比，改与语料旁的 `labels.json` 做三项对照：被处置为 noise / duplicate 的输入相对强依据忽略列表的召回与精确率（弱依据单列）；同组输入被引用进同一条目、同一根层事项的比例（跨线程组单列）；同帧事项按弱档位的成对排序与 Agent 根层份额的一致率。衔接方式的取舍见[决策记录](decisions.md#推迟到后续切片)。语料带 `stream` 时，报告另列各流的处置分布，以及根层 64 份平均有多少来自每条流（按事项引用的输入分摊）。
+自由运行不做作者对比，改与语料旁的 `labels.json` 做三项对照：被处置为 noise / duplicate 的输入相对强依据忽略列表的召回与精确率（弱依据单列）；同组输入被引用进同一条目、同一根层事项的比例（跨线程组单列）；同帧事项按弱档位的成对排序与 Agent 根层份额的一致率。衔接方式的取舍见[决策记录](decisions.md#推迟到后续切片)。语料带 `stream` 时，报告另列各流的处置分布，以及根层 64 份平均有多少来自每条流（按事项引用的输入分摊，`summary.json` 另记逐帧的值）。
+
+`labels.json` 有 `family` 一节（作者编写的家庭流，依据 `authored`）时，它单独计分，不与前四条流由真实行为推出的指标混算：前四条流的三项对照只看前四条流的输入，口径与加入家庭流之前相同；家庭流另列忽略的召回与精确率、作者事项与并入关系的同组一致、按作者档（critical > high > normal > low > trace > none）的成对排序与作者档 × 份额表，分流召回表加 family 几行。家庭流只在这一帧确实交给了模型时计分，用不含家庭流的语料跑出的旧记录复算结果不变。作者登记的问题（`family.asks`）在契约的状态里没有可对照的字段，脚本不计分，报告里人工对照。
 
 自由运行的结果可以打磨成原型的演示数据：
 

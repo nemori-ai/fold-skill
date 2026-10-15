@@ -23,7 +23,7 @@ summary.json 与 report.md；codex 的每次调用另在 codex/ 下留空工作�
 每帧拿到 SKILL.md、用户背景、自己上一帧提交后的状态、本帧输入与宿主信号；批次经内核提交，被拒绝时带回执
 重试，最多 3 次，仍被拒绝则该帧记 skipped 并沿用上一帧状态。状态逐帧前传，因此只能顺序运行。不做作者对比，
 改为与语料旁的弱标注（labels.json）做三项对照：忽略集合的精确率与召回率、同组输入是否进同一声明、同帧事项
-成对排序一致率。用法：
+成对排序一致率。labels.json 有 family 一节（作者编写的家庭流）时，它按作者标注（authored）单独计分，不与前四条流混算。用法：
   python3 scripts/eval_judgment.py --free-run --corpus corpus/curl-bagder/frames.json --dry-run   # 估算 token 与费用
   python3 scripts/eval_judgment.py --free-run --corpus <frames.json> --max-cost 40 --report        # 真实调用
   python3 scripts/eval_judgment.py --free-run --corpus <frames.json> --run-id <id> --resume --report
@@ -1028,8 +1028,46 @@ def free_estimate(records: list[dict], system_prompt: str) -> dict:
             "assumptions": "状态每帧 +1.2k token（上限 30k）；输出 = 60×输入条数 + 6k；25% 的帧重试一次；单价见 PRICE_PER_MTOK"}
 
 
+FAMILY_LEVEL_SCORE = {"critical": 5, "high": 4, "normal": 3, "low": 2, "trace": 1, "none": 0}
+FAMILY_BIN_KINDS = ("琐事", "噪音")  # 作者把互不相干的小事收进同一事项（家务、Signe 的零碎请求、诈骗短信），不当作应进同一声明的组
+
+
+def prompt_event_ids(record: dict) -> set:
+    """这一帧实际交给模型的输入 ID（取自提示的“本轮输入”）；取不到时退回处置覆盖到的 ID。"""
+    try:
+        section = record["prompt"].split("## 本轮输入\n\n", 1)[1].split("\n\n## 输出", 1)[0]
+        return {e["id"] for e in json.loads(section)}
+    except (KeyError, IndexError, TypeError, ValueError):
+        return {d.get("event") for d in record.get("dispositions") or []}
+
+
+def pair_counts(groups: list[tuple[list, bool]], cited: dict, items: dict, self_ids: set) -> collections.Counter:
+    """组内被 Agent 引用的输入两两比较：同一条目、同一根层事项；跨线程组另计同根层。"""
+    out = collections.Counter(dict.fromkeys(("groups", "groups_cited", "pairs", "same_item", "same_root",
+                                             "cross_pairs", "cross_same_root"), 0))
+    for events, cross in groups:
+        members = [e for e in events if e not in self_ids and cited.get(e)]
+        for a, b in itertools.combinations(members, 2):
+            same_root = bool({items[i]["root"] for i in cited[a]} & {items[i]["root"] for i in cited[b]})
+            out["pairs"] += 1
+            out["same_item"] += bool(cited[a] & cited[b])
+            out["same_root"] += same_root
+            if cross:
+                out["cross_pairs"] += 1
+                out["cross_same_root"] += same_root
+        out["groups"] += 1
+        out["groups_cited"] += bool(members)
+    return out
+
+
 def free_score(corpus: dict, labels: dict, records: list[dict]) -> dict:
-    """与弱标注的三项对照。只计接受或沿用的帧；弱依据的忽略单列，不计入主指标。"""
+    """与弱标注的三项对照。只计接受或沿用的帧；弱依据的忽略单列，不计入主指标。
+
+    labels.json 的 `family` 一节（作者编写的家庭流，依据 authored）单独计分：它检验与作者写定的判断是否一致，
+    不检验真实，因此不与前四条流由真实行为推出的指标混算。前四条流的指标只看前四条流的输入，口径与加入家庭流之前相同；
+    家庭流只在这一帧确实交给了模型时计分（用不含家庭流的语料运行的旧记录不受影响）。家庭流的问题（asks）在契约的
+    状态里没有可对照的字段，不在这里计分。
+    """
     label_frames = {f["frame"]: f for f in labels.get("frames", [])}
     corpus_frames = {f["id"]: f for f in corpus["frames"]}
     ignore = collections.Counter()
@@ -1040,6 +1078,16 @@ def free_score(corpus: dict, labels: dict, records: list[dict]) -> dict:
     tier_score = {"noise": 0, "untouched": 0, "delegated": 1, "later": 2, "engaged": 3}
     stream_of = {e["id"]: e.get("stream") for f in corpus["frames"] for e in f["events"]}
     by_stream: collections.Counter = collections.Counter()
+    family = labels.get("family") or {}
+    family_frames = {f["frame"]: f for f in family.get("frames", [])}
+    family_ids = ({e for e, s in stream_of.items() if s == "family"}
+                  | {i["event"] for f in family_frames.values() for i in f["ignore"]}
+                  | {e for f in family_frames.values() for item in f["items"] for e in item["events"]})
+    fam_ignore = collections.Counter()
+    fam_groups = collections.Counter()
+    fam_pairs = collections.Counter()
+    fam_levels = collections.Counter()
+    fam_per_frame = []
     for record in records:
         lf = label_frames.get(record["frame"])
         cf = corpus_frames.get(record["frame"])
@@ -1047,7 +1095,8 @@ def free_score(corpus: dict, labels: dict, records: list[dict]) -> dict:
             continue
         self_ids = {e["id"] for e in cf["events"] if e.get("author_kind") == "self"}
         disp = {d.get("event"): d.get("disposition") for d in record.get("dispositions") or []}
-        agent_ignored = {e for e, d in disp.items() if d in ("noise", "duplicate") and e not in self_ids}
+        ignored_all = {e for e, d in disp.items() if d in ("noise", "duplicate") and e not in self_ids}
+        agent_ignored = ignored_all - family_ids  # 前四条流的口径：家庭流的忽略另算
         strong = {i["event"] for i in lf["ignore"] if "in_active_item" not in i["basis"]}
         weak = {i["event"] for i in lf["ignore"] if "in_active_item" in i["basis"]}
         row = {"frame": record["frame"], "agent_ignored": len(agent_ignored), "strong": len(strong),
@@ -1077,21 +1126,7 @@ def free_score(corpus: dict, labels: dict, records: list[dict]) -> dict:
                 if ref.startswith("event:"):
                     cited[ref[6:]].add(item_id)
         # (2) 同组输入是否进同一声明：组内被引用的事件两两比较，同一条目算一致，同一根层事项另计。
-        frame_groups = {"pairs": 0, "same_item": 0, "same_root": 0, "cross_pairs": 0, "cross_same_root": 0}
-        for group in lf["groups"]:
-            members = [e for e in group["events"] if e not in self_ids and cited.get(e)]
-            cross = len(group["threads"]) > 1
-            for a, b in itertools.combinations(members, 2):
-                same_item = bool(cited[a] & cited[b])
-                same_root = bool({items[i]["root"] for i in cited[a]} & {items[i]["root"] for i in cited[b]})
-                frame_groups["pairs"] += 1
-                frame_groups["same_item"] += same_item
-                frame_groups["same_root"] += same_root
-                if cross:
-                    frame_groups["cross_pairs"] += 1
-                    frame_groups["cross_same_root"] += same_root
-            groups["groups"] += 1
-            groups["groups_cited"] += bool(members)
+        frame_groups = pair_counts([(g["events"], len(g["threads"]) > 1) for g in lf["groups"]], cited, items, self_ids)
         groups.update(frame_groups)
         row["group_pairs"] = frame_groups["pairs"]
         row["group_same_root"] = frame_groups["same_root"]
@@ -1122,8 +1157,76 @@ def free_score(corpus: dict, labels: dict, records: list[dict]) -> dict:
             pairs["tied"] += hi == lo
             pairs["discordant"] += hi < lo
         per_frame.append(row)
+        # (4) 家庭流：作者写定的忽略、事项分组与关注档（authored），只在本帧确实交给了模型时计分。
+        flf = family_frames.get(record["frame"])
+        fam_inputs = ({i["event"] for i in flf["ignore"]} | {e for item in flf["items"] for e in item["events"]}) if flf else set()
+        if not fam_inputs & prompt_event_ids(record):
+            continue
+        fam_ignored = ignored_all & family_ids
+        authored = {i["event"] for i in flf["ignore"]}
+        level_none = {e for item in flf["items"] if item["level"] == "none" for e in item["events"]}
+        fam_ignore.update({"frames": 1, "agent_ignored": len(fam_ignored), "authored": len(authored),
+                           "authored_hit": len(fam_ignored & authored), "consistent_hit": len(fam_ignored & (authored | level_none))})
+        # 分组：作者事项（除琐事与噪音两类收纳项）在本帧的输入为一组，authored_merge 的两件并成一组；噪音层的群聊线程不计。
+        story = [item for item in flf["items"] if item["thread"] in family.get("items", {})
+                 and family["items"][item["thread"]].get("kind") not in FAMILY_BIN_KINDS]
+        merged = {t: g for g in flf["groups"] for t in g["threads"]}
+        fgroups = [(g["events"], True) for g in flf["groups"]]
+        fgroups += [(item["events"], False) for item in story if item["thread"] not in merged and len(item["events"]) > 1]
+        frame_fam_groups = pair_counts(fgroups, cited, items, self_ids)
+        fam_groups.update(frame_fam_groups)
+        fam_row = {"frame": record["frame"], "agent_ignored": len(fam_ignored), "authored": len(authored),
+                   "authored_hit": len(fam_ignored & authored), "group_pairs": frame_fam_groups["pairs"],
+                   "group_same_root": frame_fam_groups["same_root"], "items": []}
+        fam_scored = []
+        for label_item in flf["items"]:
+            shares = [items[i]["root_share"] for e in label_item["events"] for i in cited.get(e, ())]
+            share = max(shares) if shares else 0
+            level = label_item["level"]
+            fam_scored.append((FAMILY_LEVEL_SCORE.get(level, 0), share))
+            fam_levels[f"{level}:total"] += 1
+            fam_levels[f"{level}:included"] += share > 0
+            fam_levels[f"{level}:ge12"] += share >= 12
+            fam_levels[f"{level}:ge6"] += share >= 6
+            fam_levels[f"{level}:share"] += share
+            tier = "high" if label_item.get("high") else label_item["tier"]
+            acted = "acted" if tier in ("high", "engaged", "later") else tier
+            by_stream[("family", acted, "total")] += 1
+            by_stream[("family", acted, "included")] += share > 0
+            by_stream[("family", acted, "ge6")] += share >= 6
+            if level != "none" or share:
+                fam_row["items"].append({"thread": label_item["thread"], "level": level, "tier": label_item["tier"],
+                                         "share": share, "open_asks": label_item.get("open_asks", [])})
+        for (sa, aa), (sb, ab) in itertools.combinations(fam_scored, 2):
+            if sa == sb:
+                continue
+            hi, lo = ((aa, ab) if sa > sb else (ab, aa))
+            fam_pairs["compared"] += 1
+            fam_pairs["concordant"] += hi > lo
+            fam_pairs["tied"] += hi == lo
+            fam_pairs["discordant"] += hi < lo
+        fam_per_frame.append(fam_row)
+
     def rate(a, b):
         return round(a / b, 3) if b else None
+    family_score = None
+    if fam_ignore["frames"]:
+        family_score = {
+            "basis": "authored",
+            "ignore": {**fam_ignore, "recall_authored": rate(fam_ignore["authored_hit"], fam_ignore["authored"]),
+                       "precision_authored": rate(fam_ignore["authored_hit"], fam_ignore["agent_ignored"]),
+                       "precision_consistent": rate(fam_ignore["consistent_hit"], fam_ignore["agent_ignored"])},
+            "groups": {**fam_groups, "same_item_rate": rate(fam_groups["same_item"], fam_groups["pairs"]),
+                       "same_root_rate": rate(fam_groups["same_root"], fam_groups["pairs"]),
+                       "cross_same_root_rate": rate(fam_groups["cross_same_root"], fam_groups["cross_pairs"])},
+            "ranking": {**fam_pairs, "concordance": rate(fam_pairs["concordant"], fam_pairs["compared"]),
+                        "concordance_ties_half": rate(fam_pairs["concordant"] + fam_pairs["tied"] / 2, fam_pairs["compared"])},
+            "levels": {level: {"total": fam_levels[f"{level}:total"], "included": fam_levels[f"{level}:included"],
+                               "share_ge_12": fam_levels[f"{level}:ge12"], "share_ge_6": fam_levels[f"{level}:ge6"],
+                               "mean_share": rate(fam_levels[f"{level}:share"], fam_levels[f"{level}:total"])}
+                       for level in FAMILY_LEVEL_SCORE if fam_levels[f"{level}:total"]},
+            "per_frame": fam_per_frame,
+        }
     return {
         "ignore": {**ignore, "recall_strong": rate(ignore["strong_hit"], ignore["strong"]),
                    "precision_strong": rate(ignore["strong_hit"], ignore["agent_ignored"]),
@@ -1142,8 +1245,9 @@ def free_score(corpus: dict, labels: dict, records: list[dict]) -> dict:
         # 分流的召回：本人后来有行动的事项（high/engaged/later 合称 acted）按流统计纳入与份额；语料没有 stream 时为空。
         "by_stream": {f"{s}:{tier}": {"total": by_stream[(s, tier, "total")], "included": by_stream[(s, tier, "included")],
                                       "share_ge_6": by_stream[(s, tier, "ge6")]}
-                      for s in ("work", "community", "life", "subscription")
+                      for s in ("work", "community", "life", "family", "subscription")
                       for tier in ("acted", "delegated", "untouched", "noise") if by_stream[(s, tier, "total")]},
+        **({"family": family_score} if family_score else {}),
     }
 
 
@@ -1192,18 +1296,23 @@ def stream_breakdown(records: list[dict], corpus: dict) -> dict | None:
         return [s for s in found if s] or ["none"]
 
     share: collections.Counter = collections.Counter()
+    by_frame_share = {}
     frames_counted = 0
     for record in records:
         state = record.get("state_after")
         if not state:
             continue
         frames_counted += 1
+        frame_share: collections.Counter = collections.Counter()
         for item in state["root"]["items"]:
             found = streams(item)
             for s in found:
-                share[s] += item["share"] / len(found)
+                frame_share[s] += item["share"] / len(found)
+        share.update(frame_share)
+        by_frame_share[record["frame"]] = {k: round(v, 1) for k, v in frame_share.most_common()}
     return {"dispositions": {k: dict(v) for k, v in disp.items()}, "self": {k: dict(v) for k, v in self_disp.items()},
-            "mean_root_share": {k: round(v / max(frames_counted, 1), 1) for k, v in share.most_common()}}
+            "mean_root_share": {k: round(v / max(frames_counted, 1), 1) for k, v in share.most_common()},
+            "root_share_by_frame": by_frame_share}
 
 
 def render_free_report(meta: dict, summary: dict, score: dict | None) -> str:
@@ -1217,7 +1326,9 @@ def render_free_report(meta: dict, summary: dict, score: dict | None) -> str:
         st = s["streams"]
         lines += ["## 各流", "", "他人发来的输入怎样处置，以及根层 64 份平均有多少来自这条流（按事项引用的输入分摊）。", "",
                   "| 流 | 采用 | 重复 | 暂缓 | 噪音 | 未判 | 本人发言 | 根层平均份额 |", "| --- | --- | --- | --- | --- | --- | --- | --- |"]
-        for name in ["work", "community", "life", "subscription", "none"]:
+        order = ["work", "community", "life", "family", "subscription", "none"]
+        seen = set(st["dispositions"]) | set(st["self"]) | set(st["mean_root_share"])
+        for name in order + sorted((n for n in seen if n not in order), key=str):
             d = st["dispositions"].get(name, {})
             mine = sum(st["self"].get(name, {}).values())
             if not d and name not in st["mean_root_share"]:
@@ -1227,9 +1338,14 @@ def render_free_report(meta: dict, summary: dict, score: dict | None) -> str:
         lines.append("")
     if score:
         ig, gr, rk = score["ignore"], score["groups"], score["ranking"]
-        lines += ["## 与弱标注对照", "", "| 指标 | 值 |", "| --- | --- |",
+        scope = "前四条流里 " if score.get("family") else ""
+        lines += ["## 与弱标注对照", ""]
+        if score.get("family"):
+            lines += ["这一节只用前四条流由真实行为推出的弱标注，口径与加入家庭流之前相同；家庭流的作者标注见下一节，"
+                      "分流的召回表里另有 family 几行。", ""]
+        lines += ["| 指标 | 值 |", "| --- | --- |",
                   f"| 忽略：强依据召回 | {ig['strong_hit']}/{ig['strong']}（{ig['recall_strong']}） |",
-                  f"| 忽略：精确率（只算强依据 / 强弱都算） | {ig['precision_strong']} / {ig['precision_any']}（Agent 忽略 {ig['agent_ignored']} 条） |",
+                  f"| 忽略：精确率（只算强依据 / 强弱都算） | {ig['precision_strong']} / {ig['precision_any']}（{scope}Agent 忽略 {ig['agent_ignored']} 条） |",
                   f"| 忽略：弱依据召回（单列） | {ig['weak_hit']}/{ig['weak']}（{ig['recall_weak']}） |",
                   f"| 忽略：与行为不矛盾（含 untouched 与 noise 档事项的输入） | {ig.get('consistent_hit')}/{ig['agent_ignored']}（{ig.get('precision_consistent')}） |",
                   f"| 同组输入进同一条目 / 同一根层事项 | {gr['same_item_rate']} / {gr['same_root_rate']}（{gr['pairs']} 对） |",
@@ -1243,13 +1359,43 @@ def render_free_report(meta: dict, summary: dict, score: dict | None) -> str:
                       "| 流 · 弱档位 | 事项帧数 | 纳入 | 根层份额 ≥6 |", "| --- | --- | --- | --- |"]
             for key, row in score["by_stream"].items():
                 lines.append(f"| {key.replace(':', ' · ')} | {row['total']} | {row['included']} | {row['share_ge_6']} |")
+        if score.get("family"):
+            lines += render_family_score(score["family"])
         lines += ["", "## 逐帧", "", "| 帧 | Agent 忽略 | 强依据命中/总数 | 弱依据命中/总数 | 组内对 | 同根层 | 根层已用 |",
                   "| --- | --- | --- | --- | --- | --- | --- |"]
         used = s["root_used_by_frame"]
         for row in score["per_frame"]:
             lines.append(f"| {row['frame']} | {row['agent_ignored']} | {row['strong_hit']}/{row['strong']} | {row['weak_hit']}/{row['weak']} | "
                          f"{row['group_pairs']} | {row['group_same_root']} | {used.get(row['frame'])} |")
+        if score.get("family"):
+            by_frame = (s.get("streams") or {}).get("root_share_by_frame", {})
+            lines += ["", "家庭流逐帧：作者档不是 none 或 Agent 给了份额的事项，写成“事项 作者档→Agent 根层份额”。", "",
+                      "| 帧 | 家庭流忽略 | authored 命中/总数 | 组内对 | 同根层 | 家庭流根层份额 | 事项 |",
+                      "| --- | --- | --- | --- | --- | --- | --- |"]
+            for row in score["family"]["per_frame"]:
+                shown = "；".join(f"{i['thread'].removeprefix('fam:')} {i['level']}→{i['share']}" for i in row["items"])
+                lines.append(f"| {row['frame']} | {row['agent_ignored']} | {row['authored_hit']}/{row['authored']} | {row['group_pairs']} | "
+                             f"{row['group_same_root']} | {by_frame.get(row['frame'], {}).get('family', 0)} | {shown} |")
     return "\n".join(lines) + "\n"
+
+
+def render_family_score(fam: dict) -> list[str]:
+    """家庭流的作者标注（authored）对照：与前四条流的弱标注分开呈现。"""
+    ig, gr, rk = fam["ignore"], fam["groups"], fam["ranking"]
+    lines = ["", "## 家庭流（作者标注）", "",
+             f"依据都是 authored：节拍表写定的忽略、事项与关注档，检验 Agent 与作者是否一致，不检验真实。计 {ig['frames']} 帧。"
+             "问题（asks）的登记与失效在契约的状态里没有对应字段，不在这里计分。", "",
+             "| 指标 | 值 |", "| --- | --- |",
+             f"| 忽略：authored 召回 | {ig['authored_hit']}/{ig['authored']}（{ig['recall_authored']}） |",
+             f"| 忽略：authored 精确率 | {ig['precision_authored']}（家庭流里 Agent 忽略 {ig['agent_ignored']} 条） |",
+             f"| 忽略：与作者档不矛盾（含 none 档事项的输入） | {ig['consistent_hit']}/{ig['agent_ignored']}（{ig['precision_consistent']}） |",
+             f"| 同一事项的输入进同一条目 / 同一根层事项 | {gr['same_item_rate']} / {gr['same_root_rate']}（{gr['pairs']} 对） |",
+             f"| 并入关系（authored_merge）进同一根层事项 | {gr['cross_same_root_rate']}（{gr['cross_pairs']} 对） |",
+             f"| 按作者档成对排序一致（平局记半） | {rk['concordance']}（{rk['concordant']}/{rk['compared']}，平 {rk['tied']}）/ {rk['concordance_ties_half']} |",
+             "", "| 作者档 | 事项帧数 | 纳入 | 根层份额 ≥12 | ≥6 | 平均份额 |", "| --- | --- | --- | --- | --- | --- |"]
+    for level, row in fam["levels"].items():
+        lines.append(f"| {level} | {row['total']} | {row['included']} | {row['share_ge_12']} | {row['share_ge_6']} | {row['mean_share']} |")
+    return lines
 
 
 def main_free(args, parser) -> int:
