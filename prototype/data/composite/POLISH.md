@@ -6,7 +6,7 @@
 
 | 项 | 内容 |
 | --- | --- |
-| Agent 判断 | 自由运行 `free-20261015-161501`：`claude-opus-5-5` 读 [skill/SKILL.md](../../../skill/SKILL.md)（sha256 `30b6a7ae10ff…`，与第一次相同），从空状态逐帧维护 28 帧。28 帧全部提交成功，3 次被退回（标题超过 24 字 2 次、摘要超过 60 字 1 次），看到回执后都改对；31 次调用，23.23 美元。评测报告见[评测索引](../../../docs/evaluations/README.md)里的第二次自由运行。 |
+| Agent 判断 | 自由运行 `free-20261015-161501`：`claude-opus-5-5` 读 [skill/SKILL.md](../../../skill/SKILL.md)（sha256 `30b6a7ae10ff…`，与第一次相同），从空状态逐帧维护 28 帧。28 帧全部提交成功，3 次被退回（标题超过 24 字 2 次、摘要超过 60 字 1 次），看到回执后都改对；31 次调用，23.23 美元。结果与作者标注的对照见[评测记录](../../../docs/evaluations/free-run-composite-v2-2026-10-15.md)。 |
 | 被打磨的批次 | [agent-batches.json](agent-batches.json)：每帧被接受的声明、确认与逐条处置，由 `--import-run .local/eval/free-20261015-161501` 导出。 |
 | 人物背景 | 交给 Agent 的是 `frames.json` 的人物设定：前四条流的设定见 [MIX.md](../../../corpus/composite/MIX.md)，另加一句家人与联系方式（伴侣 Kajsa、女儿 Signe、儿子 Ture、母亲、妹妹 Ulrika、猫 Smilla），说明家庭往来是瑞典语、由作者编写。 |
 | 演示正文 | 混合语料 v1.1 加家庭流（3217 条），去掉 21 封 Enron 营销邮件后 3196 条；正文截到 500 字符、保留链接。自由运行看到的就是这一版。 |

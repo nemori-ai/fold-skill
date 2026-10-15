@@ -18,7 +18,7 @@ make prototype
 
 | `?data=` | 内容 |
 | --- | --- |
-| `composite`（默认） | [data/composite/scenario.mjs](data/composite/scenario.mjs)：化名人物 Jonas Berglund 的两周，[混合语料](../corpus/composite/MIX.md)的输入：29 帧，`f00` 是空状态，其后 28 帧共 3196 条（四条流是化名改写的真实公开数据，另有作者编写的家庭流 388 条；正文截到 500 字，去掉了 21 封 Enron 营销邮件）。判断来自混合语料上的第二次自由运行（`free-20261015-161501`，`claude-opus-5-5`，31 次调用，23.23 美元，报告见[评测索引](../docs/evaluations/README.md)），再经人工打磨：对 Agent 批次的修正 9 处、手写反馈链接 4 处，登记回应路径 26 条（都带短问法），从本人后续动作推出反馈链接 160 条。由 `scripts/build_demo_data.py` 从 Agent 批次（[agent-batches.json](data/composite/agent-batches.json)）与修正（[edits.json](data/composite/edits.json)）重放生成，修正逐条记在 [POLISH.md](data/composite/POLISH.md)；各流的来源、许可、引用长度与化名处理见 [SOURCES.md](data/composite/SOURCES.md)，改写文本随站点公开前需用户决定。 |
+| `composite`（默认） | [data/composite/scenario.mjs](data/composite/scenario.mjs)：化名人物 Jonas Berglund 的两周，[混合语料](../corpus/composite/MIX.md)的输入：29 帧，`f00` 是空状态，其后 28 帧共 3196 条（四条流是化名改写的真实公开数据，另有作者编写的家庭流 388 条；正文截到 500 字，去掉了 21 封 Enron 营销邮件）。判断来自混合语料上的第二次自由运行（`free-20261015-161501`，`claude-opus-5-5`，31 次调用，23.23 美元，报告见[评测记录](../docs/evaluations/free-run-composite-v2-2026-10-15.md)），再经人工打磨：对 Agent 批次的修正 9 处、手写反馈链接 4 处，登记回应路径 26 条（都带短问法），从本人后续动作推出反馈链接 160 条。由 `scripts/build_demo_data.py` 从 Agent 批次（[agent-batches.json](data/composite/agent-batches.json)）与修正（[edits.json](data/composite/edits.json)）重放生成，修正逐条记在 [POLISH.md](data/composite/POLISH.md)；各流的来源、许可、引用长度与化名处理见 [SOURCES.md](data/composite/SOURCES.md)，改写文本随站点公开前需用户决定。 |
 | `story` | [data/story/scenario.mjs](data/story/scenario.mjs)：作者手写的林苒两周，37 帧、112 条输入，判断全部预先编排（[STORY.md](STORY.md)）。判断评测（`scripts/eval_judgment.py`）读的也是它。 |
 
 每个数据集在 `select.mjs` 里带一句 `notice`，页面在数据旁照写，说明人物、输入与判断从哪里来。
