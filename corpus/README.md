@@ -59,7 +59,7 @@
 | 改写 | 项目、仓库、账号、人名、邮件列表、域名与各类编号按一张本机化名表一致替换，只用规则，不用模型；每条输入带原始记录 ID 的加盐摘要 `origin`。化名不是匿名，正文仍可被搜索到。 |
 | 跨流的事 | 6 件，挑选时间或话题真实重合的线程得到，不手写。 |
 | 家庭流 | 2026-10-15 用户决定：参考真实数据仿写，不用真实内容，形式不限于邮件。人物、事件与文字都是原创，Enron 私人往来只作语气参考，与它没有共同的专名、没有 8 词以上的重合；节拍表、成品与标注入库，见 [family/README.md](composite/family/README.md)。 |
-| 用到哪里 | 第一次自由运行见[自由运行评测](../docs/evaluations/free-run-composite-2026-10-15.md)，那时还没有家庭流；运行结果经人工打磨成原型的默认演示数据，见 [POLISH.md](../prototype/data/composite/POLISH.md)。含家庭流的自由运行尚未重跑。 |
+| 用到哪里 | 第一次自由运行见[自由运行评测](../docs/evaluations/free-run-composite-2026-10-15.md)，那时还没有家庭流；运行结果经人工打磨成原型的默认演示数据，见 [POLISH.md](../prototype/data/composite/POLISH.md)。含家庭流的自由运行已于 2026-10-15 重跑，见[第二次自由运行](../docs/evaluations/free-run-composite-v2-2026-10-15.md)。 |
 
 ## 许可与入库范围
 

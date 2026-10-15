@@ -1,6 +1,6 @@
 # 判断评测：混合语料上的第一次自由运行（2026-10-15）
 
-状态：一次性评测记录。结论只覆盖本次设置——一份语料、一个模型、一次运行、自由运行；不是 Skill 的验收标准，也不改变[信息契约](../information-contract.md)。打磨成演示数据的过程见 [POLISH.md](../../prototype/data/composite/POLISH.md)。
+状态：一次性评测记录。结论只覆盖本次设置——一份语料、一个模型、一次运行、自由运行；不是 Skill 的验收标准，也不改变[信息契约](../information-contract.md)。打磨成演示数据的过程见 [POLISH.md](../../prototype/data/composite/POLISH.md)。语料加入家庭流后的第二次运行见[第二次自由运行](free-run-composite-v2-2026-10-15.md)；本报告的数字用 v1.1 语料按改过的脚本复算不变。
 
 此前两次评测都是 teacher-forced：每帧从作者手写的状态出发，看不到 Agent 自己的误差怎样累积。这一次把 [skill/SKILL.md](../../skill/SKILL.md) 交给真实模型，在[混合语料](../../corpus/composite/MIX.md)上从空状态开始，逐帧维护自己的状态两周，再与从真实后续行为推出的[弱标注](../../corpus/composite/LABELS.md)对照。
 
