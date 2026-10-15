@@ -131,6 +131,16 @@ node scripts/shoot-forms.mjs --only all --check all-sync          # 合页 all.h
 
 每种形式写 `<out>/<form>.png`，另写 `report.json`（URL、页面报错、检查结果）；有报错时退出码为 1。`--eval "<js>"` 在截图前执行一段脚本，`--base` 改原型地址，`CHROME` 环境变量指定浏览器。
 
+全部原型合页（`prototype/all.html`）可以导出为一个自包含的 HTML 文件，在 Finder 里双击、用 Safari 或 Chrome 以 `file://` 打开就能用，不需要服务：
+
+```sh
+node scripts/export-all.mjs                                          # 写到 .local/export/fold-prototypes.html
+node scripts/export-all.mjs --out ~/Downloads/fold-prototypes.html
+node scripts/export-all.mjs --out .local/export/all.html && node scripts/shoot-forms.mjs --base "file://$PWD/.local/export" --only all --check all-sync
+```
+
+浏览器在 `file://` 下不能跨文件加载模块，脚本因此用 esbuild（devDependencies 固定为 0.21.5，与 VitePress 所用版本相同）把合页和 17 个原型页面的模块打成一个 ES module，与样式、页面模板一起内联，每份只存一份，约 3 MB，大头是演示数据。21 节各用一个 srcdoc iframe 运行这段代码；页面读取的 `location.search`、`location.pathname` 与 `history.replaceState` 在打包时换成 `window.__foldLocation`，由它保存每节的 `?variant=`、`?frame=`、`?data=`、`embed=1`、`card=0`。懒加载、离视野卸载、顶栏切帧与切数据集与合页相同；单文件版没有单独页面，所以不显示“单独打开”、打磨记录与画廊链接，iframe 里指向其他页面的链接只提示、不跳转。第三条命令导出成 `all.html`，再用上面的 all-sync 检查逐节核对。导出的文件含默认演示数据的化名改写文本，转给别人之前与体验站一样先看公开许可的决定。
+
 发布前运行 `make check` 和 `npm run site:build`，并核对文档链接、公式、流程图、搜索及原型交互。站点构建成功不等于产品 CLI 的持久化与完整验收已经完成。
 
 默认演示数据与小册子的截图含化名改写的真实公开文本，`npm run site:build` 会把它们一起放进 `dist/`。公开许可由用户决定（见[演示数据的来源与许可](../prototype/data/composite/SOURCES.md#公开之前)），在此之前不运行 `npm run deploy`。
@@ -180,6 +190,7 @@ node scripts/shoot-forms.mjs --only all --check all-sync          # 合页 all.h
 | [skill/SKILL.md](../skill/SKILL.md) | 首版 Fold skill：面向使用 Fold 汇报工作的 Agent |
 | [scripts/export-scenario.mjs](../scripts/export-scenario.mjs) | 把原型的手写演示情境导出为 JSON |
 | [scripts/shoot-forms.mjs](../scripts/shoot-forms.mjs) | 用本机 Chrome 无头截取原型各形式并检查页面报错 |
+| [scripts/export-all.mjs](../scripts/export-all.mjs) | 把全部原型合页导出为可双击打开的单个 HTML 文件 |
 | [scripts/build_demo_data.py](../scripts/build_demo_data.py) | 把自由运行的批次按 edits.json 修正、重放成原型演示数据 |
 | [scripts/eval_judgment.py](../scripts/eval_judgment.py) | 用真实模型逐帧评测判断：手写情境与作者批次对比；真实语料自由运行，与弱标注对照 |
 | [evaluations/](evaluations/README.md) | 评测报告与索引 |
