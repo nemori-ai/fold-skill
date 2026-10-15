@@ -23,7 +23,6 @@ const assets = new Map();
 // Repository files and folders the site does not publish link to GitHub instead.
 const repositoryURL = 'https://github.com/nemori-ai/fold-skill/';
 const repositoryOnly = /^(?!\.\.)/;
-for (const variant of ['a', 'b', 'c', 'd']) assets.set(`site/previews/${variant}.jpg`, `previews/${variant}.jpg`);
 
 async function walk(directory) {
   const entries = await readdir(path.join(root, directory), { withFileTypes: true });
@@ -37,6 +36,9 @@ async function walk(directory) {
   }
   return files;
 }
+
+// Prototype preview images for the gallery cards (site/.vitepress/theme/prototypes.mjs), one per prototype.
+for (const file of await walk('site/previews')) if (mediaExtensions.has(path.extname(file).toLowerCase())) assets.set(file, file.slice('site/'.length));
 
 for (const file of await walk('docs')) {
   if (file.endsWith('.md')) pages.set(file, file);

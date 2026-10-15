@@ -131,6 +131,18 @@ node scripts/shoot-forms.mjs --only all --check all-sync          # 合页 all.h
 
 每种形式写 `<out>/<form>.png`，另写 `report.json`（URL、页面报错、检查结果）；有报错时退出码为 1。`--eval "<js>"` 在截图前执行一段脚本，`--base` 改原型地址，`CHROME` 环境变量指定浏览器。
 
+体验站的“原型体验”面板与首页共用 `site/.vitepress/theme/prototypes.mjs` 列出的 21 个原型，顺序、默认帧与弹框里加的 `embed=1`、`card=0` 都照合页 `all.html`。卡片预览图是 `site/previews/<id>.webp`（640×400，共约 570 KB），原型界面明显变化后按同样的参数重截：原版与 A/B/C/D 隐藏方案切换栏，形式页收起概念卡，复盘图与回应组件页用各自的默认帧，再用 Homebrew 的 `cwebp` 缩到 640 像素宽：
+
+```sh
+out=.local/previews
+node scripts/shoot-forms.mjs --out $out --only original,a,b,d --frame 26 --eval "document.documentElement.classList.add('is-embedded')"
+node scripts/shoot-forms.mjs --out $out/c --only c --frame 25 --eval "document.documentElement.classList.add('is-embedded')"
+node scripts/shoot-forms.mjs --out $out/w --only watch,multiples --frame 26 --eval "document.querySelector('[data-card]').click()"
+node scripts/shoot-forms.mjs --out $out/r --only radio,strips,frontpage,receipt,orb,departures,blame,chat --eval "document.querySelector('[data-card]').click()"
+node scripts/shoot-forms.mjs --out $out/s --only lineage,timing,provenance,yield,notation,respond
+for f in $out/*.png $out/*/*.png; do cwebp -quiet -q 82 -m 6 -sharp_yuv -resize 640 0 "$f" -o "site/previews/$(basename "$f" .png).webp"; done
+```
+
 全部原型合页（`prototype/all.html`）可以导出为一个自包含的 HTML 文件，在 Finder 里双击、用 Safari 或 Chrome 以 `file://` 打开就能用，不需要服务：
 
 ```sh
