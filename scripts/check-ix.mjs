@@ -106,6 +106,18 @@ const PAGES = {
   // D 手机首页：触屏流程见 runHome。held 是作答与让位最重的一帧，rows 是它的下一轮（有“进行中与结果”的行可长按、左滑），
   // follow 是问题原样重登记的一帧。
   home: { hook: 'foldHome', touch: true, held: 'index.html?variant=d&frame=f22', rows: 'index.html?variant=d&frame=f23', follow: 'index.html?variant=d&frame=f26' },
+  // B 时间展开：一件就是此刻 64 份柱上的一段，卡挂在柱左、盖在历史上；挑英雄数字那一件（不在就挑最大的一段）。
+  // 带 ?frame= 打开不自己讲一遍；连播由本页计时（切点起 5.6 秒一轮）。
+  b: {
+    hook: 'foldB', held: 'index.html?variant=b&frame=26', play: 'index.html?variant=b&frame=3',
+    prepare: null, index: 'foldB.index', step: 27, tabFrom: '.b-compare',
+    pick: 'foldB.pick()',
+    // 9 px left of the segment, level with its middle (the column is hit up to 16 px outside its left edge).
+    near: name => `foldB.nearOf(${JSON.stringify(name)}, 9)`,
+    blank: { x: 700, y: 22 },
+    cut: `document.querySelector('#b-page-title').textContent.startsWith('这一件') && document.querySelector('.b-reader-kicker').textContent.startsWith('这一件')`,
+    playReady: `new Promise(r => { foldB.play(); setTimeout(r, 1700); })`,
+  },
 };
 
 function args(argv) {
