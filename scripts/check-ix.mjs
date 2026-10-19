@@ -118,6 +118,17 @@ const PAGES = {
     cut: `document.querySelector('#b-page-title').textContent.startsWith('这一件') && document.querySelector('.b-reader-kicker').textContent.startsWith('这一件')`,
     playReady: `new Promise(r => { foldB.play(); setTimeout(r, 1700); })`,
   },
+  // C 流动形态：一滴就是一件；挑水面上最大的一滴，9 px 落在它边缘外、别的液滴碰不到的一侧（液滴命中到边缘外 12 px）。
+  c: {
+    hook: 'foldC', held: 'index.html?variant=c&frame=25', play: 'index.html?variant=c&frame=3',
+    prepare: null, index: 'foldC.index', step: 26, tabFrom: '.c-state',
+    pick: 'foldC.pick()',
+    near: name => `foldC.nearOf(${JSON.stringify(name)}, 9)`,
+    blank: { x: 600, y: 150 },
+    cut: `document.querySelector('.c-frame-title').textContent.startsWith('这一件') && document.querySelector('.c-read-kicker').textContent.startsWith('这一件')`,
+    // Play on from f03 (C's own player, 5.6 s a round from the cut); hover once the turn has crossed.
+    playReady: `(foldC.play(), new Promise(r => setTimeout(r, 1700)))`,
+  },
 };
 
 function args(argv) {
