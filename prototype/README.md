@@ -56,7 +56,7 @@ make prototype
 | 来源矩阵 | 某件事背后是谁在推动 | 不承载作答 | [sketches/provenance.html](forms/sketches/provenance.html) | [review-b.md](forms/polish/review-b.md) |
 | 让位图 | 一件事变大，份额从谁那里来 | 不承载作答；作答之后份额让给了谁 | [sketches/yield.html](forms/sketches/yield.html) | [review-b.md](forms/polish/review-b.md) |
 | 批次记谱 | 每一轮整理读了多少、丢了多少、动了几件 | 不承载作答；每轮登记、失效与答掉的问题 | [sketches/notation.html](forms/sketches/notation.html) | [review-b.md](forms/polish/review-b.md) |
-| 整理脉冲（动画） | 官网首屏：一轮整理演成 3.5 秒的一次脉冲 | 不承载作答；朱红只标新登记的问题、你的回应与答掉的记号 | [motion/pulse.html](forms/motion/pulse.html) | [story.md](forms/motion/pulse/story.md) |
+| 整理脉冲（动画） | 官网首屏：一轮整理演成 4.25 秒的一次脉冲 | 不承载作答；朱红只标新登记的问题、你的回应与答掉的记号 | [motion/pulse.html](forms/motion/pulse.html) | [story.md](forms/motion/pulse/story.md) |
 | 份额拨盘（动画） | 第一次看 Fold 的人，20 秒：64 份是怎样的硬约束，满了谁让位 | 不承载作答；游标只指要紧的问题 | [motion/dial.html](forms/motion/dial.html) | [story.md](forms/motion/dial/story.md) |
 
 表末两个动画是第三轮给官网用的概念动画，放在 `forms/motion/`，不算在十二种里。它们和上面的形式一样只读同一份回放（frames、批次、问题与反馈），不另造数据、不改契约；画面分两层，概念层只在渲染层炫，信息层的数字与面板都能在各自的 data.json 里找到出处（[整理脉冲](forms/motion/pulse/data.json)、[份额拨盘](forms/motion/dial/data.json)）。概念卡见 [CONCEPTS.md](forms/CONCEPTS.md#第三轮概念动画)。

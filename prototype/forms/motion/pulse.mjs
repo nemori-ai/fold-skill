@@ -1,9 +1,14 @@
-// 第三轮 · 概念动画 01 整理脉冲（pulse）。一轮整理演成 3.5 秒的一次脉冲：涌入、折叠、一问。
+// 第三轮 · 概念动画 01 整理脉冲（pulse）。一轮整理演成 4.25 秒的一次脉冲：涌入、折叠、一问。
 // 故事、节奏与约束见 pulse/story.md 与 pulse/spec.md；画面上的数字与 pulse/data.json 对得上。
 //
 // 只读同一份回放：variants/shared.mjs 的 records（scenario.mjs → engine.mjs）与 sketches/stage.mjs 的 askLife，
 // 本页不另造数据。两层：概念层（pulse-field.mjs，粒子、弧、辉光、余辉，可以装饰）在下；信息层（本文件，
 // 枝、64 格、朱红线、数字与面板，只在节拍上动、每个数都有出处）在上，文字只用等宽字。
+//
+// 两层共用一套以根为圆心的极坐标：根弧半径 r0，扇形外沿半径 R，64 条份额线是从根出发的射线。云在外沿之外的
+// 环带里，事件沿射线朝根落下；收拢弧与根同心、张角等于扇形，从云的最外沿一路收到根。云里一颗主粒子就是一条
+// 真实事件：采用的被弧带进扇形、落到所属条目在根上的格子，停一拍，再化成一束光顺着枝流到梢；暂缓的停在
+// 外沿外侧成一圈余烬；噪音在原地熄灭。
 //
 // 地址参数：?frame=<帧> 打开某一轮并演一次；?from=<帧> 从某一轮起连播；都没有时从 f00 空状态起连播，
 // 播完 28 轮接片尾，收回根，再从 f00 开始。?data= 选数据集，?card=0 收起概念卡，?perf 显示帧率。
@@ -15,12 +20,18 @@ import { withDataset } from '../../data/select.mjs';
 import { createField } from './pulse-field.mjs';
 
 // ---------- timing (seconds) ----------
-const ROUND = 3.5, OPEN = 1.0, END = 3.0, REWIND = 1.0;
-const B2 = 1.0, B3 = 2.4;                 // beat boundaries: 涌入 [0, 1.0)、折叠 [1.0, 2.4)、一问 [2.4, 3.5)
-const ARC0 = 1.0, ARC1 = 2.05;            // the sweep contracts toward the root
-const FLY = 0.4;                          // an adopted input flying into its branch
-const STRIKE = 2.7;                       // vermilion strike, after 0.3 s of dimming
-const STAGES = [[0, '收到'], [B2, '归并'], [1.7, '分配'], [B3, '回应']];
+const ROUND = 4.25, OPEN = 1.0, END = 3.0, REWIND = 1.0;
+const B2 = 1.0, B3 = 3.1;                 // beat boundaries: 涌入 [0, 1.0)、折叠 [1.0, 3.1)、一问 [3.1, 4.25)
+// Beat 2, in order: the sweep crosses the cloud to the fan's rim (ARC0 → RIM), then carries the adopted inputs
+// in through the fan and settles on the root (RIM → ARC1); they rest on their cells (REST), then run up their
+// branches as light (FLOW), one after another when several go into the same branch (within QUEUE).
+const ARC0 = 1.0, RIM = 1.45, ARC1 = 2.15;
+const REST = 0.12, FLOW = 0.4, QUEUE = 0.24;
+const RUN = ARC1 + REST;                  // the first light leaves the root
+const SHIFT = 2.4;                        // branches no adopted input runs into shrink, wither or merge from here
+const READOUT = 2.85;                     // “→ 动了 n” lands, once the tips have flashed
+const STRIKE = B3 + 0.3;                  // vermilion strike, after 0.3 s of dimming
+const STAGES = [[0, '收到'], [B2, '归并'], [RUN, '分配'], [B3, '回应']];
 const VERM = 'rgb(240, 88, 50)';
 const INK = [232, 230, 223];
 const MONO = '"SF Mono", ui-monospace, Menlo, Consolas, "PingFang SC", "Noto Sans Mono CJK SC", monospace';
@@ -30,6 +41,7 @@ const lerp = (a, b, k) => a + (b - a) * k;
 const easeOut = k => 1 - (1 - clamp(k)) ** 3;
 const easeOut4 = k => 1 - (1 - clamp(k)) ** 4;
 const easeInOut = k => { k = clamp(k); return k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2; };
+const smooth01 = x => { const c = Math.min(1, Math.max(0, x)); return c * c * (3 - 2 * c); };
 const bump = (t, a, b) => (t <= a || t >= b ? 0 : Math.sin(Math.PI * (t - a) / (b - a)));
 function rng(seed) {
   let s = seed >>> 0 || 1;
@@ -198,19 +210,30 @@ function measure() {
   stage.style.setProperty('--pad', `${pad.toFixed(1)}px`);
   stage.style.setProperty('--panel-h', `${panelH}px`);
   const origin = { x: W / 2, y: rootY };
-  const fan = (150 * Math.PI) / 180;
-  // The root is an arc of 64 cells; the tree is a symmetric fan over it that spans the width and reaches about
-  // seven tenths of the picture's height, staying clear of the hero block.
+  const fan = (160 * Math.PI) / 180;
+  // One polar system for both layers, centred on the root. The root is an arc of 64 cells at radius r0; the fan
+  // is a circular sector of radius R over it, as tall as the space under the hero block allows; the cloud lives
+  // in the ring outside R, out to the edge of the picture, within the fan's angle so the sweep crosses all of it.
   const r0 = clamp(Math.min(W * 0.06, (rootY - pad) * 0.18), 52, 92);
   const heroBottom = pad + 52 + heroSize + 24;
   const top = Math.max(H * 0.3, heroBottom + 26);
-  const A = Math.max(r0 * 2, W / 2 - clamp(W * 0.1, 96, 150)), B = Math.max(r0 * 1.8, rootY - top);
-  const corner = Math.max(Math.hypot(origin.x, origin.y), Math.hypot(W - origin.x, origin.y));
+  const R = Math.max(r0 * 2.4, Math.min(rootY - top, (W / 2 - pad - 60) / Math.sin(fan / 2)));
+  // How far a ray from the root at angle phi runs before it leaves the open picture (above the panels).
+  const box = { x0: pad, x1: W - pad, y0: pad + 4, y1: panelY - 12 };
+  const edge = phi => {
+    const dx = Math.sin(phi), dy = -Math.cos(phi);
+    let d = Infinity;
+    if (dx > 1e-6) d = Math.min(d, (box.x1 - origin.x) / dx); else if (dx < -1e-6) d = Math.min(d, (box.x0 - origin.x) / dx);
+    if (dy < -1e-6) d = Math.min(d, (box.y0 - origin.y) / dy); else if (dy > 1e-6) d = Math.min(d, (box.y1 - origin.y) / dy);
+    return d;
+  };
+  let far = R + 80;
+  for (let k = 0; k <= 64; k += 1) far = Math.max(far, edge(-fan / 2 + (fan * k) / 64));
   G = {
-    W, H, pad, panelY, panelH, rootY, origin, fan, r0, A, B,
-    Rmax: corner + 30, Rmin: r0 + 14,
-    cloud: { x0: pad, x1: W - pad, y0: pad + 4, y1: rootY - r0 - 50 },
-    sediment: { y0: rootY - 30, y1: rootY - 8, gap: r0 + 44 },
+    W, H, pad, panelY, panelH, rootY, origin, fan, r0, R, edge,
+    baseR: r0 + 5,                       // where branches leave the root, and where adopted inputs land
+    cloudIn: R + 40,                     // the cloud's inner edge; the embers settle between R + 6 and R + 30
+    Rfar: far + 12,                      // the sweep starts just outside the farthest input
     key: `${W}x${H}`,
   };
   const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -226,8 +249,9 @@ function measure() {
 }
 // Cell c of the 64 (fractional c allowed) sits at this angle on the root arc; 0 is straight up.
 const cellAngle = c => -G.fan / 2 + G.fan * (c / 64);
-const onRoot = (phi, extra = 0) => ({ x: G.origin.x + Math.sin(phi) * (G.r0 + extra), y: G.origin.y - Math.cos(phi) * (G.r0 + extra) });
-const onFan = (phi, rho) => ({ x: G.origin.x + Math.sin(phi) * G.A * rho, y: G.origin.y - Math.cos(phi) * G.B * rho });
+const polar = (phi, rad) => ({ x: G.origin.x + Math.sin(phi) * rad, y: G.origin.y - Math.cos(phi) * rad });
+const onRoot = (phi, extra = 0) => polar(phi, G.r0 + extra);
+const onFan = (phi, rho) => polar(phi, G.R * rho);
 // The information layer's text and panels, where the concept layer steps aside.
 // The concept layer goes to 0 inside each line of text and comes back linearly over 40 px around it (tried against
 // letting particles pass under outlined words: the fade keeps the small lines legible). Panels keep a box mask.
@@ -248,61 +272,60 @@ function masks() {
 
 // ---------- the tree at a moment ----------
 // Branch k of n sits at an angle by its stable order; its 64-cell span on the root follows the same order,
-// so branches do not cross. Presence, width and length are interpolated inside beat 2.
-function branchTimes(r, particles) {
-  const first = new Map(), last = new Map();
-  if (particles) for (let p = 0; p < particles.count; p += 1) {
-    if (particles.fate[p] !== 1) continue;
-    const id = particles.targets[particles.target[p]], t = particles.tf[p] + FLY;
-    if (!first.has(id) || t < first.get(id)) first.set(id, t);
-    if (!last.has(id) || t > last.get(id)) last.set(id, t);
-  }
-  return { first, last };
-}
-function treeAt(r, t, times) {
+// so branches do not cross. Presence, width and length are interpolated inside beat 2, driven by the light
+// that runs up each branch: a branch takes its new share a little with every light that reaches its tip.
+const NO_RUNS = new Map();
+const arrived = (run, t) => run.reach.reduce((sum, at) => sum + smooth01((t - at) / 0.18), 0) / run.reach.length;
+function treeAt(r, t, runs = NO_RUNS) {
   const ids = [...new Set([...r.before.keys(), ...r.after.keys()])].sort(byOrder);
+  // The root's cells are re-allotted while the arc carries the adopted inputs in, so each input lands on the cells
+  // its item will hold; the branch takes its new width only when the light reaches its tip.
+  const allot = easeInOut((t - RIM) / (ARC1 - 0.1 - RIM));
   const list = [];
   for (const id of ids) {
-    const sa = r.before.get(id), sb = r.after.get(id);
-    let presence = 1, share = sa ?? sb, length = 1, alpha = 1, grey = 0, mergeInto = null, mergeK = 0;
+    const sa = r.before.get(id), sb = r.after.get(id), run = runs.get(id);
+    let presence = 1, share = sa ?? sb, slot = share, reach = null, length = 1, alpha = 1, grey = 0, mergeInto = null, mergeK = 0;
     if (sa != null && sb != null) {
-      const start = Math.min(2.0, times.first.get(id) ?? (sb > sa ? 1.75 : 1.7));
-      share = lerp(sa, sb, easeOut((t - start) / 0.35));
+      share = lerp(sa, sb, run ? arrived(run, t) : easeOut((t - SHIFT) / 0.4));
+      slot = lerp(sa, sb, allot);
     } else if (sb != null) {
-      const start = clamp((times.first.get(id) ?? 1.75) - 0.3, 1.1, 1.9);
-      const g = easeOut((t - start) / 0.45);
-      presence = g; share = sb * g; length = g;
+      // A new branch grows out of its cells with its first light, which is its tip on the way up.
+      const g = run ? easeInOut((t - run.leave[0]) / FLOW) : easeOut((t - SHIFT) / 0.45);
+      presence = g; length = g; share = sb * (run ? arrived(run, t) : g); slot = sb * allot; reach = sb;
     } else {
-      const start = Math.max(1.7, Math.min(2.0, (times.last.get(id) ?? 0) + 0.05));
+      // A branch on its way out keeps its cells until it withers; one that still takes light (an input that
+      // closed it) holds until 2.6 s, so the light is on its way up before it fades, and is gone by beat 3.
+      const start = run ? 2.6 : SHIFT;
       const w = easeInOut((t - start) / 0.5);
       const gone = r.gone.get(id) || { withdrawn: true };
-      presence = 1 - w; share = sa * (1 - w); alpha = 1 - w; grey = w;
+      presence = 1 - w; share = sa * (1 - w); slot = share; alpha = 1 - w; grey = w;
       if (gone.merged) { mergeInto = gone.merged; mergeK = w; } else length = 1 - 0.8 * w;
     }
-    list.push({ id, presence, share, length, alpha, grey, mergeInto, mergeK });
+    list.push({ id, presence, share, slot, reach, length, alpha, grey, mergeInto, mergeK });
   }
   return place(list);
 }
 function place(list) {
   // Mid-tween, growth and shrinkage overlap; the 64 cells never overflow, they are shared out proportionally.
-  const shares = list.reduce((sum, b) => sum + Math.max(0, b.share), 0);
+  const slotOf = b => Math.max(0, b.slot ?? b.share);
+  const shares = list.reduce((sum, b) => sum + slotOf(b), 0);
   const fit = shares > 64 ? 64 / shares : 1;
   // Items alternate left and right by first appearance; on each side the oldest sit nearest the middle. Each takes
   // a wedge of the 64 cells as wide as its share, and the two sides meet at the middle unless one side needs more.
   const side = b => (order.get(b.id) ?? 0) % 2;
   const left = list.filter(b => side(b) === 0).sort((a, b) => byOrder(b.id, a.id));
   const right = list.filter(b => side(b) === 1).sort((a, b) => byOrder(a.id, b.id));
-  const width = bs => bs.reduce((sum, b) => sum + Math.max(0, b.share) * fit, 0);
+  const width = bs => bs.reduce((sum, b) => sum + slotOf(b) * fit, 0);
   const L = width(left), R = width(right);
   const start = clamp(32, L, 64 - R) - L;
   const ordered = [...left, ...right];
   const map = new Map();
   let c = start;
   for (const b of ordered) {
-    b.c0 = c; b.c1 = c + Math.max(0, b.share) * fit; c = b.c1;
+    b.c0 = c; b.c1 = c + slotOf(b) * fit; c = b.c1;
     b.angle = cellAngle((b.c0 + b.c1) / 2);
     // Larger shares reach further: 24 shares touch the edge of the fan, one share a little under half way.
-    const rho = 0.42 + 0.58 * Math.sqrt(Math.max(0, b.share) / 24);
+    const rho = 0.42 + 0.58 * Math.sqrt(Math.max(0, b.reach ?? b.share) / 24);
     b.base = onRoot(b.angle, 5);
     const full = onFan(b.angle, rho);
     b.tip = { x: lerp(b.base.x, full.x, b.length), y: lerp(b.base.y, full.y, b.length) };
@@ -328,85 +351,107 @@ function settledTree(i) {
   })));
 }
 
-// ---------- particles: one seed per real input, puffed into a small cluster ----------
+// ---------- particles: one bright particle per real input, a few faint motes around it ----------
 const particleCache = new Map();
-// Fast through the sparse outside, slowing as it closes on the root (the reference arc eases out the same way).
-const arcRadius = t => G.Rmin + (G.Rmax - G.Rmin) * (1 - easeOut((t - ARC0) / (ARC1 - ARC0)));
-function touchTime(d) {
-  if (d >= G.Rmax) return ARC0;
-  if (d <= G.Rmin) return ARC1;
+// Three faint motes per input for texture. A fixed multiple, smaller and darker, so the cloud's density still
+// counts inputs and the bright particles stay countable: 234 inputs are 234 bright particles.
+const DUST = 3;
+// The sweep runs straight through the cloud (ARC0 → RIM), then eases out through the fan onto the root
+// (RIM → ARC1), entering the fan at the speed it crossed the cloud and slowing as it closes, so the adopted
+// inputs can be watched going in.
+function arcRadius(t) {
+  if (t <= ARC0) return G.Rfar;
+  if (t <= RIM) return lerp(G.Rfar, G.R, (t - ARC0) / (RIM - ARC0));
+  const k = clamp((t - RIM) / (ARC1 - RIM));
+  const speed = (G.Rfar - G.R) / (RIM - ARC0), power = clamp((speed * (ARC1 - RIM)) / (G.R - G.baseR), 1.2, 2.6);
+  return G.R - (G.R - G.baseR) * (1 - (1 - k) ** power);
+}
+// Each input rides a little ahead of or behind the arc; the spread closes as the arc reaches the root.
+const ride = (arc, off) => arc + off * clamp((arc - G.baseR) / 90);
+function touchTime(rad, off) {
+  if (ride(G.Rfar, off) <= rad) return ARC0;
   let lo = ARC0, hi = ARC1;
-  for (let k = 0; k < 22; k += 1) { const mid = (lo + hi) / 2; if (arcRadius(mid) > d) lo = mid; else hi = mid; }
+  for (let k = 0; k < 24; k += 1) { const mid = (lo + hi) / 2; if (ride(arcRadius(mid), off) > rad) lo = mid; else hi = mid; }
   return (lo + hi) / 2;
 }
+// fate: 1 adopted, carried to its cell on the root and up its branch as light; 2 deferred, carried to the rim and
+// left there as an ember; 3 noise and duplicates, out where they stand; 4 unjudged, dissolving; 5 a mote.
+const FATE = { used: 1, deferred: 2, noise: 3, duplicate: 3, unjudged: 4 };
 function particlesFor(i) {
   const key = `${i}:${G.key}`;
   if (particleCache.has(key)) return particleCache.get(key);
-  const r = rounds[i], n = r.events.length;
-  const k = n ? Math.max(4, Math.min(16, Math.floor(4000 / n))) : 0;
-  const cap = n * k;
+  const r = rounds[i], n = r.events.length, cap = n * (1 + DUST);
   const P = {
-    count: cap, k, x0: new Float32Array(cap), y0: new Float32Array(cap), x1: new Float32Array(cap), y1: new Float32Array(cap),
-    ts: new Float32Array(cap), dur: new Float32Array(cap), tf: new Float32Array(cap), size: new Float32Array(cap), alpha: new Float32Array(cap),
-    ring: new Uint8Array(cap), glow: new Uint8Array(cap), stay: new Uint8Array(cap), fate: new Uint8Array(cap), target: new Int16Array(cap), u: new Float32Array(cap), side: new Float32Array(cap),
-    sx: new Float32Array(cap), sy: new Float32Array(cap), seed: new Float32Array(cap), targets: [],
-    landed: [], resolved: [],
+    n, count: cap, phi: new Float32Array(cap), r1: new Float32Array(cap), rs: new Float32Array(cap),
+    ts: new Float32Array(cap), dur: new Float32Array(cap), off: new Float32Array(cap), tt: new Float32Array(cap),
+    size: new Float32Array(cap), alpha: new Float32Array(cap), stop: new Float32Array(cap), seed: new Float32Array(cap),
+    leave: new Float32Array(cap).fill(-1), ring: new Uint8Array(cap), fate: new Uint8Array(cap), target: new Int16Array(cap).fill(-1),
+    targets: [], runs: new Map(), landed: [], resolved: [],
   };
   const rand = rng(hash(`${scenario.id}:${frames[i].id}:${G.key}`));
+  // Streams take wedges of the fan's angle, as wide as their lanes were.
   const lanes = hasStreams ? LANES : [null];
   const weights = hasStreams ? laneWeight : [1], wsum = weights.reduce((a, b) => a + b, 0);
-  const laneX = weights.map((w, k) => G.cloud.x0 + (G.cloud.x1 - G.cloud.x0) * weights.slice(0, k).reduce((a, b) => a + b, 0) / wsum);
-  const laneW = weights.map(w => (G.cloud.x1 - G.cloud.x0) * w / wsum);
+  const span = G.fan - 0.03;
+  const laneA = weights.map((w, k) => -span / 2 + span * weights.slice(0, k).reduce((a, b) => a + b, 0) / wsum);
+  const laneW = weights.map(w => span * w / wsum);
   const blocked = (G.masks || []).map(([x, y, w, h]) => [x - 18, y - 18, w + 36, h + 36]);
   const inMask = (x, y) => blocked.some(([bx, by, bw, bh]) => x > bx && x < bx + bw && y > by && y < by + bh);
-  const targetIndex = new Map();
+  const targetIndex = new Map(), byTarget = new Map();
   let p = 0;
   r.events.forEach((e, j) => {
     const lane = Math.max(0, lanes.indexOf(e.stream));
-    let cx = 0, cy = 0;
+    let phi = 0, rad = 0;
     for (let tries = 0; tries < 12; tries += 1) {
-      cx = laneX[lane] + laneW[lane] * (0.04 + 0.92 * rand());
-      cy = G.cloud.y0 + (G.cloud.y1 - G.cloud.y0) * rand() ** 0.85;
-      if (!inMask(cx, cy)) break;
+      phi = laneA[lane] + laneW[lane] * (0.04 + 0.92 * rand());
+      const outer = Math.max(G.cloudIn + 24, G.edge(phi) - 8);
+      // Denser near the rim, thinning toward the edge of the picture.
+      rad = G.cloudIn + (outer - G.cloudIn) * rand() ** 1.45;
+      const at = polar(phi, rad);
+      if (!inMask(at.x, at.y)) break;
     }
     const ts = 0.03 + 0.48 * (j / Math.max(1, n)) + rand() * 0.03, dur = 0.3 + rand() * 0.12;
-    const spread = 7 + rand() * 12;
+    const fate = FATE[e.disp] ?? 4;
     let ti = -1;
-    if (e.target) { if (!targetIndex.has(e.target)) { targetIndex.set(e.target, P.targets.length); P.targets.push(e.target); } ti = targetIndex.get(e.target); }
-    const fateOf = { used: 4, deferred: 2, noise: 3, duplicate: 3, unjudged: 4 };
-    for (let q = 0; q < k; q += 1, p += 1) {
-      const carrier = q === 0 && e.disp === 'used' && ti >= 0;
-      const x1 = carrier ? cx : cx + gauss(rand) * spread, y1 = carrier ? cy : cy + gauss(rand) * spread;
-      P.x1[p] = x1; P.y1[p] = y1;
-      P.x0[p] = x1 + (rand() - 0.5) * 26; P.y0[p] = -24 - rand() * 150;
-      P.ts[p] = ts + rand() * 0.025; P.dur[p] = dur;
-      P.tf[p] = touchTime(Math.hypot(x1 - G.origin.x, y1 - G.origin.y)) + rand() * 0.03;
-      P.size[p] = (carrier ? 2.7 : 1.1 + rand() * 1.4) * (e.machine ? 0.72 : 1);
-      P.alpha[p] = (carrier ? 1 : 0.68 + rand() * 0.4) * (e.machine ? 0.6 : 1);
-      P.glow[p] = !carrier && rand() < 0.05 ? 1 : 0;
-      P.ring[p] = q === 0 && e.self ? 1 : 0;
-      // fate: 1 fly into the branch, 2 sink to embers, 3 go out, 4 dissolve
-      P.fate[p] = carrier ? 1 : fateOf[e.disp];
-      P.target[p] = carrier ? ti : -1;
-      P.u[p] = 0.35 + rand() * 0.35;
-      P.side[p] = rand() < 0.5 ? -1 : 1;
-      // Deferred inputs settle in a band on either side of the root, clear of the branches' feet.
-      const sx = x1 + (rand() - 0.5) * 60, off = sx - G.origin.x;
-      P.sx[p] = sx; P.stay[p] = Math.abs(off) < G.sediment.gap ? 1 : 0;
-      P.sy[p] = G.sediment.y0 + (G.sediment.y1 - G.sediment.y0) * rand();
+    if (fate === 1 && e.target) {
+      if (!targetIndex.has(e.target)) { targetIndex.set(e.target, P.targets.length); P.targets.push(e.target); byTarget.set(e.target, []); }
+      ti = targetIndex.get(e.target);
+      byTarget.get(e.target).push(p);
+    }
+    for (let q = 0; q <= DUST; q += 1, p += 1) {
+      const main = q === 0, spread = 5 + rand() * 12;
+      P.r1[p] = main ? rad : rad + gauss(rand) * spread;
+      P.phi[p] = main ? phi : phi + (gauss(rand) * spread) / Math.max(60, rad);
+      P.rs[p] = P.r1[p] + 140 + rand() * 220;   // it falls in along its ray from beyond the edge
+      P.ts[p] = ts + (main ? 0 : rand() * 0.04); P.dur[p] = dur * (main ? 1 : 0.9 + rand() * 0.25);
+      P.off[p] = main ? (rand() - 0.35) * 14 : (rand() - 0.5) * 18;
+      P.tt[p] = touchTime(P.r1[p], P.off[p]);
+      P.size[p] = main ? (2.9 + rand() * 0.45) * (e.machine ? 0.8 : 1) : 0.55 + rand() * 0.3;
+      P.alpha[p] = main ? 1.25 * (e.machine ? 0.6 : 1) : 0.07 + rand() * 0.08;
+      P.ring[p] = main && e.self ? 1 : 0;
+      P.fate[p] = main ? fate : 5;
+      P.target[p] = main ? ti : -1;
+      P.stop[p] = G.R + 6 + rand() * 24;
       P.seed[p] = rand() * 6.283;
     }
     P.landed.push(ts + dur);
-    if (e.disp !== 'used') P.resolved.push(touchTime(Math.hypot(cx - G.origin.x, cy - G.origin.y)));
+    if (fate !== 1) P.resolved.push(P.tt[p - 1 - DUST]);
   });
+  // The adopted inputs of one branch leave the root one after another, within QUEUE, in the order they came in.
+  for (const [id, list] of byTarget) {
+    const gap = list.length > 1 ? Math.min(0.07, QUEUE / (list.length - 1)) : 0;
+    const leave = list.map((pp, k) => (P.leave[pp] = RUN + k * gap));
+    P.runs.set(id, { leave, reach: leave.map(at => at + FLOW) });
+  }
   P.landed.sort((a, b) => a - b);
   P.resolved.sort((a, b) => a - b);
   particleCache.set(key, P);
   if (particleCache.size > 6) particleCache.delete(particleCache.keys().next().value);
   return P;
 }
-const smooth01 = x => { const c = Math.min(1, Math.max(0, x)); return c * c * (3 - 2 * c); };
 const countUpTo = (sorted, t) => { let lo = 0, hi = sorted.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (sorted[mid] <= t) lo = mid + 1; else hi = mid; } return lo; };
+// A point at fraction u of a branch's full length, even while the branch is still growing toward it.
+const frontOf = (b, u) => onBranch(b, Math.min(1, u / Math.max(b.length, 1e-3)));
 
 // ---------- concept layer: backdrop, twigs, sweep ----------
 const MAX_POINTS = 6000, MAX_LINES = 16000;
@@ -415,18 +460,21 @@ let backdrop = null, stars = null;
 function buildBackdrop() {
   const rand = rng(hash(`backdrop:${G.key}`));
   const segs = [];
-  // The concept layer's current runs outward along the same 64 lines the information layer draws for the budget.
+  // The concept layer's current runs outward along the same 64 rays the information layer draws for the budget,
+  // and on past the rim into the cloud at under half strength, so the rain falls along them.
   for (let c = 0; c < 64; c += 1) {
-    const phi = cellAngle(c + 0.5), steps = 12, from = (G.r0 + 10) / G.B;
-    let prev = onFan(phi, from), prevD = Math.hypot(prev.x - G.origin.x, prev.y - G.origin.y);
+    const phi = cellAngle(c + 0.5), from = G.r0 + 10, to = Math.max(G.R, G.edge(phi));
+    const steps = Math.max(8, Math.round((to - from) / 30));
+    let prevD = from;
     for (let q = 1; q <= steps; q += 1) {
-      const pt = onFan(phi, from + (1 - from) * (q / steps)), d = Math.hypot(pt.x - G.origin.x, pt.y - G.origin.y);
-      segs.push([prev.x, prev.y, prevD, pt.x, pt.y, d]);
-      prev = pt; prevD = d;
+      const d = from + (to - from) * (q / steps), a = polar(phi, prevD), b = polar(phi, d);
+      segs.push([a.x, a.y, prevD, b.x, b.y, d, d > G.R + 1 ? 0.4 : 1]);
+      prevD = d;
     }
   }
   backdrop = segs;
-  stars = Array.from({ length: 700 }, () => ({ x: rand() * G.W, y: rand() * (G.panelY - 10), s: 0.6 + rand() * 0.9, a: 0.08 + rand() * 0.26, ph: rand() * 6.283 }));
+  // A few faint fixed stars so the black is not empty; smaller and dimmer than any input.
+  stars = Array.from({ length: 180 }, () => ({ x: rand() * G.W, y: rand() * (G.panelY - 10), s: 0.45 + rand() * 0.35, a: 0.03 + rand() * 0.07, ph: rand() * 6.283 }));
 }
 
 // ---------- the clock ----------
@@ -503,23 +551,24 @@ function render(wall) {
   // --- the tree and its timing ---
   const inRound = seg === 'round';
   const P = inRound && r.events.length ? particlesFor(i) : null;
-  const times = branchTimes(r, P);
   let tree;
-  if (inRound) tree = treeAt(r, t, times);
+  if (inRound) tree = treeAt(r, t, P ? P.runs : NO_RUNS);
   else if (seg === 'open') tree = place([]);
   else tree = settledTree(i);
   // The rewind draws every branch back into the root before f00 begins again.
   const retract = seg === 'rewind' ? easeInOut(t / (REWIND * 0.85)) : 0;
-  if (retract) tree = place(tree.list.map(b => ({ ...b, share: b.share * (1 - retract), presence: 1 - retract, length: 1 - retract, alpha: 1 - retract })));
+  if (retract) tree = place(tree.list.map(b => ({ ...b, share: b.share * (1 - retract), slot: (b.slot ?? b.share) * (1 - retract), presence: 1 - retract, length: 1 - retract, alpha: 1 - retract })));
 
   const fresh = inRound ? r.open.filter(a => r.fresh.has(a.id)) : [];
   const dimOn = inRound && fresh.length > 0 && !still;
   // Before the strike the whole picture goes dark for 0.3 s; afterwards it comes back slowly.
-  const dim = !dimOn ? 1 : t < B3 ? 1 : t < STRIKE ? 1 - 0.58 * easeInOut((t - B3) / (STRIKE - B3)) : t < 3.05 ? 0.42 : lerp(0.42, 1, easeInOut((t - 3.05) / 0.45));
-  const flash = inRound && !still ? 0.75 * bump(t, 2.12, 2.46) * Math.min(1, r.events.length / 60 + 0.25) : 0;
-  let duck = dimOn ? (t < B3 ? 1 : t < STRIKE ? lerp(1, 0.22, easeInOut((t - B3) / (STRIKE - B3))) : t < 3.05 ? 0.22 : lerp(0.22, 0.95, easeInOut((t - 3.05) / 0.45))) : 1;
+  const AFTER = STRIKE + 0.35;
+  const dim = !dimOn ? 1 : t < B3 ? 1 : t < STRIKE ? 1 - 0.58 * easeInOut((t - B3) / (STRIKE - B3)) : t < AFTER ? 0.42 : lerp(0.42, 1, easeInOut((t - AFTER) / 0.45));
+  // The concept layer's big flash: the arc closing on the root with the adopted inputs, the end of the fold.
+  const flash = inRound && !still ? 0.75 * bump(t, ARC1 - 0.1, ARC1 + 0.3) * Math.min(1, r.events.length / 60 + 0.25) : 0;
+  let duck = dimOn ? (t < B3 ? 1 : t < STRIKE ? lerp(1, 0.22, easeInOut((t - B3) / (STRIKE - B3))) : t < AFTER ? 0.22 : lerp(0.22, 0.95, easeInOut((t - AFTER) / 0.45))) : 1;
   // Small ducks under information moves: a response running up its thread, the readout landing.
-  if (inRound && !still) duck *= 1 - 0.3 * Math.max(r.pulses.length ? bump(t, 0.25, 0.85) : 0, bump(t, 2.18, 2.5));
+  if (inRound && !still) duck *= 1 - 0.3 * Math.max(r.pulses.length ? bump(t, 0.25, 0.85) : 0, bump(t, READOUT - 0.04, READOUT + 0.28));
   if (seg === 'rewind') duck *= 0.8;
 
   // --- concept layer ---
@@ -532,9 +581,9 @@ function render(wall) {
   const norm = field.kind === 'webgl2' && !(still || play.frozen?.still) ? 1 - Math.exp(-Math.min(0.1, dt) / field.tau) : 1;
   // Stars twinkle on their own 2.9 s clock; the backdrop's current runs outward on a 4.1 s clock. Neither locks to the beat.
   for (const s of stars) pushPoint(s.x + Math.sin(T2 * 0.05 + s.ph) * 3, s.y, s.s, norm * s.a * (0.55 + 0.45 * Math.sin(T2 * 2.1667 + s.ph)));
-  for (const [x0, y0, r0, x1, y1, r1] of backdrop) {
-    const wave = rr => norm * (0.03 + 0.2 * Math.max(0, Math.sin(rr * 0.016 - T2 * 1.532)) ** 4);
-    pushLine(x0, y0, wave(r0), x1, y1, wave(r1));
+  for (const [x0, y0, d0, x1, y1, d1, k] of backdrop) {
+    const wave = rr => k * norm * (0.03 + 0.2 * Math.max(0, Math.sin(rr * 0.016 - T2 * 1.532)) ** 4);
+    pushLine(x0, y0, wave(d0), x1, y1, wave(d1));
   }
   // Twigs: fine growth around each branch, seeded by the item, scaled by its share.
   for (const b of tree.list) {
@@ -553,93 +602,125 @@ function render(wall) {
       pushPoint(end.x, end.y, 0.9, 0.16 * b.alpha * norm);
     }
   }
-  // The sweep: a scribbled arc contracting toward the root. Coarse and sparse first, finer as it closes.
-  if (inRound && !still && t >= ARC0 && t <= ARC1 + 0.12) {
-    const k = clamp((t - ARC0) / (ARC1 - ARC0));
+  // The sweep: an arc on the root's centre, exactly as wide as the fan, from beyond the cloud in to the root.
+  // A steady leading stroke, with scribbled strokes trailing just outside it; the scribble calms as it closes.
+  if (inRound && !still && t >= ARC0 && t <= ARC1 + 0.15) {
     const rad = arcRadius(Math.min(t, ARC1));
-    const fadeIn = clamp((t - ARC0) / 0.12), fadeOut = 1 - clamp((t - ARC1) / 0.12);
-    const base = (r.events.length ? 1 : 0.3) * fadeIn * fadeOut;
-    const jitterSeed = Math.floor(T * 20);
-    // The scribble changes every third frame, so it deposits about three frames' worth.
-    const closing = clamp((rad - G.Rmin) / (G.r0 * 1.6));
-    const sweepK = base * (norm < 1 ? 0.42 : 1) * (0.15 + 0.85 * closing);
-    const span = G.fan / 2 + 0.14;
-    for (let layer = 0; layer < 5; layer += 1) {
+    const fadeIn = clamp((t - ARC0) / 0.1), fadeOut = 1 - clamp((t - ARC1) / 0.15);
+    const sweepK = (r.events.length ? 1 : 0.3) * fadeIn * fadeOut * (norm < 1 ? 0.42 : 1);
+    const amp = rad > G.R ? lerp(3, 10, clamp((rad - G.R) / (G.Rfar - G.R))) : 1.2 + 1.8 * clamp((rad - G.baseR) / (G.R - G.baseR));
+    const jitterSeed = Math.floor(T * 20), half = G.fan / 2;
+    const m = Math.max(24, Math.round((G.fan * rad) / 7));
+    for (let layer = 0; layer < 4; layer += 1) {
       const rand = rng(hash(`${jitterSeed}:${layer}`));
-      const m = Math.round((60 + 120 * k) * span / 1.78);
-      const amp = 42 * (1 - k) + 9;
+      const lift = layer ? 2 + layer * 4 : 0, la = layer ? 0.55 / layer : 1;
       let prev = null;
       for (let q = 0; q <= m; q += 1) {
-        const a = -span + (2 * span * q) / m;
-        const rr = rad + (rand() - 0.5) * 2 * amp + layer * 5;
-        const pt = { x: G.origin.x + Math.sin(a) * rr, y: G.origin.y - Math.cos(a) * rr };
-        if (prev) pushLine(prev.x, prev.y, sweepK * (0.5 + rand() * 0.5), pt.x, pt.y, sweepK * (0.5 + rand() * 0.5));
+        const pt = polar(-half + (2 * half * q) / m, rad + lift + (rand() - 0.5) * (layer ? 2 * amp : 1.2));
+        if (prev) pushLine(prev.x, prev.y, sweepK * la * (0.55 + rand() * 0.45), pt.x, pt.y, sweepK * la * (0.55 + rand() * 0.45));
         prev = pt;
       }
     }
   }
-  // The round's inputs.
+  // The round's inputs: one bright particle per input, with its motes.
   if (P) {
+    const arcNow = arcRadius(Math.min(t, ARC1));
     for (let p = 0; p < P.count; p += 1) {
       const ts = P.ts[p];
       if (t < ts) continue;
-      const land = ts + P.dur[p];
-      let x, y, a = P.alpha[p], s = P.size[p];
+      const land = ts + P.dur[p], fate = P.fate[p];
+      let phi = P.phi[p], rad, a = P.alpha[p], s = P.size[p];
       if (t < land) {
-        const q = (t - ts) / P.dur[p], e = easeOut4(q);
-        x = lerp(P.x0[p], P.x1[p], e); y = lerp(P.y0[p], P.y1[p], e); a *= 0.8 * lerp(1, norm, smooth01((q - 0.45) / 0.55));
+        // Falling in along its ray toward the root: fast, then settling.
+        const q = (t - ts) / P.dur[p];
+        rad = lerp(P.rs[p], P.r1[p], easeOut4(q)); a *= 0.8 * lerp(1, norm, smooth01((q - 0.45) / 0.55));
         if (!still && q < 0.7) {
-          const eb = easeOut4(Math.max(0, q - 0.08 / P.dur[p]));
-          pushLine(lerp(P.x0[p], P.x1[p], eb), lerp(P.y0[p], P.y1[p], eb), 0, x, y, a * 0.55 * (1 - q / 0.7));
+          const from = polar(phi, lerp(P.rs[p], P.r1[p], easeOut4(Math.max(0, q - 0.08 / P.dur[p])))), to = polar(phi, rad);
+          pushLine(from.x, from.y, 0, to.x, to.y, a * 0.55 * (1 - q / 0.7));
         }
-      } else if (t < P.tf[p] || still && t < B3) {
-        // Landed with weight: a short impact flash and a damped settle.
+      } else if (t < P.tt[p] || (still && t < B3)) {
+        // Landed with weight: a short impact flash and a damped settle along the ray.
         const since = t - land;
-        x = P.x1[p] + (still ? 0 : Math.sin(T * 1.3 + P.seed[p]) * 0.5);
-        y = P.y1[p] - (still ? 0 : 3.2 * Math.exp(-since * 13) * Math.sin(since * 34));
-        a *= norm * (1 + (still ? 0 : 2.6 * Math.exp(-since / 0.12)));
+        rad = P.r1[p] - (still ? 0 : 3.2 * Math.exp(-since * 13) * Math.sin(since * 34));
+        if (!still) phi += (Math.sin(T * 1.3 + P.seed[p]) * 0.5) / P.r1[p];
+        a *= norm * (1 + (still ? 0 : (fate === 5 ? 1.2 : 2.6) * Math.exp(-since / 0.12)));
+        // Each input carries a soft halo, so the 234 read as the cloud and the motes and stars as texture.
+        if (fate !== 5) { const at = polar(phi, rad); pushPoint(at.x, at.y, s * 2.6, a * 0.2, 2); }
       } else {
-        const since = t - P.tf[p];
-        const fate = P.fate[p];
+        const since = t - P.tt[p];
         if (fate === 1) {
-          const q = since / FLY;
-          if (q >= 1 || still) continue;
-          const b = tree.map.get(P.targets[P.target[p]]);
-          const to = b ? onBranch(b, P.u[p]) : G.origin;
-          const from = { x: P.x1[p], y: P.y1[p] };
-          const mid = { x: (from.x + to.x) / 2 + P.side[p] * (to.y - from.y) * 0.22, y: (from.y + to.y) / 2 - P.side[p] * (to.x - from.x) * 0.22 };
-          const e = easeInOut(q), v = 1 - e;
-          x = v * v * from.x + 2 * v * e * mid.x + e * e * to.x; y = v * v * from.y + 2 * v * e * mid.y + e * e * to.y;
-          a = 0.95; s *= 0.8;
+          // Carried in by the arc; inside the fan it turns toward its branch's foot and lands there at ARC1.
+          rad = Math.max(G.baseR, Math.min(P.r1[p], ride(arcNow, P.off[p])));
+          const b = P.target[p] >= 0 ? tree.map.get(P.targets[P.target[p]]) : null;
+          if (!b) {
+            // Its item is not on the tree this round: it goes into the root and is gone.
+            if (t >= ARC1 + 0.3 || still) continue;
+            a *= norm * (1 - clamp((t - ARC1) / 0.3));
+          } else {
+            const k = smooth01((G.R - rad) / (G.R - G.baseR));
+            phi = lerp(phi, b.angle, k);
+            if (t >= ARC1 - 0.02 || still) {
+              // It rests on its cell until its light leaves; the light is drawn with the branches.
+              if (t >= P.leave[p] || still) continue;
+              pushPoint(b.base.x, b.base.y, s * 1.15, a * norm * 1.4);
+              continue;
+            }
+            a *= 1 + 0.25 * k;   // moving at full strength, so the afterglow draws its track
+            if (k > 0) { const at = polar(phi, rad); pushPoint(at.x, at.y, s * 2.2, 0.5 * k, 2); }   // inside the fan only the adopted are left: they glow
+          }
         } else if (fate === 2) {
-          const q = clamp(since / 0.7), e = q * q;
-          if (P.stay[p]) { if (q >= 1) continue; x = P.x1[p]; y = P.y1[p]; a *= norm * (1 - q); }
-          else { x = lerp(P.x1[p], P.sx[p], e); y = lerp(P.y1[p], P.sy[p], e); a = lerp(a, 0.34, q) * norm; }
-          s *= 0.85;
+          // Carried to the rim, dimming as it goes, and left there as an ember.
+          rad = Math.max(P.stop[p], Math.min(P.r1[p], ride(arcNow, P.off[p])));
+          const sink = clamp(since / 0.6);
+          // While the arc pushes it, it moves at full strength (the afterglow draws its track); at rest, normalised.
+          a *= lerp(1, 0.36, sink) * (rad > P.stop[p] + 0.5 && rad < P.r1[p] - 0.5 ? 0.85 : norm);
+          s *= 1 - 0.15 * sink;
         } else if (fate === 3) {
           const q = since / 0.22;
           if (q >= 1) continue;
-          x = P.x1[p]; y = P.y1[p]; a *= norm * (1 + 1.6 * (1 - q)) * (1 - q); s *= 1 - 0.5 * q;
-        } else {
+          rad = P.r1[p]; a *= norm * (1 + 1.6 * (1 - q)) * (1 - q); s *= 1 - 0.5 * q;
+        } else if (fate === 4) {
           const q = since / 0.5;
           if (q >= 1) continue;
-          x = P.x1[p]; y = P.y1[p] - 6 * q; a *= norm * (1 - q);
+          rad = P.r1[p] - 6 * q; a *= norm * (1 - q);
+        } else {
+          const q = since / 0.3;
+          if (q >= 1) continue;
+          rad = Math.min(P.r1[p], ride(arcNow, P.off[p])); a *= norm * (1 - q);
         }
       }
-      pushPoint(x, y, s, a, P.ring[p]);
-      if (P.glow[p]) pushPoint(x, y, s * 4.2, a * 0.5, 2);
+      const at = polar(phi, rad);
+      pushPoint(at.x, at.y, s, a, P.ring[p]);
+    }
+    // The light running up each branch: its glow and track here, its bright core with the branches.
+    if (!still) for (const [id, run] of P.runs) {
+      const b = tree.map.get(id);
+      if (!b || b.alpha <= 0.02) continue;
+      run.leave.forEach(at => {
+        const q = (t - at) / FLOW;
+        if (q < 0 || q > 1.35) return;
+        if (q <= 1) {
+          const pt = frontOf(b, easeInOut(q));
+          pushPoint(pt.x, pt.y, 5.5, 0.42, 2);
+          pushPoint(pt.x, pt.y, 1.6, 0.85);
+        } else pushPoint(b.tip.x, b.tip.y, 6.5, norm * 1.6 * (1 - (q - 1) / 0.35), 2);
+      });
     }
   }
   // Last round's embers fade out under the new rain.
-  if (inRound && i > 0 && t < 1.2 && rounds[i - 1].events.length) {
-    const Q = particlesFor(i - 1), fadeK = 1 - t / 1.2;
-    for (let p = 0; p < Q.count; p += 3) if (Q.fate[p] === 2 && !Q.stay[p]) pushPoint(Q.sx[p], Q.sy[p], Q.size[p] * 0.85, 0.34 * fadeK * norm);
+  if (inRound && i > 0 && t < 0.9 && rounds[i - 1].events.length) {
+    const Q = particlesFor(i - 1), fadeK = 1 - t / 0.9;
+    for (let p = 0; p < Q.count; p += 1 + DUST) {
+      if (Q.fate[p] !== 2) continue;
+      const at = polar(Q.phi[p], Q.stop[p]);
+      pushPoint(at.x, at.y, Q.size[p] * 0.85, Q.alpha[p] * 0.36 * fadeK * norm, Q.ring[p]);
+    }
   }
   livePoints = np; livePeak = Math.max(livePeak, np);
   field.frame({ points: pointBuf, pointCount: np, lines: lineBuf, lineCount: nl, duck, flash, masks: G.masks, dt, still: still || Boolean(play.frozen && play.frozen.still) });
 
   // --- information layer ---
-  drawInfo({ i, r, t, seg, tree, P, times, dim, fresh, still });
+  drawInfo({ i, r, t, seg, tree, P, dim, fresh, still });
   // The rewind fades the end card's words out, swaps to f00's while they are invisible, and fades those in,
   // so the last rewind frame and the first f00 frame are the same picture.
   const swap = seg === 'rewind' && t >= REWIND / 2;
@@ -677,8 +758,17 @@ function strokePath(pts, upto = 1) {
 const ink = a => `rgba(${INK[0]}, ${INK[1]}, ${INK[2]}, ${clamp(a).toFixed(3)})`;
 const vermA = a => VERM.replace('rgb(', 'rgba(').replace(')', `, ${clamp(a).toFixed(3)})`);
 const cellCenter = b => onRoot(b.angle, 0);
+// A path along a branch from fraction u0 to u1 of its full length.
+function traceBranch(b, u0, u1) {
+  const n = Math.max(2, Math.ceil((u1 - u0) * 24));
+  info.beginPath();
+  for (let q = 0; q <= n; q += 1) {
+    const pt = frontOf(b, lerp(u0, u1, q / n));
+    if (q) info.lineTo(pt.x, pt.y); else info.moveTo(pt.x, pt.y);
+  }
+}
 
-function drawInfo({ i, r, t, seg, tree, P, times, dim, fresh, still }) {
+function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
   const W = G.W, H = G.H;
   info.clearRect(0, 0, W, H);
   const inRound = seg === 'round';
@@ -697,6 +787,9 @@ function drawInfo({ i, r, t, seg, tree, P, times, dim, fresh, still }) {
     info.beginPath(); info.moveTo(a.x, a.y); info.lineTo(b.x, b.y); info.stroke();
   }
   info.setLineDash([]);
+  // The rim: where the 64 lines end. The cloud lies outside it, the sweep crosses it, the embers settle along it.
+  info.strokeStyle = ink((0.09 + 0.3 * openingGlow) * D);
+  info.beginPath(); info.arc(O.x, O.y, G.R, -G.fan / 2 - Math.PI / 2, G.fan / 2 - Math.PI / 2); info.stroke();
   // The root: 64 cells on an arc. Items fill contiguous cells under their branches; the rest is open budget.
   const gap = 0.0045;
   info.lineWidth = 7; info.lineCap = 'butt';
@@ -730,23 +823,66 @@ function drawInfo({ i, r, t, seg, tree, P, times, dim, fresh, still }) {
     info.fillStyle = vermA(0.85 * appear * D * retire);
     info.fillRect(marksX + m * 6, O.y + 23, 3, 3);
   }
-  // Branches: width is the share; a branch glows when adopted inputs arrive.
+  // Branches: width is the share. A branch that adopted inputs this round steps back while the arc brings them
+  // in, and is lit again from the root up as far as its first light has climbed.
   info.lineCap = 'round';
+  const runOf = b => (inRound && P && !still ? P.runs.get(b.id) : null);
   for (const b of tree.list) {
     if (b.alpha <= 0.01 || b.length <= 0.01) continue;
-    let glow = 0;
-    if (P && inRound) for (let p = 0; p < P.count; p += 1) {
-      if (P.fate[p] !== 1 || P.targets[P.target[p]] !== b.id) continue;
-      const since = t - (P.tf[p] + FLY);
-      if (since >= 0 && since < 0.4) glow = Math.min(1, glow + 0.35 * Math.exp(-since / 0.14));
-    }
+    const run = runOf(b);
     const lw = 0.7 + Math.max(0, b.share) * 0.34;
-    const col = b.grey ? `rgba(${lerp(INK[0], 120, b.grey) | 0}, ${lerp(INK[1], 120, b.grey) | 0}, ${lerp(INK[2], 120, b.grey) | 0}, ${(b.alpha * 0.9 * D).toFixed(3)})` : ink(0.88 * b.alpha * D);
+    const greyA = b.alpha * 0.9 * D, inkA = 0.88 * b.alpha * D;
+    const col = k => (b.grey ? `rgba(${lerp(INK[0], 120, b.grey) | 0}, ${lerp(INK[1], 120, b.grey) | 0}, ${lerp(INK[2], 120, b.grey) | 0}, ${(greyA * k).toFixed(3)})` : ink(inkA * k));
+    const lit = run ? easeInOut((t - run.leave[0]) / FLOW) : 1;
+    const wait = run ? 1 - 0.5 * smooth01((t - RIM) / 0.4) : 1;
     info.beginPath(); info.moveTo(b.base.x, b.base.y); info.quadraticCurveTo(b.ctrl.x, b.ctrl.y, b.tip.x, b.tip.y);
-    info.strokeStyle = ink((0.02 + glow * 0.1) * b.alpha * D); info.lineWidth = lw + 2 + glow * 3.5; info.stroke();
-    info.strokeStyle = col; info.lineWidth = lw; info.stroke();
-    info.fillStyle = col;
+    info.strokeStyle = ink(0.02 * b.alpha * D); info.lineWidth = lw + 2; info.stroke();
+    info.strokeStyle = col(lit >= 1 ? 1 : wait); info.lineWidth = lw; info.stroke();
+    if (lit > 0 && lit < 1) { traceBranch(b, 0, lit); info.strokeStyle = col(1); info.stroke(); }
+    info.fillStyle = col(lit >= 1 ? 1 : wait);
     info.beginPath(); info.arc(b.tip.x, b.tip.y, 1.6 + b.share * 0.07, 0, Math.PI * 2); info.fill();
+  }
+  // The light: each adopted input rests on its branch's foot, then runs up to the tip; the tip flashes when the
+  // first one arrives and brightens with each after it; the whole branch glows briefly once the last is in.
+  for (const b of tree.list) {
+    const run = runOf(b);
+    if (!run || b.alpha <= 0.02) continue;
+    const lw = 0.7 + Math.max(0, b.share) * 0.34, tipR = 1.6 + b.share * 0.07;
+    let resting = false, tipHot = 0;
+    run.leave.forEach((at, k) => {
+      if (t >= ARC1 - 0.02 && t < at) resting = true;
+      const since = t - run.reach[k];
+      if (since >= 0 && since < 0.25) tipHot = Math.max(tipHot, 1 - since / 0.25);
+      const q = (t - at) / FLOW;
+      if (q < 0 || q >= 1) return;
+      const f = easeInOut(q), from = Math.max(0, f - 0.22);
+      traceBranch(b, from, f);
+      info.strokeStyle = ink(0.16 * b.alpha * D); info.lineWidth = lw + 7; info.stroke();
+      info.strokeStyle = ink(b.alpha * D); info.lineWidth = lw + 1.2; info.stroke();
+      const pt = frontOf(b, f);
+      info.fillStyle = ink(b.alpha * D);
+      info.beginPath(); info.arc(pt.x, pt.y, 2.3, 0, Math.PI * 2); info.fill();
+    });
+    const after = t - run.reach[run.reach.length - 1];
+    if (after >= 0 && after < 0.35) {
+      info.beginPath(); info.moveTo(b.base.x, b.base.y); info.quadraticCurveTo(b.ctrl.x, b.ctrl.y, b.tip.x, b.tip.y);
+      info.strokeStyle = ink(0.13 * (1 - after / 0.35) * b.alpha * D); info.lineWidth = lw + 6; info.stroke();
+    }
+    if (resting) {
+      info.fillStyle = ink(0.95 * D);
+      info.beginPath(); info.arc(b.base.x, b.base.y, 2.5, 0, Math.PI * 2); info.fill();
+      info.strokeStyle = ink(0.35 * D); info.lineWidth = 1;
+      info.beginPath(); info.arc(b.base.x, b.base.y, 5.5, 0, Math.PI * 2); info.stroke();
+    }
+    const first = t - run.reach[0];
+    if (first >= 0 && first < 0.4) {
+      info.strokeStyle = ink(0.75 * (1 - first / 0.4) * D); info.lineWidth = 1.2;
+      info.beginPath(); info.arc(b.tip.x, b.tip.y, tipR + 2 + first * 32, 0, Math.PI * 2); info.stroke();
+    }
+    if (tipHot > 0) {
+      info.fillStyle = ink(D);
+      info.beginPath(); info.arc(b.tip.x, b.tip.y, tipR + 1.8 * tipHot, 0, Math.PI * 2); info.fill();
+    }
   }
   // Names at the larger tips and at every tip with a question open, outlined so the cloud never covers them.
   const openIds = new Set((inRound && t < STRIKE ? r.prevOpen : seg === 'open' ? [] : r.open).map(a => a.item));
@@ -778,7 +914,7 @@ function drawInfo({ i, r, t, seg, tree, P, times, dim, fresh, still }) {
       let alpha = 0.55, to = 1;
       // Answered: once your response reaches the tip, the thread draws back from the root and is gone.
       if (r.answered.has(a.id)) { const k = clamp((t - 0.82) / 0.3); to = 1 - k; if (k >= 1) continue; }
-      else if (r.lapsed.has(a.id)) { const k = clamp((t - 1.7) / 0.5); alpha *= 1 - k; if (k >= 1) continue; threads.push({ a, b, alpha, to, grey: Math.max(0.01, k) }); continue; }
+      else if (r.lapsed.has(a.id)) { const k = clamp((t - SHIFT) / 0.5); alpha *= 1 - k; if (k >= 1) continue; threads.push({ a, b, alpha, to, grey: Math.max(0.01, k) }); continue; }
       threads.push({ a, b, alpha, to });
     }
     for (const a of fresh) {
@@ -845,7 +981,7 @@ function paintText({ i, r, t, seg, P, dim, fresh }) {
     signal = `${dayTime(f.at)} · ${sig?.type === 'review' ? '定时整理，窗口内 0 条' : sig?.reason || '整理'}`;
     say = f.title;
     nShown = P ? countUpTo(P.landed, t) : 0;
-    if (t >= 2.22) moved = `→ 动了 ${r.moved}`;
+    if (t >= READOUT) moved = `→ 动了 ${r.moved}`;
     if (fresh.length && t >= STRIKE) asked = ` · 新问 ${fresh.length}`;
     count = `第 ${i} / ${LAST} 轮 · 累计 ${(i ? rounds[i - 1].cumulative : 0) + nShown} 条`;
   }
@@ -873,10 +1009,10 @@ function paintPanels({ i, r, t, seg, P, fresh }) {
   const n = r.events.length;
   const landed = inRound && P ? countUpTo(P.landed, t) : seg === 'open' ? 0 : n;
   const out = inRound && P ? countUpTo(P.resolved, t) : seg === 'open' ? 0 : n - r.used;
-  const settled = !inRound || t >= 2.06;
+  const settled = !inRound || t >= RIM + 0.1;
   const stageNo = inRound ? STAGES.filter(([at]) => t >= at).length - 1 : -1;
-  const askPhase = inRound ? (t < 0.3 ? 0 : t < 1.7 ? 1 : t < STRIKE ? 2 : 3) : 3;
-  const key = `${seg}|${i}|${landed}|${out}|${settled}|${stageNo}|${askPhase}|${t >= 2.22}`;
+  const askPhase = inRound ? (t < 0.3 ? 0 : t < SHIFT ? 1 : t < STRIKE ? 2 : 3) : 3;
+  const key = `${seg}|${i}|${landed}|${out}|${settled}|${stageNo}|${askPhase}|${t >= READOUT}`;
   if (key === panelKey) return;
   panelKey = key;
   const roundLabel = seg === 'open' ? '空状态' : frames[i].id;
@@ -885,7 +1021,7 @@ function paintPanels({ i, r, t, seg, P, fresh }) {
   const lanes = hasStreams ? LANES.filter(s => r.streams[s]).map(s => `<i style="flex:${r.streams[s]}" title="${LANE_WORD[s]} ${r.streams[s]}"></i>`).join('') : '';
   const laneWords = hasStreams && seg !== 'open' ? LANES.filter(s => r.streams[s]).map(s => `${LANE_WORD[s]} ${r.streams[s]}`).join(' · ') : '';
   el.round.innerHTML = `<h3>本轮 <small>${esc(roundLabel)}</small></h3>
-    <dl><dt>收到</dt><dd>${landed}</dd><dt>没采用</dt><dd>${inRound && t < ARC0 ? '…' : out}<small>${esc(breakdown)}</small></dd><dt>动了</dt><dd>${inRound && t < 2.22 ? '…' : seg === 'open' ? 0 : r.moved}<small>${seg === 'open' ? '' : '件 · 新增、变大、撤下、合并'}</small></dd></dl>
+    <dl><dt>收到</dt><dd>${landed}</dd><dt>没采用</dt><dd>${inRound && t < ARC0 ? '…' : out}<small>${esc(breakdown)}</small></dd><dt>动了</dt><dd>${inRound && t < READOUT ? '…' : seg === 'open' ? 0 : r.moved}<small>${seg === 'open' ? '' : '件 · 新增、变大、撤下、合并'}</small></dd></dl>
     ${lanes ? `<div class="pl-lanes" style="width:${Math.min(100, (landed / total) * 100).toFixed(1)}%">${lanes}</div><p class="pl-lane-words">${esc(laneWords)}</p>` : `<p class="pl-lane-words">${seg === 'open' ? '还没有输入' : n ? '' : '定时整理，窗口内 0 条'}</p>`}`;
   // Open questions: before the strike the list is last round's (answered ones struck, lapsed ones grey); after it, this round's.
   let rows, count;
@@ -906,7 +1042,7 @@ function paintPanels({ i, r, t, seg, P, fresh }) {
   el.pipe.innerHTML = `<h3>流水线</h3><ol>${[
     ['收到', seg === 'open' ? '—' : `${landed} 条`],
     ['归并', seg === 'open' ? '—' : inRound && t < B2 ? '…' : `采用 ${r.used}`],
-    ['分配', seg === 'open' ? '—' : inRound && t < 2.22 ? '…' : `动了 ${r.moved} 件`],
+    ['分配', seg === 'open' ? '—' : inRound && t < READOUT ? '…' : `动了 ${r.moved} 件`],
     ['回应', seg === 'open' ? '—' : inRound && t < STRIKE ? '…' : `新问 ${r.fresh.size}`],
   ].map(([name, value], k) => `<li class="${k === stageNo ? 'is-on' : ''}"><span>${k + 1}</span>${name}<em>${value}</em></li>`).join('')}</ol>`;
   lastDim = -1;
@@ -976,4 +1112,16 @@ window.foldPulse = {
       cpuMs: cpuTimes.length ? cpuTimes.reduce((x, y) => x + y, 0) / cpuTimes.length : null, cpuP95Ms: cpuTimes.length ? [...cpuTimes].sort((x, y) => x - y)[Math.floor(cpuTimes.length * 0.95)] : null };
   },
   resetStats() { frameTimes.length = 0; cpuTimes.length = 0; livePeak = 0; },
+  // What the cloud of round i is made of: bright particles by fate, against the round's inputs.
+  census(index) {
+    const P = rounds[index].events.length ? particlesFor(index) : null, n = { inputs: rounds[index].events.length, bright: 0, motes: 0, adopted: 0, embers: 0, out: 0, dissolve: 0, lights: 0 };
+    if (P) for (let p = 0; p < P.count; p += 1) {
+      const f = P.fate[p];
+      if (f === 5) { n.motes += 1; continue; }
+      n.bright += 1;
+      n[['', 'adopted', 'embers', 'out', 'dissolve'][f]] += 1;
+    }
+    if (P) for (const run of P.runs.values()) n.lights += run.leave.length;
+    return n;
+  },
 };
