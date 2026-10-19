@@ -1,0 +1,69 @@
+/* 第三轮 · 概念动画 01 整理脉冲。页头与概念卡沿用 forms.css；舞台近黑，文字只用等宽字。 */
+.pl-page {
+  --pl-mono: "SF Mono", ui-monospace, Menlo, Consolas, "PingFang SC", "Noto Sans Mono CJK SC", monospace;
+  --pl-ink: rgb(232 230 223);
+  --pl-ink-2: rgb(232 230 223 / .58);
+  --pl-ink-3: rgb(232 230 223 / .34);
+  --pl-line: rgb(232 230 223 / .12);
+  --pl-vermilion: rgb(240 88 50);
+  font-family: var(--pl-mono);
+}
+.pl-page .fs-name, .pl-page .fs-title, .pl-page .fs-card h1, .pl-page .fs-tagline, .pl-page .fs-card dd { font-family: var(--pl-mono); }
+.pl-page .fs-ticks button.is-day { margin-left: 3px; }
+.pl-play-icon { display: inline-block; width: 0; height: 0; border-left: 9px solid currentColor; border-top: 6px solid transparent; border-bottom: 6px solid transparent; vertical-align: -1px; }
+.pl-playing .pl-play-icon { width: 9px; height: 11px; border: 0; border-left: 3px solid currentColor; border-right: 3px solid currentColor; }
+
+.pl-stage { position: relative; overflow: hidden; outline: none; background: rgb(9 10 11); color: var(--pl-ink); }
+.pl-stage canvas { position: absolute; left: 0; top: 0; display: block; }
+.pl-info { pointer-events: none; }
+
+/* Information layer: signal and narration, the hero number, the round counter. */
+.pl-top { position: absolute; left: var(--pad); top: var(--pad); max-width: min(62%, 760px); }
+.pl-signal { font-size: 12px; letter-spacing: .02em; color: var(--pl-ink-2); }
+.pl-say { margin-top: 3px; font-size: 15px; line-height: 1.4; color: var(--pl-ink); }
+.pl-hero { position: absolute; left: var(--pad); top: calc(var(--pad) + 52px); }
+.pl-hero-label { font-size: 12px; color: var(--pl-ink-2); letter-spacing: .04em; }
+.pl-hero-row { display: flex; align-items: baseline; gap: 10px; white-space: nowrap; }
+.pl-n { font-size: var(--hero); line-height: .95; font-weight: 300; letter-spacing: -.03em; font-variant-numeric: tabular-nums; color: var(--pl-ink); }
+.pl-unit { font-size: calc(var(--hero) * .16); color: var(--pl-ink-2); }
+.pl-readout { font-size: calc(var(--hero) / 3); line-height: 1; font-weight: 300; font-variant-numeric: tabular-nums; }
+.pl-moved { color: var(--pl-ink); }
+.pl-asked.is-ask { color: var(--pl-vermilion); }
+.pl-count { position: absolute; right: var(--pad); top: var(--pad); font-size: 12px; color: var(--pl-ink-2); font-variant-numeric: tabular-nums; }
+
+/* Panels: this round, open questions, the pipeline. */
+.pl-panels { position: absolute; left: var(--pad); right: var(--pad); bottom: 14px; height: var(--panel-h); display: grid; grid-template-columns: 1.15fr 1.15fr .9fr; gap: 12px; }
+.pl-panel { min-width: 0; padding: 9px 12px 8px; overflow: hidden; border: 1px solid var(--pl-line); background: rgb(9 10 11 / .92); font-size: 11.5px; line-height: 1.5; color: var(--pl-ink-2); }
+.pl-panel h3 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 5px; font-size: 11px; font-weight: 500; letter-spacing: .06em; color: var(--pl-ink-2); }
+.pl-panel h3 b { font-weight: 500; color: var(--pl-ink); font-variant-numeric: tabular-nums; }
+.pl-panel h3 small { margin-left: auto; font-size: 11px; color: var(--pl-ink-3); }
+.pl-panel dl { display: grid; grid-template-columns: 4.2em minmax(0, 1fr); gap: 1px 10px; margin: 0; }
+.pl-panel dt { color: var(--pl-ink-3); }
+.pl-panel dd { margin: 0; color: var(--pl-ink); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-panel dd small { margin-left: 10px; color: var(--pl-ink-3); font-size: 10.5px; }
+.pl-lanes { display: flex; gap: 2px; height: 4px; margin-top: 7px; transition: width .08s linear; }
+.pl-lanes i { display: block; min-width: 2px; background: var(--pl-ink-3); }
+.pl-lane-words { margin: 4px 0 0; font-size: 10.5px; color: var(--pl-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-panel ul { margin: 0; padding: 0; list-style: none; }
+.pl-panel li { display: flex; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--pl-ink); }
+.pl-panel li b { flex: none; min-width: 2.2em; font-weight: 400; color: var(--pl-ink-3); }
+.pl-panel li.is-fresh, .pl-panel li.is-fresh b { color: var(--pl-vermilion); }
+.pl-panel li.is-answered { color: var(--pl-ink-3); text-decoration: line-through; }
+.pl-panel li.is-answered b { color: var(--pl-vermilion); text-decoration: none; }
+.pl-panel li.is-lapsed { color: var(--pl-ink-3); }
+.pl-more { margin: 2px 0 0; font-size: 10.5px; color: var(--pl-ink-3); }
+.pl-panel ol { margin: 0; padding: 0; list-style: none; }
+.pl-panel ol li { align-items: baseline; padding: 1px 6px; border: 1px solid transparent; color: var(--pl-ink-2); }
+.pl-panel ol li span { color: var(--pl-ink-3); min-width: 1em; }
+.pl-panel ol li em { margin-left: auto; font-style: normal; color: var(--pl-ink-3); font-variant-numeric: tabular-nums; }
+.pl-panel ol li.is-on { border-color: var(--pl-ink-2); color: var(--pl-ink); }
+.pl-panel ol li.is-on em { color: var(--pl-ink); }
+
+.pl-perf { position: absolute; right: var(--pad); top: calc(var(--pad) + 18px); font-size: 11px; color: var(--pl-ink-2); }
+.pl-perf[hidden] { display: none; }
+.pl-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+@media (max-width: 900px) {
+  .pl-panels { grid-template-columns: 1fr 1fr; }
+  .pl-panel[data-p="pipe"] { display: none; }
+}
