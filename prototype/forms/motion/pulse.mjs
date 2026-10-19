@@ -308,7 +308,8 @@ function settledTree(i) {
 
 // ---------- particles: one seed per real input, puffed into a small cluster ----------
 const particleCache = new Map();
-const arcRadius = t => G.Rmin + (G.Rmax - G.Rmin) * (1 - easeInOut((t - ARC0) / (ARC1 - ARC0)));
+// Fast through the sparse outside, slowing as it closes on the root (the reference arc eases out the same way).
+const arcRadius = t => G.Rmin + (G.Rmax - G.Rmin) * (1 - easeOut((t - ARC0) / (ARC1 - ARC0)));
 function touchTime(d) {
   if (d >= G.Rmax) return ARC0;
   if (d <= G.Rmin) return ARC1;
