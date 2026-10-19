@@ -141,7 +141,7 @@ node scripts/shoot-forms.mjs --out $out/w --only watch,multiples --frame 26 --ev
 node scripts/shoot-forms.mjs --out $out/r --only radio,strips,frontpage,receipt,orb,departures,blame,chat --eval "document.querySelector('[data-card]').click()"
 node scripts/shoot-forms.mjs --out $out/s --only lineage,timing,provenance,yield,notation,respond
 node scripts/shoot-forms.mjs --out $out/m --only dial --frame 26 --eval "document.querySelector('[data-card]').click()"
-node scripts/shoot-forms.mjs --out $out/p --only pulse --gpu --frame 20 --eval "(async () => { document.querySelector('[data-card]').click(); await new Promise(r => setTimeout(r, 400)); foldPulse.seek(20, 2.85); })()"
+node scripts/shoot-forms.mjs --out $out/p --only pulse --gpu --frame 20 --eval "(async () => { document.querySelector('[data-card]').click(); await new Promise(r => setTimeout(r, 400)); foldPulse.seek(20, 3.55); })()"
 for f in $out/*.png $out/*/*.png; do cwebp -quiet -q 82 -m 6 -sharp_yuv -resize 640 0 "$f" -o "site/previews/$(basename "$f" .png).webp"; done
 ```
 
