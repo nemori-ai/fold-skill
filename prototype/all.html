@@ -156,9 +156,9 @@
     ] },
     { title: '第二轮：复盘图', note: '五张图各自回答一种别处看不见的关系；未选帧时停在各自的默认帧。', sections: ['lineage', 'timing', 'provenance', 'yield', 'notation'].map(id => (
       { id, name: sketch(id).name, href: `forms/sketches/${id}.html`, frame: null, see: sketch(id).relation, answers: README[id][1], notes: README[id][2] })) },
-    { title: '第三轮：概念动画', note: '官网用的概念动画，读同一份回放。整理脉冲未选帧时从 f00 自动连播，顶栏选帧时演一遍那一轮再停住；份额拨盘单独打开时循环 20 秒的三拍，合页里只走单帧，跟着顶栏的帧走，不自己循环。', sections: [
-      { id: 'pulse', name: motion('pulse').name, href: `forms/${motion('pulse').page}`, embed: { card: 0 }, frame: null, see: motion('pulse').tagline, answers: '不承载作答；朱红只标新登记的问题、你的回应与答掉的记号' },
-      { id: 'dial', name: motion('dial').name, href: `forms/${motion('dial').page}`, embed: { card: 0 }, frame: at(26, 17), see: motion('dial').tagline, answers: '不承载作答；游标只指要紧的问题' },
+    { title: '第三轮：概念动画', note: '官网用的概念动画，读同一份回放。整理脉冲未选帧时从 f00 自动连播，顶栏选帧时演一遍那一轮再停住；份额拨盘单独打开时循环 20 秒的三拍，合页里只走单帧，跟着顶栏的帧走，不自己循环。两页都可以悬停看概要、点击展开详情。', sections: [
+      { id: 'pulse', name: motion('pulse').name, href: `forms/${motion('pulse').page}`, embed: { card: 0 }, frame: null, see: motion('pulse').tagline, answers: '不承载作答；朱红只标新登记的问题、你的回应与答掉的记号；悬停枝条看概要，点击展开详情，问题旁的“去回答 →”链到同一帧的 D' },
+      { id: 'dial', name: motion('dial').name, href: `forms/${motion('dial').page}`, embed: { card: 0 }, frame: at(26, 17), see: motion('dial').tagline, answers: '不承载作答；游标只指要紧的问题；悬停扇区看概要，点击展开详情，问题旁的“去回答 →”链到同一帧的 D' },
     ] },
     { title: '回应组件', note: '', sections: [
       { id: 'respond', name: '回应组件页', href: 'forms/respond.html', frame: null, see: '按 ask.expects 逐类演示六种回应控件，并列出与 event.feedback 同形的反馈记录；顶栏选帧时改的是它的回放时刻。', answers: 'confirm、choose、reply、schedule、approve、defer', size: 'is-long' },
