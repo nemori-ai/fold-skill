@@ -26,6 +26,8 @@ export const FORMS = {
   // 第一轮撤下后恢复的八个形式：只做了能在两个数据集下运行的最小适配，未打磨。
   radio: 'forms/radio.html', strips: 'forms/strips.html', frontpage: 'forms/frontpage.html', receipt: 'forms/receipt.html',
   orb: 'forms/orb.html', departures: 'forms/departures.html', blame: 'forms/blame.html', chat: 'forms/chat.html',
+  // 第三轮：概念动画。带 --frame 时停在那一帧，不带时播放 hero 循环。
+  dial: 'forms/motion/dial.html',
   // 所有原型合在一页；截图只看首屏，iframe 里的报错也会冒到这里。
   all: 'all.html',
 };

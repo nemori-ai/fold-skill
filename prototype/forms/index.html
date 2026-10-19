@@ -13,6 +13,8 @@
   <h1>为这份状态的结构发明形式</h1>
   <p class="fg-lead">A/B/C/D 各自围绕状态本身发明了一种结构：空间、时间、流体、首页。第一轮试过把状态搬进现成载体（表盘、耳机、报纸、小票、聊天窗……），载体眼熟，结构却没有新东西，八个已撤下（现已恢复为可运行页面、未打磨，放在页尾）。留下的两周小倍数是唯一回答“注意力在两周里怎样移动”的形式；腕上一瞥是用户后来决定保留的，回答“有没有等我回应的事”。第二轮的五张图各自回答一种别处看不见的关系：同一件事的改写史、回应路径的开闭、谁在推动哪件事、份额从谁让给谁、每轮整理的组成。它们起初是单帧草图，现在都已做成完整版：可逐帧、悬停与固定、打开详情。这些形式都在真实数据上打磨过，打磨记录见概念卡开头。</p>
   <p class="fg-links"><a href="../all.html"><b>全部原型合在一页 →</b></a> · <a data-notes="CONCEPTS" href="CONCEPTS.md">概念卡与两轮结论</a> · <a data-notes="INSPIRATION" href="INSPIRATION.md">灵感来源</a> · <a href="respond.html">回应组件</a> · <a href="../index.html?variant=a&amp;frame=14">回到 A/B/C/D</a></p>
+  <h2 class="fg-section">第三轮：动画 <small>官网用的概念动画：读同一份回放，不另造数据；缩略图就是正在循环的页面</small></h2>
+  <div class="fg-grid" id="fg-motions"></div>
   <h2 class="fg-section">第二轮：复盘图 <small>先问它让人看见了哪一种别处看不见的关系；完整版，可逐帧</small></h2>
   <div class="fg-grid" id="fg-sketches"></div>
   <h2 class="fg-section">第一轮留下的形式</h2>
@@ -22,7 +24,7 @@
   <p class="fg-note" id="fg-note"></p>
 </main>
 <script type="module">
-  import { forms, withdrawn, sketches, notesHref } from './catalog.mjs';
+  import { forms, withdrawn, sketches, motions, notesHref } from './catalog.mjs';
   import { withDataset, keepDataset, datasetNotice } from '../data/select.mjs';
   import { scenario } from '../scenario.mjs';
   keepDataset();
@@ -31,16 +33,18 @@
   document.querySelectorAll('[data-notes]').forEach(a => { a.href = notesHref(a.dataset.notes); });
   const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   // Each card shows the live page at its default frame, scaled down; the whole card links to it.
-  const card = f => `<article class="fg-card">
-    <div class="fg-thumb fs-theme-${f.theme}"><iframe src="${go(`${f.id}.html?frame=${f.frame}&card=0`)}" title="${esc(f.name)}缩略" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></div>
-    <div class="fg-text"><header><b>${String(f.no).padStart(2, '0')}</b><h2><a class="fg-link" href="${go(`${f.id}.html?frame=${f.frame}`)}">${esc(f.name)}</a></h2></header>
+  const card = (f, href = `${f.id}.html?frame=${f.frame}`, thumb = `${href}&card=0`) => `<article class="fg-card">
+    <div class="fg-thumb fs-theme-${f.theme}"><iframe src="${go(thumb)}" title="${esc(f.name)}缩略" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></div>
+    <div class="fg-text"><header><b>${String(f.no).padStart(2, '0')}</b><h2><a class="fg-link" href="${go(href)}">${esc(f.name)}</a></h2></header>
     <p>${esc(f.tagline)}</p>
     <div class="fg-meta"><span>${esc(f.carrier)}</span><span>${esc(f.scene)}</span><span>${esc(f.usage)}</span></div>
     <pre>${esc(f.skeleton)}</pre>
     <div class="fg-channel">${esc(f.channel)}</div>
     <div class="fg-enter">进入 →</div></div></article>`;
-  document.getElementById('fg-grid').innerHTML = forms.map(card).join('');
-  document.getElementById('fg-withdrawn').innerHTML = withdrawn.map(card).join('');
+  document.getElementById('fg-grid').innerHTML = forms.map(f => card(f)).join('');
+  document.getElementById('fg-withdrawn').innerHTML = withdrawn.map(f => card(f)).join('');
+  // Round three: concept animations. With no frame the page plays its loop, so the thumbnail moves.
+  document.getElementById('fg-motions').innerHTML = motions.map(f => card(f, f.page, `${f.page}?card=0`)).join('');
   // Round-two pages started as single-frame sketches and are now full pages with frame navigation;
   // the thumbnail is the page itself at its default frame.
   document.getElementById('fg-sketches').innerHTML = sketches.map(f => `<article class="fg-card">

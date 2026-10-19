@@ -152,7 +152,24 @@ export const sketches = [
     color: '朱红 = 来自你本人' },
 ];
 
-export const formById = id => forms.find(form => form.id === id) || withdrawn.find(form => form.id === id);
+// Round three: concept animations for the site, each reading the same replay as every other form. Fields as in
+// `forms`, plus `page` (relative to forms/). Keep in step with CONCEPTS.md「第三轮：概念动画」.
+export const motions = [
+  {
+    id: 'dial', no: 2, name: '份额拨盘', frame: 26, theme: 'light', page: 'motion/dial.html',
+    tagline: '整份状态是一圈 64 格的刻度：每一轮成百条输入沿车道涌进来，只有十几件留在环上；一件变大，别的就得让；游标只停在要紧、等你回的那一件上。',
+    carrier: '官网首屏的概念动画，也能逐帧停下', scene: '第一次看 Fold 的人，20 秒', usage: '默认循环 20 秒三拍；空格连播全部轮次，←/→ 逐帧',
+    question: '64 份是怎样的硬约束？成百条进来之后环上剩下什么、谁让了位、哪一件要我回？',
+    channel: '角度 → 份额（64 刻度，硬止刻在 0/64）；车道上的墨色记号 → 本轮真实输入；黑游标 → 要紧的问题；朱红 → 只给等你回的问题。',
+    skeleton: '左：64 格份额环，环心一个大字 64，环外一圈旋转的字形\n右：五条车道向环汇入，墨色记号是真实输入，灰色是质感\n上：旁白卡与计数；下：五块小仪表',
+    discard: '摘要、来源、子层与作答；1–3 份的扇区不标名字；“谁让给谁”的配对（回执里没有）。',
+    diff: '其他形式画此刻或复盘；这里把一轮整理本身演出来：输入涌入、归并、份额落定、游标落下。概念层约八成、信息层约两成，信息只在节拍上动。',
+    palette: '纸白、墨黑与灰阶；朱红只给等你回的问题。',
+    inspiration: '视频 B（@francescoinweb3 的工作室仪表）：0.4 秒的第一个动作、一帧硬切、亮的极少',
+  },
+];
+
+export const formById = id => forms.find(form => form.id === id) || withdrawn.find(form => form.id === id) || motions.find(form => form.id === id);
 
 // The local preview serves Markdown as files; the documentation site publishes it as pages.
 export const notesHref = name => (location.port === '4173' || location.protocol === 'file:' ? `${name}.md` : `/prototype-notes/forms/${name}`);

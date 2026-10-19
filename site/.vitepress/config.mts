@@ -66,7 +66,7 @@ export default defineConfig({
       { text: '概览', link: '/overview' },
       { text: '小册子', link: '/docs/brief/index.html', target: '_self' },
       { text: '产品文档', link: '/docs/product', activeMatch: '^/docs/' },
-      // 原型体验：铺开全部 21 个原型的画册面板，点卡片在本页弹框里打开（theme/PrototypeMenu.vue、PrototypeLayer.vue）。
+      // 原型体验：铺开全部原型的画册面板，点卡片在本页弹框里打开（theme/PrototypeMenu.vue、PrototypeLayer.vue）。
       { component: 'PrototypeMenu' },
       { text: '原型说明', link: '/prototype-notes/README', activeMatch: '^/prototype-notes/' },
     ],
