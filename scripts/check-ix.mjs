@@ -90,6 +90,17 @@ const PAGES = {
     cut: `document.querySelector('.lv-date').textContent.startsWith('这一件') && document.querySelector('.lv-side h2').textContent.startsWith('这一件')`,
     playReady: `new Promise(r => { const go = () => (foldTiming.player.index >= 5 ? r(1) : setTimeout(go, 50)); go(); })`,
   },
+  yield: {
+    hook: 'foldYield', held: 'forms/sketches/yield.html?frame=23', play: 'forms/sketches/yield.html?frame=10',
+    prepare: null, index: 'foldSketch.index', step: 24,
+    // The outermost named block of the round (clear space past its outer end), 9 px past that end along the row.
+    pick: 'foldYield.pick()',
+    near: name => `foldYield.nearOf(${JSON.stringify(name)}, 9)`,
+    blank: { x: 700, y: 805 }, tabFrom: '[data-y="unfold"]',
+    cut: `document.querySelector('.st-title').textContent.startsWith('这一件') && document.querySelector('.st-side-kicker').textContent.includes('这一件')`,
+    // Playing on (half-speed posting, 1.6 s a round) from f10: hover once a round has settled.
+    playReady: `(foldYield.play(), new Promise(r => { const go = () => (foldSketch.index >= 12 && foldYield.settled() ? r(1) : setTimeout(go, 50)); go(); }))`,
+  },
 };
 
 function args(argv) {
