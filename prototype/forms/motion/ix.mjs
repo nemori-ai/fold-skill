@@ -46,6 +46,9 @@
 //   keysIn           隐藏按钮组放进哪个元素（作为它的第一个子元素），缺省放在 stage 末尾；决定 Tab 先到哪里
 //   label            隐藏按钮组的 aria-label；pending 是 seen.inputs 为 false 时“本轮进了它”一节的说明
 //   trendH           份额小条图的高（px），缺省 32
+//   peekHTML(f, o), detailHTML(f, o)  卡里写什么：缺省是事项卡（本文件的 peekHTML / detailHTML，读 itemFacts）；
+//                    宿主的“一件”不是事项（批次记谱的一行、合计行）时自己给，参数与缺省的相同。详情里放一个
+//                    data-x="close" 的按钮就能收回；facts 至少要有 i 与 short（卡的缓存键与 aria-label）
 //
 // ---------- 宿主每帧做什么 ----------
 //   const X = ix.frame();     // {focus, dim, pop, popId, line, card, detail, peek, peekId, keyFocus}
@@ -391,7 +394,7 @@ export function createIx(host) {
       S.peekKey = key;
       const f = H.facts(id);
       peekEl.dataset.id = id;
-      peekEl.innerHTML = peekHTML(f, { seen, asks: H.asks(f, seen) });
+      peekEl.innerHTML = (H.peekHTML || peekHTML)(f, { seen, asks: H.asks(f, seen) });
       peekEl.hidden = false;
       const w = peekEl.offsetWidth, h = peekEl.offsetHeight, p = peekPlace(id, w, h);
       S.peekBox = { x0: p.x, y0: p.y, x1: p.x + w, y1: p.y + h, from: p.from };
@@ -412,7 +415,7 @@ export function createIx(host) {
     const key = `${S.view.i}:${id}`;
     if (S.detailKey !== key) {
       S.detailKey = key; S.place = null;
-      detailEl.innerHTML = detailHTML(S.view, { seen: S.seen, asks: H.asks(S.view, S.seen), last: H.last, href: H.answerHref(S.view), trendH: H.trendH, pending: H.pending });
+      detailEl.innerHTML = (H.detailHTML || detailHTML)(S.view, { seen: S.seen, asks: H.asks(S.view, S.seen), last: H.last, href: H.answerHref(S.view), trendH: H.trendH, pending: H.pending });
       detailEl.setAttribute('aria-label', `${S.view.short} · 第 ${S.view.i} 轮`);
       detailEl.scrollTop = 0;
     }

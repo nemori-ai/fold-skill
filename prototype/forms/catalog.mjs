@@ -132,7 +132,8 @@ export const withdrawn = [
   },
 ];
 
-// Round-two pages: each drawn for a relation no earlier form shows; `frame` is the story default.
+// Round-two pages: each drawn for a relation no earlier form shows; `frame` is the story default. `last` opens every
+// dataset on its last frame (the dataset's `sketchFrames` is not used); `usage` replaces the gallery's “完整版 · 可逐帧”.
 // Keep in step with the round-two concept cards in CONCEPTS.md.
 export const sketches = [
   { id: 'lineage', no: 1, name: '身份线', frame: 'f34',
@@ -147,8 +148,9 @@ export const sketches = [
   { id: 'yield', no: 4, name: '让位图', frame: 'f15',
     relation: '每一轮份额从谁那里来、到谁那里去：一件事变大，必有别的事让位或动用留白，两边永远相等。',
     color: '颜色 = 事项身份' },
-  { id: 'notation', no: 5, name: '批次记谱', frame: 'f34',
+  { id: 'notation', no: 5, name: '批次记谱', frame: 'f34', last: true,
     relation: '每一轮整理由什么组成：收到几条、各怎么判，对哪几件事做了什么；两周里整理的疏密，和你插话的时刻。',
+    usage: '直接打开先演 12 秒：读得越多丢得越多，动的却不跟着多；悬停看概要，点击展开',
     color: '朱红 = 来自你本人' },
 ];
 
