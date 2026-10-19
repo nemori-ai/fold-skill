@@ -167,3 +167,6 @@ composite 讲完约 7.5 秒，停在 f23，阅读区停在猫看病，回执可�
 - 60 fps（`--enable-gpu`，用 rAF 间隔量）：换轮 f21→f22、f22→f23、f06→f07 各约 1.7 秒、103–104 帧，p95 16.8 ms，没有一帧超过 25 ms；每帧绘制平均 1.6–2.1 ms，最差 7.7 ms。作答、撤回各三次，没有一帧超过 25 ms（一次点击的同步开销约 13 ms）。悬停到展开 92 帧、讲一遍全程 542 帧，都没有超过 25 ms 的帧。
 - 小事展开后成员可悬停、可展开；进入子层（story 的发布方案）后同样可用，Esc 先收卡、第二下才回上层。390×844 触屏：第一下悬停、第二下展开，卡盖在图上。
 - `node scripts/shoot-forms.mjs --only b,all --gpu --check all-sync`（两份数据）：无报错，合页逐节同步通过。
+- `make check` 通过；`npm run site:build` 通过；`site/previews/b.webp` 按 [development.md](../../../docs/development.md) 的参数（f26、`is-embedded`）重截。
+
+**没做的。** 讲一遍替你按下的那一下记在本页内存里（与你自己按的一样，可撤回），重演时先撤掉它；你自己答过的不动。概念层没有为窄屏另做，390 px 宽时照样画，灰点更密。Safari 没有实际打开看过。
