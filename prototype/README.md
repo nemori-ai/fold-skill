@@ -46,7 +46,7 @@ make prototype
 | --- | --- | --- | --- | --- |
 | 原版树图 | 在电脑前掌握两周局面，顺手处理工作评审 | approve（格子里直接批准或要求修改）；其余在详情里作答 | [index.html?frame=26](./index.html?frame=26) | [spatial.md](forms/polish/spatial.md) |
 | A 空间排布 | 桌前，生活急事要当场二选一 | choose、稍后；也能批准、定时间、回一句 | [?variant=a&frame=26](./index.html?variant=a&frame=26) | [spatial.md](forms/polish/spatial.md) |
-| B 时间展开 | 期限落在此刻之后的哪里，谁先到 | schedule、choose，任何事项都可稍后提醒 | [?variant=b&frame=26](./index.html?variant=b&frame=26) | [temporal.md](forms/polish/temporal.md) |
+| B 时间展开 | 期限落在此刻之后的哪里，谁先到；换轮时此刻之后的一切朝此刻线流，最近的期限撞上来，答掉它，最近的期限才往后退；直接打开讲一遍约 7.5 秒 | schedule、choose，任何事项都可稍后提醒；回应面板原地收成回执，下一轮读到了才让出份额；悬停看概要，点击展开详情，在右栏作答 | [?variant=b&frame=26](./index.html?variant=b&frame=26) | [temporal.md](forms/polish/temporal.md)、[b-motion.md](forms/polish/b-motion.md) |
 | C 流动形态 | 可以推后的事沉下去，到点浮起 | defer；其余用回应组件 | [?variant=c&frame=25](./index.html?variant=c&frame=25) | [temporal.md](forms/polish/temporal.md) |
 | D 手机首页 | 离开半天回来，先答最急的 3 件；作答时卡原地收成回执，下一轮整理先确认回执、再带着让出的份额沉到进行中 | approve、choose 一键；confirm、reply、schedule、defer；轻点卡从卡长出详情，长按看概要，左滑知道了 | [?variant=d&frame=26](./index.html?variant=d&frame=26) | [home.md](forms/polish/home.md)、[home-motion.md](forms/polish/home-motion.md) |
 | 腕上一瞥 | 抬腕两秒：要不要现在掏手机；换轮时刻度重分、新要你回的闪一下、数字落定 | confirm 与两项的 choose；其余转到手机；悬停刻度或事项名看概要，点击展开详情 | [forms/watch.html](forms/watch.html?frame=26) | [home.md](forms/polish/home.md)、[watch-motion.md](forms/polish/watch-motion.md) |

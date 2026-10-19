@@ -214,11 +214,15 @@ export function createResponder({ store, snapshot, cls = 't', onChange = () => {
      * Prompt, controls or receipt for an item; '' when nothing is registered and nothing was answered.
      *   inlineDefer  a defer question shows its moments at once instead of behind “推到…”
      *   allowDefer   an item without a question still offers the dataset's default “稍后提醒”
+     *   previous     (opt-in) when the question on screen is a newer one than the record answered, show its controls
+     *                under one line about the earlier answer instead of the old receipt alone
      */
-    html(item, rawAsk, { inlineDefer = false, allowDefer = false } = {}) {
+    html(item, rawAsk, { inlineDefer = false, allowDefer = false, previous = false } = {}) {
       const record = latestRecord(store, item.id, cursor());
       const ask = rawAsk ? normalizeAsk(rawAsk) : null;
-      if (record) return receipt(record, ask, item);
+      const stale = previous && record && ask && record.ask !== ask.id && !(record.meaning === 'snooze' && record.until > cursor());
+      if (record && !stale) return receipt(record, ask, item);
+      const earlier = stale ? `<p class="${cls}-rs-earlier"><span aria-hidden="true">✓</span>你答过上一版：${esc(recordWords(record))}（${responseStatus(record, frames, cursor()).status === 'acknowledged' ? '已收到' : '已保存'}）</p>` : '';
       const id = esc(item.id), open = panel && panel.key?.split(':')[0] === item.id;
       if (!ask) {
         if (!allowDefer) return '';
@@ -228,7 +232,7 @@ export function createResponder({ store, snapshot, cls = 't', onChange = () => {
       if (ask.expects === 'defer' && inlineDefer) {
         return `<div class="${cls}-rs is-defer" data-rs-item="${id}"><p class="${cls}-rs-prompt">${esc(ask.prompt)}</p>${due}<div class="${cls}-rs-panel is-inline">${deferHTML({ target: item.id, now: cursor(), classes })}</div></div>`;
       }
-      return `<div class="${cls}-rs" data-rs-item="${id}"><p class="${cls}-rs-prompt">${esc(ask.prompt)}</p>${due}${responseHTML(ask, { target: item.id, classes, drafts })}${open ? `<div class="${cls}-rs-panel">${panelHTML(ask, item)}</div>` : ''}</div>`;
+      return `<div class="${cls}-rs" data-rs-item="${id}">${earlier}<p class="${cls}-rs-prompt">${esc(ask.prompt)}</p>${due}${responseHTML(ask, { target: item.id, classes, drafts })}${open ? `<div class="${cls}-rs-panel">${panelHTML(ask, item)}</div>` : ''}</div>`;
     },
     /** Delegated handlers on the reader. getAsk(id) → the raw ask; getItem(id) → the item version. */
     bind(root, { getAsk, getItemVersion, render }) {

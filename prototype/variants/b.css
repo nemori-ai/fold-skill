@@ -200,12 +200,13 @@
 .variant-b .b-labels.is-dense .b-label .b-label-main > small, .variant-b .b-label.is-dense .b-label-main > small { margin: 0; flex-shrink: 0; }
 .variant-b .b-current-empty { position: absolute; left: 120px; top: 42%; color: var(--b-muted); font-size: 13px; }
 
-/* Shared emphasis: hover, focus and selection follow one item everywhere. */
-.variant-b .b-chart-layout.has-emphasis .b-flow { opacity: calc(var(--o, 1) * .22); }
+/* Shared emphasis: hover, focus and selection follow one item everywhere. Since the third round the rest goes to
+   seven tenths, as under ix's hover and detail, so the hero's bracket and the other deadlines stay readable. */
+.variant-b .b-chart-layout.has-emphasis .b-flow { opacity: calc(var(--o, 1) * .7); }
 .variant-b .b-chart-layout.has-emphasis .b-flow.is-emphasized { opacity: var(--o, 1); fill-opacity: .9; stroke: var(--b-ink); stroke-width: 1px; }
 .variant-b .b-chart-layout.has-emphasis .b-flow.is-group.is-emphasized { stroke: none; fill-opacity: 1; }
-.variant-b .b-chart-layout.has-emphasis :is(.b-bar, .b-lane, .b-tick-mark, .b-leader, .b-bar-number, .b-loop, .b-merge-link):not(.is-emphasized) { opacity: calc(var(--o, 1) * .3); }
-.variant-b .b-chart-layout.has-emphasis .b-label:not(.is-emphasized) { opacity: calc(var(--o, 1) * .45); }
+.variant-b .b-chart-layout.has-emphasis :is(.b-bar, .b-lane, .b-tick-mark, .b-leader, .b-bar-number, .b-loop, .b-merge-link):not(.is-emphasized) { opacity: calc(var(--o, 1) * .7); }
+.variant-b .b-chart-layout.has-emphasis .b-label:not(.is-emphasized) { opacity: calc(var(--o, 1) * .7); }
 .variant-b .b-label.is-emphasized .b-label-main { background: var(--b-hover); }
 .variant-b .b-label .b-label-main[aria-pressed="true"] { background: var(--b-press); }
 
@@ -464,4 +465,86 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .variant-b *, .variant-b *::before, .variant-b *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+}
+
+/* ---------- 第三轮（forms/polish/b-motion.md）：英雄数字、走、作答、交互 ---------- */
+/* The shared cards (ix.mjs) on B's paper: only the --ix-* variables; ix.css holds the structure. */
+.variant-b {
+  --b-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --b-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ix-bg: var(--b-surface); --ix-fg: var(--b-ink); --ix-fg-2: var(--b-muted); --ix-fg-3: var(--b-faint);
+  --ix-frame: var(--b-ink); --ix-rule: var(--b-line); --ix-leader: var(--b-ink); --ix-mono: var(--b-sans);
+  --ix-ask: color-mix(in oklch, var(--b-ask) 55%, var(--b-paper)); --ix-ask-urgent: var(--b-ask); --ix-link-hover: var(--b-ask);
+  --ix-scrollbar: var(--b-line) transparent; --ix-z-peek: 6; --ix-z-detail: 7; --ix-z-leader: 5;
+  --ix-peek-pad: 8px 12px 9px; --ix-mark: 7px; --ix-mark-gap: 7px; --ix-d-mark-gap: 7px; --ix-strong: 620;
+  --ix-font: 13px/1.5 var(--b-sans); --ix-k-font: 11px/1.4 var(--b-sans); --ix-q-font: 600 14.5px/1.35 var(--b-sans); --ix-q-margin: 2px 0 3px;
+  --ix-d-font: 12px/1.5 var(--b-sans); --ix-ask-font: 560 12.5px/1.4 var(--b-sans); --ix-ask-small-font: 400 11px/1.4 var(--b-sans);
+  --ix-t-font: 600 15px/1.35 var(--b-sans); --ix-sum-font: 12.5px/1.5 var(--b-sans); --ix-sum-color: var(--b-ink);
+  --ix-h-font: 600 10.5px/1.5 var(--b-sans); --ix-h-b-size: 11px; --ix-h-b-color: var(--b-ink);
+  --ix-axis-font: 10px var(--b-sans); --ix-list-font: 12px/1.45 var(--b-sans); --ix-meta-font: 10.5px var(--b-sans);
+  --ix-kid-b-font: 600 11px var(--b-sans); --ix-none-size: 11.5px; --ix-none-lh: 1.5; --ix-none-lh-list: 1.45;
+  --ix-dask-p-font: 600 13px/1.4 var(--b-sans); --ix-dask-small-font: 11px/1.45 var(--b-sans); --ix-dask-a-font: 600 11.5px var(--b-sans);
+  --ix-trend-h: 30px; --ix-bar: color-mix(in oklch, var(--b-ink) 30%, transparent); --ix-bar-later: color-mix(in oklch, var(--b-ink) 9%, transparent); --ix-bar-off: color-mix(in oklch, var(--b-ink) 16%, transparent);
+}
+.variant-b .b-chart-layout { position: relative; }
+/* ix.css arrives after the first layout: keep its parts out of the flex row from the start. */
+.variant-b .b-chart-layout > :is(.ix-leaders, .ix-sr, .ix-peek, .ix-detail) { position: absolute; left: 0; top: 0; }
+.variant-b .b-chart-layout > .ix-leaders { width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.variant-b .b-chart-layout > .ix-sr { width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.variant-b .ix-peek, .variant-b .ix-detail { border-radius: 6px; box-shadow: 0 10px 28px -12px oklch(0.3 0.02 150 / .28); font-variant-numeric: tabular-nums; }
+.variant-b .ix-d-k button { padding: 0 2px; border: 0; border-radius: 0; background: none; line-height: 1; }
+.variant-b .ix-d-k button:hover { background: none; }
+.variant-b .b-ix-rec i { background: var(--b-ink); }
+/* Drawn marks take focus only from a click (tabindex -1); the keyboard goes through ix's proxies and the labels. */
+.variant-b :is(.b-bar, .b-lane, .b-tick-mark, .b-loop, .b-merge-link):focus { outline: none; }
+.variant-b .b-ix-here { margin-top: 3px; color: var(--b-ask) !important; font-weight: 560; }
+/* Hovering or opening an item (ix) keeps it and takes the rest to seven tenths, eased by --b-ixdim. */
+.variant-b .b-chart-layout.has-ix :is(.b-flow, .b-bar, .b-lane, .b-tick-mark, .b-leader, .b-bar-number, .b-loop, .b-merge-link, .b-label):not(.is-emphasized) { opacity: calc(var(--o, 1) * var(--b-ixdim, .7)); }
+.variant-b .b-chart-layout.has-ix .b-ask-notch.is-on:not([data-b-item].is-emphasized) { opacity: calc(var(--o, 1) * var(--b-ixdim, .7)); }
+.variant-b .b-chart-layout.has-ix .b-label.is-emphasized .b-label-main { background: var(--b-hover); }
+
+/* The hero: the nearest deadline still waiting for you, in hours; on the chart, the ink bracket from now to it. */
+.variant-b .b-present-heading { min-width: 0; }
+.variant-b .b-hero { flex: 1; min-width: 0; display: inline-flex; align-items: baseline; gap: 5px; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--b-muted); font-size: 11px; }
+.variant-b .b-hero-k { flex: none; }
+.variant-b .b-hero-n { flex: none; font-size: 26px; font-weight: 650; line-height: 1; color: var(--b-ink); letter-spacing: -.3px; }
+.variant-b .b-hero-u { flex: none; font-size: 12px; color: var(--b-ink); }
+.variant-b .b-hero-q { min-width: 0; overflow: hidden; text-overflow: ellipsis; margin-left: 4px; }
+.variant-b .b-hero.is-none .b-hero-k { color: var(--b-faint); }
+.variant-b .b-hero-mark { fill: none; stroke: var(--b-ink); stroke-width: 1.3; stroke-linecap: butt; pointer-events: none; }
+/* The concept layer: the walk's time grain and one grey dot per input (canvas, never hit). */
+.variant-b .b-concept { position: absolute; left: 0; top: 0; pointer-events: none; }
+/* A deadline that the walk brought to now, one you answered here, a question new this round, a deferral come back. */
+.variant-b .b-tick-mark.is-answered .b-tick-head { fill: var(--b-surface); stroke: var(--b-ask); stroke-width: 1.4; }
+.variant-b .b-tick-mark.is-answered .b-tick-line { stroke-opacity: .45; }
+.variant-b .b-tick-mark.is-answered .b-tick-t2 { fill: var(--b-muted); font-weight: 400; }
+.variant-b .b-label.is-new-ask .b-label-main { animation: b-ask-flash 1.6s cubic-bezier(.215,.61,.355,1) 1; }
+.variant-b .b-label.is-back .b-label-main { animation: b-back-flash 1.6s cubic-bezier(.215,.61,.355,1) 1; }
+@keyframes b-ask-flash { 0%, 55% { box-shadow: inset 0 0 0 1.5px var(--b-ask); } 100% { box-shadow: inset 0 0 0 1.5px transparent; } }
+@keyframes b-back-flash { 0%, 55% { box-shadow: inset 0 0 0 1.5px var(--b-ink); } 100% { box-shadow: inset 0 0 0 1.5px transparent; } }
+.variant-b .b-upcoming li.is-answered time { color: var(--b-muted); font-weight: 400; }
+
+/* 作答：the response box turns into its receipt in place (the box changes height under the old and new contents). */
+.variant-b .b-detail-respond.is-morphing { position: relative; background: transparent !important; border-color: transparent !important; }
+.variant-b .b-detail-respond.is-morphing > :not(.b-respond-bg) { position: relative; z-index: 1; }
+.variant-b .b-detail-respond.is-morphing .b-rs-receipt { animation: none; }
+.variant-b .b-respond-bg { position: absolute !important; inset: 0; z-index: 0 !important; transform-origin: 50% 0; pointer-events: none; }
+.variant-b .b-respond-ghost { position: absolute !important; left: 13px; right: 13px; pointer-events: none; }
+.variant-b .b-rs-receipt.is-acking .b-rs-check { animation: b-ack-fill 300ms cubic-bezier(.215,.61,.355,1); }
+@keyframes b-ack-fill { from { background: transparent; color: var(--b-ink); } }
+.variant-b .b-rs-earlier { display: flex; gap: 6px; margin-bottom: 6px; font-size: 11.5px; color: var(--b-muted); line-height: 1.5; }
+
+/* 讲一遍 */
+.variant-b .b-tell { flex: none; font-size: 12px; padding: 4px 9px; color: var(--b-muted); border-color: var(--b-line); }
+.variant-b .b-tell-note { flex: none; font-size: 11px; color: var(--b-muted); white-space: nowrap; }
+@media (max-width: 1300px) {
+  .variant-b .b-hero-q { display: none; }
+}
+@media (max-width: 760px) {
+  .variant-b .b-hero-k, .variant-b .b-tell-note { display: none; }
+  .variant-b .b-hero-n { font-size: 17px; }
+  .variant-b .b-tell { padding-inline: 6px; min-height: 36px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .variant-b .b-concept { display: none; }
 }
