@@ -4,11 +4,14 @@
 // frame(scene) 每帧调用一次，scene 里是 CSS 像素坐标：
 //   points: Float32Array，每点 5 个数 [x, y, size, alpha, ring]；pointCount
 //   lines:  Float32Array，每个顶点 3 个数 [x, y, alpha]，两两成一段；lineCount（顶点数）
-//   duck（整体亮度乘数）、flash（闪光增益）、masks（[x, y, w, h] 数组，信息层文字与面板所在，概念层在这里让开）
+//   duck（整体亮度乘数）、flash（闪光增益）、masks（[x, y, w, h, feather] 数组，信息层文字与面板所在：框内为 0，
+//   向外 feather 像素内线性回到原亮度，概念层在这里让开；最多 12 个）
 //   dt（距上一帧的秒数，决定余辉衰减）、still（为真时不留余辉：减少动态效果或定格）
 
 const BG = [9 / 255, 10 / 255, 11 / 255];
 const CAP = 0.62; // 概念层最亮处：低于信息层的字与线（约 0.88）
+const TAU = 0.0375; // 余辉的时间常数（秒）：尾迹约 0.1 秒内淡到一成以下
+const MAX_MASKS = 12;
 
 export function createField(canvas) {
   let gl = null;
@@ -55,8 +58,9 @@ function glField(canvas, gl) {
     out vec4 o;
     void main() {
       float d = length(gl_PointCoord - 0.5) * 2.0;
-      float core = v_ring > 0.5 ? smoothstep(0.16, 0.0, abs(d - 0.34)) : smoothstep(0.34, 0.0, d);
-      float halo = exp(-d * d * 7.0) * 0.32;
+      // ring 0: a dot with a soft halo; 1: a ring (your own inputs); 2: halo only, for the few brightest points.
+      float core = v_ring > 1.5 ? 0.0 : v_ring > 0.5 ? smoothstep(0.16, 0.0, abs(d - 0.34)) : smoothstep(0.34, 0.0, d);
+      float halo = v_ring > 1.5 ? exp(-d * d * 4.0) * 0.6 : exp(-d * d * 7.0) * 0.32;
       float a = v_alpha * (core + halo) * step(d, 1.0);
       o = vec4(vec3(0.86, 0.88, 0.9) * a, 1.0);
     }`);
@@ -80,18 +84,18 @@ function glField(canvas, gl) {
   const out = program(quad, `#version 300 es
     precision mediump float;
     in vec2 v_uv; uniform sampler2D u_tex; uniform vec2 u_px; uniform float u_duck; uniform float u_gain;
-    uniform vec4 u_masks[6]; uniform int u_maskCount; uniform float u_feather; uniform vec3 u_bg; uniform float u_cap;
+    uniform vec4 u_masks[12]; uniform float u_feathers[12]; uniform int u_maskCount; uniform vec3 u_bg; uniform float u_cap;
     out vec4 o;
     void main() {
       vec3 c = texture(u_tex, v_uv).rgb * u_gain;
       vec3 mapped = u_cap * (1.0 - exp(-c * 1.5));
       vec2 p = vec2(v_uv.x, 1.0 - v_uv.y) * u_px;
       float m = 1.0;
-      for (int i = 0; i < 6; i++) {
+      for (int i = 0; i < 12; i++) {
         if (i >= u_maskCount) break;
         vec4 r = u_masks[i];
         float d = length(max(max(r.xy - p, p - (r.xy + r.zw)), 0.0));
-        m *= smoothstep(0.0, u_feather, d);
+        m *= clamp(d / u_feathers[i], 0.0, 1.0);
       }
       o = vec4(u_bg + mapped * m * u_duck, 1.0);
     }`);
@@ -138,6 +142,7 @@ function glField(canvas, gl) {
   const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
   return {
     kind: 'webgl2',
+    tau: TAU,
     device: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
     resize(w, h, ratio) {
       width = w; height = h; dpr = ratio;
@@ -162,7 +167,7 @@ function glField(canvas, gl) {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, prev.tex);
         gl.uniform1i(fade.u.u_prev, 0);
-        gl.uniform1f(fade.u.u_keep, Math.exp(-Math.min(0.1, scene.dt) / 0.075));
+        gl.uniform1f(fade.u.u_keep, Math.exp(-Math.min(0.1, scene.dt) / TAU));
         gl.uniform1f(fade.u.u_sub, half ? 0.0008 : 0.6 / 255);
         gl.bindVertexArray(emptyVAO);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -199,12 +204,12 @@ function glField(canvas, gl) {
       gl.uniform1f(out.u.u_gain, 1 + scene.flash);
       gl.uniform3f(out.u.u_bg, ...BG);
       gl.uniform1f(out.u.u_cap, CAP);
-      const masks = (scene.masks || []).slice(0, 6);
-      const flat = new Float32Array(24);
-      masks.forEach((m, i) => flat.set(m.map(v => v * dpr), i * 4));
+      const masks = (scene.masks || []).slice(0, MAX_MASKS);
+      const flat = new Float32Array(MAX_MASKS * 4), feathers = new Float32Array(MAX_MASKS).fill(1);
+      masks.forEach((m, i) => { flat.set(m.slice(0, 4).map(v => v * dpr), i * 4); feathers[i] = Math.max(1, (m[4] ?? 22) * dpr); });
       gl.uniform4fv(out.u.u_masks, flat);
+      gl.uniform1fv(out.u.u_feathers, feathers);
       gl.uniform1i(out.u.u_maskCount, masks.length);
-      gl.uniform1f(out.u.u_feather, 22 * dpr);
       gl.bindVertexArray(emptyVAO);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       current = 1 - current;
@@ -249,7 +254,7 @@ function flatField(canvas) {
       ctx.fillStyle = rgb;
       for (let i = 0; i < scene.pointCount; i += 1) {
         const a = scene.points[i * 5 + 3];
-        if (a < 0.01) continue;
+        if (a < 0.01 || scene.points[i * 5 + 4] > 1.5) continue;   // halo-only points need the WebGL sprite
         const s = scene.points[i * 5 + 2];
         ctx.globalAlpha = Math.min(1, toneA(a));
         ctx.fillRect(scene.points[i * 5] - s / 2, scene.points[i * 5 + 1] - s / 2, s, s);

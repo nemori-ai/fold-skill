@@ -125,7 +125,7 @@ const rounds = frames.map((frame, i) => {
   };
 });
 const LAST = frames.length - 1;
-const TOTAL = cumulative, ASKED = freshSoFar;
+const TOTAL = cumulative, ASKED = freshSoFar, ANSWERED = answeredSoFar;
 
 // ---------- page ----------
 const form = formById('pulse');
@@ -192,23 +192,25 @@ function measure() {
   const W = stage.clientWidth, H = stage.clientHeight;
   const pad = clamp(W * 0.022, 18, 30);
   const panelH = 126, panelY = H - panelH - 14;
-  const rulerY = panelY - 44;
-  const rulerW = Math.min(64 * 7, W * 0.42), cell = rulerW / 64, rulerX = W / 2 - rulerW / 2;
+  const rootY = panelY - 40;
   const heroSize = clamp(H / 6.2, 60, 140);
   stage.style.setProperty('--hero', `${heroSize.toFixed(1)}px`);
   stage.style.setProperty('--pad', `${pad.toFixed(1)}px`);
   stage.style.setProperty('--panel-h', `${panelH}px`);
-  const origin = { x: W / 2, y: rulerY };
-  const fan = (158 * Math.PI) / 180;
-  // Tips stay below the hero block and leave room for their names at the sides.
+  const origin = { x: W / 2, y: rootY };
+  const fan = (150 * Math.PI) / 180;
+  // The root is an arc of 64 cells; the tree is a symmetric fan over it that spans the width and reaches about
+  // seven tenths of the picture's height, staying clear of the hero block.
+  const r0 = clamp(Math.min(W * 0.06, (rootY - pad) * 0.18), 52, 92);
   const heroBottom = pad + 52 + heroSize + 24;
-  const Rhi = Math.max(80, Math.min(rulerY - heroBottom, (W / 2 - 130) / Math.sin(fan / 2))), Rlo = Rhi * 0.36;
+  const top = Math.max(H * 0.3, heroBottom + 26);
+  const A = Math.max(r0 * 2, W / 2 - clamp(W * 0.1, 96, 150)), B = Math.max(r0 * 1.8, rootY - top);
   const corner = Math.max(Math.hypot(origin.x, origin.y), Math.hypot(W - origin.x, origin.y));
   G = {
-    W, H, pad, panelY, panelH, rulerY, rulerW, rulerX, cell, origin, Rhi, Rlo, fan,
-    Rmax: corner + 30, Rmin: 60,
-    cloud: { x0: pad, x1: W - pad, y0: pad + 4, y1: rulerY - 124 },
-    sediment: { y0: rulerY - 18, y1: panelY - 8 },
+    W, H, pad, panelY, panelH, rootY, origin, fan, r0, A, B,
+    Rmax: corner + 30, Rmin: r0 + 14,
+    cloud: { x0: pad, x1: W - pad, y0: pad + 4, y1: rootY - r0 - 50 },
+    sediment: { y0: rootY - 30, y1: rootY - 8, gap: r0 + 44 },
     key: `${W}x${H}`,
   };
   const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -222,12 +224,26 @@ function measure() {
   buildBackdrop();
   G.masks = null;
 }
+// Cell c of the 64 (fractional c allowed) sits at this angle on the root arc; 0 is straight up.
+const cellAngle = c => -G.fan / 2 + G.fan * (c / 64);
+const onRoot = (phi, extra = 0) => ({ x: G.origin.x + Math.sin(phi) * (G.r0 + extra), y: G.origin.y - Math.cos(phi) * (G.r0 + extra) });
+const onFan = (phi, rho) => ({ x: G.origin.x + Math.sin(phi) * G.A * rho, y: G.origin.y - Math.cos(phi) * G.B * rho });
 // The information layer's text and panels, where the concept layer steps aside.
+// The concept layer goes to 0 inside each line of text and comes back linearly over 40 px around it (tried against
+// letting particles pass under outlined words: the fade keeps the small lines legible). Panels keep a box mask.
 function masks() {
   const s = stage.getBoundingClientRect();
-  const rect = node => { const r = node.getBoundingClientRect(); return [r.left - s.left, r.top - s.top, r.width, r.height]; };
-  const list = [rect(el.top), rect(el.hero), rect(el.count), rect(el.panels)];
-  return list.filter(r => r[2] > 0 && r[3] > 0);
+  const box = (r, feather) => [r.left - s.left, r.top - s.top, r.width, r.height, feather];
+  const text = node => {
+    if (!node || !node.textContent.trim()) return null;
+    const range = document.createRange();
+    range.selectNodeContents(node);
+    const r = range.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 ? box(r, 40) : null;
+  };
+  const list = [box(el.panels.getBoundingClientRect(), 18)];
+  for (const node of [el.signal, el.say, el.heroLabel, el.n, el.unit, el.moved, el.asked, el.count]) list.push(text(node));
+  return list.filter(r => r && r[2] > 0 && r[3] > 0);
 }
 
 // ---------- the tree at a moment ----------
@@ -268,31 +284,37 @@ function treeAt(r, t, times) {
   return place(list);
 }
 function place(list) {
-  const total = list.reduce((s, b) => s + b.presence, 0) || 1;
   // Mid-tween, growth and shrinkage overlap; the 64 cells never overflow, they are shared out proportionally.
-  const shares = list.reduce((s, b) => s + Math.max(0, b.share), 0);
+  const shares = list.reduce((sum, b) => sum + Math.max(0, b.share), 0);
   const fit = shares > 64 ? 64 / shares : 1;
-  let cum = 0, cells = 0;
+  // Items alternate left and right by first appearance; on each side the oldest sit nearest the middle. Each takes
+  // a wedge of the 64 cells as wide as its share, and the two sides meet at the middle unless one side needs more.
+  const side = b => (order.get(b.id) ?? 0) % 2;
+  const left = list.filter(b => side(b) === 0).sort((a, b) => byOrder(b.id, a.id));
+  const right = list.filter(b => side(b) === 1).sort((a, b) => byOrder(a.id, b.id));
+  const width = bs => bs.reduce((sum, b) => sum + Math.max(0, b.share) * fit, 0);
+  const L = width(left), R = width(right);
+  const start = clamp(32, L, 64 - R) - L;
+  const ordered = [...left, ...right];
   const map = new Map();
-  for (const b of list) {
-    const k = (cum + b.presence / 2) / total;
-    b.angle = list.length === 1 ? 0 : -G.fan / 2 + G.fan * k;
-    b.c0 = cells; b.c1 = cells + Math.max(0, b.share) * fit;
-    cum += b.presence; cells = b.c1;
-    const R = (G.Rlo + (G.Rhi - G.Rlo) * Math.sqrt(Math.max(0, b.share) / 24)) * b.length;
-    b.base = { x: G.rulerX + ((b.c0 + b.c1) / 2) * G.cell, y: G.rulerY - 5 };
-    b.tip = { x: G.origin.x + Math.sin(b.angle) * R, y: G.origin.y - Math.cos(b.angle) * R };
+  let c = start;
+  for (const b of ordered) {
+    b.c0 = c; b.c1 = c + Math.max(0, b.share) * fit; c = b.c1;
+    b.angle = cellAngle((b.c0 + b.c1) / 2);
+    // Larger shares reach further: 24 shares touch the edge of the fan, one share a little under half way.
+    const rho = 0.42 + 0.58 * Math.sqrt(Math.max(0, b.share) / 24);
+    b.base = onRoot(b.angle, 5);
+    const full = onFan(b.angle, rho);
+    b.tip = { x: lerp(b.base.x, full.x, b.length), y: lerp(b.base.y, full.y, b.length) };
     map.set(b.id, b);
   }
-  for (const b of list) if (b.mergeInto && map.has(b.mergeInto)) {
+  for (const b of ordered) if (b.mergeInto && map.has(b.mergeInto)) {
     const to = map.get(b.mergeInto).tip;
     b.tip = { x: lerp(b.tip.x, to.x, b.mergeK), y: lerp(b.tip.y, to.y, b.mergeK) };
   }
-  for (const b of list) {
-    const h = b.base.y - b.tip.y;
-    b.ctrl = { x: lerp(b.base.x, b.tip.x, 0.18), y: b.base.y - h * 0.58 };
-  }
-  return { list, map, used: cells };
+  // Rise first, then lean out.
+  for (const b of ordered) b.ctrl = { x: lerp(b.base.x, b.tip.x, 0.36), y: lerp(b.base.y, b.tip.y, 0.66) };
+  return { list: ordered, map, used: L + R, start };
 }
 const onBranch = (b, u) => {
   const v = 1 - u;
@@ -326,7 +348,7 @@ function particlesFor(i) {
   const P = {
     count: cap, k, x0: new Float32Array(cap), y0: new Float32Array(cap), x1: new Float32Array(cap), y1: new Float32Array(cap),
     ts: new Float32Array(cap), dur: new Float32Array(cap), tf: new Float32Array(cap), size: new Float32Array(cap), alpha: new Float32Array(cap),
-    ring: new Uint8Array(cap), fate: new Uint8Array(cap), target: new Int16Array(cap), u: new Float32Array(cap), side: new Float32Array(cap),
+    ring: new Uint8Array(cap), glow: new Uint8Array(cap), stay: new Uint8Array(cap), fate: new Uint8Array(cap), target: new Int16Array(cap), u: new Float32Array(cap), side: new Float32Array(cap),
     sx: new Float32Array(cap), sy: new Float32Array(cap), seed: new Float32Array(cap), targets: [],
     landed: [], resolved: [],
   };
@@ -360,14 +382,17 @@ function particlesFor(i) {
       P.ts[p] = ts + rand() * 0.025; P.dur[p] = dur;
       P.tf[p] = touchTime(Math.hypot(x1 - G.origin.x, y1 - G.origin.y)) + rand() * 0.03;
       P.size[p] = (carrier ? 2.7 : 1.1 + rand() * 1.4) * (e.machine ? 0.72 : 1);
-      P.alpha[p] = (carrier ? 1 : 0.5 + rand() * 0.45) * (e.machine ? 0.55 : 1);
+      P.alpha[p] = (carrier ? 1 : 0.68 + rand() * 0.4) * (e.machine ? 0.6 : 1);
+      P.glow[p] = !carrier && rand() < 0.05 ? 1 : 0;
       P.ring[p] = q === 0 && e.self ? 1 : 0;
       // fate: 1 fly into the branch, 2 sink to embers, 3 go out, 4 dissolve
       P.fate[p] = carrier ? 1 : fateOf[e.disp];
       P.target[p] = carrier ? ti : -1;
-      P.u[p] = 0.42 + rand() * 0.5;
+      P.u[p] = 0.35 + rand() * 0.35;
       P.side[p] = rand() < 0.5 ? -1 : 1;
-      P.sx[p] = x1 + (rand() - 0.5) * 60;
+      // Deferred inputs settle in a band on either side of the root, clear of the branches' feet.
+      const sx = x1 + (rand() - 0.5) * 60, off = sx - G.origin.x;
+      P.sx[p] = sx; P.stay[p] = Math.abs(off) < G.sediment.gap ? 1 : 0;
       P.sy[p] = G.sediment.y0 + (G.sediment.y1 - G.sediment.y0) * rand();
       P.seed[p] = rand() * 6.283;
     }
@@ -390,27 +415,15 @@ let backdrop = null, stars = null;
 function buildBackdrop() {
   const rand = rng(hash(`backdrop:${G.key}`));
   const segs = [];
-  const R = G.Rhi * 1.25;
-  // A dim fan of fine spokes from the root with a few short forks, the way the reference keeps its search tree behind everything.
-  const spokes = 56;
-  for (let k = 0; k < spokes; k += 1) {
-    const a0 = -G.fan / 2 - 0.1 + (G.fan + 0.2) * (k + 0.2 + rand() * 0.6) / spokes;
-    const reach = R * (0.72 + rand() * 0.42), steps = 7, bend = (rand() - 0.5) * 0.16;
-    let prev = { x: G.origin.x, y: G.origin.y, r: 0 };
+  // The concept layer's current runs outward along the same 64 lines the information layer draws for the budget.
+  for (let c = 0; c < 64; c += 1) {
+    const phi = cellAngle(c + 0.5), steps = 12, from = (G.r0 + 10) / G.B;
+    let prev = onFan(phi, from), prevD = Math.hypot(prev.x - G.origin.x, prev.y - G.origin.y);
     for (let q = 1; q <= steps; q += 1) {
-      const r1 = reach * q / steps, a1 = a0 + bend * (q / steps) ** 2 + (rand() - 0.5) * 0.025;
-      const pt = { x: G.origin.x + Math.sin(a1) * r1, y: G.origin.y - Math.cos(a1) * r1, r: r1 };
-      segs.push([prev.x, prev.y, prev.r, pt.x, pt.y, pt.r]);
-      if (q >= 3 && q < steps && rand() < 0.3) {
-        const fa = a1 + (rand() < 0.5 ? -1 : 1) * (0.1 + rand() * 0.12), fr = r1 + reach * (0.12 + rand() * 0.16);
-        segs.push([pt.x, pt.y, r1, G.origin.x + Math.sin(fa) * fr, G.origin.y - Math.cos(fa) * fr, fr]);
-      }
-      prev = pt;
+      const pt = onFan(phi, from + (1 - from) * (q / steps)), d = Math.hypot(pt.x - G.origin.x, pt.y - G.origin.y);
+      segs.push([prev.x, prev.y, prevD, pt.x, pt.y, d]);
+      prev = pt; prevD = d;
     }
-  }
-  for (let s = 0; s < 72; s += 1) {
-    const a0 = -Math.PI / 2 + (Math.PI * s) / 72, a1 = -Math.PI / 2 + (Math.PI * (s + 1)) / 72;
-    segs.push([G.origin.x + Math.sin(a0) * G.Rlo, G.origin.y - Math.cos(a0) * G.Rlo, -1, G.origin.x + Math.sin(a1) * G.Rlo, G.origin.y - Math.cos(a1) * G.Rlo, -1]);
   }
   backdrop = segs;
   stars = Array.from({ length: 700 }, () => ({ x: rand() * G.W, y: rand() * (G.panelY - 10), s: 0.6 + rand() * 0.9, a: 0.08 + rand() * 0.26, ph: rand() * 6.283 }));
@@ -516,11 +529,11 @@ function render(wall) {
   const T2 = still ? 0 : T;
   // Under the afterglow a still light piles up to 1/(1-keep) of itself; what stays put deposits only (1-keep) per frame,
   // so it settles at its own alpha, and only what moves leaves a trail. Canvas 2D has no afterglow.
-  const norm = field.kind === 'webgl2' && !(still || play.frozen?.still) ? 1 - Math.exp(-Math.min(0.1, dt) / 0.075) : 1;
+  const norm = field.kind === 'webgl2' && !(still || play.frozen?.still) ? 1 - Math.exp(-Math.min(0.1, dt) / field.tau) : 1;
   // Stars twinkle on their own 2.9 s clock; the backdrop's current runs outward on a 4.1 s clock. Neither locks to the beat.
   for (const s of stars) pushPoint(s.x + Math.sin(T2 * 0.05 + s.ph) * 3, s.y, s.s, norm * s.a * (0.55 + 0.45 * Math.sin(T2 * 2.1667 + s.ph)));
   for (const [x0, y0, r0, x1, y1, r1] of backdrop) {
-    const wave = rr => norm * (rr < 0 ? 0.07 : 0.045 + 0.2 * Math.max(0, Math.sin(rr * 0.016 - T2 * 1.532)) ** 4);
+    const wave = rr => norm * (0.03 + 0.2 * Math.max(0, Math.sin(rr * 0.016 - T2 * 1.532)) ** 4);
     pushLine(x0, y0, wave(r0), x1, y1, wave(r1));
   }
   // Twigs: fine growth around each branch, seeded by the item, scaled by its share.
@@ -548,14 +561,16 @@ function render(wall) {
     const base = (r.events.length ? 1 : 0.3) * fadeIn * fadeOut;
     const jitterSeed = Math.floor(T * 20);
     // The scribble changes every third frame, so it deposits about three frames' worth.
-    const sweepK = base * (norm < 1 ? 0.42 : 1);
+    const closing = clamp((rad - G.Rmin) / (G.r0 * 1.6));
+    const sweepK = base * (norm < 1 ? 0.42 : 1) * (0.15 + 0.85 * closing);
+    const span = G.fan / 2 + 0.14;
     for (let layer = 0; layer < 5; layer += 1) {
       const rand = rng(hash(`${jitterSeed}:${layer}`));
-      const m = Math.round(60 + 120 * k);
+      const m = Math.round((60 + 120 * k) * span / 1.78);
       const amp = 42 * (1 - k) + 9;
       let prev = null;
       for (let q = 0; q <= m; q += 1) {
-        const a = -1.78 + (3.56 * q) / m;
+        const a = -span + (2 * span * q) / m;
         const rr = rad + (rand() - 0.5) * 2 * amp + layer * 5;
         const pt = { x: G.origin.x + Math.sin(a) * rr, y: G.origin.y - Math.cos(a) * rr };
         if (prev) pushLine(prev.x, prev.y, sweepK * (0.5 + rand() * 0.5), pt.x, pt.y, sweepK * (0.5 + rand() * 0.5));
@@ -574,7 +589,7 @@ function render(wall) {
         const q = (t - ts) / P.dur[p], e = easeOut4(q);
         x = lerp(P.x0[p], P.x1[p], e); y = lerp(P.y0[p], P.y1[p], e); a *= 0.8 * lerp(1, norm, smooth01((q - 0.45) / 0.55));
         if (!still && q < 0.7) {
-          const eb = easeOut4(Math.max(0, q - 0.05 / P.dur[p]));
+          const eb = easeOut4(Math.max(0, q - 0.08 / P.dur[p]));
           pushLine(lerp(P.x0[p], P.x1[p], eb), lerp(P.y0[p], P.y1[p], eb), 0, x, y, a * 0.55 * (1 - q / 0.7));
         }
       } else if (t < P.tf[p] || still && t < B3) {
@@ -590,7 +605,7 @@ function render(wall) {
           const q = since / FLY;
           if (q >= 1 || still) continue;
           const b = tree.map.get(P.targets[P.target[p]]);
-          const to = b ? onBranch(b, P.u[p]) : { x: G.origin.x, y: G.rulerY };
+          const to = b ? onBranch(b, P.u[p]) : G.origin;
           const from = { x: P.x1[p], y: P.y1[p] };
           const mid = { x: (from.x + to.x) / 2 + P.side[p] * (to.y - from.y) * 0.22, y: (from.y + to.y) / 2 - P.side[p] * (to.x - from.x) * 0.22 };
           const e = easeInOut(q), v = 1 - e;
@@ -598,7 +613,9 @@ function render(wall) {
           a = 0.95; s *= 0.8;
         } else if (fate === 2) {
           const q = clamp(since / 0.7), e = q * q;
-          x = lerp(P.x1[p], P.sx[p], e); y = lerp(P.y1[p], P.sy[p], e); a = lerp(a, 0.15, q) * norm; s *= 0.85;
+          if (P.stay[p]) { if (q >= 1) continue; x = P.x1[p]; y = P.y1[p]; a *= norm * (1 - q); }
+          else { x = lerp(P.x1[p], P.sx[p], e); y = lerp(P.y1[p], P.sy[p], e); a = lerp(a, 0.34, q) * norm; }
+          s *= 0.85;
         } else if (fate === 3) {
           const q = since / 0.22;
           if (q >= 1) continue;
@@ -610,12 +627,13 @@ function render(wall) {
         }
       }
       pushPoint(x, y, s, a, P.ring[p]);
+      if (P.glow[p]) pushPoint(x, y, s * 4.2, a * 0.5, 2);
     }
   }
   // Last round's embers fade out under the new rain.
   if (inRound && i > 0 && t < 1.2 && rounds[i - 1].events.length) {
     const Q = particlesFor(i - 1), fadeK = 1 - t / 1.2;
-    for (let p = 0; p < Q.count; p += 3) if (Q.fate[p] === 2) pushPoint(Q.sx[p], Q.sy[p], Q.size[p] * 0.85, 0.15 * fadeK * norm);
+    for (let p = 0; p < Q.count; p += 3) if (Q.fate[p] === 2 && !Q.stay[p]) pushPoint(Q.sx[p], Q.sy[p], Q.size[p] * 0.85, 0.34 * fadeK * norm);
   }
   livePoints = np; livePeak = Math.max(livePeak, np);
   field.frame({ points: pointBuf, pointCount: np, lines: lineBuf, lineCount: nl, duck, flash, masks: G.masks, dt, still: still || Boolean(play.frozen && play.frozen.still) });
@@ -658,7 +676,7 @@ function strokePath(pts, upto = 1) {
 }
 const ink = a => `rgba(${INK[0]}, ${INK[1]}, ${INK[2]}, ${clamp(a).toFixed(3)})`;
 const vermA = a => VERM.replace('rgb(', 'rgba(').replace(')', `, ${clamp(a).toFixed(3)})`);
-const cellCenter = (b) => ({ x: b.base.x, y: G.rulerY + 3 });
+const cellCenter = b => onRoot(b.angle, 0);
 
 function drawInfo({ i, r, t, seg, tree, P, times, dim, fresh, still }) {
   const W = G.W, H = G.H;
@@ -668,37 +686,49 @@ function drawInfo({ i, r, t, seg, tree, P, times, dim, fresh, still }) {
   const D = dim;
   // Root: 64 cells. Items fill contiguous cells in the same order as their branches; the rest is open budget.
   const openingGlow = seg === 'open' && !still ? bump(t, 0.4, 0.95) : 0;
-  const y = G.rulerY;
-  let filled = 0;
-  for (const b of tree.list) {
-    if (b.share <= 0.01) continue;
-    const x0 = G.rulerX + b.c0 * G.cell, x1 = G.rulerX + b.c1 * G.cell;
-    info.fillStyle = ink((0.72 * b.alpha * (1 - b.grey * 0.6) + 0.1) * D);
-    for (let c = Math.floor(b.c0 + 1e-6); c < Math.ceil(b.c1 - 1e-6); c += 1) {
-      const cx0 = Math.max(x0, G.rulerX + c * G.cell) + 0.6, cx1 = Math.min(x1, G.rulerX + (c + 1) * G.cell) - 0.6;
-      if (cx1 > cx0) info.fillRect(cx0, y, cx1 - cx0, 7);
-    }
-    filled = Math.max(filled, b.c1);
-  }
-  info.strokeStyle = ink((0.2 + 0.6 * openingGlow) * D);
+  const O = G.origin, used0 = tree.start, used1 = tree.start + tree.used;
+  // The 64 share lines: always on screen. Unallocated shares are the faintest grey; allocated ones sit under their branch.
   info.lineWidth = 1;
-  for (let c = Math.ceil(filled - 1e-6); c < 64; c += 1) info.strokeRect(G.rulerX + c * G.cell + 1.1, y + 0.5, G.cell - 2.2, 6);
+  for (let c = 0; c < 64; c += 1) {
+    const covered = clamp(Math.min(c + 1, used1) - Math.max(c, used0));
+    const phi = cellAngle(c + 0.5), a = onRoot(phi, 10), b = onFan(phi, 1);
+    info.setLineDash(covered > 0.5 ? [] : [1.5, 4.5]);
+    info.strokeStyle = ink((covered > 0.5 ? 0.06 + 0.1 * covered : 0.15) * (1 - openingGlow) * D + 0.5 * openingGlow * D);
+    info.beginPath(); info.moveTo(a.x, a.y); info.lineTo(b.x, b.y); info.stroke();
+  }
+  info.setLineDash([]);
+  // The root: 64 cells on an arc. Items fill contiguous cells under their branches; the rest is open budget.
+  const gap = 0.0045;
+  info.lineWidth = 7; info.lineCap = 'butt';
+  info.strokeStyle = ink((0.13 + 0.5 * openingGlow) * D);
+  for (let c = 0; c < 64; c += 1) {
+    const lo = Math.max(c, used0), hi = Math.min(c + 1, used1);
+    if (hi - lo >= 0.98) continue;
+    info.beginPath(); info.arc(O.x, O.y, G.r0, cellAngle(c) + gap - Math.PI / 2, cellAngle(c + 1) - gap - Math.PI / 2); info.stroke();
+  }
+  for (const b of tree.list) {
+    if (b.c1 - b.c0 <= 0.01) continue;
+    info.strokeStyle = ink((0.72 * b.alpha * (1 - b.grey * 0.6) + 0.1) * D);
+    for (let c = Math.floor(b.c0 + 1e-6); c < Math.ceil(b.c1 - 1e-6); c += 1) {
+      const lo = Math.max(b.c0, c), hi = Math.min(b.c1, c + 1);
+      // A sliver narrower than the gaps would make canvas draw the long way round.
+      if (cellAngle(hi) - cellAngle(lo) <= 2 * gap + 0.002) continue;
+      info.beginPath(); info.arc(O.x, O.y, G.r0, cellAngle(lo) + gap - Math.PI / 2, cellAngle(hi) - gap - Math.PI / 2); info.stroke();
+    }
+  }
   info.font = `11px ${MONO}`;
   info.textBaseline = 'middle';
+  info.textAlign = 'center';
   info.fillStyle = ink((0.62 + 0.38 * openingGlow) * D);
-  info.textAlign = 'left';
-  info.fillText(`64 份 · 已分 ${Math.round(tree.used)}`, G.rulerX + G.rulerW + 10, y + 4);
-  if (openingGlow) {
-    info.fillStyle = ink(0.18 * openingGlow);
-    info.fillRect(G.rulerX - 4, y - 4, G.rulerW + 8, 15);
-  }
-  // Answered questions leave a mark under the root, one per question.
+  info.fillText(`64 份 · 已分 ${Math.round(tree.used)}`, O.x, O.y + 13);
+  // Answered questions leave a mark under the root, one per question, in a row centred on the root.
   const marksBefore = i ? rounds[i - 1].answeredSoFar : 0;
   const marksNow = inRound ? marksBefore + (t >= 0.3 ? r.answered.size : 0) : seg === 'open' ? 0 : r.answeredSoFar;
+  const marksX = O.x - (ANSWERED * 6) / 2;
   for (let m = 0; m < marksNow; m += 1) {
     const appear = inRound && m >= marksBefore ? clamp((t - 0.3) / 0.2) : 1;
     info.fillStyle = vermA(0.85 * appear * D * retire);
-    info.fillRect(G.rulerX + m * 6, y + 13, 3, 3);
+    info.fillRect(marksX + m * 6, O.y + 23, 3, 3);
   }
   // Branches: width is the share; a branch glows when adopted inputs arrive.
   info.lineCap = 'round';
@@ -713,7 +743,7 @@ function drawInfo({ i, r, t, seg, tree, P, times, dim, fresh, still }) {
     const lw = 0.7 + Math.max(0, b.share) * 0.34;
     const col = b.grey ? `rgba(${lerp(INK[0], 120, b.grey) | 0}, ${lerp(INK[1], 120, b.grey) | 0}, ${lerp(INK[2], 120, b.grey) | 0}, ${(b.alpha * 0.9 * D).toFixed(3)})` : ink(0.88 * b.alpha * D);
     info.beginPath(); info.moveTo(b.base.x, b.base.y); info.quadraticCurveTo(b.ctrl.x, b.ctrl.y, b.tip.x, b.tip.y);
-    info.strokeStyle = ink((0.04 + glow * 0.2) * b.alpha * D); info.lineWidth = lw + 4 + glow * 7; info.stroke();
+    info.strokeStyle = ink((0.02 + glow * 0.1) * b.alpha * D); info.lineWidth = lw + 2 + glow * 3.5; info.stroke();
     info.strokeStyle = col; info.lineWidth = lw; info.stroke();
     info.fillStyle = col;
     info.beginPath(); info.arc(b.tip.x, b.tip.y, 1.6 + b.share * 0.07, 0, Math.PI * 2); info.fill();
@@ -721,12 +751,21 @@ function drawInfo({ i, r, t, seg, tree, P, times, dim, fresh, still }) {
   // Names at the larger tips and at every tip with a question open, outlined so the cloud never covers them.
   const openIds = new Set((inRound && t < STRIKE ? r.prevOpen : seg === 'open' ? [] : r.open).map(a => a.item));
   info.font = `11.5px ${MONO}`;
-  for (const b of tree.list) {
-    if (b.alpha <= 0.15 || b.length < 0.6 || !(b.share >= 6 || openIds.has(b.id))) continue;
-    const side = Math.sin(b.angle);
-    const tx = b.tip.x + side * 9, ty = b.tip.y - Math.cos(b.angle) * 9 - 2;
-    info.textAlign = side < -0.15 ? 'right' : side > 0.15 ? 'left' : 'center';
-    const label = `${shortOf(b.id)} ${Math.round(b.share)}`;
+  const placed = [];
+  const named = tree.list.filter(b => b.alpha > 0.15 && b.length >= 0.6 && (b.share >= 6 || openIds.has(b.id))).sort((a, b) => b.share - a.share || byOrder(a.id, b.id));
+  for (const b of named) {
+    const side = Math.sin(b.angle), align = side < -0.15 ? 'right' : side > 0.15 ? 'left' : 'center';
+    const label = `${shortOf(b.id)} ${Math.round(b.share)}`, w = info.measureText(label).width;
+    let tx = 0, ty = 0, box = null;
+    for (const step of [9, 24, 40]) {
+      const x = b.tip.x + side * step, y = b.tip.y - Math.cos(b.angle) * step - 2;
+      const x0 = align === 'right' ? x - w : align === 'center' ? x - w / 2 : x;
+      const r = [x0 - 3, y - 9, w + 6, 18];
+      if (!placed.some(q => r[0] < q[0] + q[2] && q[0] < r[0] + r[2] && r[1] < q[1] + q[3] && q[1] < r[1] + r[3])) { tx = x; ty = y; box = r; break; }
+    }
+    if (!box) continue;
+    placed.push(box);
+    info.textAlign = align;
     info.lineWidth = 4; info.strokeStyle = `rgba(9, 10, 11, ${(0.9 * b.alpha).toFixed(3)})`; info.strokeText(label, tx, ty);
     info.fillStyle = ink(0.8 * b.alpha * D); info.fillText(label, tx, ty);
   }
@@ -812,7 +851,7 @@ function paintText({ i, r, t, seg, P, dim, fresh }) {
   }
   const key = `${signal}|${say}|${label}|${fmt(nShown)}|${moved}|${asked}|${count}`;
   if (key !== textKey) {
-    textKey = key;
+    textKey = key; G.masks = null;   // the words moved: the concept layer steps aside from where they are now
     el.signal.textContent = signal; el.say.textContent = say; el.heroLabel.textContent = label;
     el.n.textContent = fmt(nShown); el.unit.textContent = unit; el.moved.textContent = moved; el.asked.textContent = asked;
     el.asked.classList.toggle('is-ask', Boolean(asked));
@@ -891,7 +930,8 @@ function loop(ms) {
   if (play.frozen) play.frozen.done = true;
 }
 const report = followFrames(i => go(i));
-new ResizeObserver(() => { measure(); textKey = ''; panelKey = ''; if (play.frozen) play.frozen.done = false; }).observe(stage);
+// A held still is re-run after a resize, so its afterglow builds again in the new buffers.
+new ResizeObserver(() => { measure(); textKey = ''; panelKey = ''; if (play.frozen) window.foldPulse.seek(play.index, play.frozen.t, play.seg); }).observe(stage);
 measure();
 document.addEventListener('click', event => {
   const b = event.target.closest('button');
