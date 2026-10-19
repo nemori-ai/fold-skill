@@ -127,6 +127,7 @@ node scripts/shoot-forms.mjs                                      # 全部形式
 node scripts/shoot-forms.mjs --data story --only d,watch --frame 12 --out .local/shots
 node scripts/shoot-forms.mjs --only d --check d-respond           # D 的回应控件交互检查
 node scripts/shoot-forms.mjs --only all --check all-sync          # 合页 all.html：逐节等每页报告所在帧，再选一帧确认全部跟上
+node scripts/check-ix.mjs --data story                            # 悬停与展开：接入 motion/ix.mjs 的页面各跑 16 项（真鼠标、键盘与触屏）
 ```
 
 每种形式写 `<out>/<form>.png`，另写 `report.json`（URL、页面报错、检查结果）；有报错时退出码为 1。`--eval "<js>"` 在截图前执行一段脚本，`--base` 改原型地址，`CHROME` 环境变量指定浏览器。默认关掉显卡，页面里的 WebGL 会退回 Canvas 2D；要截 WebGL 画面（整理脉冲的粒子与余辉）时加 `--gpu`。
