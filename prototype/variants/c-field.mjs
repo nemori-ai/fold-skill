@@ -1,12 +1,18 @@
-// C · 流动形态 — the drop field. A WebGL2 fragment shader shades up to 24
-// bodies on one canvas (drops of 3 shares or more, deferred bodies resting at the
-// bottom, and bodies on their way to or from the bead string); drops in the same
+// C · 流动形态 — the drop field. A WebGL2 fragment shader shades up to 32
+// bodies on one canvas (drops of 3 shares or more above the surface, the beads and
+// deferred bodies under it, and bodies on their way across); drops in the same
 // group are joined with a smooth union whose blend radius the caller animates
 // (only explicit merges ever get one), every other drop is composited on its own,
 // so unrelated drops never fuse. A Canvas2D fallback draws the same drops as shaded
-// circles and bridges. The layout solver below places drops once per state change.
-export const MAX_DROPS = 24;
+// circles and bridges. Dimming (hover, open) is one formula in both: the colour goes
+// 30 % of the way to the paper and shadows, halo and rings drop to 70 %.
+// The layout solver below places drops once per state change.
+export const MAX_DROPS = 32;
 const ACCENT = [0.81, 0.29, 0.17];
+const INK = [0.2, 0.25, 0.27];
+const PAPER = [0.972, 0.966, 0.952];
+/** How far a dimmed drop goes toward the paper (the shader and the fallback share it). */
+export const DIM_TO_PAPER = 0.3;
 
 const VERT = `#version 300 es
 in vec2 aPos;
@@ -21,10 +27,11 @@ uniform int uGroups;
 uniform vec4 uA[MAXD];   // x, y, r, alpha (css px, y down)
 uniform vec4 uB[MAXD];   // rgb, light (selection / hover)
 uniform vec4 uC[MAXD];   // ring, dashed, stretch.x, stretch.y
-uniform int uGStart[MAXD];
-uniform int uGCount[MAXD];
-uniform float uGK[MAXD];
+uniform vec4 uD[MAXD];   // dim (0..1), ring ink (0 vermilion .. 1 ink), unused, unused
+uniform vec4 uG[MAXD];   // group: first member, member count, blend k, unused (one vec4 each keeps the uniform count low)
 uniform vec3 uAccent;
+uniform vec3 uInk;
+uniform vec3 uPaper;
 out vec4 frag;
 
 // Circle, optionally stretched along its motion (area preserving).
@@ -53,29 +60,30 @@ void main() {
   vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
   for (int gi = 0; gi < MAXD; gi++) {
     if (gi >= uGroups) break;
-    int st = uGStart[gi]; int n = uGCount[gi]; float k = max(uGK[gi], 1e-3);
+    int st = int(uG[gi].x + .5); int n = int(uG[gi].y + .5); float k = max(uG[gi].z, 1e-3);
     float d = 1e5; vec2 gr = vec2(0.0, -1.0); vec3 col = vec3(0.0);
-    float light = 0.0, al = 0.0, rad = 0.0;
+    float light = 0.0, al = 0.0, rad = 0.0, dim = 0.0;
     for (int j = 0; j < MAXD; j++) {
       if (j >= n) break;
       int i = st + j; vec2 gj;
       float dj = sdDrop(p, uA[i], uC[i], gj);
-      if (j == 0) { d = dj; gr = gj; col = uB[i].rgb; light = uB[i].a; al = uA[i].w; rad = uA[i].z; }
+      if (j == 0) { d = dj; gr = gj; col = uB[i].rgb; light = uB[i].a; al = uA[i].w; rad = uA[i].z; dim = uD[i].x; }
       else {
         float h = clamp(0.5 + 0.5 * (dj - d) / k, 0.0, 1.0);
         d = mix(dj, d, h) - k * h * (1.0 - h);
         gr = mix(gj, gr, h); col = mix(uB[i].rgb, col, h);
-        light = mix(uB[i].a, light, h); al = mix(uA[i].w, al, h); rad = mix(uA[i].z, rad, h);
+        light = mix(uB[i].a, light, h); al = mix(uA[i].w, al, h); rad = mix(uA[i].z, rad, h); dim = mix(uD[i].x, dim, h);
       }
     }
     if (d > 46.0 || al < 0.002) continue;
     float lg = length(gr); gr = lg > 1e-4 ? gr / lg : vec2(0.0, -1.0);
     float outside = smoothstep(-1.0, 1.0, d);
     // Contact shadow on the paper, leaning away from the light.
-    float sh = exp(-max(d, 0.0) / 9.0) * (0.45 + 0.55 * max(0.0, dot(gr, -Lxy))) * 0.085 * al * outside;
+    float keep = 1.0 - ${DIM_TO_PAPER.toFixed(3)} * dim;
+    float sh = exp(-max(d, 0.0) / 9.0) * (0.45 + 0.55 * max(0.0, dot(gr, -Lxy))) * 0.085 * al * outside * keep;
     acc = vec4(0.0, 0.0, 0.0, sh) + acc * (1.0 - sh);
     // Selection: the drop's own light spills a little onto the paper.
-    float halo = light * exp(-max(d, 0.0) / 16.0) * 0.42 * al * outside;
+    float halo = light * exp(-max(d, 0.0) / 16.0) * 0.42 * al * outside * keep;
     vec3 haloC = clamp(mix(vec3(dot(col, vec3(0.3, 0.59, 0.11))), col, 1.5) * 1.05, 0.0, 1.0);
     acc = vec4(haloC * halo, halo) + acc * (1.0 - halo);
     float cov = smoothstep(0.75, -0.75, d) * al;
@@ -106,6 +114,8 @@ void main() {
       c = mix(c, lit, light * (0.3 + 0.7 * inner));
       float nh = max(dot(N, H), 0.0);
       c += pow(nh, 90.0) * 0.42 + pow(nh, 16.0) * 0.035;
+      // Dimmed: the body goes part of the way to the paper (the fallback uses the same mix).
+      c = mix(c, uPaper, 1.0 - keep);
       float a = cov * 0.96;
       acc = vec4(c * a, a) + acc * (1.0 - a);
     }
@@ -113,7 +123,7 @@ void main() {
     for (int j = 0; j < MAXD; j++) {
       if (j >= n) break;
       int i = st + j;
-      float ring = uC[i].x * uA[i].w;
+      float ring = uC[i].x * uA[i].w * (1.0 - ${DIM_TO_PAPER.toFixed(3)} * uD[i].x);
       if (ring < 0.002) continue;
       vec2 q = p - uA[i].xy; float R = uA[i].z + 6.0;
       float dr = abs(length(q) - R) - 0.8;
@@ -123,7 +133,8 @@ void main() {
         float ph = fract((atan(q.y, q.x) / 6.2831853) * seg);
         ra *= smoothstep(0.02, 0.1, ph) * smoothstep(0.62, 0.54, ph);
       }
-      acc = vec4(uAccent * ra, ra) + acc * (1.0 - ra);
+      vec3 rc = mix(uAccent, uInk, uD[i].y);
+      acc = vec4(rc * ra, ra) + acc * (1.0 - ra);
     }
   }
   frag = acc;
@@ -149,22 +160,23 @@ export function createRenderer(canvas) {
       const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
       const loc = gl.getAttribLocation(prog, 'aPos'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
       const U = name => gl.getUniformLocation(prog, name);
-      const u = { size: U('uSize'), dpr: U('uDpr'), groups: U('uGroups'), a: U('uA'), b: U('uB'), c: U('uC'), gs: U('uGStart'), gc: U('uGCount'), gk: U('uGK'), accent: U('uAccent') };
-      const A = new Float32Array(MAX_DROPS * 4), B = new Float32Array(MAX_DROPS * 4), C = new Float32Array(MAX_DROPS * 4);
-      const GS = new Int32Array(MAX_DROPS), GC = new Int32Array(MAX_DROPS), GK = new Float32Array(MAX_DROPS);
+      const u = { size: U('uSize'), dpr: U('uDpr'), groups: U('uGroups'), a: U('uA'), b: U('uB'), c: U('uC'), d: U('uD'), g: U('uG'), accent: U('uAccent'), ink: U('uInk'), paper: U('uPaper') };
+      const A = new Float32Array(MAX_DROPS * 4), B = new Float32Array(MAX_DROPS * 4), C = new Float32Array(MAX_DROPS * 4), D = new Float32Array(MAX_DROPS * 4);
+      const G = new Float32Array(MAX_DROPS * 4);
       return {
         kind: 'webgl2',
         resize(w, h, dpr) { Object.assign(size, { w, h, dpr }); canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); },
         render(drops, groupK = {}) {
           const t0 = performance.now();
           const groups = groupDrops(drops, groupK);
-          let i = 0; A.fill(0); B.fill(0); C.fill(0);
+          let i = 0; A.fill(0); B.fill(0); C.fill(0); D.fill(0);
           groups.forEach((g, gi) => {
-            GS[gi] = i; GC[gi] = g.members.length; GK[gi] = g.k;
+            G.set([i, g.members.length, g.k, 0], gi * 4);
             for (const d of g.members) {
               A.set([d.x, d.y, Math.max(0, d.r), d.alpha ?? 1], i * 4);
               B.set([d.color[0], d.color[1], d.color[2], d.light || 0], i * 4);
               C.set([d.ring || 0, d.dashed ? 1 : 0, d.sx || 0, d.sy || 0], i * 4);
+              D.set([d.dim || 0, d.ringInk || 0, 0, 0], i * 4);
               i++;
             }
           });
@@ -173,9 +185,9 @@ export function createRenderer(canvas) {
           gl.useProgram(prog); gl.bindVertexArray(vao);
           gl.uniform2f(u.size, size.w, size.h); gl.uniform1f(u.dpr, size.dpr);
           gl.uniform1i(u.groups, groups.length);
-          gl.uniform4fv(u.a, A); gl.uniform4fv(u.b, B); gl.uniform4fv(u.c, C);
-          gl.uniform1iv(u.gs, GS); gl.uniform1iv(u.gc, GC); gl.uniform1fv(u.gk, GK);
-          gl.uniform3fv(u.accent, ACCENT);
+          gl.uniform4fv(u.a, A); gl.uniform4fv(u.b, B); gl.uniform4fv(u.c, C); gl.uniform4fv(u.d, D);
+          gl.uniform4fv(u.g, G);
+          gl.uniform3fv(u.accent, ACCENT); gl.uniform3fv(u.ink, INK); gl.uniform3fv(u.paper, PAPER);
           gl.drawArrays(gl.TRIANGLES, 0, 3);
           lastMs = performance.now() - t0;
         },
@@ -189,6 +201,8 @@ export function createRenderer(canvas) {
   // ---------- Canvas2D fallback: same drops, simpler light ----------
   const ctx = canvas.getContext('2d');
   const rgb = (c, a = 1, lift = 0) => `rgba(${c.map(v => Math.round(255 * Math.min(1, v + (1 - v) * lift))).join(',')},${a})`;
+  // The same dimming as the shader: part of the way to the paper; shadows and rings to 70 %.
+  const toPaper = (c, dim) => c.map((v, k) => v + (PAPER[k] - v) * DIM_TO_PAPER * dim);
   return {
     kind: '2d',
     resize(w, h, dpr) { Object.assign(size, { w, h, dpr }); canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); },
@@ -204,13 +218,15 @@ export function createRenderer(canvas) {
           if (gap < g.k) { ctx.strokeStyle = rgb(a.color, a.alpha ?? 1); ctx.lineWidth = w * (1 - Math.max(0, gap) / g.k); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
         }
         for (const d of ms) {
-          const a = d.alpha ?? 1;
-          ctx.save(); ctx.shadowColor = 'rgba(20,30,30,.12)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 3;
+          const a = d.alpha ?? 1, dim = d.dim || 0, keep = 1 - DIM_TO_PAPER * dim;
+          const body = toPaper(d.color, dim), rim = toPaper(d.color.map(v => v * v * .95), dim);
+          ctx.save(); ctx.shadowColor = `rgba(20,30,30,${(.12 * keep).toFixed(3)})`; ctx.shadowBlur = 10; ctx.shadowOffsetY = 3;
           const grad = ctx.createRadialGradient(d.x - d.r * .3, d.y - d.r * .35, d.r * .1, d.x, d.y, d.r);
-          grad.addColorStop(0, rgb(d.color, a, .25 + (d.light || 0) * .3)); grad.addColorStop(.75, rgb(d.color, a, (d.light || 0) * .2)); grad.addColorStop(1, rgb(d.color.map(v => v * v * .95), a));
+          grad.addColorStop(0, rgb(body, a, .25 + (d.light || 0) * .3)); grad.addColorStop(.75, rgb(body, a, (d.light || 0) * .2)); grad.addColorStop(1, rgb(rim, a));
           ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
           if (d.ring > .01) {
-            ctx.strokeStyle = rgb(ACCENT, d.ring * a); ctx.lineWidth = 1.6; ctx.setLineDash(d.dashed ? [4, 3] : []);
+            const ringC = ACCENT.map((v, k) => v + (INK[k] - v) * (d.ringInk || 0));
+            ctx.strokeStyle = rgb(ringC, d.ring * a * keep); ctx.lineWidth = 1.6; ctx.setLineDash(d.dashed ? [4, 3] : []);
             ctx.beginPath(); ctx.arc(d.x, d.y, d.r + 6, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
           }
         }
@@ -234,7 +250,9 @@ function groupDrops(drops, groupK) {
 }
 
 // ---------- layout ----------
-// nodes: { id, r, share, label: { w, h, inside }, prev?: {x,y}, seed?: {x,y} }
+// nodes: { id, r, share, label: { w, h, inside }, prev?: {x,y}, seed?: {x,y}, fixed? }
+// A fixed node (a drop that is about to sink and still sits where it was) never moves;
+// the others are pushed clear of it.
 // Each node's footprint is its circle plus, for small drops, a label box
 // beside it. Shares pull drops toward the visual centre (largest nearest),
 // previous positions hold every drop near where it was, and footprints are
@@ -248,7 +266,7 @@ export function solveLayout(nodes, bounds, opt = {}) {
   const ps = nodes.map((n, i) => {
     let p = n.prev || n.seed;
     if (!p) { const a = hashAngle(n.id), d = Math.min(w, h) * (.18 + .05 * i); p = { x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d * .8 }; }
-    return { n, x: p.x, y: p.y, side: n.side || (p.x >= cx ? 'right' : 'left'), mass: n.r * n.r };
+    return { n, x: p.x, y: p.y, side: n.side || (p.x >= cx ? 'right' : 'left'), mass: n.fixed ? 1e9 : n.r * n.r };
   });
   const labelRect = (p, side = p.side) => {
     const L = p.n.label; if (!L || L.inside) return null;
@@ -285,6 +303,7 @@ export function solveLayout(nodes, bounds, opt = {}) {
   for (let it = 0; it < iterations; it++) {
     const cool = 1 - it / iterations;
     for (const p of ps) {
+      if (p.n.fixed) continue;
       // share gravity toward the centre, stronger for larger drops
       const pull = .006 + .03 * (p.n.r / maxR);
       p.x += (cx - p.x) * pull * cool; p.y += (cy - p.y) * pull * cool * 1.15;
@@ -298,6 +317,7 @@ export function solveLayout(nodes, bounds, opt = {}) {
         a.x -= v.x * wa * .5; a.y -= v.y * wa * .5; b.x += v.x * wb * .5; b.y += v.y * wb * .5;
       }
       for (const p of ps) {
+        if (p.n.fixed) continue;
         const b = bbox(p);
         if (b.x0 < margin) p.x += margin - b.x0; if (b.x1 > w - margin) p.x -= b.x1 - (w - margin);
         if (b.y0 < margin) p.y += margin - b.y0; if (b.y1 > h - margin) p.y -= b.y1 - (h - margin);

@@ -47,7 +47,7 @@ make prototype
 | 原版树图 | 在电脑前掌握两周局面，顺手处理工作评审 | approve（格子里直接批准或要求修改）；其余在详情里作答 | [index.html?frame=26](./index.html?frame=26) | [spatial.md](forms/polish/spatial.md) |
 | A 空间排布 | 桌前，生活急事要当场二选一 | choose、稍后；也能批准、定时间、回一句 | [?variant=a&frame=26](./index.html?variant=a&frame=26) | [spatial.md](forms/polish/spatial.md) |
 | B 时间展开 | 期限落在此刻之后的哪里，谁先到；换轮时此刻之后的一切朝此刻线流，最近的期限撞上来，答掉它，最近的期限才往后退；直接打开讲一遍约 7.5 秒 | schedule、choose，任何事项都可稍后提醒；回应面板原地收成回执，下一轮读到了才让出份额；悬停看概要，点击展开详情，在右栏作答 | [?variant=b&frame=26](./index.html?variant=b&frame=26) | [temporal.md](forms/polish/temporal.md)、[b-motion.md](forms/polish/b-motion.md) |
-| C 流动形态 | 可以推后的事沉下去，到点浮起 | defer；其余用回应组件 | [?variant=c&frame=25](./index.html?variant=c&frame=25) | [temporal.md](forms/polish/temporal.md) |
+| C 流动形态 | 可以推后的事沉下去，到点浮起；换轮按涌入、长缩、沉浮、落定四段走，直接打开时讲一遍：那件事沉了几轮、到点浮起 | defer；作答时控件原地收成回执，下一轮整理读到才沉；其余用回应组件；悬停液滴看概要，点击展开详情 | [?variant=c&frame=25](./index.html?variant=c&frame=25) | [temporal.md](forms/polish/temporal.md)、[c-motion.md](forms/polish/c-motion.md) |
 | D 手机首页 | 离开半天回来，先答最急的 3 件；作答时卡原地收成回执，下一轮整理先确认回执、再带着让出的份额沉到进行中 | approve、choose 一键；confirm、reply、schedule、defer；轻点卡从卡长出详情，长按看概要，左滑知道了 | [?variant=d&frame=26](./index.html?variant=d&frame=26) | [home.md](forms/polish/home.md)、[home-motion.md](forms/polish/home-motion.md) |
 | 腕上一瞥 | 抬腕两秒：要不要现在掏手机；换轮时刻度重分、新要你回的闪一下、数字落定 | confirm 与两项的 choose；其余转到手机；悬停刻度或事项名看概要，点击展开详情 | [forms/watch.html](forms/watch.html?frame=26) | [home.md](forms/polish/home.md)、[watch-motion.md](forms/polish/watch-motion.md) |
 | 两周小倍数 | 复盘两周注意力怎样移动；直接打开放一遍约 24 秒，看出它是成块挪的 | 不承载作答；黑点 = 一个开着的问题，展开后仍开着的问题链到同一帧的 D；悬停一帧或一格看概要，点击展开详情 | [forms/multiples.html](forms/multiples.html?frame=26) | [review-a.md](forms/polish/review-a.md)、[multiples-motion.md](forms/polish/multiples-motion.md) |
@@ -75,6 +75,7 @@ make prototype
 - 腕上一瞥、小倍数与五张复盘图的页头各有帧导航：←/→ 逐帧，空格播放，当前帧写进地址栏 `frame=`；让位图、来源矩阵与批次记谱的侧栏底部链到同一帧的其他形式。
 - 批次记谱直接打开（不带 `frame=`）时停在最后一帧，先演 12 秒的开场：读、丢、动三拍同时作用在全部行上，任意键或点一下跳到终态，R 或顶栏“重演”从头演到此刻；嵌入与带 `frame=` 的链接不演。换帧时新的一行演 0.9 秒的缩短版。悬停一行看这一轮的账，悬停记号看这一件，点击展开到侧栏，与两个动画共用 `forms/motion/ix.mjs`（见 [notation-motion.md](forms/polish/notation-motion.md)）。
 - 回应时序直接打开（不带 `frame=`）时先讲一遍约 24 秒：开得最久的“母亲九月住哪？”从登记、等 19 轮到别人先开口，落在最后一帧；任意键或点一下跳到终态，顶栏“▶ 讲一遍”重讲；嵌入与带 `frame=` 的链接不讲。之后 ▶ 连播、←/→ 逐帧都按同一节拍走：此刻线缓出，批次刻度上硬切。悬停一条时序线看概要，点击弹出 8 px、引线出到详情卡，右栏切到“这一件”，同样共用 `forms/motion/ix.mjs`（见 [timing-motion.md](forms/polish/timing-motion.md)）。
+- C 流动形态直接打开（不带 `frame=`、不是从别处链进来）时先讲一遍约 20 秒：猫看病那件（story 是费用）沉下去、在水下等 9 轮（story 13 轮）、到点带着新消息浮起，落在浮起那一帧；任意键或点一下跳到终态，顶栏“▶ 讲一遍”重讲；嵌入、合页与带 `frame=` 的链接不讲。换轮按涌入（一粒一条输入）、长缩（份额加留白始终是 64）、沉浮、数字落定四段走。悬停一滴看概要、其余压暗，点击沿它自己的方向弹出 8 px、引线出到详情卡，右栏切到“这一件”，共用 `forms/motion/ix.mjs`；作答时右栏控件原地收成回执，液滴等下一轮整理读到才沉（见 [c-motion.md](forms/polish/c-motion.md)）。
 - 本页作答只存在浏览器内存里：按下即“已保存”，推进到下一轮整理后显示“已收到”，随时可撤回；不写回演示数据，也不调用模型。
 - 原版与 A/B/C/D 都保留未分配份额：原版与 A 用面积、B 用带宽、C 用液滴面积与 64 格预算带、D 用先后与字号表达份额，精确份数在详情里。
 - `prefers-reduced-motion` 时切帧与作答直接到终态。

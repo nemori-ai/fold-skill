@@ -53,16 +53,21 @@
 .c-track-days span { position: absolute; white-space: nowrap; top: 22px; font-size: 10px; color: var(--c-faint); transform: translateX(-50%); font-variant-numeric: tabular-nums; }
 .c-track-thumb { position: absolute; top: 8px; width: 13px; height: 13px; border-radius: 50%; background: var(--c-ink); box-shadow: 0 0 0 3px var(--c-paper); transform: translateX(-50%); transition: left .32s cubic-bezier(.3,.7,.2,1); pointer-events: none; }
 .c-state { font-size: 12.5px; color: var(--c-muted); white-space: nowrap; padding: 8px 2px; }
+/* 讲一遍 / 跳过: only on a page opened directly. */
+.c-tell { font-size: 12.5px; white-space: nowrap; height: 30px; padding: 0 11px; border-radius: 15px; box-shadow: inset 0 0 0 1px var(--c-line); color: var(--c-ink); font-variant-numeric: tabular-nums; }
+.c-tell:hover { background: oklch(.94 .006 150); }
+.is-embedded .c-tell { display: none; }
 .c-state:hover { color: var(--c-ink); }
 
 /* ---------- main: vessel left, reading right ---------- */
 .c-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, min(460px, 32vw)); gap: 56px; align-items: start; padding-top: 26px; }
-.c-lede { max-width: 680px; min-height: 100px; }
+/* Room for one headline line and two signal lines, so the vessel does not move when the words flip. */
+.c-lede { max-width: 680px; min-height: 122px; }
 .c-headline { font-size: 27px; line-height: 1.3; font-weight: 600; letter-spacing: -.01em; }
 .c-headline em { font-style: normal; color: var(--c-accent-ink); }
 .c-headline small { font-size: 15px; font-weight: 450; color: var(--c-muted); letter-spacing: 0; }
 .c-frame-title { margin-top: 6px; font-size: 14px; color: var(--c-ink); }
-.c-signal { margin-top: 8px; font-size: 12.5px; color: var(--c-muted); line-height: 1.7; }
+.c-signal { margin-top: 8px; font-size: 12.5px; color: var(--c-muted); line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .c-signal b { color: var(--c-ink); font-weight: 600; margin-left: 4px; }
 .c-sig-kind { display: inline-block; margin-right: 8px; padding: 0 7px; border-radius: 4px; background: oklch(.935 .008 150); color: var(--c-ink); font-size: 11.5px; line-height: 20px; }
 .c-sig-kind.is-review { background: transparent; box-shadow: inset 0 0 0 1px var(--c-muted); }
@@ -78,6 +83,8 @@
 
 .c-stage { position: relative; margin-top: 10px; border-radius: 22px; background: radial-gradient(ellipse 70% 56% at 50% 40%, color-mix(in oklch, var(--c-tint, transparent) 16%, transparent), transparent 72%); transition: background .6s ease; touch-action: manipulation; overflow: hidden; }
 .c-canvas { position: absolute; inset: 0; display: block; z-index: 1; pointer-events: none; }
+/* One grain per input of the round; under the drops, quiet (the concept layer). */
+.c-grains { position: absolute; inset: 0; display: block; z-index: 1; pointer-events: none; }
 .c-empty { position: absolute; inset: 0 0 112px; display: grid; place-items: center; font-size: 14px; color: var(--c-faint); letter-spacing: .02em; }
 .c-empty::before { content: ""; position: absolute; width: 132px; height: 132px; border-radius: 50%; border: 1px dashed var(--c-line); }
 
@@ -89,13 +96,13 @@
 .c-surface-tray { text-align: right; }
 
 .c-overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
-.c-hits { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
-.c-hits > * { pointer-events: auto; }
-
-/* A transparent disc over each drop: hover, click, keyboard. Scaled to the drop every frame. */
-.c-hit { position: absolute; left: 0; top: 0; width: 100px; height: 100px; border-radius: 50%; transform-origin: 50px 50px; will-change: transform; }
-.c-hit:focus-visible { outline: none !important; box-shadow: 0 0 0 2px var(--c-paper), 0 0 0 4px var(--c-ink); }
-
+/* The tell's hero number: rounds under the surface, beside the hero bead. */
+.c-hero { position: absolute; left: 0; top: 0; display: flex; align-items: baseline; gap: 5px; padding: 2px 9px 3px; transition: opacity .2s linear; border-radius: 9px; background: oklch(.99 .004 95 / .9); box-shadow: 0 0 0 1px oklch(.85 .015 205 / .8), 0 6px 16px -10px oklch(.2 .02 205 / .35); color: var(--c-ink); white-space: nowrap; will-change: transform, opacity; }
+.c-hero b { font-size: 22px; line-height: 26px; font-weight: 650; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.c-hero span { font-size: 12.5px; font-weight: 560; }
+.c-hero small { font-size: 11.5px; color: var(--c-muted); max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
+.c-hero small::before { content: "· "; }
+.c-hero.is-away { opacity: 0; }
 /* Share inside a drop; a short title only on large drops without a question. */
 .c-cap { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; text-align: center; color: oklch(.24 .03 205); pointer-events: none; will-change: transform, opacity; white-space: nowrap; }
 .c-cap b { font-size: 21px; line-height: 24px; font-weight: 640; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
@@ -110,27 +117,15 @@
 .c-l-ask { font-size: 12px; line-height: 17px; color: var(--c-accent-ink); font-weight: 560; }
 .c-l-ask b { font-weight: 650; }
 .c-l-prompt { font-size: 11.5px; line-height: 16px; color: var(--c-muted); text-wrap: pretty; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.c-l-prior { font-size: 11px; line-height: 15px; color: var(--c-faint); }
+/* Your answer, where the question was: ink, dashed check until the next 整理 reads it. */
+.c-l-receipt { display: inline-flex; align-items: baseline; gap: 5px; font-size: 12px; line-height: 17px; color: var(--c-ink); font-weight: 520; }
+.c-l-receipt i { display: inline-grid; place-items: center; width: 13px; height: 13px; border-radius: 50%; font-size: 8.5px; font-weight: 600; line-height: 1; font-style: normal; box-shadow: inset 0 0 0 1px var(--c-ink); transform: translateY(1px); }
+.c-l-receipt.is-ack i { background: var(--c-ink); color: var(--c-paper); }
+.c-label.is-receipt .c-l-title { color: var(--c-muted); }
 
 /* “◷ 09:00” under a deferred body. */
 .c-tag { position: absolute; left: 0; top: 0; font-size: 11px; line-height: 16px; color: var(--c-ink); font-variant-numeric: tabular-nums; white-space: nowrap; padding: 0 6px; border-radius: 8px; background: oklch(.99 .004 95 / .86); box-shadow: 0 0 0 1px oklch(.85 .015 205 / .8); will-change: transform, opacity; }
-
-/* Beads: 1–2 shares each, strung along the bottom. */
-.c-bead { position: absolute; left: 0; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: radial-gradient(circle at 34% 30%, color-mix(in oklch, var(--bead) 35%, white) 0, var(--bead) 58%, color-mix(in oklch, var(--bead) 78%, black) 100%); box-shadow: 0 1.5px 2.5px oklch(.3 .02 205 / .18); transition: translate .48s cubic-bezier(.22,.68,.32,1), opacity .3s ease, scale .36s cubic-bezier(.34,1.4,.5,1), box-shadow .2s ease, transform .4s ease; }
-.c-bead::before { content: ""; position: absolute; inset: -5px; border-radius: 50%; }
-.c-bead.has-ask { box-shadow: 0 0 0 2px var(--c-paper), 0 0 0 3.4px var(--c-accent), 0 1.5px 2.5px oklch(.3 .02 205 / .18); }
-.c-bead:hover, .c-bead.is-selected { scale: 1.35; }
-.c-bead.is-selected { box-shadow: 0 0 0 2px var(--c-paper), 0 0 0 3.4px var(--c-ink); }
-.c-bead.is-waiting { opacity: 0; transition: none; }
-.c-bead.is-new { scale: 0; opacity: 0; }
-/* Position lives in `translate`; hover and enter/leave use `scale` and `transform`, which compose after it. */
-.c-bead.is-leaving { scale: .2; opacity: 0; transform: translateY(40px); pointer-events: none; }
-.c-bead:focus-visible { outline: none !important; box-shadow: 0 0 0 2px var(--c-paper), 0 0 0 4px var(--c-ink); }
-
-.c-tip { position: absolute; left: 0; top: 0; z-index: 5; display: flex; flex-direction: column; gap: 1px; max-width: 260px; padding: 7px 10px 8px; border-radius: 8px; background: oklch(.27 .022 205); color: oklch(.97 .004 95); font-size: 11.5px; line-height: 1.5; pointer-events: none !important; box-shadow: 0 6px 18px oklch(.2 .02 205 / .2); }
-.c-tip b { font-size: 12.5px; font-weight: 600; }
-.c-tip span { opacity: .8; font-variant-numeric: tabular-nums; }
-.c-tip em { font-style: normal; color: oklch(.83 .1 40); opacity: 1; }
-.c-tip small { font-size: 11.5px; opacity: .92; }
 
 /* the exact 64 */
 .c-budget { margin-top: 10px; }
@@ -153,6 +148,7 @@
 .c-key-ring { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 1.4px var(--c-accent); }
 .c-key-bead { width: 8px; height: 8px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, oklch(.86 .05 80), oklch(.66 .08 70)); }
 .c-key-tray { width: 16px; height: 9px; border-top: 1px solid oklch(.7 .02 205); background: radial-gradient(circle at 50% 75%, oklch(.82 .02 205) 2.5px, transparent 3px); }
+.c-key-grain { width: 12px; height: 8px; background: radial-gradient(circle at 25% 30%, oklch(.36 .02 205 / .6) 1.4px, transparent 1.8px), radial-gradient(circle at 70% 75%, oklch(.36 .02 205 / .45) 1.4px, transparent 1.8px); }
 .c-key-merge { width: 20px; height: 10px; background: radial-gradient(circle at 25% 50%, oklch(.78 .07 80) 4px, transparent 4.5px), radial-gradient(circle at 75% 50%, oklch(.78 .07 80) 4px, transparent 4.5px), linear-gradient(oklch(.78 .07 80), oklch(.78 .07 80)) center / 8px 4px no-repeat; }
 .c-back kbd { margin-left: 8px; font: 10.5px/1 inherit; padding: 2px 5px; border-radius: 4px; box-shadow: inset 0 0 0 1px oklch(.42 .02 205 / .25); color: var(--c-muted); }
 .c-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--cell); margin-right: 7px; vertical-align: 0; }
@@ -267,8 +263,10 @@
 .c-rs-panel .rs-send { width: 32px; height: 32px; border-radius: 50%; background: var(--c-ink); color: var(--c-paper); font-weight: 700; }
 .c-rs-panel .rs-keypad-keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 6px 0; }
 .c-rs-panel .rs-keypad-keys button { min-height: 32px; border-radius: 6px; background: oklch(.95 .006 150); }
-.c-rs-receipt { position: relative; padding: 2px 0 0; animation: c-receipt-in .26s cubic-bezier(.22,.68,.32,1); }
-@keyframes c-receipt-in { from { opacity: 0; transform: translateY(4px); } }
+/* The control folds into the receipt in place (c.mjs foldInPlace): the box's height eases, the receipt fades in after it. */
+.c-rs-receipt { position: relative; padding: 2px 0 0; }
+.c-respond.is-folding .c-rs-receipt { animation: c-receipt-in .3s linear; }
+@keyframes c-receipt-in { 0%, 45% { opacity: 0; } }
 .c-rs-receipt:focus { outline: none; }
 .c-rs-receipt:focus-visible { outline: 1.5px dashed oklch(.585 .175 34 / .55); outline-offset: 6px; border-radius: 4px; }
 .c-rs-receipt > p:first-child { display: flex; align-items: baseline; gap: 8px; font-size: 14px; padding-right: 48px; }
@@ -312,6 +310,29 @@
   .c-legend { gap: 4px 12px; font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .c-track-thumb, .c-bead, .c-stage { transition: none !important; }
+  .c-track-thumb, .c-stage { transition: none !important; }
   .c-arrivals, .c-rs-panel, .c-rs-receipt { animation: none !important; }
 }
+
+/* ---------- cards (forms/motion/ix.mjs): C's paper, soft frame; variables only, the structure is ix.css ---------- */
+.variant-c {
+  --c-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans CJK SC", sans-serif;
+  --ix-bg: var(--c-card); --ix-fg: var(--c-ink); --ix-fg-2: var(--c-muted); --ix-fg-3: var(--c-faint);
+  --ix-frame: oklch(.84 .012 205); --ix-rule: var(--c-line); --ix-leader: oklch(.42 .02 205); --ix-mono: var(--c-sans);
+  --ix-ask: oklch(.66 .12 38); --ix-ask-urgent: var(--c-accent); --ix-link-hover: var(--c-accent-ink); --ix-scrollbar: auto;
+  --ix-z-peek: 6; --ix-z-detail: 7; --ix-z-leader: 5; --ix-peek-pad: 9px 12px 10px;
+  --ix-mark: 7px; --ix-mark-gap: 7px; --ix-d-mark-gap: 7px; --ix-strong: 650;
+  --ix-font: 13px/1.5 var(--c-sans); --ix-k-font: 11px/1.4 var(--c-sans); --ix-q-font: 650 14.5px/1.35 var(--c-sans); --ix-q-margin: 2px 0 2px;
+  --ix-d-font: 12px/1.5 var(--c-sans); --ix-ask-font: 600 12.5px/1.4 var(--c-sans); --ix-ask-small-font: 400 11.5px/1.4 var(--c-sans);
+  --ix-t-font: 650 15px/1.35 var(--c-sans); --ix-sum-font: 12.5px/1.55 var(--c-sans); --ix-sum-color: var(--c-ink);
+  --ix-h-font: 600 11px var(--c-sans); --ix-h-b-size: 11px; --ix-h-b-color: var(--c-ink); --ix-axis-font: 10px var(--c-sans);
+  --ix-list-font: 12px/1.45 var(--c-sans); --ix-meta-font: 10.5px var(--c-sans); --ix-kid-b-font: 600 11px var(--c-sans);
+  --ix-none-size: 11.5px; --ix-none-lh: 1.5; --ix-none-lh-list: 1.5;
+  --ix-dask-p-font: 600 13px/1.4 var(--c-sans); --ix-dask-small-font: 11.5px var(--c-sans); --ix-dask-a-font: 600 12px var(--c-sans);
+  --ix-trend-h: 30px; --ix-bar: oklch(.72 .03 190); --ix-bar-later: oklch(.92 .01 190); --ix-bar-off: oklch(.86 .01 190);
+}
+.variant-c .ix-peek, .variant-c .ix-detail { border-radius: 10px; box-shadow: 0 14px 30px -18px oklch(.2 .02 205 / .45); font-variant-numeric: tabular-nums; }
+.c-ix-where { margin-top: 2px; color: var(--c-ink); }
+.c-ix-where-d { margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: var(--c-ink); }
+.c-ix-answer { grid-column: 2; justify-self: start; margin-top: 3px; font-size: 12px; font-weight: 600; color: var(--c-accent-ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: oklch(.585 .175 34 / .35); }
+.c-ix-answer:hover { text-decoration-color: currentColor; }
