@@ -44,7 +44,7 @@ make prototype
 
 | 形式 | 场景 | 承载的回应 | 入口 | 打磨记录 |
 | --- | --- | --- | --- | --- |
-| 原版树图 | 在电脑前掌握两周局面，顺手处理工作评审 | approve（格子里直接批准或要求修改）；其余在详情里作答 | [index.html?frame=26](./index.html?frame=26) | [spatial.md](forms/polish/spatial.md) |
+| 原版树图 | 在电脑前掌握两周局面，顺手处理工作评审；换轮时格子按离场、移位、进场挪到新面积，作答时格子原地收成回执、面积不让，下一轮整理读到了才让出份额；直接打开讲一遍约 10 秒 | approve（格子里直接批准或要求修改）；其余在详情卡里作答；悬停格子看概要，点击格子弹出、详情卡盖在右栏上 | [index.html?frame=26](./index.html?frame=26) | [spatial.md](forms/polish/spatial.md)、[tree-motion.md](forms/polish/tree-motion.md) |
 | A 空间排布 | 桌前，生活急事要当场二选一 | choose、稍后；也能批准、定时间、回一句 | [?variant=a&frame=26](./index.html?variant=a&frame=26) | [spatial.md](forms/polish/spatial.md) |
 | B 时间展开 | 期限落在此刻之后的哪里，谁先到；换轮时此刻之后的一切朝此刻线流，最近的期限撞上来，答掉它，最近的期限才往后退；直接打开讲一遍约 7.5 秒 | schedule、choose，任何事项都可稍后提醒；回应面板原地收成回执，下一轮读到了才让出份额；悬停看概要，点击展开详情，在右栏作答 | [?variant=b&frame=26](./index.html?variant=b&frame=26) | [temporal.md](forms/polish/temporal.md)、[b-motion.md](forms/polish/b-motion.md) |
 | C 流动形态 | 可以推后的事沉下去，到点浮起；换轮按涌入、长缩、沉浮、落定四段走，直接打开时讲一遍：那件事沉了几轮、到点浮起 | defer；作答时控件原地收成回执，下一轮整理读到才沉；其余用回应组件；悬停液滴看概要，点击展开详情 | [?variant=c&frame=25](./index.html?variant=c&frame=25) | [temporal.md](forms/polish/temporal.md)、[c-motion.md](forms/polish/c-motion.md) |

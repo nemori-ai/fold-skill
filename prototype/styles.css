@@ -192,10 +192,10 @@ span.loop-target { color: var(--ink); text-decoration: none; }
 /* A tile is a colour shape plus a text body (variants/spatial-kit.mjs): the shape moves and scales,
    the body keeps its final layout and is only translated and clipped, so glyphs never stretch. */
 .pin-tile { --tile-bg: oklch(0.89 0.028 145); --tile-edge: oklch(0.62 0.024 135 / 0.25); position: absolute; min-width: 0; min-height: 0; margin: 0; padding: 0; }
-.pin-tile > .flip-shape { position: absolute; inset: 0; transform-origin: 0 0; background: var(--tile-bg); box-shadow: inset 0 0 0 0.5px var(--tile-edge); transition: background-color 180ms var(--ease), box-shadow 180ms var(--ease); }
-.pin-tile > .flip-body, .pin-tile > .flip-ghost { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
-.pin-tile > .flip-ghost { pointer-events: none; }
-.pinboard.is-moving .pin-tile > .flip-shape, .pinboard.is-moving .pin-tile > .flip-body { will-change: transform; }
+.pin-tile > .flip-shape { position: absolute; inset: 0; overflow: hidden; transform-origin: 0 0; background: var(--tile-bg); box-shadow: inset 0 0 0 0.5px var(--tile-edge); transition: background-color 180ms var(--ease), box-shadow 180ms var(--ease); }
+.pin-tile .flip-body, .pin-tile .flip-ghost { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; transform-origin: 0 0; }
+.pin-tile .flip-ghost { pointer-events: none; }
+.pinboard.is-moving .pin-tile > .flip-shape, .pinboard.is-moving .pin-tile .flip-body, .pinboard.is-moving .pin-tile .flip-ghost { will-change: transform; }
 .pin-tile.is-leaving { z-index: -1; pointer-events: none; }
 .pin-tile[data-color="sage"] { --tile-bg: oklch(0.85 0.040 145); }
 .pin-tile[data-color="blue"] { --tile-bg: oklch(0.88 0.026 230); }
@@ -210,12 +210,12 @@ span.loop-target { color: var(--ink); text-decoration: none; }
 .pin-tile.is-selected.is-changed { outline-color: var(--green); }
 .tile-button { display: flex; flex-direction: column; align-items: stretch; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 13px 14px 11px; border: 0; border-radius: 0; background: transparent; text-align: left; overflow: hidden; }
 .tile-button > * { flex-shrink: 0; }
-.pin-tile[data-fit~="no-dive"] .dive-button { display: none; }
-.pin-tile.is-tiny .tile-button > h3 { flex-shrink: 1; }
-.pin-tile[data-fit~="compact-label"] .tile-ask { font-size: 0; }
-.pin-tile[data-fit~="compact-label"] .tile-kind-after, .pin-tile[data-fit~="compact-label"] .tile-share small { display: none; }
-.pin-tile[data-fit~="sliver"] .tile-button > * { visibility: hidden; }
-.pin-tile[data-fit~="sliver"] .dive-button { display: none; }
+.pin-tile [data-fit~="no-dive"] .dive-button { display: none; }
+.pin-tile .is-tiny .tile-button > h3 { flex-shrink: 1; }
+.pin-tile [data-fit~="compact-label"] .tile-ask { font-size: 0; }
+.pin-tile [data-fit~="compact-label"] .tile-kind-after, .pin-tile [data-fit~="compact-label"] .tile-share small { display: none; }
+.pin-tile [data-fit~="sliver"] .tile-button > * { visibility: hidden; }
+.pin-tile [data-fit~="sliver"] .dive-button { display: none; }
 .tile-button:hover { background: oklch(0.99 0.005 95 / 0.14); }
 .tile-button:active { background: oklch(0.28 0.025 155 / 0.05); }
 .tile-button:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
@@ -237,28 +237,28 @@ span.loop-target { color: var(--ink); text-decoration: none; }
 .dive-button:hover { background: oklch(0.99 0.005 95 / 0.40); }
 .pin-tile .dive-button { position: absolute; z-index: 3; right: 10px; bottom: 8px; }
 .change-label { color: var(--clay); font-weight: 550; }
-.pin-tile.is-small .dive-button { right: 6px; bottom: 5px; min-height: 20px; padding: 2px 4px; }
-.pin-tile.is-small .tile-button { padding: 8px 10px; }
-.pin-tile.is-small .tile-top { margin-bottom: 5px; font-size: 12px; }
-.pin-tile.is-small h3 { font-size: 12px; line-height: 1.5; }
-.pin-tile.is-small .tile-summary { display: none; }
-.pin-tile.is-small .tile-prompt { margin-top: 4px; font-size: 12px; }
-.pin-tile.is-narrow .tile-button { padding: 7px 7px 6px; }
-.pin-tile.is-narrow .tile-top { margin-bottom: 4px; }
-.pin-tile.is-narrow .tile-kind, .pin-tile.is-narrow .tile-kind-after, .pin-tile.is-narrow .tile-summary, .pin-tile.is-narrow .tile-prompt, .pin-tile.is-narrow .tile-share small { display: none; }
-.pin-tile.is-narrow .tile-ask { font-size: 0; }
-.pin-tile.is-narrow h3 { font-size: 12px; line-height: 1.45; }
-.pin-tile.is-narrow .dive-button { right: 4px; bottom: 4px; }
-.pin-tile.is-small .tile-footer { padding-top: 5px; }
-.pin-tile.is-tiny .tile-button { flex-direction: row; align-items: center; gap: 5px; padding: 3px 5px; }
-.pin-tile.is-tiny .tile-top { order: 2; flex-shrink: 0; margin: 0 0 0 auto; }
-.pin-tile.is-tiny h3 { min-width: 0; font-size: 12px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pin-tile.is-tiny .tile-top { gap: 4px; }
-.pin-tile.is-tiny .tile-kind, .pin-tile.is-tiny .tile-kind-after, .pin-tile.is-tiny .tile-summary, .pin-tile.is-tiny .tile-prompt, .pin-tile.is-tiny .tile-footer { display: none; }
-.pin-tile.is-tiny .tile-ask { font-size: 0; }
+.pin-tile .is-small .dive-button { right: 6px; bottom: 5px; min-height: 20px; padding: 2px 4px; }
+.pin-tile .is-small .tile-button { padding: 8px 10px; }
+.pin-tile .is-small .tile-top { margin-bottom: 5px; font-size: 12px; }
+.pin-tile .is-small h3 { font-size: 12px; line-height: 1.5; }
+.pin-tile .is-small .tile-summary { display: none; }
+.pin-tile .is-small .tile-prompt { margin-top: 4px; font-size: 12px; }
+.pin-tile .is-narrow .tile-button { padding: 7px 7px 6px; }
+.pin-tile .is-narrow .tile-top { margin-bottom: 4px; }
+.pin-tile .is-narrow .tile-kind, .pin-tile .is-narrow .tile-kind-after, .pin-tile .is-narrow .tile-summary, .pin-tile .is-narrow .tile-prompt, .pin-tile .is-narrow .tile-share small { display: none; }
+.pin-tile .is-narrow .tile-ask { font-size: 0; }
+.pin-tile .is-narrow h3 { font-size: 12px; line-height: 1.45; }
+.pin-tile .is-narrow .dive-button { right: 4px; bottom: 4px; }
+.pin-tile .is-small .tile-footer { padding-top: 5px; }
+.pin-tile .is-tiny .tile-button { flex-direction: row; align-items: center; gap: 5px; padding: 3px 5px; }
+.pin-tile .is-tiny .tile-top { order: 2; flex-shrink: 0; margin: 0 0 0 auto; }
+.pin-tile .is-tiny h3 { min-width: 0; font-size: 12px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pin-tile .is-tiny .tile-top { gap: 4px; }
+.pin-tile .is-tiny .tile-kind, .pin-tile .is-tiny .tile-kind-after, .pin-tile .is-tiny .tile-summary, .pin-tile .is-tiny .tile-prompt, .pin-tile .is-tiny .tile-footer { display: none; }
+.pin-tile .is-tiny .tile-ask { font-size: 0; }
 
-.pin-tile.is-tiny .tile-share { font-size: 12px; }
-.pin-tile.is-tiny .dive-button, .pin-tile.is-tiny .tile-share small { display: none; }
+.pin-tile .is-tiny .tile-share { font-size: 12px; }
+.pin-tile .is-tiny .dive-button, .pin-tile .is-tiny .tile-share small { display: none; }
 .pin-tile.is-blank { --tile-bg: oklch(0.955 0.007 110); --tile-edge: oklch(0.62 0.024 135 / 0.12); }
 .pin-tile.is-blank .blank-body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; height: 100%; padding: 8px; color: var(--muted); text-align: center; }
 .pin-tile.is-blank .blank-label, .pin-tile.is-blank strong { font-size: 12px; font-weight: 450; }
@@ -559,8 +559,8 @@ span.loop-target { color: var(--ink); text-decoration: none; }
 .event-text, .detail-summary, .detail-section p, .message-quote,
 .story-drawer p, .story-drawer li, .empty-detail { font-size: 14px; line-height: 1.8; }
 .agent-note p, .tile-summary, .story-heading p, .source-item p { font-size: 13px; }
-.pin-tile.is-small h3 { font-size: 14px; }
-.pin-tile.is-tiny h3, .pin-tile.is-tiny .tile-share { font-size: 12px; }
+.pin-tile .is-small h3 { font-size: 14px; }
+.pin-tile .is-tiny h3, .pin-tile .is-tiny .tile-share { font-size: 12px; }
 .detail-times, .detail-section dl { font-size: 13px; }
 @media (max-width: 759px) {
   .boards-wrap.is-comparing { grid-template-columns: minmax(0, 1fr); }
@@ -570,8 +570,8 @@ span.loop-target { color: var(--ink); text-decoration: none; }
   .event-text, .detail-summary, .detail-section p { font-size: 14px; }
 }
 
-.pin-tile.is-blank.is-small small { display: none; }
-.pin-tile.is-blank.is-small .blank-body { flex-direction: row; gap: 5px; flex-wrap: wrap; }
+.pin-tile.is-blank .is-small small { display: none; }
+.pin-tile.is-blank .is-small .blank-body { flex-direction: row; gap: 5px; flex-wrap: wrap; }
 .story-meta small { font-size: 12px; }
 @media (max-width: 759px) {
   .header-actions button, .view-actions button, .detail-tabs button,
@@ -756,23 +756,24 @@ span.loop-target { color: var(--ink); text-decoration: none; }
 .pin-tile.is-linked { z-index: 3; }
 .pin-tile .tile-button::after { content: "详情 ›"; position: absolute; right: 10px; bottom: 8px; color: var(--green); font-size: 11.5px; opacity: 0; transform: translateX(-3px); transition: opacity 140ms var(--ease), transform 140ms var(--ease); pointer-events: none; }
 .pin-tile .tile-button:hover::after, .pin-tile .tile-button:focus-visible::after { opacity: 1; transform: none; }
-.pin-tile.is-small .tile-button::after, .pin-tile.is-narrow .tile-button::after, .pin-tile.is-tiny .tile-button::after, .pin-tile.has-children .tile-button::after, .pin-tile.has-actions .tile-button::after { display: none; }
+.pin-tile .is-small .tile-button::after, .pin-tile .is-narrow .tile-button::after, .pin-tile .is-tiny .tile-button::after, .pin-tile .has-children .tile-button::after, .pin-tile .has-actions .tile-button::after { display: none; }
 .pin-tile .tile-ask { color: oklch(0.46 0.13 36); }
 .pin-tile .tile-ask::before { background: oklch(0.52 0.15 36); }
 .board-legend .legend-ask { background: oklch(0.52 0.15 36); }
 .tile-answered { color: var(--green); font-weight: 650; white-space: nowrap; }
 .tile-subject { margin-top: 6px; color: var(--ink); font-size: 12.5px; line-height: 1.5; }
 .tile-subject b { font-family: var(--mono); font-size: 12px; }
-.pin-tile.has-actions .tile-button { padding-bottom: 50px; }
-.pin-tile.has-actions .tile-prompt { color: oklch(0.36 0.02 155); font-weight: 450; font-size: 12.5px; }
+.pin-tile .has-actions .tile-button { padding-bottom: 50px; }
+.pin-tile .has-actions .tile-prompt { color: oklch(0.36 0.02 155); font-weight: 450; font-size: 12.5px; }
 .tile-actions { position: absolute; z-index: 3; right: 10px; bottom: 10px; left: 12px; display: flex; align-items: center; gap: 6px; }
 .tile-approve { min-height: 30px; padding: 4px 11px; border: 1px solid oklch(0.45 0.03 150 / 0.35); border-radius: 5px; background: oklch(0.99 0.005 95 / 0.72); color: var(--ink); font-size: 12.5px; font-weight: 600; }
 .tile-approve:hover { background: var(--surface); border-color: var(--ink); }
 .tile-approve.is-primary { border-color: var(--green); background: var(--green); color: var(--surface); }
 .tile-approve.is-primary:hover { background: var(--green-hover); }
-.tile-actions.is-answered { justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 5px; background: oklch(0.99 0.005 95 / 0.78); animation: og-settle 260ms var(--ease) both; }
-.tile-receipt { display: flex; flex-direction: column; min-width: 0; color: var(--muted); font-size: 11.5px; line-height: 1.4; }
-.tile-receipt b { color: var(--green); font-size: 12.5px; }
+.tile-actions.is-answered { justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 5px; background: oklch(0.99 0.005 95 / 0.78); }
+.tile-receipt { display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden; color: var(--muted); font-size: 11.5px; line-height: 1.4; white-space: nowrap; }
+.tile-receipt > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.tile-receipt > b { display: flex; align-items: center; gap: 5px; color: var(--green); font-size: 12.5px; }
 .tile-undo { flex-shrink: 0; min-height: 26px; padding: 2px 8px; border-color: transparent; background: transparent; color: var(--muted); font-size: 12px; }
 .tile-undo:hover { color: var(--ink); border-color: var(--line); }
 .pin-tile.is-answered > .flip-shape { background: color-mix(in oklch, var(--tile-bg) 78%, white); }
@@ -802,7 +803,7 @@ span.loop-target { color: var(--ink); text-decoration: none; }
 .tail-open { position: absolute; right: 12px; bottom: 9px; color: var(--green); font-size: 12px; font-weight: 600; }
 .pin-tile.is-tail .tile-button::after { display: none; }
 .pin-tile.is-tail.has-selected > .flip-shape { box-shadow: inset 0 0 0 2px oklch(0.37 0.047 154 / 0.5); }
-.pin-tile.is-tail.is-small .tail-list, .pin-tile.is-tail.is-narrow .tail-list, .pin-tile.is-tail.is-tiny .tail-list { display: none; }
+.pin-tile.is-tail .is-small .tail-list, .pin-tile.is-tail .is-narrow .tail-list, .pin-tile.is-tail .is-tiny .tail-list { display: none; }
 
 /* Hover card for tiles too small to carry their whole title. */
 .hover-card { position: fixed; z-index: 60; top: 0; left: 0; width: 280px; padding: 11px 13px 10px; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface); box-shadow: 0 10px 30px oklch(0.28 0.025 155 / 0.14); pointer-events: none; animation: og-pop 140ms var(--ease) both; }
@@ -970,7 +971,7 @@ details.source-item .md-body { margin-top: 6px; padding: 8px 10px; border-radius
 .frame-heading > .view-actions { flex: 0 0 auto; }
 .event-meta .event-from { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .event-meta time, .event-action time { flex-shrink: 0; }
-.pin-tile.is-blank[data-fit~="sliver"] .blank-body { visibility: hidden; }
+.pin-tile.is-blank [data-fit~="sliver"] .blank-body { visibility: hidden; }
 .inspector-top { align-items: flex-start; }
 .inspector-top .eyebrow { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .inspector-top button#close-detail { flex-shrink: 0; white-space: nowrap; }
@@ -978,3 +979,54 @@ details.source-item .md-body { margin-top: 6px; padding: 8px 10px; border-radius
 .ask-card.is-answered .ask-expects::before { background: var(--green); }
 .tile-actions.is-answered { padding: 4px 6px 4px 9px; }
 .tile-actions.is-received .tile-receipt { color: var(--green); }
+
+/* ---------- 原版树图的动画与交互（motion.mjs 与 forms/motion/ix.mjs；forms/polish/tree-motion.md） ---------- */
+/* The stage of ix: cards, leaders and keyboard proxies are placed in it; ix.css only takes these variables. */
+.main-grid { position: relative; --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --ix-bg: var(--surface); --ix-fg: var(--ink); --ix-fg-2: var(--muted); --ix-fg-3: var(--faint); --ix-frame: var(--line-strong);
+  --ix-rule: var(--line); --ix-leader: var(--ink); --ix-ask: oklch(0.52 0.15 36); --ix-ask-urgent: oklch(0.52 0.15 36);
+  --ix-font: 13px/1.55 var(--sans); --ix-k-font: 11.5px/1.5 var(--sans); --ix-q-font: 600 14px/1.45 var(--sans); --ix-d-font: 12px/1.55 var(--mono);
+  --ix-ask-font: 550 12.5px/1.45 var(--sans); --ix-ask-small-font: 400 11.5px var(--mono); --ix-z-leader: 4; --ix-z-peek: 6; --ix-z-detail: 7; }
+.main-grid > .ix-peek { width: 252px; border-radius: 6px; box-shadow: 0 10px 30px oklch(0.28 0.025 155 / 0.14); }
+.main-grid > .ix-peek .ix-ask i { border-radius: 50%; width: 7px; height: 7px; }
+.main-grid > .ix-peek .tc-rc { color: var(--green); }
+.main-grid > .ix-peek .tc-rc i { box-sizing: border-box; border: 1.5px solid var(--green); background: transparent; }
+.main-grid > .ix-peek .tc-rc.is-received i { background: var(--green); }
+/* The card is the reader's own detail, laid over the reader column (the overview stays beneath). */
+.main-grid > .ix-detail.tree-card { padding: 0; border: 0; border-left: 1px solid var(--line-strong); border-radius: 0; background: var(--surface); color: var(--ink); font: 14px/1.6 var(--sans);
+  box-shadow: -12px 0 28px oklch(0.28 0.025 155 / 0.07); scrollbar-width: thin; }
+.tc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 17px 20px 10px; font-size: 12px; }
+.tc-kicker { min-width: 0; overflow: hidden; color: var(--green); font-weight: 600; letter-spacing: 0.035em; text-overflow: ellipsis; white-space: nowrap; }
+.tc-close { flex-shrink: 0; min-height: 26px; padding: 4px 6px; border: 0; background: transparent; color: var(--green); font-size: 12px; white-space: nowrap; }
+.tc-title { margin: 0; padding: 0 20px 6px; font-size: 16px; font-weight: 600; line-height: 1.5; }
+.tree-card .tc-body { padding-top: 12px; border-top: 1px solid var(--line); }
+@media (max-width: 1200px) { .tc-head, .tc-title, .tree-card .tc-body { padding-right: 16px; padding-left: 16px; } }
+/* The headline count: the board's one large figure (22 px, never moves); it turns over on its beat. */
+.board-heading .layer-title { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 2px 10px; }
+.hero { display: inline-flex; align-items: baseline; gap: 6px; color: var(--ink); }
+.hero-n { display: inline-grid; min-width: 1.3ch; overflow: hidden; font: 600 22px/1 var(--mono); font-variant-numeric: tabular-nums; }
+.hero-n > span { grid-area: 1 / 1; }
+.hero-unit { font-size: 13px; font-weight: 600; }
+.layer-meta { color: var(--muted); font-size: 12px; font-weight: 450; }
+.budget-label:has(> .ft-new) { display: inline-grid; }
+.budget-label > .ft-new, .budget-label > .ft-old { grid-area: 1 / 1; }
+/* The receipt under a tile's title: the hollow tick is “saved”, the filled one “the Agent has read it”. */
+.tile-rc { display: flex; align-items: center; gap: 5px; margin-top: 6px; color: var(--green); font-size: 12px; font-weight: 550; line-height: 1.45; }
+.tile-rc > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rc-tick { position: relative; flex: none; box-sizing: border-box; width: 11px; height: 11px; border: 1.5px solid currentColor; border-radius: 50%; }
+.rc-tick > b { position: absolute; inset: 1.5px; border-radius: 50%; background: currentColor; opacity: 0; }
+.is-received .rc-tick > b { opacity: 1; }
+.pin-tile .is-tiny .tile-rc, .pin-tile .is-narrow .tile-rc > span { display: none; }
+/* A question registered this round is outlined once; the tile ix opens steps out 4 px each side; the keyboard's is ringed. */
+.tile-ring { position: absolute; z-index: 2; inset: 0; box-shadow: inset 0 0 0 2px oklch(0.52 0.15 36); opacity: 0; pointer-events: none; }
+.pin-tile.is-popped { z-index: 5; }
+.pin-tile.is-popped::before { content: ""; position: absolute; inset: 0; background: var(--tile-bg); box-shadow: 0 0 0 1px oklch(0.28 0.025 155 / 0.55), 0 8px 22px oklch(0.28 0.025 155 / 0.18);
+  opacity: min(1, calc(var(--pop, 0) * 3)); transform: scale(var(--psx, 1), var(--psy, 1)); pointer-events: none; }
+.pinboard.has-pop { overflow: visible; }
+.pin-tile.is-keyfocus > .flip-shape { box-shadow: inset 0 0 0 2px var(--focus); }
+.pin-tile.is-keyfocus { z-index: 4; }
+.tree-grains { position: absolute; z-index: 3; left: 0; top: 0; pointer-events: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.view-actions #tell-again[hidden], .is-embedded .view-actions #tell-again { display: none; }
+.board-keys { display: contents; }
+@media (prefers-reduced-motion: reduce) { .pin-tile > .flip-shape, .pin-tile .tile-button { transition: none; } }

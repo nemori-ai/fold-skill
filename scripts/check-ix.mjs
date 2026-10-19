@@ -129,6 +129,17 @@ const PAGES = {
     // Play on from f03 (C's own player, 5.6 s a round from the cut); hover once the turn has crossed.
     playReady: `(foldC.play(), new Promise(r => setTimeout(r, 1700)))`,
   },
+  // 原版树图：一格就是一件；详情卡盖在右栏上，旁白标题切到“这一件”。隐藏按钮紧跟在视图栏的“对比”之后。
+  tree: {
+    hook: 'foldTree', held: 'index.html?frame=22', play: 'index.html?frame=3',
+    prepare: null, index: 'foldTree.index', step: 23, tabFrom: '#compare-button',
+    // The largest tile on the board's left edge; 9 px left of the board, level with it (the band is 10 px).
+    pick: 'foldTree.pick()',
+    near: name => `foldTree.nearOf(${JSON.stringify(name)}, 9)`,
+    blank: { x: 760, y: 768 },
+    cut: `document.querySelector('#frame-title').textContent.startsWith('这一件') && Boolean(document.querySelector('.tree-card .tc-kicker')?.textContent.startsWith('这一件'))`,
+    playReady: `(foldTree.play(), new Promise(r => setTimeout(r, 1700)))`,
+  },
 };
 
 function args(argv) {
