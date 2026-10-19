@@ -50,7 +50,7 @@ make prototype
 | C 流动形态 | 可以推后的事沉下去，到点浮起 | defer；其余用回应组件 | [?variant=c&frame=25](./index.html?variant=c&frame=25) | [temporal.md](forms/polish/temporal.md) |
 | D 手机首页 | 离开半天回来，先答最急的 3 件 | approve、choose 一键；confirm、reply、schedule、defer | [?variant=d&frame=26](./index.html?variant=d&frame=26) | [home.md](forms/polish/home.md) |
 | 腕上一瞥 | 抬腕两秒：要不要现在掏手机；换轮时刻度重分、新要你回的闪一下、数字落定 | confirm 与两项的 choose；其余转到手机；悬停刻度或事项名看概要，点击展开详情 | [forms/watch.html](forms/watch.html?frame=26) | [home.md](forms/polish/home.md)、[watch-motion.md](forms/polish/watch-motion.md) |
-| 两周小倍数 | 复盘两周注意力怎样移动 | 不承载作答；黑点标出此刻开着的问题 | [forms/multiples.html](forms/multiples.html?frame=26) | [review-a.md](forms/polish/review-a.md) |
+| 两周小倍数 | 复盘两周注意力怎样移动；直接打开放一遍约 24 秒，看出它是成块挪的 | 不承载作答；黑点 = 一个开着的问题，展开后仍开着的问题链到同一帧的 D；悬停一帧或一格看概要，点击展开详情 | [forms/multiples.html](forms/multiples.html?frame=26) | [review-a.md](forms/polish/review-a.md)、[multiples-motion.md](forms/polish/multiples-motion.md) |
 | 身份线 | 追一件事的来龙去脉：改名、撤下、并入 | 不承载作答；标出问题的开与闭 | [sketches/lineage.html](forms/sketches/lineage.html) | [review-a.md](forms/polish/review-a.md) |
 | 回应时序 | 我欠了谁什么回应，开了多久 | 不承载作答；所有类型的开闭与期限 | [sketches/timing.html](forms/sketches/timing.html) | [review-a.md](forms/polish/review-a.md) |
 | 来源矩阵 | 某件事背后是谁在推动 | 不承载作答 | [sketches/provenance.html](forms/sketches/provenance.html) | [review-b.md](forms/polish/review-b.md) |

@@ -65,6 +65,18 @@ const PAGES = {
     // No concept card here: Tab starts from the frame bar's last control, the tick strip.
     tabFrom: '.st-ticks',
   },
+  multiples: {
+    // Opened at the top level without a frame the page plays its show once by itself; with ?frame= it stays still.
+    hook: 'foldMultiples', held: 'forms/multiples.html?frame=23&card=0', play: 'forms/multiples.html?card=0',
+    prepare: null, index: 'foldMultiples.player.index', step: 24, tabFrom: '[data-inspect="state"]',
+    // The largest item of the frame on screen: its block starts at the big waffle's first cell.
+    pick: `foldMultiples.rounds[foldMultiples.player.index].items[0].short`,
+    // 9 px above the big waffle, over the item's first row (the waffle is hit up to 12 px outside its edge).
+    near: name => `(() => { const g = foldMultiples.geom(), p = foldMultiples.pointOf(${JSON.stringify(name)}); return { x: p.x, y: g.y0 - 9 }; })()`,
+    blank: { x: 60, y: 76 },
+    cut: `document.querySelector('.mx-now-k').textContent.startsWith('这一件')`,
+    playReady: `new Promise(r => { const go = () => (foldMultiples.player.index >= 3 ? r(1) : setTimeout(go, 50)); go(); })`,
+  },
 };
 
 function args(argv) {
