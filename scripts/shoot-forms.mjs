@@ -8,6 +8,7 @@
 //   node scripts/shoot-forms.mjs --only d --frame 26 --scale 2     # 2 倍像素密度，供裁切后放进文档（版面仍按 1440×900）
 //   node scripts/shoot-forms.mjs --check d-respond               # 额外跑一段交互检查（见 CHECKS）
 //   node scripts/shoot-forms.mjs --only d --eval "document.querySelector('.d-card button').click()"   # 截图前先执行
+//   node scripts/shoot-forms.mjs --gpu --only pulse --frame 20   # 用显卡渲染（默认关显卡）；WebGL 画面与余辉要用它截，体验站的 pulse 预览图也用它
 //
 // 每种形式输出 <out>/<form>.png，另写 <out>/report.json：URL、页面报错、控制台错误与截图路径。
 // 任一形式有报错时退出码为 1。CHROME 环境变量可指定浏览器路径。
@@ -26,7 +27,8 @@ export const FORMS = {
   // 第一轮撤下后恢复的八个形式：只做了能在两个数据集下运行的最小适配，未打磨。
   radio: 'forms/radio.html', strips: 'forms/strips.html', frontpage: 'forms/frontpage.html', receipt: 'forms/receipt.html',
   orb: 'forms/orb.html', departures: 'forms/departures.html', blame: 'forms/blame.html', chat: 'forms/chat.html',
-  // 第三轮：概念动画。带 --frame 时停在那一帧，不带时播放 hero 循环。
+  // 第三轮：概念动画。带 --frame 时停在那一帧（整理脉冲先演一遍那一轮再停住），不带时播放各自的循环。
+  pulse: 'forms/motion/pulse.html',
   dial: 'forms/motion/dial.html',
   // 所有原型合在一页；截图只看首屏，iframe 里的报错也会冒到这里。
   all: 'all.html',
@@ -87,10 +89,11 @@ const CHECKS = {
 };
 
 function args(argv) {
-  const out = { data: null, base: 'http://127.0.0.1:4173', out: '.local/polish-base', only: null, frame: null, width: 1440, height: 900, scale: 1, check: [], eval: null };
+  const out = { data: null, base: 'http://127.0.0.1:4173', out: '.local/polish-base', only: null, frame: null, width: 1440, height: 900, scale: 1, check: [], eval: null, gpu: false };
   for (let i = 0; i < argv.length; i += 1) {
     const [key, value] = [argv[i].replace(/^--/, ''), argv[i + 1]];
-    if (key === 'check') { out.check.push(value); i += 1; } else if (key in out) { out[key] = value; i += 1; } else throw new Error(`未知参数 ${argv[i]}`);
+    if (key === 'gpu') out.gpu = true;
+    else if (key === 'check') { out.check.push(value); i += 1; } else if (key in out) { out[key] = value; i += 1; } else throw new Error(`未知参数 ${argv[i]}`);
   }
   out.only = out.only ? out.only.split(',') : Object.keys(FORMS);
   return out;
@@ -102,9 +105,11 @@ function chromePath() {
   return 'google-chrome';
 }
 
-async function launch(width, height) {
+async function launch(width, height, gpu = false) {
   const profile = await mkdtemp(path.join(tmpdir(), 'fold-shoot-'));
-  const chrome = spawn(chromePath(), ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--no-first-run', '--no-default-browser-check',
+  // Without --gpu the pages render in software (WebGL pages fall back to Canvas 2D); with it, through the GPU.
+  const graphics = gpu ? ['--enable-gpu', '--ignore-gpu-blocklist', ...(process.platform === 'darwin' ? ['--use-angle=metal'] : [])] : ['--disable-gpu'];
+  const chrome = spawn(chromePath(), ['--headless=new', ...graphics, '--hide-scrollbars', '--no-first-run', '--no-default-browser-check',
     `--window-size=${width},${height}`, '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'] });
   const endpoint = await new Promise((resolve, reject) => {
     let text = '';
@@ -183,7 +188,7 @@ async function main() {
   const options = args(process.argv.slice(2));
   const out = path.resolve(root, options.out);
   await mkdir(out, { recursive: true });
-  const { chrome, profile, endpoint } = await launch(options.width, options.height);
+  const { chrome, profile, endpoint } = await launch(options.width, options.height, options.gpu);
   const cdp = connect(endpoint);
   await cdp.ready;
   const report = [];

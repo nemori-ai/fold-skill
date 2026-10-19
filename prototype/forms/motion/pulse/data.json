@@ -1,0 +1,182 @@
+{
+  "about": "pulse 画面上会出现的数字。页面运行时只读同一份回放（scenario.mjs → engine.mjs replayScenario），用下面的推导现算，不读本文件；本文件是 ship 阶段对照用的定值。2026-10-19 由回放算出。",
+  "budget": {"value":64,"source":"prototype/engine.mjs BUDGET；每层 64 份，两个数据集相同"},
+  "derivations": {
+    "faded": "一轮里没被采用的输入：events.length − count(disposition === 'used')，即暂缓 + 重复 + 噪音 + 未判；与 sketches/notation.mjs 的“收到”条同一分类",
+    "moved": "records[i].diff.changes（去掉 annotations_changed）按 sketches/notation.mjs 归类后，新增 + 变大 + 撤下 + 合并 的件数；变小与只改内容不算",
+    "fresh": "sketches/stage.mjs askLife：这一帧开着（variants/shared.mjs currentAsk，ask 属于条目当前版本）而上一帧没开的问题",
+    "answered": "askLife：上一帧开着、这一帧关上，且此前有 event.feedback[].ask 指向它",
+    "open": "askLife：这一帧开着的问题数",
+    "blank": "64 − state.root.used，根层未分配的份额"
+  },
+  "composite": {
+    "source_file": "prototype/data/composite/scenario.mjs",
+    "person": {"value":"Jonas Berglund","source":"scenario.persona.name"},
+    "frames": {"value":29,"source":"scenario.frames.length"},
+    "rounds": {"value":28,"source":"scenario.frames 中 phase 不是 initial 的帧（第一帧是空状态）"},
+    "span": {"value":"2026-08-03 — 2026-08-17","source":"frames[0].at 与 frames.at(-1).at"},
+    "total_inputs": {"value":3196,"source":"Σ frames[].events.length"},
+    "inputs_by_stream": {"value":{"work":1676,"community":738,"life":326,"subscription":68,"family":388},"source":"按 event.stream 计数"},
+    "inputs_per_round": {
+      "max": {"value":{"frame":"f20","n":234},"source":"max frames[i].events.length → frames[20]（signal.received 记 235，差的是未收入演示的营销邮件；画面用 events.length）"},
+      "min": {"value":{"frames":["f11","f25"],"n":54},"source":"有输入的轮次中 events.length 最小者；rounds 是这样的轮数"},
+      "median": {"value":108.5,"source":"有输入轮次 events.length 的中位数"}
+    },
+    "review_rounds": {"value":{"count":0,"frames":[]},"source":"frames[i].signal.type === 'review'（窗口内 0 条，定时整理）"},
+    "used_total": {"value":1177,"source":"event.disposition === 'used' 计数"},
+    "inputs_by_disposition": {"value":{"used":1177,"noise":864,"deferred":1117,"duplicate":33,"unjudged":5},"source":"按 event.disposition 计数；faded = 其中 used 以外的全部"},
+    "faded_share": {
+      "overall": {"value":0.632,"source":"1 − used_total / total_inputs"},
+      "median": {"value":0.631,"source":"有输入轮次 faded/n 的中位数（faded 见 derivations）"},
+      "max": {"value":{"frame":"f27","faded":59,"n":66,"ratio":0.894},"source":"有输入轮次 faded/n 最大者"},
+      "min": {"value":{"frames":["f15"],"faded":17,"n":71,"ratio":0.239},"source":"有输入轮次 faded/n 最小者"}
+    },
+    "moved_per_round": {"value":{"median":3,"max":15,"max_frame":"f18"},"source":"moved 见 derivations"},
+    "asks_registered": {"value":26,"source":"不同的 frames[].asks[*].id；等于两周新登记的问题数"},
+    "fresh_per_round": {"value":{"median":1,"none":10,"one_or_two":17,"more":[{"frame":"f01","fresh":5}]},"source":"fresh 见 derivations；none / one_or_two / more 是轮数"},
+    "feedback_links": {"value":{"total":160,"to_asks":32,"via":{"source":160}},"source":"Σ event.feedback.length；to_asks 是带 ask 的；via 按 link.via 计数"},
+    "max_share": {"value":{"share":24,"holders":{"mamma-stambyte":"f03…f22 中的 12 帧","smilla-vet":"f22","driveway-wet":"f26、f27、f28"}},"source":"回放后各帧 state.root.items[].share 的最大值（engine.mjs WEIGHTS.critical = 24）"},
+    "blank_max": {"value":{"frame":"f23","blank":25},"source":"blank 见 derivations"},
+    "rounds_on_screen": {
+      "f01": {
+        "at": {"value":"2026-08-03T12:00:00+02:00","source":"frames[1].at"},
+        "title": {"value":"母亲来电、猫打喷嚏，#13350 等复审","source":"frames[1].title（旁白）"},
+        "n": {"value":76,"source":"frames[1].events.length"},
+        "cumulative": {"value":76,"source":"Σ frames[0..1].events.length"},
+        "faded": {"value":38,"source":"derivations.faded，frames[1]"},
+        "moved": {"value":10,"source":"derivations.moved，records[1]"},
+        "fresh": {"value":["Smilla 约上兽医了吗？（smilla-vet）","master CI 红了谁来查？（ci-urls-master）","派对回几个人？（kraftskiva-22-8）","#13350 复审：批准合并？（pr-13350-review）","水碗多大？回一句尺寸（qa-comments）"],"source":"derivations.fresh；文字是 ask.short"},
+        "answered": {"value":[],"source":"derivations.answered；份额取前后两帧 state.root"},
+        "open": {"value":5,"source":"derivations.open"},
+        "blank": {"value":7,"source":"derivations.blank，records[1]"}
+      },
+      "f02": {
+        "at": {"value":"2026-08-04T00:00:00+02:00","source":"frames[2].at"},
+        "title": {"value":"master CI 变红，答应母亲的电话没打","source":"frames[2].title（旁白）"},
+        "n": {"value":131,"source":"frames[2].events.length"},
+        "cumulative": {"value":207,"source":"Σ frames[0..2].events.length"},
+        "faded": {"value":93,"source":"derivations.faded，frames[2]"},
+        "moved": {"value":4,"source":"derivations.moved，records[2]"},
+        "fresh": {"value":["#13473 定时器重构：批准？（pr-13473-review）"],"source":"derivations.fresh；文字是 ask.short"},
+        "answered": {"value":[],"source":"derivations.answered；份额取前后两帧 state.root"},
+        "open": {"value":6,"source":"derivations.open"},
+        "blank": {"value":0,"source":"derivations.blank，records[2]"}
+      },
+      "f03": {
+        "at": {"value":"2026-08-04T12:00:00+02:00","source":"frames[3].at"},
+        "title": {"value":"母亲楼里换水管：14 日前选住处","source":"frames[3].title（旁白）"},
+        "n": {"value":132,"source":"frames[3].events.length"},
+        "cumulative": {"value":339,"source":"Σ frames[0..3].events.length"},
+        "faded": {"value":84,"source":"derivations.faded，frames[3]"},
+        "moved": {"value":7,"source":"derivations.moved，records[3]"},
+        "fresh": {"value":["母亲九月住哪？（mamma-stambyte）","NDEBUG：报错/undef？（issue-13481-ndebug）"],"source":"derivations.fresh；文字是 ask.short"},
+        "answered": {"value":["水碗多大？回一句尺寸（qa-comments 3 份→1 份）"],"source":"derivations.answered；份额取前后两帧 state.root"},
+        "open": {"value":7,"source":"derivations.open"},
+        "blank": {"value":1,"source":"derivations.blank，records[3]"}
+      },
+      "f04": {
+        "at": {"value":"2026-08-05T00:00:00+02:00","source":"frames[4].at"},
+        "title": {"value":"他开 #13484；Kajsa 嫌六周太长","source":"frames[4].title（旁白）"},
+        "n": {"value":125,"source":"frames[4].events.length"},
+        "cumulative": {"value":464,"source":"Σ frames[0..4].events.length"},
+        "faded": {"value":63,"source":"derivations.faded，frames[4]"},
+        "moved": {"value":2,"source":"derivations.moved，records[4]"},
+        "fresh": {"value":["vdns 搬迁：批准合并？（pr-13482-review）"],"source":"derivations.fresh；文字是 ask.short"},
+        "answered": {"value":[],"source":"derivations.answered；份额取前后两帧 state.root"},
+        "open": {"value":8,"source":"derivations.open"},
+        "blank": {"value":0,"source":"derivations.blank，records[4]"}
+      },
+      "f05": {
+        "at": {"value":"2026-08-05T12:00:00+02:00","source":"frames[5].at"},
+        "title": {"value":"约好兽医，vdns 合并","source":"frames[5].title（旁白）"},
+        "n": {"value":70,"source":"frames[5].events.length"},
+        "cumulative": {"value":534,"source":"Σ frames[0..5].events.length"},
+        "faded": {"value":35,"source":"derivations.faded，frames[5]"},
+        "moved": {"value":3,"source":"derivations.moved，records[5]"},
+        "fresh": {"value":[],"source":"derivations.fresh；文字是 ask.short"},
+        "answered": {"value":["Smilla 约上兽医了吗？（smilla-vet 12 份→3 份）","vdns 搬迁：批准合并？（pr-13482-review 1 份→撤下）"],"source":"derivations.answered；份额取前后两帧 state.root"},
+        "open": {"value":6,"source":"derivations.open"},
+        "blank": {"value":6,"source":"derivations.blank，records[5]"}
+      },
+      "f20": {
+        "at": {"value":"2026-08-13T00:00:00+02:00","source":"frames[20].at"},
+        "title": {"value":"Ture 发烧被接回，Kajsa 的后刹失灵","source":"frames[20].title（旁白）"},
+        "n": {"value":234,"source":"frames[20].events.length"},
+        "cumulative": {"value":2297,"source":"Σ frames[0..20].events.length"},
+        "faded": {"value":168,"source":"derivations.faded，frames[20]"},
+        "moved": {"value":3,"source":"derivations.moved，records[20]"},
+        "fresh": {"value":["后刹排气定哪天？（kajsa-bike-brake）"],"source":"derivations.fresh；文字是 ask.short"},
+        "answered": {"value":["机票退款回来了吗？（kajsa-ticket-refund 3 份→撤下）"],"source":"derivations.answered；份额取前后两帧 state.root"},
+        "open": {"value":6,"source":"derivations.open"},
+        "blank": {"value":0,"source":"derivations.blank，records[20]"}
+      },
+      "f23": {
+        "at": {"value":"2026-08-14T12:00:00+02:00","source":"frames[23].at"},
+        "title": {"value":"打了诊所；母亲自己定了","source":"frames[23].title（旁白）"},
+        "n": {"value":115,"source":"frames[23].events.length"},
+        "cumulative": {"value":2681,"source":"Σ frames[0..23].events.length"},
+        "faded": {"value":81,"source":"derivations.faded，frames[23]"},
+        "moved": {"value":1,"source":"derivations.moved，records[23]"},
+        "fresh": {"value":["三个旧 PR 推到哪天？（pr-reviews-0814）"],"source":"derivations.fresh；文字是 ask.short"},
+        "answered": {"value":["Smilla 多吃了药：打诊所？（smilla-vet 24 份→12 份）","#13572 堵复用绕过：批准？（pr-reviews-0814 6 份→6 份）"],"source":"derivations.answered；份额取前后两帧 state.root"},
+        "open": {"value":3,"source":"derivations.open"},
+        "blank": {"value":25,"source":"derivations.blank，records[23]"}
+      }
+    }
+  },
+  "story": {
+    "source_file": "prototype/data/story/scenario.mjs",
+    "person": {"value":"林苒","source":"scenario.persona.name"},
+    "frames": {"value":37,"source":"scenario.frames.length"},
+    "rounds": {"value":36,"source":"scenario.frames 中 phase 不是 initial 的帧（第一帧是空状态）"},
+    "span": {"value":"2026-10-12 — 2026-10-25","source":"frames[0].at 与 frames.at(-1).at"},
+    "total_inputs": {"value":112,"source":"Σ frames[].events.length"},
+    "inputs_by_stream": {"value":null,"source":"事件没有 stream 字段，画面只有一列"},
+    "inputs_per_round": {
+      "max": {"value":{"frame":"f01","n":9},"source":"max frames[i].events.length → frames[3]"},
+      "min": {"value":{"n":3,"rounds":30},"source":"有输入的轮次中 events.length 最小者；rounds 是这样的轮数"},
+      "median": {"value":3,"source":"有输入轮次 events.length 的中位数"}
+    },
+    "review_rounds": {"value":{"count":2,"frames":["f17","f27"]},"source":"frames[i].signal.type === 'review'（窗口内 0 条，定时整理）"},
+    "used_total": {"value":84,"source":"event.disposition === 'used' 计数"},
+    "inputs_by_disposition": {"value":{"used":84,"noise":12,"duplicate":10,"deferred":6},"source":"按 event.disposition 计数；faded = 其中 used 以外的全部"},
+    "faded_share": {
+      "overall": {"value":0.25,"source":"1 − used_total / total_inputs"},
+      "median": {"value":0.333,"source":"有输入轮次 faded/n 的中位数（faded 见 derivations）"},
+      "max": {"value":{"frame":"f06","faded":2,"n":3,"ratio":0.667},"source":"有输入轮次 faded/n 最大者"},
+      "min": {"value":{"ratio":0,"rounds":7},"source":"有输入轮次 faded/n 最小者"}
+    },
+    "moved_per_round": {"value":{"median":1,"max":16,"max_frame":"f01"},"source":"moved 见 derivations"},
+    "asks_registered": {"value":39,"source":"不同的 frames[].asks[*].id；等于两周新登记的问题数"},
+    "fresh_per_round": {"value":{"median":1,"none":16,"one_or_two":16,"more":[{"frame":"f01","fresh":6},{"frame":"f05","fresh":3},{"frame":"f12","fresh":3},{"frame":"f22","fresh":3}]},"source":"fresh 见 derivations；none / one_or_two / more 是轮数"},
+    "feedback_links": {"value":{"total":15,"to_asks":12,"via":{"reply":12,"button":3}},"source":"Σ event.feedback.length；to_asks 是带 ask 的；via 按 link.via 计数"},
+    "max_share": {"value":{"share":24,"holders":{"pilot":"f05…f23 中的 7 帧","performance":"f07","family":"f15…f18 中的 4 帧","launch":"f25、f26、f27"}},"source":"回放后各帧 state.root.items[].share 的最大值（engine.mjs WEIGHTS.critical = 24）"},
+    "blank_max": {"value":{"frame":"cold-01","blank":58},"source":"blank 见 derivations"},
+    "rounds_on_screen": {
+      "f05": {
+        "at": {"value":"2026-10-13T14:40:00+08:00","source":"frames[7].at"},
+        "title": {"value":"远川两店库存口径不一，总库存暂不承诺","source":"frames[7].title（旁白）"},
+        "n": {"value":3,"source":"frames[7].events.length"},
+        "cumulative": {"value":27,"source":"Σ frames[0..7].events.length"},
+        "faded": {"value":1,"source":"derivations.faded，frames[7]"},
+        "moved": {"value":2,"source":"derivations.moved，records[7]"},
+        "fresh": {"value":["今天对远川怎样表态？（pilot）","请许宁确认可售与剩余的含义（pilot-data）","总库存需求先怎么回？（pilot-promise）"],"source":"derivations.fresh；文字是 ask.short"},
+        "answered": {"value":["导出模板是否允许编辑？（launch-scope 12 份→6 份）","先核对构成，还是直接定预算？（expenses 6 份→3 份）"],"source":"derivations.answered；份额取前后两帧 state.root"},
+        "open": {"value":6,"source":"derivations.open"},
+        "blank": {"value":0,"source":"derivations.blank，records[7]"}
+      },
+      "f17": {
+        "at": {"value":"2026-10-18T08:00:00+08:00","source":"frames[19].at"},
+        "title": {"value":"无新输入：东馆开放时间待出发前复核","source":"frames[19].title（旁白）"},
+        "n": {"value":0,"source":"frames[19].events.length"},
+        "cumulative": {"value":61,"source":"Σ frames[0..19].events.length"},
+        "faded": {"value":0,"source":"derivations.faded，frames[19]"},
+        "moved": {"value":0,"source":"derivations.moved，records[19]"},
+        "fresh": {"value":[],"source":"derivations.fresh；文字是 ask.short"},
+        "answered": {"value":[],"source":"derivations.answered；份额取前后两帧 state.root"},
+        "open": {"value":4,"source":"derivations.open"},
+        "blank": {"value":12,"source":"derivations.blank，records[19]"}
+      }
+    }
+  }
+}
