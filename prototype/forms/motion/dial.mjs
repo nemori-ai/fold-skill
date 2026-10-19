@@ -4,7 +4,8 @@
 //
 // 模式：默认 hero（20 秒三拍循环）；空格连播全部轮次（每轮 4 秒）；←/→ 逐帧并停住；?frame= 直接停在那帧；
 // 被合页 all.html 用 followFrames 驱动时只走单帧。prefers-reduced-motion 时每拍直接到终态，概念层不动。
-import { notice, frames, rounds, lanes, hero, BUDGET, orderOf, shortOf, scenario } from './dial-model.mjs';
+// 交互（story.md「交互」）：悬停或 Tab 到扇区看概要，点击展开详情；两者都让播放停在当前轮，离开或收回 0.4 秒后接着播。
+import { notice, frames, rounds, lanes, hero, BUDGET, orderOf, shortOf, scenario, itemFacts, dayTime } from './dial-model.mjs';
 import { motions } from '../catalog.mjs';
 import { followFrames } from '../../embed.mjs';
 import { withDataset, keepDataset, datasets, currentDataset } from '../../data/select.mjs';
@@ -24,6 +25,8 @@ const C = { ink: '#1f2d26', ink2: '#5d6b63', paper: '#f6f5ef' };
 // 1.3 s to read; hard cut at 4.0.
 const T = { flow: 0.6, travel: 0.4, travelJitter: 0.3, shares: 1.3, sharesDur: 0.5, cursor: 1.9, swing: 0.5, bundle: 2.7, bundleDur: 0.3, end: 4.0 };
 const PHASES = [['输入涌入', 0, 1.0], ['归并压缩', 1.0, 1.3], ['份额分配', 1.3, 1.8], ['回应路径', 1.9, 2.7]];
+// The five panels' headings while one item is open: they switch to that item's view (paintPanels).
+const PANEL_ITEM = ['输入 · 这一件', '处置 · 这一件', '一轮四段 · 这一件', '份额 · 逐轮 ', '信号 · 它的输入'];
 const HERO = { intro: 1.5, b1: 4.0, b2: 9.0, b3: 5.5 };
 
 const clamp01 = x => (x < 0 ? 0 : x > 1 ? 1 : x);
@@ -162,7 +165,11 @@ function jumpScene(seg, t) {
 }
 
 // ---------- player ----------
-const clock = () => performance.now() / 1000;
+// Playback time is wall time minus every pause: hovering or opening a sector stops the loop and the continuous play
+// at the moment they are in (the concept layer keeps its own clock and keeps moving).
+const wall = () => performance.now() / 1000;
+const pause = { at: null, total: 0 };
+const clock = () => (pause.at ?? wall()) - pause.total;
 const player = { mode: 'hero', segs: [], index: 0, firstHero: true, end: 0, freeze: null, followed: false };
 function heroSegments(t0, countOut) {
   const { b1, b2, b3 } = hero;
@@ -247,7 +254,8 @@ function cardHTML() {
     <p class="fs-tagline">${esc(form.tagline)}</p>
     <dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${k === '视觉骨架' ? v : esc(v)}</dd>`).join('')}</dl>
     <p class="dl-keys"><kbd>空格</kbd> 连播 / 暂停 · <kbd>←</kbd><kbd>→</kbd> 逐帧并停住 · 默认循环 20 秒</p>
-    <p class="fs-foot">动画只读同一份回放，不写回状态，也不承载作答。${esc(notice)}
+    <p class="dl-keys">悬停或 <kbd>Tab</kbd> 到扇区看概要 · 点击或 <kbd>Enter</kbd> 展开详情 · <kbd>Esc</kbd> 收回；悬停与展开时播放停在当前轮</p>
+    <p class="fs-foot">动画只读同一份回放，不写回状态，也不承载作答；详情里的问题链到同一帧的 D 手机首页去回答。${esc(notice)}
       <a href="${note('motion/dial/story')}">story</a> · <a href="${note('motion/dial/spec')}">spec</a> · <a href="${note('CONCEPTS')}">全部概念卡</a> · <a href="${note('INSPIRATION')}">灵感来源</a></p>`;
 }
 
@@ -276,9 +284,12 @@ function buildDOM() {
       <div class="dl-main">
         <canvas class="dl-field" aria-hidden="true"></canvas>
         <canvas class="dl-marks" aria-hidden="true"></canvas>
-        <svg class="dl-ring" aria-label="64 份预算环"><g class="dl-ticks"></g><g class="dl-blank"></g><g class="dl-sectors"></g><g class="dl-asks"></g><g class="dl-labels"></g><path class="dl-leader"/><g class="dl-cursor"><line class="dl-needle"/><rect class="dl-tag"/><text class="dl-tag-t"></text></g><g class="dl-hub"></g></svg>
+        <svg class="dl-ring" aria-label="64 份预算环"><g class="dl-pop"></g><g class="dl-ticks"></g><g class="dl-blank"></g><g class="dl-sectors"></g><g class="dl-asks"></g><path class="dl-xline" pathLength="1"/><g class="dl-labels"></g><path class="dl-leader"/><path class="dl-leader dl-peek-leader"/><g class="dl-cursor"><line class="dl-needle"/><rect class="dl-tag"/><text class="dl-tag-t"></text></g><g class="dl-hub"></g></svg>
         <div class="dl-title"><div class="dl-kicker"></div><h2></h2></div>
-        <div class="dl-callout" hidden><div class="dl-c-k"><i></i>要你回 · 要紧</div><div class="dl-c-q"></div><div class="dl-c-d"></div></div>
+        <div class="dl-callout" hidden><div class="dl-c-k"><i></i>要你回 · 要紧</div><div class="dl-c-q"></div><div class="dl-c-d"></div><div class="dl-c-more" hidden></div></div>
+        <div class="dl-callout dl-peek" hidden></div>
+        <div class="dl-detail" role="dialog" tabindex="-1" hidden></div>
+        <div class="dl-sr" role="group" aria-label="环上的事项：Tab 逐个看概要，Enter 展开详情，Esc 收回"></div>
       </div>
       <div class="dl-panels">
         <section class="dl-p"><h4>输入 · 片段</h4><div class="dl-feed-w"><div class="dl-feed">${'<div></div>'.repeat(7)}</div></div></section>
@@ -294,7 +305,9 @@ function buildDOM() {
     ticks: $('.dl-ticks'), blank: $('.dl-blank'), sectors: $('.dl-sectors'), asks: $('.dl-asks'), labels: $('.dl-labels'), hub: $('.dl-hub'),
     cursor: $('.dl-cursor'), needle: $('.dl-needle'), tag: $('.dl-tag'), tagText: $('.dl-tag-t'), leader: $('.dl-leader'),
     title: $('.dl-title'), kicker: $('.dl-kicker'), h2: $('.dl-title h2'),
-    callout: $('.dl-callout'), cq: $('.dl-c-q'), cd: $('.dl-c-d'),
+    callout: $('.dl-callout'), cq: $('.dl-c-q'), cd: $('.dl-c-d'), cmore: $('.dl-c-more'),
+    pop: $('.dl-pop'), xline: $('.dl-xline'), peek: $('.dl-peek'), peekLeader: $('.dl-peek-leader'), detail: $('.dl-detail'), sr: $('.dl-sr'),
+    panelHeads: [...document.querySelectorAll('.dl-p h4')].map(h => ({ h, text: h.firstChild.textContent })),
     counts: Object.fromEntries([...document.querySelectorAll('.dl-count')].map(el => [el.dataset.c, el.querySelector('b')])),
     strip: [...document.querySelectorAll('.dl-strip i')], feed: $('.dl-feed'), grid: $('.dl-grid'), pipe: [...document.querySelectorAll('.dl-pipe li')],
     alloc: $('.dl-alloc'), allocV: $('.dl-alloc-v'), wave: $('.dl-wave'), window: $('.dl-window'),
@@ -359,8 +372,8 @@ function buildStatic() {
   // The hub's 64: digits about a sixth of the ring's diameter, so the sector names are read first.
   node('text', { x: g.cx, y: g.cy + g.R * 0.1, class: 'dl-hero', 'font-size': (g.R * 0.46).toFixed(1) }, els.hub).textContent = String(BUDGET);
   node('text', { x: g.cx, y: g.cy + g.R * 0.1 + 22, class: 'dl-hero-s' }, els.hub).textContent = '份 · 每层预算';
-  sectorEls.clear(); labelEls.clear(); els.sectors.replaceChildren(); els.labels.replaceChildren();
-  lastKey = ''; calloutSize = null; ticksShown = BUDGET; hubShown = 1;
+  sectorEls.clear(); labelEls.clear(); els.sectors.replaceChildren(); els.labels.replaceChildren(); els.pop.replaceChildren();
+  lastKey = ''; calloutSize = null; ticksShown = BUDGET; hubShown = 1; ix.peekKey = ''; ix.detailSize = null;
 }
 
 function resize() {
@@ -385,7 +398,7 @@ function arc(a0, a1, r) {
   return `M${P(r, ang(a0))}A${r},${r} 0 ${a1 - a0 > BUDGET / 2 ? 1 : 0} 1 ${P(r, ang(a1))}`;
 }
 function drawRing(s) {
-  const key = `${[...s.layout.map].map(([id, [a, b]]) => `${id}:${a.toFixed(3)}:${b.toFixed(3)}`).join('|')}#${s.cursorRoot}#${s.cursor.hollow}#${s.labels.used}#${s.asks.join()}`;
+  const key = `${[...s.layout.map].map(([id, [a, b]]) => `${id}:${a.toFixed(3)}:${b.toFixed(3)}`).join('|')}#${s.cursorRoot}#${s.cursor.hollow}#${s.labels.used}#${s.asks.join()}#${X.keyFocus}`;
   if (key !== lastKey) {
     lastKey = key;
     const seen = new Set();
@@ -394,7 +407,8 @@ function drawRing(s) {
       let el = sectorEls.get(id);
       if (!el) { el = node('path', {}, els.sectors); sectorEls.set(id, el); }
       el.setAttribute('d', wedge(a0, a1, g.Rin, g.R));
-      el.setAttribute('class', `${parity.get(id) ? 'is-b' : 'is-a'}${id === s.cursorRoot ? ' is-cursor' : ''}`);
+      // is-focus: the sector a keyboard user has tabbed to gets an ink outline.
+      el.setAttribute('class', `${parity.get(id) ? 'is-b' : 'is-a'}${id === s.cursorRoot ? ' is-cursor' : ''}${id === X.keyFocus ? ' is-focus' : ''}`);
     }
     for (const [id, el] of sectorEls) if (!seen.has(id)) { el.remove(); sectorEls.delete(id); }
     // Blank: the dashed arc between the last sector and the hard stop.
@@ -417,7 +431,7 @@ function drawRing(s) {
     for (const l of labels) {
       keep.add(l.id);
       let el = labelEls.get(l.id);
-      if (!el) { el = node('text', {}, els.labels); labelEls.set(l.id, el); }
+      if (!el) { el = node('text', l.blank ? {} : { 'data-id': l.id }, els.labels); labelEls.set(l.id, el); }
       const [x, y] = pt(l.inside ? (g.R + g.Rin) / 2 : g.R + 22, l.mid), c = Math.cos(l.mid);
       el.setAttribute('x', x.toFixed(1)); el.setAttribute('y', (y + 4).toFixed(1));
       el.setAttribute('text-anchor', l.inside ? 'middle' : c > 0.25 ? 'start' : c < -0.25 ? 'end' : 'middle');
@@ -428,8 +442,11 @@ function drawRing(s) {
     // Other open questions: a small dark-vermilion tick on the outer edge of their sector.
     els.asks.innerHTML = s.asks.map(id => { const m = midOf(s.layout, id); if (m == null) return ''; const [x1, y1] = pt(g.R + 1, m), [x2, y2] = pt(g.R + 9, m); return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`; }).join('');
   }
+  paintFocus(s);
   // Cursor: a black needle through the band and a black tag with the item's short name; hollow when nothing is urgent.
   const a = s.cursor.angle, hollow = s.cursor.hollow;
+  const tagId = hollow ? '' : s.cursor.c?.root || '';
+  if (els.cursor.dataset.id !== tagId) { if (tagId) els.cursor.dataset.id = tagId; else delete els.cursor.dataset.id; }
   const [n1x, n1y] = pt(g.Rin - 8, a), [n2x, n2y] = pt(g.R + 14, a);
   els.needle.setAttribute('x1', n1x); els.needle.setAttribute('y1', n1y); els.needle.setAttribute('x2', n2x); els.needle.setAttribute('y2', n2y);
   els.cursor.setAttribute('class', `dl-cursor${hollow ? ' is-hollow' : ''}`);
@@ -443,17 +460,28 @@ function drawRing(s) {
   els.tag.setAttribute('width', tw); els.tag.setAttribute('height', label ? 22 : 0);
   els.tagText.setAttribute('x', tx.toFixed(1)); els.tagText.setAttribute('y', (ty + 4.5).toFixed(1));
   placeCallout(s, tx, ty, tw);
+  paintPeek(s);
+  paintDetail(s);
 }
 
 function placeCallout(s, tx, ty, tw) {
   const c = s.callout;
-  const show = c && !s.cursor.hollow && s.calloutAlpha > 0.01;
+  // An open detail carries the question itself: the note steps back while the detail card unfolds.
+  const alpha = s.calloutAlpha * (1 - X.card);
+  const show = c && !s.cursor.hollow && alpha > 0.01;
   els.callout.hidden = !show;
   els.leader.setAttribute('d', '');
+  calloutRect = null;
   if (!show) return;
   const due = c.due || '没有期限';
-  if (els.cq.textContent !== c.short || els.cd.textContent !== due || !calloutSize) {
+  // Hovering the cursor's own sector adds the summary to this note instead of opening a second card.
+  const more = X.peekId === c.root && X.peek > 0 ? summaryOf(s.i, c.root) : null;
+  const moreKey = more ? `${s.i}:${c.root}` : '';
+  if (els.cq.textContent !== c.short || els.cd.textContent !== due || els.cmore.dataset.key !== moreKey || !calloutSize) {
     els.cq.textContent = c.short; els.cd.textContent = due;
+    els.cmore.dataset.key = moreKey;
+    els.cmore.hidden = !more;
+    els.cmore.innerHTML = more ? `<div><b>${esc(more.name)}</b>${more.from ? ` · ${esc(more.from)}` : ''}</div><div>${esc(more.change)}</div><div>${esc(more.inputs)}</div>` : '';
     calloutSize = [els.callout.offsetWidth, els.callout.offsetHeight];
   }
   const [bw, bh] = calloutSize;
@@ -477,10 +505,377 @@ function placeCallout(s, tx, ty, tw) {
   }
   if (x == null) x = Math.max(8, Math.min(g.W - bw - 8, tx + tw / 2 + 22));
   els.callout.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
-  els.callout.style.opacity = s.calloutAlpha.toFixed(3);
+  els.callout.style.opacity = alpha.toFixed(3);
   const ex = side > 0 ? x : x + bw, ey = Math.max(y + 10, Math.min(y + bh - 10, ty));
   els.leader.setAttribute('d', `M${(side > 0 ? tx + tw / 2 : tx - tw / 2).toFixed(1)},${ty.toFixed(1)}L${ex.toFixed(1)},${ey.toFixed(1)}`);
-  els.leader.style.opacity = s.calloutAlpha.toFixed(3);
+  els.leader.style.opacity = alpha.toFixed(3);
+  calloutRect = { x1: x, y1: y, x2: x + bw, y2: y + bh };
+  X.inPlace = Boolean(more);
+  if (els.callout.dataset.id !== c.root) els.callout.dataset.id = c.root;
+}
+
+// ---------- interaction: hover for a summary, click to open the detail (story.md 交互) ----------
+// Both read itemFacts (dial-model.mjs), the same replay the ring is drawn from. The hub's 64, the hard stop and the
+// 64 ticks never move, and the ring is never turned: a sector steps out along its own radius and a leader carries the
+// eye to the card. Open: 0 cut (play stops, title card and panels switch to the item) → 0–0.3 s the sector steps out
+// (ease-out, overshoot 3.7 %) → 0.4–0.6 s the leader is drawn (the first motion at 0.4 s, as after every cut) →
+// 0.6–0.9 s the card unfolds along it. Close runs it back: card 0.2 s, leader 0.15 s, sector 0.2 s, then the cut
+// back; play resumes 0.4 s later.
+const IX = { pop: 8, popDur: 0.3, line: 0.4, lineDur: 0.2, card: 0.6, cardDur: 0.3, fold: 0.2, unline: 0.15, drop: 0.2,
+  fadeIn: 0.15, fadeOut: 0.12, dim: 0.15, resume: 0.4, grace: 0.15, lead: 18 };
+const ix = {
+  hover: null, via: null, peek: null, peekAt: 0, peekOut: null, peekKey: '', peekSize: null, labelBox: null,
+  open: null, openAt: 0, closeAt: null, viaKey: false, focusMoved: false, next: null, view: null, detailKey: '', detailSize: null,
+  dim: 0, dimId: null, fixed: null, resumeTimer: null, leaveTimer: null,
+};
+// What the interaction shows this frame (ixFrame): the focused item, how far the others are dimmed, the open motion.
+let X = { focus: null, dim: 0, pop: 0, popId: null, line: 0, card: 0, detail: false, peek: 0, peekId: null, keyFocus: null, inPlace: false };
+let calloutRect = null, lastScene = null;
+
+function summaryOf(i, id) {
+  const f = itemFacts(i, id);
+  return { name: f.share ? `${f.short} ${f.share} 份` : f.short, from: f.stream.length ? `来自${f.stream.join(' · ')}` : '',
+    change: f.change?.text || '', inputs: f.inputs.length ? `本轮进了 ${f.inputs.length} 条输入` : '本轮没有输入进它', asks: f.asks };
+}
+
+// Others drop to 70 %; the open sector steps out along its radius into a group drawn under the ticks, so the ticks
+// stay on top and nothing of the static ring moves.
+function paintFocus(s) {
+  const op = 1 - 0.3 * X.dim;
+  const setOp = (el, v) => { const t = v >= 0.999 ? '' : v.toFixed(3); if (el._op !== t) { el._op = t; el.style.opacity = t; } };
+  let shift = '';
+  const live = X.popId && X.pop > 0.001 && s.layout.map.get(X.popId);
+  if (live) { const m = ang((live[0] + live[1]) / 2), d = IX.pop * X.pop; shift = `translate(${(Math.cos(m) * d).toFixed(2)},${(Math.sin(m) * d).toFixed(2)})`; }
+  for (const [id, el] of sectorEls) {
+    setOp(el, id === X.focus ? 1 : op);
+    const tr = id === X.popId ? shift : '';
+    if ((el._tr || '') === tr) continue;
+    el._tr = tr;
+    if (tr) { if (el.parentNode !== els.pop) els.pop.append(el); el.setAttribute('transform', tr); }
+    else { els.sectors.append(el); el.removeAttribute('transform'); }
+  }
+  for (const [id, el] of labelEls) {
+    setOp(el, id === X.focus ? 1 : op);
+    const tr = id === X.popId ? shift : '';
+    if ((el._tr || '') !== tr) { el._tr = tr; if (tr) el.setAttribute('transform', tr); else el.removeAttribute('transform'); }
+  }
+}
+
+// A box beside angle a, level with the point at R + 46 (where the cursor's tag sits), slid away from the ring until it
+// clears the ring, the title card, the edges and every rectangle in `avoid` (placeCallout's method, with more rows).
+// It stays on the item's own side, trying above and below before the other side, and its leader from `from` never
+// passes over the ring.
+function placeBox(a, bw, bh, from, avoid = []) {
+  const [tx, ty] = pt(g.R + 46, a);
+  const t = { x1: els.title.offsetLeft, y1: els.title.offsetTop, x2: els.title.offsetLeft + els.title.offsetWidth, y2: els.title.offsetTop + els.title.offsetHeight };
+  const hit = (x, y, r) => x < r.x2 + 8 && x + bw > r.x1 - 8 && y < r.y2 + 8 && y + bh > r.y1 - 8;
+  const near = (x, y) => [Math.max(x, Math.min(from[0], x + bw)), Math.max(y, Math.min(from[1], y + bh))];
+  const offRing = (x, y) => {
+    // Nearest point of the leader to the centre stays outside the ring.
+    const [ex, ey] = near(x, y), dx = ex - from[0], dy = ey - from[1], L = dx * dx + dy * dy;
+    const k = L ? clamp01(((g.cx - from[0]) * dx + (g.cy - from[1]) * dy) / L) : 0;
+    return Math.hypot(from[0] + dx * k - g.cx, from[1] + dy * k - g.cy) > g.R + 8;
+  };
+  const clear = (x, y) => {
+    const nx = Math.max(x, Math.min(g.cx, x + bw)), ny = Math.max(y, Math.min(g.cy, y + bh));
+    return Math.hypot(nx - g.cx, ny - g.cy) > g.R + 18 && !hit(x, y, t) && avoid.every(r => !r || !hit(x, y, r)) && offRing(x, y);
+  };
+  const first = Math.cos(a) >= -0.2 ? 1 : -1;
+  for (const dir of [first, -first]) {
+    for (const dy of [0, -(bh / 2 + 16), bh / 2 + 16, -(bh + 24), bh + 24]) {
+      const y = Math.max(8, Math.min(g.H - bh - 8, ty - bh / 2 + dy));
+      for (let k = 0; k < 120; k += 1) {
+        let x = dir > 0 ? tx + 22 + k * 6 : tx - 22 - bw - k * 6;
+        const out = x < 8 || x > g.W - bw - 8;
+        // Near an edge the box may sit flush with it (above or below the name) instead of beside it.
+        if (out) x = Math.max(8, Math.min(g.W - bw - 8, x));
+        if (clear(x, y)) return { x, y };
+        if (out) break;
+      }
+    }
+  }
+  return { x: Math.max(8, Math.min(g.W - bw - 8, tx + 22)), y: Math.max(8, Math.min(g.H - bh - 8, ty - bh / 2)) };
+}
+
+// The summary card: the callout's paper, ink frame and type, beside the hovered sector, with the same thin leader.
+// For the cursor's own sector the callout grows in place instead (placeCallout).
+function paintPeek(s) {
+  const id = X.peekId, live = id && s.layout.map.get(id);
+  const show = live && X.peek > 0.01 && !X.inPlace && !ix.open;
+  els.peek.hidden = !show;
+  els.peekLeader.setAttribute('d', '');
+  if (!show) return;
+  const key = `${s.i}:${id}`;
+  if (ix.peekKey !== key) {
+    ix.peekKey = key;
+    const m = summaryOf(s.i, id);
+    els.peek.dataset.id = id;
+    els.peek.innerHTML = `<div class="dl-c-k">${esc(m.from || `第 ${s.i} 轮`)}</div><div class="dl-c-q">${esc(m.name)}</div>
+      <div class="dl-c-d">${esc(m.change)}</div><div class="dl-c-d">${esc(m.inputs)}</div>
+      ${m.asks.map(a => `<div class="dl-c-ask${a.cursor ? ' is-urgent' : ''}"><i></i><span>${esc(a.short)}</span>${a.due ? `<small>${esc(a.due)}</small>` : ''}</div>`).join('')}`;
+    ix.peekSize = [els.peek.offsetWidth, els.peek.offsetHeight];
+    const label = labelEls.get(id), b = label?.getBBox();
+    ix.labelBox = b && b.width ? { x1: b.x, y1: b.y, x2: b.x + b.width, y2: b.y + b.height } : null;
+  }
+  const [bw, bh] = ix.peekSize;
+  const m = ang((live[0] + live[1]) / 2);
+  const tag = s.cursor.hollow || !tagWidth ? null : (([x, y]) => ({ x1: x - tagWidth / 2, y1: y - 11, x2: x + tagWidth / 2, y2: y + 11 }))(pt(g.R + 46, s.cursor.angle));
+  // The leader leaves from the sector's name when it has one (as the callout's leaves from the tag), else from the rim,
+  // and ends at the nearest point of the card.
+  const lb = ix.labelBox, outward = Math.cos(m) >= 0;
+  const from = lb ? [outward ? lb.x2 + 3 : lb.x1 - 3, (lb.y1 + lb.y2) / 2] : pt(g.R + 14, m);
+  const { x, y } = placeBox(m, bw, bh, from, [calloutRect, ix.labelBox, tag]);
+  els.peek.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+  els.peek.style.opacity = X.peek.toFixed(3);
+  const ex = Math.max(x, Math.min(from[0], x + bw)), ey = Math.max(y, Math.min(from[1], y + bh));
+  const [sx, sy] = from;
+  els.peekLeader.setAttribute('d', `M${sx.toFixed(1)},${sy.toFixed(1)}L${ex.toFixed(1)},${ey.toFixed(1)}`);
+  els.peekLeader.style.opacity = X.peek.toFixed(3);
+}
+
+// ---------- the detail card ----------
+function detailHTML(f) {
+  const d = withDataset(`../../index.html?variant=d&frame=${f.i}`);
+  const groups = new Map();
+  for (const x of f.inputs) { if (!groups.has(x.source)) groups.set(x.source, []); groups.get(x.source).push(x); }
+  const sorted = [...groups].sort((a, b) => b[1].length - a[1].length);
+  const rest = sorted.slice(3).reduce((n, [, list]) => n + list.length, 0);
+  const inputs = sorted.slice(0, 3).map(([source, list]) => `<li><small>${esc(source)} · ${list.length} 条</small>${[...new Map(list.map(x => [x.title, x])).values()].slice(0, 2)
+    .map(x => `<span>${x.from ? `<em>${esc(x.from)}</em> ` : ''}${esc(x.title)}</span>`).join('')}</li>`).join('')
+    + (rest ? `<li class="dl-d-none">另有 ${rest} 条，来自 ${sorted.length - 3} 个来源</li>` : '');
+  // Share in every round: one bar a round, this round in ink, later rounds faint (as the allocation panel draws them).
+  const n = last, W = 300, H = 34, top = Math.max(24, ...f.trend), bw = W / n;
+  const bars = f.trend.slice(1).map((v, k) => {
+    const x = (k * bw + bw * 0.15).toFixed(1), w = (bw * 0.7).toFixed(1), h = v ? Math.max(1.5, (v / top) * (H - 2)) : 1;
+    return `<rect x="${x}" y="${(H - h).toFixed(1)}" width="${w}" height="${h.toFixed(1)}" class="${k + 1 === f.i ? 'is-now' : k + 1 > f.i ? 'is-later' : v ? '' : 'is-off'}"/>`;
+  }).join('');
+  const asks = f.asks.length ? f.asks.slice(0, 2).map(a => `<div class="dl-d-ask${a.cursor ? ' is-urgent' : ''}"><i></i><p>${esc(a.prompt)}</p>
+      <small>${esc(a.due || '没有期限')}</small><a href="${esc(d)}">去回答 →</a></div>`).join('') : '<p class="dl-d-none">没有开着的问题</p>';
+  const fb = f.feedback.length ? `<ul class="dl-d-fb">${f.feedback.slice(-3).map(x => `<li><time>${esc(dayTime(x.at))}</time>${esc(x.text)}</li>`).join('')}</ul>`
+    : '<p class="dl-d-none">到这一轮还没有你的回应</p>';
+  return `<div class="dl-d-k"><span>第 ${f.i} / ${last} 轮${f.stream.length ? ` · 来自${esc(f.stream.join(' · '))}` : ''}</span>
+      <button type="button" data-x="close" aria-label="收回（Esc）" title="收回（Esc）">×</button></div>
+    <div class="dl-d-t">${esc(f.title)}</div>
+    <div class="dl-d-s"><b>${esc(f.short)} ${f.share}</b> / ${BUDGET} 份${f.change ? ` · ${esc(f.change.text)}` : ''}</div>
+    ${f.summary ? `<p class="dl-d-sum">${esc(f.summary)}</p>` : ''}
+    ${f.children.length ? `<section><h5>子层<b>${f.children.length} 件</b></h5><ul class="dl-d-kids">${f.children.map(c => `<li><span>${esc(c.title)}</span><b>${c.share}</b></li>`).join('')}</ul></section>` : ''}
+    <section><h5>份额 · 逐轮<b>第 ${f.i} 轮 ${f.share} 份</b></h5><svg class="dl-d-trend" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${bars}</svg>
+      <div class="dl-d-axis"><span>第 1 轮</span><span>第 ${n} 轮</span></div></section>
+    <section><h5>本轮进了它<b>${f.inputs.length} 条</b></h5>${inputs ? `<ul class="dl-d-in">${inputs}</ul>` : '<p class="dl-d-none">本轮没有输入进它</p>'}</section>
+    <section><h5>开着的问题<b>${f.asks.length ? `${f.asks.length} 条` : ''}</b></h5>${asks}</section>
+    <section><h5>你的回应<b>${f.feedback.length ? `共 ${f.feedback.length} 条` : ''}</b></h5>${fb}</section>`;
+}
+
+// Where the card goes and the leader's path. The card takes the side the sector faces when there is room (else the
+// other side), hugs that edge of the stage and never comes into the hub. The leader leaves the stepped-out sector,
+// turns just outside the ticks and, when the sector faces away from the card, runs round the ring to it.
+function detailPlace(s, id) {
+  const live = s.layout.map.get(id);
+  if (!live) return null;
+  const mid = ang((live[0] + live[1]) / 2);
+  const title = els.title.offsetTop + els.title.offsetHeight;
+  const room = side => (side > 0 ? g.W - (g.cx + g.R + 40) - 12 : g.cx - g.R - 40 - 12);
+  let side = Math.cos(mid) >= 0 ? 1 : -1;
+  if (room(side) < 260 && room(-side) >= 260) side = -side;
+  let w = Math.round(Math.max(240, Math.min(340, room(side))));
+  let x = side > 0 ? g.W - 12 - w : 12;
+  if (side > 0 && x < g.cx + g.Rin + 10) { x = g.cx + g.Rin + 10; w = g.W - 12 - x; }
+  if (side < 0 && x + w > g.cx - g.Rin - 10) w = g.cx - g.Rin - 10 - x;
+  const minY = side < 0 ? title + 10 : 10;
+  els.detail.style.width = `${w}px`;
+  els.detail.style.maxHeight = `${Math.max(160, g.H - minY - 10)}px`;
+  els.detail.style.clipPath = 'inset(0 100% 100% 0)';
+  els.detail.hidden = false;
+  const h = els.detail.offsetHeight;
+  // The leader leaves the sector at its point nearest the card (kept off the sector's edges, and off the cursor's
+  // needle, which sits at the middle of its sector), from the rim where the stepped-out sector now ends.
+  const a0 = ang(live[0]), a1 = ang(live[1]), toward = side > 0 ? 0 : Math.PI, TAU = Math.PI * 2;
+  const rel = (((toward - a0) % TAU) + TAU) % TAU;
+  let m = rel <= a1 - a0 ? a0 + rel : rel - (a1 - a0) < TAU - rel ? a1 : a0;
+  const inset = Math.min((a1 - a0) / 2, Math.max((a1 - a0) * 0.18, 0.04));
+  m = Math.max(a0 + inset, Math.min(a1 - inset, m));
+  const c = Math.cos(m), push = [Math.cos(mid) * IX.pop, Math.sin(mid) * IX.pop];
+  const direct = side * c >= 0.5;
+  const turn = direct ? m : side > 0 ? (Math.sin(m) <= 0 ? -Math.PI / 3 : Math.PI / 3) : (Math.sin(m) <= 0 ? -2 * Math.PI / 3 : 2 * Math.PI / 3);
+  // Just outside the ticks; a run over the top goes higher, clear of the hard stop and its “0 / 64”.
+  const over = shortest(m, -Math.PI / 2), run = shortest(m, turn);
+  const Rl = g.R + (!direct && Math.sign(over) === Math.sign(run) && Math.abs(over) < Math.abs(run) ? 36 : IX.lead);
+  const rim = pt(g.R, m);
+  const pts = [[rim[0] + push[0], rim[1] + push[1]], pt(Rl, m)];
+  if (!direct) { const d = shortest(m, turn), steps = Math.max(2, Math.ceil(Math.abs(d) * 24)); for (let j = 1; j <= steps; j += 1) pts.push(pt(Rl, m + (d * j) / steps)); }
+  const ey = pts.at(-1)[1];
+  const y = Math.max(minY, Math.min(g.H - h - 10, ey - h * 0.3));
+  const ay = Math.max(y + 14, Math.min(y + h - 14, ey));
+  pts.push([side > 0 ? x : x + w, ay]);
+  return { x, y, w, h, side, ay: ay - y, d: `M${pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join('L')}` };
+}
+
+function paintDetail(s) {
+  const id = ix.open;
+  if (!id) { if (!els.detail.hidden) els.detail.hidden = true; if (els.xline.getAttribute('d')) els.xline.setAttribute('d', ''); return; }
+  const key = `${ix.view.i}:${id}`;
+  if (ix.detailKey !== key) {
+    ix.detailKey = key; ix.detailSize = null;
+    els.detail.innerHTML = detailHTML(ix.view);
+    els.detail.setAttribute('aria-label', `${ix.view.short} · 第 ${ix.view.i} 轮`);
+    els.detail.scrollTop = 0;
+  }
+  if (!ix.detailSize) { ix.detailSize = detailPlace(s, id); if (ix.detailSize) els.xline.setAttribute('d', ix.detailSize.d); }
+  const p = ix.detailSize;
+  if (!p) return;
+  els.detail.hidden = false;
+  els.xline.style.strokeDashoffset = (1 - X.line).toFixed(4);
+  // The card unfolds from the leader's end: first a short ink edge growing up and down, then the width.
+  const q = X.card, kv = easeOutCubic(clamp01(q / 0.45)), kh = easeOutCubic(clamp01((q - 0.15) / 0.85));
+  const cut = ((1 - kh) * (p.w - 1)).toFixed(1);
+  els.detail.style.clipPath = q >= 1 ? 'none' : `inset(${((1 - kv) * p.ay).toFixed(1)}px ${p.side > 0 ? cut : 0}px ${((1 - kv) * (p.h - p.ay)).toFixed(1)}px ${p.side > 0 ? 0 : cut}px)`;
+  els.detail.style.visibility = q > 0 ? '' : 'hidden';
+  els.detail.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
+  if (ix.viaKey && !ix.focusMoved && q >= 1) { ix.focusMoved = true; els.detail.focus({ preventScroll: true }); }
+}
+
+// ---------- interaction state ----------
+function ixFrame(dt) {
+  const now = wall(), rm = reduced();
+  const since = t0 => (rm ? 99 : ix.fixed != null ? ix.fixed : now - t0);
+  let pop = 0, line = 0, card = 0, detail = false;
+  if (ix.open) {
+    if (ix.closeAt == null) {
+      const e = since(ix.openAt);
+      pop = easeOutBack(clamp01(e / IX.popDur));
+      line = easeOutCubic(clamp01((e - IX.line) / IX.lineDur));
+      card = clamp01((e - IX.card) / IX.cardDur);
+      detail = true;
+    } else {
+      const e = since(ix.closeAt);
+      card = 1 - clamp01(e / IX.fold);
+      line = 1 - easeInOutCubic(clamp01((e - IX.fold) / IX.unline));
+      pop = 1 - easeInOutCubic(clamp01((e - IX.fold - IX.unline) / IX.drop));
+      detail = e < IX.fold + IX.unline + IX.drop;
+      if (!detail) finishClose();
+    }
+  }
+  const target = ix.open || ix.hover ? 1 : 0;
+  ix.dim = rm ? target : target > ix.dim ? Math.min(target, ix.dim + dt / IX.dim) : Math.max(target, ix.dim - dt / IX.dim);
+  // A pinned moment (test hook) shows the dimming where the open motion has it, not where the wall clock has it.
+  if (ix.fixed != null && !rm && ix.open && ix.closeAt == null && !ix.hover) ix.dim = clamp01(ix.fixed / IX.dim);
+  if (ix.open || ix.hover) ix.dimId = ix.open || ix.hover;
+  let peek = 0;
+  if (ix.peek) {
+    peek = ix.peekOut != null ? 1 - clamp01((now - ix.peekOut) / IX.fadeOut) : clamp01((now - ix.peekAt) / IX.fadeIn);
+    if (rm) peek = ix.peekOut != null ? 0 : 1;
+    if (ix.peekOut != null && peek <= 0) { ix.peek = null; ix.peekOut = null; }
+  }
+  return { focus: ix.dim > 0 ? ix.dimId : null, dim: ix.dim, pop, popId: ix.open, line, card, detail, peek, peekId: ix.peek,
+    keyFocus: ix.via === 'key' && !ix.open ? ix.hover : null, inPlace: false };
+}
+// Hovering or opening stops play where it is; 0.4 s after the last one ends it goes on from there.
+function syncPause() {
+  if (ix.hover || ix.open) {
+    clearTimeout(ix.resumeTimer); ix.resumeTimer = null;
+    if (pause.at == null) pause.at = wall();
+  } else if (pause.at != null && !ix.resumeTimer) {
+    ix.resumeTimer = setTimeout(() => { ix.resumeTimer = null; if (!ix.hover && !ix.open) resumeNow(); }, IX.resume * 1000);
+  }
+}
+function resumeNow() {
+  clearTimeout(ix.resumeTimer); ix.resumeTimer = null;
+  if (pause.at != null) { pause.total += wall() - pause.at; pause.at = null; }
+}
+function setHover(id, via) {
+  clearTimeout(ix.leaveTimer); ix.leaveTimer = null;
+  if (!id) {
+    if (!ix.hover) return;
+    const clear = () => { ix.hover = null; ix.via = null; if (ix.peek && ix.peekOut == null) ix.peekOut = wall(); syncPause(); };
+    // A short grace, so the pointer can travel from the sector onto its card.
+    if (via === 'now') clear(); else ix.leaveTimer = setTimeout(clear, IX.grace * 1000);
+    return;
+  }
+  ix.via = via;
+  if (ix.hover === id) return;
+  ix.hover = id;
+  if (!ix.open) { const shown = ix.peek && ix.peekOut == null; ix.peek = id; ix.peekOut = null; ix.peekAt = shown ? wall() - IX.fadeIn : wall(); }
+  syncPause();
+}
+function openItem(id, viaKey = false) {
+  if (!id || !lastScene?.layout.map.has(id)) return;
+  if (ix.open === id && ix.closeAt == null) return;
+  if (ix.open && ix.open !== id) { ix.next = { id, viaKey }; closeItem(); return; }
+  clearTimeout(ix.leaveTimer); ix.leaveTimer = null;
+  ix.open = id; ix.openAt = wall(); ix.closeAt = null; ix.viaKey = viaKey; ix.focusMoved = false;
+  ix.view = itemFacts(lastScene.i, id); ix.detailKey = ''; ix.detailSize = null;
+  if (ix.peek && ix.peekOut == null) ix.peekOut = wall();
+  syncPause();
+}
+function closeItem() { if (ix.open && ix.closeAt == null) ix.closeAt = wall(); }
+function finishClose() {
+  const id = ix.open, refocus = ix.viaKey;
+  ix.open = null; ix.closeAt = null; ix.view = null; ix.viaKey = false; ix.detailKey = ''; ix.detailSize = null;
+  els.detail.hidden = true; els.xline.setAttribute('d', '');
+  if (ix.hover) { ix.peek = ix.hover; ix.peekAt = wall(); ix.peekOut = null; }
+  if (refocus) els.sr.querySelector(`[data-sector="${CSS.escape(id)}"]`)?.focus({ preventScroll: true });
+  const next = ix.next;
+  ix.next = null;
+  if (next) openItem(next.id, next.viaKey); else syncPause();
+}
+/** Any navigation (frame, step, mode, the embedding page) drops hover and detail at once and lets play go on. */
+function resetIx() {
+  clearTimeout(ix.leaveTimer); ix.leaveTimer = null;
+  if (els.sr.contains(document.activeElement)) document.activeElement.blur();
+  Object.assign(ix, { hover: null, via: null, peek: null, peekOut: null, open: null, closeAt: null, view: null, next: null, viaKey: false, dim: 0, detailKey: '', detailSize: null });
+  els.detail.hidden = true; els.peek.hidden = true; els.xline.setAttribute('d', ''); els.main.style.cursor = '';
+  resumeNow();
+}
+
+// Which sector is under a point of the stage: by angle and radius, so it follows the ring however the DOM changes.
+function idAt(x, y) {
+  const s = lastScene;
+  if (!s) return null;
+  const dx = x - g.cx, dy = y - g.cy, r = Math.hypot(dx, dy);
+  if (r < g.Rin - 4 || r > g.R + 16) return null;
+  let u = ((Math.atan2(dy, dx) + Math.PI / 2) / (Math.PI * 2)) * BUDGET;
+  if (u < 0) u += BUDGET;
+  for (const [id, [a0, a1]] of s.layout.map) if (u >= a0 && u < a1 && a1 - a0 > 0.05) return id;
+  return null;
+}
+// Sector names, the cursor's tag, its callout and the summary card carry data-id; anything else is hit by geometry.
+function pointerItem(event) {
+  const tagged = event.target.closest?.('[data-id]');
+  if (tagged && lastScene?.layout.map.has(tagged.dataset.id)) return tagged.dataset.id;
+  if (event.target.closest?.('.dl-detail, .dl-title, .dl-callout')) return null;
+  const box = els.main.getBoundingClientRect();
+  return idAt(event.clientX - box.left, event.clientY - box.top);
+}
+const itemNamed = name => (lastScene?.layout.map.has(name) ? name : [...(lastScene?.layout.map.keys() || [])].find(id => shortOf(id) === name) || null);
+// Keyboard: one visually hidden button per sector of the round, clockwise from 0; focus is a hover, Enter opens.
+function syncProxies(s) {
+  const key = String(s.i);
+  if (els.sr.dataset.key === key || els.sr.contains(document.activeElement)) return;
+  els.sr.dataset.key = key;
+  els.sr.innerHTML = rounds[s.i].sectors.map(x => `<button type="button" data-sector="${esc(x.id)}" aria-label="${esc(`${x.short} ${x.share} 份`)}"></button>`).join('');
+}
+function bindInteraction() {
+  let lastPointer = 'mouse';
+  els.main.addEventListener('pointermove', event => {
+    if (event.pointerType === 'touch') return;
+    const id = pointerItem(event);
+    els.main.style.cursor = id ? 'pointer' : '';
+    if (id) setHover(id, 'pointer');
+    else if (ix.via === 'pointer') setHover(null);
+  });
+  els.main.addEventListener('pointerleave', () => { if (ix.via === 'pointer') setHover(null); });
+  els.main.addEventListener('pointerdown', event => { lastPointer = event.pointerType || 'mouse'; });
+  els.main.addEventListener('click', event => {
+    if (event.target.closest('.dl-detail')) { if (event.target.closest('[data-x="close"]')) closeItem(); return; }
+    if (event.target.closest('a, button')) return;
+    const id = pointerItem(event);
+    // Touch has no hover: the first tap on a sector is the hover, a second tap (or a tap on its card) opens it.
+    if (id && lastPointer === 'touch' && ix.hover !== id && ix.open !== id) { setHover(id, 'touch'); return; }
+    if (id) { if (ix.open === id && ix.closeAt == null) closeItem(); else openItem(id); return; }
+    if (ix.open) closeItem(); else if (ix.hover && ix.via !== 'key') setHover(null, 'now');
+  });
+  els.sr.addEventListener('focusin', event => { const id = event.target.dataset?.sector; if (id) setHover(id, 'key'); });
+  els.sr.addEventListener('focusout', event => { if (ix.via === 'key' && !els.sr.contains(event.relatedTarget)) setHover(null, 'now'); });
 }
 
 // ---------- drawing: canvas (concept field, information marks) ----------
@@ -508,7 +903,37 @@ function drawMarks(s) {
   });
   ctx.restore();
   for (const batch of s.inputs) drawInputs(ctx, batch);
+  drawLit(ctx, s);
   if (s.bundle) drawBundle(ctx, s);
+}
+
+// Hovered or open: this round's inputs taken into that item light up on their own lanes, parked short of the ring;
+// every other mark drops to 30 %. Where they sit on the lane is the same per-event variation the flow uses.
+function drawLit(ctx, s) {
+  if (!X.focus || X.dim <= 0.01) return;
+  ctx.lineCap = 'butt';
+  for (const e of rounds[s.i].events) {
+    if (e.root !== X.focus) continue;
+    const L = laneOf(e);
+    const a = L.a + (e.r3 - 0.5) * 0.05;
+    drawCluster(ctx, pt(lerp(L.out, g.laneIn, 0.42 + e.r3 * 0.46), a), a, e, 0, X.dim);
+  }
+  ctx.globalAlpha = 1;
+}
+function drawCluster(ctx, [x0, y0], a, e, gather, alpha) {
+  const size = 3 + Math.floor(e.r3 * 3), ca = Math.cos(a), sa = Math.sin(a);
+  ctx.globalAlpha = alpha * (e.machine ? 0.55 : 0.95);
+  ctx.strokeStyle = e.machine ? C.ink2 : C.ink;
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  for (let m = 0; m < size; m += 1) {
+    // Trailing dashes sit further out on the lane, a little to either side; they close up as the input is taken in.
+    const back = m * 9 * (1 - gather), side = m ? ((m % 2) * 2 - 1) * 2.4 * (1 - gather) : 0, half = 6 - m * 0.7;
+    const x = x0 + ca * back - sa * side, y = y0 + sa * back + ca * side;
+    ctx.moveTo(x - ca * half, y - sa * half); ctx.lineTo(x + ca * half, y + sa * half);
+  }
+  ctx.stroke();
+  if (e.self) { ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(x0, y0, 6.5, 0, Math.PI * 2); ctx.stroke(); }
 }
 
 // The round's real inputs (information layer): each one a small cluster of 3–5 ink dashes running in along its
@@ -554,20 +979,10 @@ function drawInputs(ctx, { round, T: t, mode, d, target }) {
       }
     }
     if (r == null) r = lerp(L.out, g.laneIn, Math.min(1, u));
-    const size = 3 + Math.floor(e.r3 * 3), ca = Math.cos(a), sa = Math.sin(a);
-    const [x0, y0] = pt(r, a);
-    ctx.globalAlpha = alpha * (e.machine ? 0.55 : 0.95);
-    ctx.strokeStyle = e.machine ? C.ink2 : C.ink;
-    ctx.lineWidth = 2.6;
-    ctx.beginPath();
-    for (let m = 0; m < size; m += 1) {
-      // Trailing dashes sit further out on the lane, a little to either side; they close up as the input is taken in.
-      const back = m * 9 * (1 - gather), side = m ? ((m % 2) * 2 - 1) * 2.4 * (1 - gather) : 0, half = 6 - m * 0.7;
-      const x = x0 + ca * back - sa * side, y = y0 + sa * back + ca * side;
-      ctx.moveTo(x - ca * half, y - sa * half); ctx.lineTo(x + ca * half, y + sa * half);
-    }
-    ctx.stroke();
-    if (e.self) { ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(x0, y0, 6.5, 0, Math.PI * 2); ctx.stroke(); }
+    // While an item is hovered or open its own marks move to their lit places (drawLit); the rest drop to 30 %.
+    const focus = X.dim > 0 ? (X.focus && e.root === X.focus ? 1 - X.dim : 1 - 0.7 * X.dim) : 1;
+    if (alpha * focus <= 0.01) continue;
+    drawCluster(ctx, pt(r, a), a, e, gather, alpha * focus);
   }
   ctx.globalAlpha = 1;
 }
@@ -608,7 +1023,8 @@ function drawBundle(ctx, s) {
   if (!n || s.cursor.hollow) return;
   const step = n > 1 ? Math.min(0.1, 0.4 / (n - 1)) : 0;
   ctx.save();
-  ctx.globalAlpha = 0.7; ctx.strokeStyle = C.ink; ctx.lineJoin = 'round';
+  // The bundle belongs to the cursor's item: it stays when that item is the one in focus, and dims with the rest otherwise.
+  ctx.globalAlpha = 0.7 * (X.focus && X.focus !== s.cursorRoot ? 1 - 0.7 * X.dim : 1); ctx.strokeStyle = C.ink; ctx.lineJoin = 'round';
   for (let k = 0; k < n; k += 1) {
     const q = easeOutCubic(clamp01((t - k * step) / T.bundleDur));
     if (q <= 0) continue;
@@ -679,7 +1095,8 @@ function buildField(ctx) {
 function drawField(s, c) {
   const ctx = ctxField;
   ctx.clearRect(0, 0, g.W, g.H);
-  const alpha = (s.intro ? s.intro.concept : 1) * s.duck;
+  // Down to 40 % while the information moves (s.duck) and while a sector is hovered or open (X.dim).
+  const alpha = (s.intro ? s.intro.concept : 1) * Math.min(s.duck, 1 - 0.6 * X.dim);
   if (alpha <= 0.01) return;
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -781,7 +1198,12 @@ function paintText(s) {
     if (el.dataset.f !== key) { el.dataset.f = key; el.firstChild.style.transform = `scaleX(${fill})`; }
   });
   const total = frames.length - 1;
-  if (s.kind === 'lapse') {
+  const view = X.detail ? ix.view : null;
+  if (view) {
+    // The open item's own title card: one hard cut on open, one on close.
+    put(els.kicker, `这一件 · ${r.id} · ${r.date}`);
+    put(els.h2, `第 ${view.i} 轮 · ${view.short}`);
+  } else if (s.kind === 'lapse') {
     put(els.kicker, `快进 · 第 ${s.i} / ${total} 轮 · ${r.date}`);
     put(els.h2, `${s.lapse.n} 轮，每轮 ${(HERO.b2 / s.lapse.n).toFixed(2)} 秒`);
   } else {
@@ -794,11 +1216,13 @@ function paintText(s) {
   // Pipeline: each phase fills during its window (B's dispatch bars).
   els.pipe.forEach((li, k) => {
     const [, a, b] = PHASES[k];
-    const f = s.kind === 'round' ? clamp01((s.T - a) / (b - a)) : s.kind === 'lapse' ? s.progress : s.kind === 'hold' ? 1 : 0;
-    const key = f.toFixed(2);
-    if (li.dataset.f !== key) { li.dataset.f = key; li.querySelector('u').style.transform = `scaleX(${f})`; li.classList.toggle('is-on', f > 0 && f < 1); }
+    // Open item: a phase is full and in ink when it touched this item this round (itemFacts phases), else empty.
+    const f = view ? Number(view.phases[k]) : s.kind === 'round' ? clamp01((s.T - a) / (b - a)) : s.kind === 'lapse' ? s.progress : s.kind === 'hold' ? 1 : 0;
+    const key = `${f.toFixed(2)}${view ? 'v' : ''}`;
+    if (li.dataset.f !== key) { li.dataset.f = key; li.querySelector('u').style.transform = `scaleX(${f})`; li.classList.toggle('is-on', view ? f === 1 : f > 0 && f < 1); }
   });
-  put(els.allocV, `${Math.round(s.kind === 'round' && s.T < T.shares ? rounds[Math.max(0, s.i - 1)].allocated : r.allocated)} / ${BUDGET}`);
+  els.panelHeads.forEach(({ h, text }, k) => { const t = view ? PANEL_ITEM[k] : text; if (h.firstChild.textContent !== t) h.firstChild.textContent = t; });
+  put(els.allocV, `${view ? view.share : Math.round(s.kind === 'round' && s.T < T.shares ? rounds[Math.max(0, s.i - 1)].allocated : r.allocated)} / ${BUDGET}`);
   put(els.window, r.window ? `${fmtShort(r.window.from)} → ${fmtShort(r.window.to)}` : '—');
 }
 const shortFmt = new Intl.DateTimeFormat('en-GB', { timeZone: scenario.timeZone || 'Asia/Shanghai', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
@@ -825,13 +1249,18 @@ function feedPosition(s, c, n) {
   if (s.kind === 'lapse') return s.progress * n;
   return c * 2.5;
 }
+// While one item is open every panel takes its view (story.md 交互): the feed rolls only its inputs, the grid lights
+// only its cells, the allocation line is its share, and its inputs are ticked on the signal axis.
 function paintPanels(s, c) {
   const r = rounds[s.i];
-  const n = r.events.length;
+  const view = X.detail ? ix.view : null;
+  const mine = view ? new Set(view.inputs.map(x => x.k)) : null;
+  const n = view ? view.inputs.length : r.events.length;
   // 输入 · 片段: digits blanked, the concept layer shows no readable numbers (story.md).
-  const lines = r.channels.length ? r.channels.map(line => line.replace(/\d/g, '·')) : ['—'];
-  const p = Math.max(0, feedPosition(s, c, n)), base = Math.floor(p);
-  const key = `${s.i}:${base}`;
+  const lines = view ? (view.inputs.length ? view.inputs.map(x => `${x.source.slice(0, 10)} · used · ${view.id.slice(0, 12)}`.replace(/\d/g, '·')) : ['—'])
+    : r.channels.length ? r.channels.map(line => line.replace(/\d/g, '·')) : ['—'];
+  const p = Math.max(0, view ? c * 2.5 : feedPosition(s, c, n)), base = Math.floor(p);
+  const key = `${s.i}:${view?.id || ''}:${base}`;
   if (els.feed.dataset.key !== key) {
     els.feed.dataset.key = key;
     [...els.feed.children].forEach((div, k) => {
@@ -852,6 +1281,7 @@ function paintPanels(s, c) {
       const age = s.kind === 'round' ? s.T - at : s.kind === 'lapse' ? (s.progress - (k / Math.max(1, n)) * 0.8) * (HERO.b2 / s.lapse.n) : 9;
       let alpha;
       if (!e) alpha = 0.04 + (Math.abs(k - sweep) < 3 ? 0.08 : 0);
+      else if (mine) alpha = mine.has(k) ? 0.62 + (Math.abs(k - sweep) < 2 ? 0.2 : 0) : 0.05;
       else if (age < 0) alpha = 0.06;
       else {
         const shade = e.disposition === 'used' ? 0.62 : e.disposition === 'deferred' ? 0.3 : 0.13;
@@ -869,18 +1299,20 @@ function paintPanels(s, c) {
     const x = k => 4 + ((k - 1) / Math.max(1, m - 1)) * (w - 30), y = v => h - 4 - (v / BUDGET) * (h - 12);
     ctx.strokeStyle = C.ink; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(0, y(BUDGET)); ctx.lineTo(w, y(BUDGET)); ctx.stroke();
     ctx.font = '9px ui-monospace, Menlo, monospace'; ctx.fillStyle = C.ink2; ctx.textAlign = 'right'; ctx.fillText('64', w, y(BUDGET) + 10);
-    const grow = s.kind === 'round' ? clamp01((s.T - T.shares) / T.sharesDur) : s.kind === 'lapse' ? clamp01(s.progress * 4) : 1;
+    // The open item's view draws its own share instead of the whole ring's allocation, on the same 0–64 scale.
+    const v = k => (view ? view.trend[k] : rounds[k].allocated);
+    const grow = view ? 1 : s.kind === 'round' ? clamp01((s.T - T.shares) / T.sharesDur) : s.kind === 'lapse' ? clamp01(s.progress * 4) : 1;
     ctx.lineWidth = 1;
     ctx.strokeStyle = 'rgba(31,45,38,.15)'; ctx.beginPath();
-    for (let k = 1; k <= m; k += 1) { if (k === 1) ctx.moveTo(x(k), y(rounds[k].allocated)); else ctx.lineTo(x(k), y(rounds[k].allocated)); }
+    for (let k = 1; k <= m; k += 1) { if (k === 1) ctx.moveTo(x(k), y(v(k))); else ctx.lineTo(x(k), y(v(k))); }
     ctx.stroke();
     let hx = null, hy = null;
     if (s.i >= 1) {
       ctx.strokeStyle = C.ink; ctx.beginPath();
-      ctx.moveTo(x(1), y(rounds[1].allocated));
-      for (let k = 2; k < s.i; k += 1) ctx.lineTo(x(k), y(rounds[k].allocated));
-      if (s.i === 1) { hx = x(1); hy = y(rounds[1].allocated); }
-      else { hx = lerp(x(s.i - 1), x(s.i), grow); hy = lerp(y(rounds[s.i - 1].allocated), y(r.allocated), grow); ctx.lineTo(hx, hy); }
+      ctx.moveTo(x(1), y(v(1)));
+      for (let k = 2; k < s.i; k += 1) ctx.lineTo(x(k), y(v(k)));
+      if (s.i === 1) { hx = x(1); hy = y(v(1)); }
+      else { hx = lerp(x(s.i - 1), x(s.i), grow); hy = lerp(y(v(s.i - 1)), y(v(s.i)), grow); ctx.lineTo(hx, hy); }
       ctx.stroke();
       ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(hx, hy, 2.6, 0, Math.PI * 2); ctx.fill();
     }
@@ -891,9 +1323,11 @@ function paintPanels(s, c) {
   if (ctx) {
     const w = els.wave._w, h = els.wave._h;
     ctx.clearRect(0, 0, w, h);
-    const X = at => 2 + ((at - span.from) / Math.max(1, span.to - span.from)) * (w - 4);
     const prev = rounds[Math.max(0, s.i - 1)].window || r.window, cur = r.window;
-    const move = s.kind === 'round' ? easeOutCubic(clamp01(s.T / 0.4)) : s.kind === 'lapse' ? easeOutCubic(clamp01(s.progress * 3)) : 1;
+    // The open item's view zooms the axis to this round's window, so its inputs can be told apart.
+    const axis = view && cur ? { from: Date.parse(cur.from), to: Date.parse(cur.to) } : span;
+    const X = at => 2 + ((at - axis.from) / Math.max(1, axis.to - axis.from)) * (w - 4);
+    const move = view ? 1 : s.kind === 'round' ? easeOutCubic(clamp01(s.T / 0.4)) : s.kind === 'lapse' ? easeOutCubic(clamp01(s.progress * 3)) : 1;
     const axisY = h - 3;
     ctx.strokeStyle = 'rgba(31,45,38,.3)'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(0, axisY); ctx.lineTo(w, axisY); ctx.stroke();
@@ -905,6 +1339,8 @@ function paintPanels(s, c) {
       ctx.fillStyle = 'rgba(31,45,38,.1)'; ctx.fillRect(x0, 0, x1 - x0, axisY);
       ctx.fillStyle = C.ink; ctx.fillRect(x0, axisY - 1.5, x1 - x0, 3);
     }
+    // The open item: when each of its inputs this round arrived, as ink ticks inside the window.
+    if (view) { ctx.fillStyle = C.ink; for (const input of view.inputs) ctx.fillRect(Math.max(x0, Math.min(x1 - 1.5, X(input.at) - 0.75)), axisY - 12, 1.5, 9); }
     ctx.strokeStyle = 'rgba(31,45,38,.45)'; ctx.lineWidth = 1;
     for (const [amp, off] of [[0.3, 0.3], [0.2, 0.62]]) {
       ctx.beginPath();
@@ -924,13 +1360,17 @@ let conceptClock = 0, lastT = null;
 // ?perf or foldDial.resetPerf(): frame intervals and the script time spent per frame.
 const perf = { on: new URLSearchParams(location.search).has('perf'), times: [], work: [] };
 function frame(now) {
-  let t = now / 1000;
-  const dt = lastT == null ? 0 : Math.min(0.1, t - lastT);
-  if (perf.on && lastT != null) perf.times.push(t - lastT);
-  lastT = t;
+  const w = now / 1000;
+  const dt = lastT == null ? 0 : Math.min(0.1, w - lastT);
+  if (perf.on && lastT != null) perf.times.push(w - lastT);
+  lastT = w;
+  // Playback time stands still while a sector is hovered or open (see clock); the concept layer runs on wall time.
+  let t = Math.max(0, (pause.at ?? w) - pause.total);
   // ?at=<seconds>: a still of the hero at that moment (for stills and checks); any control releases it.
   if (player.freeze != null && player.mode === 'hero') { t = player.segs[0].t0 + player.freeze; conceptClock = player.freeze; }
   const s = sceneAt(t);
+  lastScene = s;
+  X = ixFrame(dt);
   // First open: 0.4 s of stillness, the concept layer included (direct note 1).
   if (player.freeze == null && !reduced() && !(s.intro && s.intro.concept === 0)) conceptClock += dt;
   paintTicks(s.intro ? s.intro.ticks : BUDGET, s.intro ? s.intro.hub : 1);
@@ -939,6 +1379,7 @@ function frame(now) {
   drawRing(s);
   paintText(s);
   paintPanels(s, conceptClock);
+  syncProxies(s);
   if (perf.on) perf.work.push(performance.now() - now);
   requestAnimationFrame(frame);
 }
@@ -967,7 +1408,7 @@ export function boot() {
   // Inside all.html the page follows the bar's frame: single-frame only, no loop and no continuous play.
   // Embedded without a frame (the gallery thumbnail, the site's viewer) it plays the loop like a page of its own.
   const follow = () => { document.body.classList.add('dl-followed'); player.followed = true; };
-  report = followFrames(i => { follow(); player.freeze = null; hold(i, 'jump'); });
+  report = followFrames(i => { follow(); player.freeze = null; resetIx(); hold(i, 'jump'); });
   if (window.parent !== window && asked != null) follow();
   if (Number.isInteger(index) && index >= 0 && index <= last) {
     player.index = index;
@@ -978,10 +1419,17 @@ export function boot() {
     const at = Number(params.get('at'));
     if (params.has('at') && at >= 0 && at < 20) player.freeze = at;
   }
+  bindInteraction();
   document.addEventListener('click', event => {
     const b = event.target.closest('button');
-    if (!b) return;
+    // A click outside the stage (the panels, the concept card) also folds an open detail back.
+    if (!b) { if (ix.open && !event.target.closest('.dl-main, a')) closeItem(); return; }
+    // Keyboard proxies: Enter or Space on a focused sector opens it, again folds it.
+    if (b.dataset.sector) { const id = b.dataset.sector; if (ix.open === id && ix.closeAt == null) closeItem(); else openItem(id, true); return; }
+    if (b.closest('.dl-detail')) return;
     player.freeze = null;
+    // Navigation drops hover and detail at once, then does what it says.
+    if (b.dataset.step || b.dataset.frame || b.dataset.mode) resetIx();
     if (b.dataset.step) hold(player.index + Number(b.dataset.step), 'step');
     else if (b.dataset.frame) hold(Number(b.dataset.frame), 'jump');
     else if (b.dataset.mode === 'hero' && !player.followed) { player.firstHero = false; startHero(); }
@@ -994,10 +1442,14 @@ export function boot() {
   });
   document.addEventListener('keydown', event => {
     if (event.target.matches?.('input,textarea,select,[contenteditable]') || event.metaKey || event.ctrlKey || event.altKey) return;
+    // Esc folds the open detail back (or drops the summary); Enter and Space on a sector or in the card are theirs.
+    if (event.key === 'Escape') { if (ix.open) { event.preventDefault(); closeItem(); } else if (ix.hover) setHover(null, 'now'); return; }
+    if ((event.key === ' ' || event.key === 'Enter') && event.target.closest?.('.dl-sr, .dl-detail')) return;
     player.freeze = null;
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); hold(player.index + (event.key === 'ArrowLeft' ? -1 : 1), 'step'); }
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); resetIx(); hold(player.index + (event.key === 'ArrowLeft' ? -1 : 1), 'step'); }
     if (event.key === ' ' && !player.followed) {
       event.preventDefault();
+      resetIx();
       if (player.mode === 'play') hold(player.index);
       else startPlay(player.mode === 'frame' ? player.index + 1 : 1);
     }
@@ -1021,6 +1473,13 @@ export function boot() {
         workMs: +(work.reduce((a, b) => a + b, 0) / Math.max(1, work.length)).toFixed(2), workP95ms: +p95(work).toFixed(2) };
     },
     resetPerf: () => { perf.on = true; perf.times = []; perf.work = []; },
+    // Test hooks for stills and checks: an item by id or by its short name on the ring (主水管, 猫看病).
+    // ixAt(seconds) pins the open or close motion at that moment; ixAt(null) lets it run.
+    hover: name => setHover(itemNamed(name), 'pointer'), unhover: () => setHover(null, 'now'),
+    open: name => openItem(itemNamed(name)), close: () => closeItem(), ixAt: at => { ix.fixed = at ?? null; }, ix,
+    paused: () => pause.at != null,
+    // Where a sector's middle is on the page (for driving a real pointer in checks).
+    pointOf: name => { const live = lastScene?.layout.map.get(itemNamed(name)); if (!live) return null; const box = els.main.getBoundingClientRect(), [x, y] = pt((g.R + g.Rin) / 2, ang((live[0] + live[1]) / 2)); return { x: box.left + x, y: box.top + y }; },
   };
   requestAnimationFrame(frame);
 }

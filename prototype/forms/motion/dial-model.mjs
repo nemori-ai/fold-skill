@@ -2,6 +2,8 @@
 // 不读 dial/data.json（那是 ship 步对照用的），不往演示数据里加任何字段；口径与 data.json 的 rules 一致。
 import { scenario, records, currentAsk, getItem, formatDate, formatTime, notice } from '../../variants/shared.mjs?v=feedback-loop-1';
 import { currentDataset } from '../../data/select.mjs';
+// The person's responses are worded the way the other forms word them (D 首页、回应时序、让位图).
+import { responseSentence } from '../sketches/stage.mjs';
 
 export { scenario, notice };
 export const frames = scenario.frames;
@@ -131,3 +133,70 @@ export const rounds = frames.map((frame, index) => {
 
 /** Root share sizes of round i as a Map (id → share). */
 export const sizesOf = i => new Map(rounds[i].sectors.map(s => [s.id, s.share]));
+
+// ---------- one item in one round: what hovering and opening a sector shows ----------
+// Everything comes from the same replay the ring is drawn from: the round's events (and their relatedIds), the
+// state's items with their children, the registered asks (currentAsk) and the person's feedback links. Nothing new.
+function subtreeOf(snapshot, id) {
+  const out = new Set([id]);
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const item of Object.values(snapshot.items)) if (item.parent_id && out.has(item.parent_id) && !out.has(item.id)) { out.add(item.id); grew = true; }
+  }
+  return out;
+}
+const sourceOf = event => String(event.channel || '').split(' · ')[0] || '来源';
+const factCache = new Map();
+/** Facts about root item `id` in round i: name, share and its change, streams, inputs, open asks, responses, trend. */
+export function itemFacts(i, id) {
+  const key = `${i}:${id}`;
+  if (factCache.has(key)) return factCache.get(key);
+  const r = rounds[i], prev = rounds[Math.max(0, i - 1)];
+  const record = records[i], state = record.state, stored = record.snapshot.items[id];
+  const live = getItem(state, id);
+  const share = r.sectors.find(s => s.id === id)?.share ?? 0;
+  const before = i > 0 ? prev.sectors.find(s => s.id === id)?.share ?? 0 : 0;
+  const change = i === 0 ? null
+    : !before && share ? { kind: 'new', text: `新增 ${share} 份` }
+      : before && !share ? { kind: 'gone', text: stored?.status === 'merged' ? `撤下 · 并入${shortOf(stored.merged_into)}` : `撤下 · 原 ${before} 份` }
+        : share > before ? { kind: 'up', text: `变大 ${before} → ${share}` }
+          : share < before ? { kind: 'down', text: `变小 ${before} → ${share}` } : { kind: 'same', text: `不变 ${share} 份` };
+  // Which stream feeds it: the lanes of every input taken into it so far (a second one if it brings a third as many).
+  const perLane = lanes.map(() => 0);
+  for (let k = 1; k <= i; k += 1) for (const e of rounds[k].events) if (e.root === id) perLane[e.lane] += 1;
+  const ranked = perLane.map((n, lane) => ({ n, lane })).filter(x => x.n).sort((a, b) => b.n - a.n);
+  const stream = ranked.filter((x, k) => !k || x.n * 3 >= ranked[0].n).slice(0, 2).map(x => lanes[x.lane].label);
+  // This round's inputs taken into it, with the source and a clipped title from the original event.
+  const inputs = r.events.filter(e => e.root === id).map(e => {
+    const event = frames[i].events[e.k];
+    return { k: e.k, lane: e.lane, at: Date.parse(event.at), source: sourceOf(event), from: event.from || '', self: e.self,
+      title: clip(String(event.subject || event.text || '').replace(/\s+/g, ' ').trim(), 30) };
+  });
+  // Open questions on it or anything under it (currentAsk: registered for the item's current version).
+  const asks = [];
+  const walk = node => {
+    if (!node) return;
+    const ask = currentAsk({ index: i, state }, node.id);
+    if (ask) asks.push({ id: ask.id, item: node.id, short: clip(ask.short || ask.prompt, 18), prompt: ask.prompt, due: ask.due_at ? dueText(Date.parse(ask.due_at)) : null, cursor: r.cursor?.ask === ask.id });
+    for (const child of node.children?.items || []) walk(child);
+  };
+  walk(live);
+  asks.sort((a, b) => b.cursor - a.cursor);
+  // The person's responses to it or anything under it, up to this round.
+  const ids = subtreeOf(record.snapshot, id);
+  const feedback = [];
+  for (let k = 1; k <= i; k += 1) {
+    for (const event of frames[k].events) for (const link of event.feedback || []) if (ids.has(link.target)) feedback.push({ at: Date.parse(event.at), round: k, text: responseSentence(event, link) });
+  }
+  const value = {
+    id, i, short: shortOf(id), title: (live || stored)?.title || titleOf(id), summary: (live || stored)?.summary || '',
+    share, before, change, stream, inputs, asks, feedback,
+    children: (live?.children?.items || []).map(c => ({ title: c.title, share: c.share })),
+    // Root share in every round (0 when it is not on the ring); the detail draws rounds after i faintly.
+    trend: rounds.map(x => x.sectors.find(s => s.id === id)?.share ?? 0),
+    // Which of the round's four phases touched it: inputs came in, were taken in, its share moved, it asks you.
+    phases: [inputs.length > 0, inputs.length > 0, Boolean(change) && change.kind !== 'same', asks.length > 0],
+  };
+  factCache.set(key, value);
+  return value;
+}
