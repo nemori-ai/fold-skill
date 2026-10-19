@@ -144,6 +144,7 @@ const form = formById('pulse');
 const params = new URLSearchParams(location.search);
 const hideCard = params.get('card') === '0';
 const perfOn = params.has('perf');
+const debugGeom = params.get('debug') === 'geom';
 const intParam = name => (/^\d+$/.test(params.get(name) || '') ? Math.min(LAST, Number(params.get(name))) : null);
 const fromParam = intParam('from'), frameParam = intParam('frame');
 
@@ -274,10 +275,27 @@ function masks() {
 // Branch k of n sits at an angle by its stable order; its 64-cell span on the root follows the same order,
 // so branches do not cross. Presence, width and length are interpolated inside beat 2, driven by the light
 // that runs up each branch: a branch takes its new share a little with every light that reaches its tip.
+//
+// Every branch is one of the 64 share rays lit from the root out to its tip: a straight line from the root's
+// centre, on exactly the ray the information layer draws and the concept layer's current runs along
+// (cellAngle(c + 0.5)). A wedge of odd width has a ray at its middle; an even wedge's middle falls on the line
+// between two rays, and the branch takes the one on its own side of the fan (items on the left the left one,
+// items on the right the right one), so neighbours spread apart. In motion the offset from the wedge's middle
+// to its ray moves from the old layout's to the new one's as the wedge itself moves, so nothing jumps and every
+// held frame is back on a ray. ?debug=geom draws the check (foldPulse.geom() returns it).
 const NO_RUNS = new Map();
 const arrived = (run, t) => run.reach.reduce((sum, at) => sum + smooth01((t - at) / 0.18), 0) / run.reach.length;
+const sideOf = id => (order.get(id) ?? 0) % 2;   // 0 left of the middle, 1 right (place)
+const restDelta = (m, side) => clamp(Math.round(m - 0.5 + (side ? 1e-6 : -1e-6)) + 0.5, 0.5, 63.5) - m;
+// Wedge middles and ray offsets of a frame's settled tree, by item.
+const restCache = new Map();
+function restLayout(i) {
+  if (!restCache.has(i)) restCache.set(i, new Map(settledTree(i).list.map(b => [b.id, { m: b.m, d: b.delta }])));
+  return restCache.get(i);
+}
 function treeAt(r, t, runs = NO_RUNS) {
   const ids = [...new Set([...r.before.keys(), ...r.after.keys()])].sort(byOrder);
+  const was = r.i ? restLayout(r.i - 1) : new Map(), will = restLayout(r.i);
   // The root's cells are re-allotted while the arc carries the adopted inputs in, so each input lands on the cells
   // its item will hold; the branch takes its new width only when the light reaches its tip.
   const allot = easeInOut((t - RIM) / (ARC1 - 0.1 - RIM));
@@ -301,7 +319,10 @@ function treeAt(r, t, runs = NO_RUNS) {
       presence = 1 - w; share = sa * (1 - w); slot = share; alpha = 1 - w; grey = w;
       if (gone.merged) { mergeInto = gone.merged; mergeK = w; } else length = 1 - 0.8 * w;
     }
-    list.push({ id, presence, share, slot, reach, length, alpha, grey, mergeInto, mergeK });
+    // A new branch has no old layout and one on its way out no new one: each keeps the offset it has.
+    const p0 = was.get(id) || will.get(id), p1 = will.get(id) || p0;
+    const snap = p0 ? { m0: p0.m, d0: p0.d, m1: p1.m, d1: p1.d } : null;
+    list.push({ id, presence, share, slot, reach, length, alpha, grey, mergeInto, mergeK, snap });
   }
   return place(list);
 }
@@ -312,9 +333,8 @@ function place(list) {
   const fit = shares > 64 ? 64 / shares : 1;
   // Items alternate left and right by first appearance; on each side the oldest sit nearest the middle. Each takes
   // a wedge of the 64 cells as wide as its share, and the two sides meet at the middle unless one side needs more.
-  const side = b => (order.get(b.id) ?? 0) % 2;
-  const left = list.filter(b => side(b) === 0).sort((a, b) => byOrder(b.id, a.id));
-  const right = list.filter(b => side(b) === 1).sort((a, b) => byOrder(a.id, b.id));
+  const left = list.filter(b => sideOf(b.id) === 0).sort((a, b) => byOrder(b.id, a.id));
+  const right = list.filter(b => sideOf(b.id) === 1).sort((a, b) => byOrder(a.id, b.id));
   const width = bs => bs.reduce((sum, b) => sum + slotOf(b) * fit, 0);
   const L = width(left), R = width(right);
   const start = clamp(32, L, 64 - R) - L;
@@ -323,26 +343,29 @@ function place(list) {
   let c = start;
   for (const b of ordered) {
     b.c0 = c; b.c1 = c + slotOf(b) * fit; c = b.c1;
-    b.angle = cellAngle((b.c0 + b.c1) / 2);
+    // The ray: at rest the one nearest the wedge's middle; in motion the offset follows the wedge from the old
+    // layout to the new (see above). A wedge narrower than one cell (growing in, withering away) keeps it inside.
+    const m = (b.c0 + b.c1) / 2, s = b.snap;
+    const d = !s ? restDelta(m, sideOf(b.id)) : Math.abs(s.m1 - s.m0) > 1e-6 ? lerp(s.d0, s.d1, clamp((m - s.m0) / (s.m1 - s.m0))) : s.d0;
+    b.m = m; b.delta = d * clamp(b.c1 - b.c0);
+    b.angle = cellAngle(m + b.delta);
     // Larger shares reach further: 24 shares touch the edge of the fan, one share a little under half way.
     const rho = 0.42 + 0.58 * Math.sqrt(Math.max(0, b.reach ?? b.share) / 24);
-    b.base = onRoot(b.angle, 5);
-    const full = onFan(b.angle, rho);
-    b.tip = { x: lerp(b.base.x, full.x, b.length), y: lerp(b.base.y, full.y, b.length) };
+    b.tipR = lerp(G.baseR, G.R * rho, b.length);
     map.set(b.id, b);
   }
+  // A branch merging into another swings over onto the other's ray as it fades, straight from the root all the way.
+  // It sinks toward the root while it crosses, so it passes under the branches in between (the other may sit on
+  // the far side of the fan), and rises again along the other's ray.
   for (const b of ordered) if (b.mergeInto && map.has(b.mergeInto)) {
-    const to = map.get(b.mergeInto).tip;
-    b.tip = { x: lerp(b.tip.x, to.x, b.mergeK), y: lerp(b.tip.y, to.y, b.mergeK) };
+    const to = map.get(b.mergeInto), k = b.mergeK;
+    b.angle = lerp(b.angle, to.angle, k);
+    b.tipR = lerp(lerp(b.tipR, to.tipR, k), G.baseR + 8, 0.85 * Math.sin(Math.PI * k));
   }
-  // Rise first, then lean out.
-  for (const b of ordered) b.ctrl = { x: lerp(b.base.x, b.tip.x, 0.36), y: lerp(b.base.y, b.tip.y, 0.66) };
+  for (const b of ordered) { b.base = polar(b.angle, G.baseR); b.tip = polar(b.angle, b.tipR); }
   return { list: ordered, map, used: L + R, start };
 }
-const onBranch = (b, u) => {
-  const v = 1 - u;
-  return { x: v * v * b.base.x + 2 * v * u * b.ctrl.x + u * u * b.tip.x, y: v * v * b.base.y + 2 * v * u * b.ctrl.y + u * u * b.tip.y };
-};
+const onBranch = (b, u) => ({ x: lerp(b.base.x, b.tip.x, u), y: lerp(b.base.y, b.tip.y, u) });
 // The tree held at a frame's end (no motion).
 function settledTree(i) {
   if (i < 0) return place([]);
@@ -527,7 +550,7 @@ function paintPlay() {
 }
 
 // ---------- drawing ----------
-let lastFrameAt = 0, lastDim = -1, panelKey = '', textKey = '';
+let lastFrameAt = 0, lastDim = -1, panelKey = '', textKey = '', lastTree = null;
 const frameTimes = [], cpuTimes = [];
 let livePoints = 0, livePeak = 0;
 
@@ -557,7 +580,9 @@ function render(wall) {
   else tree = settledTree(i);
   // The rewind draws every branch back into the root before f00 begins again.
   const retract = seg === 'rewind' ? easeInOut(t / (REWIND * 0.85)) : 0;
-  if (retract) tree = place(tree.list.map(b => ({ ...b, share: b.share * (1 - retract), slot: (b.slot ?? b.share) * (1 - retract), presence: 1 - retract, length: 1 - retract, alpha: 1 - retract })));
+  if (retract) tree = place(tree.list.map(b => ({ ...b, share: b.share * (1 - retract), slot: (b.slot ?? b.share) * (1 - retract), presence: 1 - retract, length: 1 - retract, alpha: 1 - retract,
+    snap: { m0: b.m, d0: b.delta, m1: b.m, d1: b.delta } })));
+  lastTree = tree;
 
   const fresh = inRound ? r.open.filter(a => r.fresh.has(a.id)) : [];
   const dimOn = inRound && fresh.length > 0 && !still;
@@ -835,7 +860,7 @@ function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
     const col = k => (b.grey ? `rgba(${lerp(INK[0], 120, b.grey) | 0}, ${lerp(INK[1], 120, b.grey) | 0}, ${lerp(INK[2], 120, b.grey) | 0}, ${(greyA * k).toFixed(3)})` : ink(inkA * k));
     const lit = run ? easeInOut((t - run.leave[0]) / FLOW) : 1;
     const wait = run ? 1 - 0.5 * smooth01((t - RIM) / 0.4) : 1;
-    info.beginPath(); info.moveTo(b.base.x, b.base.y); info.quadraticCurveTo(b.ctrl.x, b.ctrl.y, b.tip.x, b.tip.y);
+    info.beginPath(); info.moveTo(b.base.x, b.base.y); info.lineTo(b.tip.x, b.tip.y);
     info.strokeStyle = ink(0.02 * b.alpha * D); info.lineWidth = lw + 2; info.stroke();
     info.strokeStyle = col(lit >= 1 ? 1 : wait); info.lineWidth = lw; info.stroke();
     if (lit > 0 && lit < 1) { traceBranch(b, 0, lit); info.strokeStyle = col(1); info.stroke(); }
@@ -865,7 +890,7 @@ function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
     });
     const after = t - run.reach[run.reach.length - 1];
     if (after >= 0 && after < 0.35) {
-      info.beginPath(); info.moveTo(b.base.x, b.base.y); info.quadraticCurveTo(b.ctrl.x, b.ctrl.y, b.tip.x, b.tip.y);
+      info.beginPath(); info.moveTo(b.base.x, b.base.y); info.lineTo(b.tip.x, b.tip.y);
       info.strokeStyle = ink(0.13 * (1 - after / 0.35) * b.alpha * D); info.lineWidth = lw + 6; info.stroke();
     }
     if (resting) {
@@ -947,6 +972,7 @@ function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
     }
     info.strokeStyle = vermA(th.alpha * dimK); info.lineWidth = th.hot ? 2.2 : 1.1; strokePath(seen, th.to);
   }
+  if (debugGeom) drawGeom(tree);
   // A response to a registered question runs from the root up its thread.
   if (inRound) r.pulses.forEach((pu, k) => {
     const b = tree.map.get(pu.item);
@@ -959,6 +985,45 @@ function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
     info.fillStyle = vermA(0.25); info.beginPath(); info.arc(x, yy, 7, 0, Math.PI * 2); info.fill();
     info.fillStyle = vermA(1); info.beginPath(); info.arc(x, yy, 2.6, 0, Math.PI * 2); info.fill();
   });
+}
+
+// ---------- ?debug=geom: every branch against the rays, read back from the drawn coordinates ----------
+// Angles are measured from the root's centre (0 up, positive to the right) off the points actually drawn: the
+// branch's base and tip, the information layer's 64 share lines (cellAngle(c + 0.5)) and the concept layer's
+// rays, taken from its own backdrop segments. All differences are in degrees.
+function geomOf(tree) {
+  if (!tree || !G) return [];
+  const deg = a => (a * 180) / Math.PI;
+  const angleOf = (x, y) => Math.atan2(x - G.origin.x, G.origin.y - y);
+  const lines = Array.from({ length: 64 }, (_, c) => { const p = onFan(cellAngle(c + 0.5), 1); return angleOf(p.x, p.y); });
+  const concept = [...new Set(backdrop.map(([, , , x1, y1]) => Math.round(angleOf(x1, y1) * 1e9)))].map(v => v / 1e9);
+  const nearest = (list, a) => list.reduce((best, x) => (Math.abs(x - a) < Math.abs(best - a) ? x : best), Infinity);
+  return tree.list.filter(b => b.alpha > 0.02 && b.length > 0.02).map(b => {
+    const base = angleOf(b.base.x, b.base.y), tip = angleOf(b.tip.x, b.tip.y), ray = nearest(lines, tip);
+    return {
+      id: b.id, short: shortOf(b.id), share: Number(b.share.toFixed(3)), cells: [Number(b.c0.toFixed(3)), Number(b.c1.toFixed(3))],
+      ray: Number(((tip - cellAngle(0)) / (G.fan / 64) - 0.5).toFixed(3)),
+      base: deg(base), tip: deg(tip), dBase: deg(base - nearest(lines, base)), dTip: deg(tip - ray), dConcept: deg(tip - nearest(concept, tip)),
+      inWedge: tip >= cellAngle(b.c0) - 1e-9 && tip <= cellAngle(b.c1) + 1e-9, merging: Boolean(b.mergeInto),
+    };
+  });
+}
+function drawGeom(tree) {
+  const rows = geomOf(tree);
+  info.save();
+  info.font = `10.5px ${MONO}`; info.textAlign = 'left'; info.textBaseline = 'top';
+  info.strokeStyle = 'rgba(80, 220, 255, 0.9)'; info.fillStyle = 'rgba(80, 220, 255, 0.95)'; info.lineWidth = 1;
+  for (const b of tree.list) {
+    if (b.alpha <= 0.02 || b.length <= 0.02) continue;
+    for (const p of [b.base, b.tip]) { info.beginPath(); info.moveTo(p.x - 4, p.y); info.lineTo(p.x + 4, p.y); info.moveTo(p.x, p.y - 4); info.lineTo(p.x, p.y + 4); info.stroke(); }
+  }
+  const worst = rows.reduce((m, x) => Math.max(m, Math.abs(x.dBase), Math.abs(x.dTip), Math.abs(x.dConcept)), 0);
+  const text = [`geom · ${rows.length} 枝 · 最大角度差 ${worst.toFixed(4)}°`, ...rows.map(x => `${x.short.padEnd(8, '　')} ${String(x.share).padStart(6)} 份  射线 ${x.ray}  Δ根 ${x.dBase.toFixed(4)}°  Δ梢 ${x.dTip.toFixed(4)}°  Δ概念 ${x.dConcept.toFixed(4)}°${x.inWedge ? '' : '  楔形外'}`)];
+  const x0 = G.W - G.pad - 520, y0 = G.pad + 40;
+  info.fillStyle = 'rgba(9, 10, 11, 0.85)'; info.fillRect(x0 - 8, y0 - 6, 528, text.length * 14 + 10);
+  info.fillStyle = 'rgba(80, 220, 255, 0.95)';
+  text.forEach((line, k) => info.fillText(line, x0, y0 + k * 14));
+  info.restore();
 }
 
 const fmt = n => String(Math.round(n));
@@ -1112,6 +1177,9 @@ window.foldPulse = {
       cpuMs: cpuTimes.length ? cpuTimes.reduce((x, y) => x + y, 0) / cpuTimes.length : null, cpuP95Ms: cpuTimes.length ? [...cpuTimes].sort((x, y) => x - y)[Math.floor(cpuTimes.length * 0.95)] : null };
   },
   resetStats() { frameTimes.length = 0; cpuTimes.length = 0; livePeak = 0; },
+  // The branches of the frame on screen against the rays (?debug=geom draws the same); geom(i, t) computes the tree
+  // of round i at second t without drawing it.
+  geom: (i, t) => geomOf(i == null ? lastTree : treeAt(rounds[i], t, rounds[i].events.length ? particlesFor(i).runs : NO_RUNS)),
   // What the cloud of round i is made of: bright particles by fate, against the round's inputs.
   census(index) {
     const P = rounds[index].events.length ? particlesFor(index) : null, n = { inputs: rounds[index].events.length, bright: 0, motes: 0, adopted: 0, embers: 0, out: 0, dissolve: 0, lights: 0 };
