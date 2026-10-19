@@ -15,7 +15,7 @@ import path from 'node:path';
 
 // Each page: where to open it (a held frame, and a playing one), the window hook, which item to use, a point 9 px
 // outside that item's drawn geometry (still inside the widened hit band), a blank point, whether the page has cut to
-// “这一件”, and how to read the round on screen.
+// “这一件”, how to read the round on screen, and (tabFrom) the control the Tab test starts from if not the bar's [data-card].
 const PAGES = {
   pulse: {
     hook: 'foldPulse', held: 'forms/motion/pulse.html?frame=20&card=0', play: 'forms/motion/pulse.html?from=19&card=0',
@@ -38,6 +38,19 @@ const PAGES = {
     blank: { x: 60, y: 600 },
     cut: `document.querySelector('.dl-kicker').textContent.startsWith('这一件') && document.querySelector('.dl-p h4').textContent.includes('这一件')`,
     playReady: `new Promise(r => { const go = () => (foldDial.player.index >= 3 ? r(1) : setTimeout(go, 50)); go(); })`,
+  },
+  watch: {
+    hook: 'foldWatch', held: 'forms/watch.html?frame=26&card=0', play: 'forms/watch.html?frame=3&card=0',
+    prepare: null, index: 'foldWatch.index', step: 27,
+    // The shell's bar ends with “状态”; the ring's hidden buttons come right after it.
+    tabFrom: '[data-inspect="state"]',
+    pick: `foldWatch.ring().sort((a, b) => b.share - a.share)[0].short`,
+    // Just outside the rim, along the segment's middle (ticks are hit by angle up to 14 px past the rim).
+    near: name => `(() => { const g = foldWatch.geom(), seg = foldWatch.ring().find(x => x.short === ${JSON.stringify(name)}); return { x: g.cx + Math.cos(seg.a) * (g.outer + 9), y: g.cy + Math.sin(seg.a) * (g.outer + 9) }; })()`,
+    blank: { x: 1380, y: 300 },
+    cut: `document.querySelector('.w-lede').textContent.startsWith('这一件')`,
+    // Play on from f03 (the page counts 5.6 s a round from the cut); hover once the turn has settled.
+    playReady: `new Promise(r => { foldWatch.play(); setTimeout(r, 1700); })`,
   },
 };
 
@@ -157,7 +170,7 @@ async function run(cdp, base, data, name) {
   // 9–11: keyboard. Tab from the bar's last control lands on the first item's hidden button (a hover); Enter opens and
   // moves focus into the card; Esc folds it and puts focus back on that button.
   await move(P.blank.x, P.blank.y); await wait(800);
-  await ev(`document.querySelector('[data-card]').focus(), 1`);
+  await ev(`document.querySelector(${JSON.stringify(P.tabFrom || '[data-card]')}).focus(), 1`);
   await key('Tab'); await wait(400);
   s = await state();
   check('Tab 到事项：概要卡出现', s.focus === 'proxy' && s.hover && card(s), s);
