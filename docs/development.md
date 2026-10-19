@@ -131,7 +131,7 @@ node scripts/shoot-forms.mjs --only all --check all-sync          # 合页 all.h
 
 每种形式写 `<out>/<form>.png`，另写 `report.json`（URL、页面报错、检查结果）；有报错时退出码为 1。`--eval "<js>"` 在截图前执行一段脚本，`--base` 改原型地址，`CHROME` 环境变量指定浏览器。
 
-体验站的“原型体验”面板与首页共用 `site/.vitepress/theme/prototypes.mjs` 列出的全部原型，顺序、默认帧与弹框里加的 `embed=1`、`card=0` 都照合页 `all.html`。卡片预览图是 `site/previews/<id>.webp`（640×400，共约 590 KB），原型界面明显变化后按同样的参数重截：原版与 A/B/C/D 隐藏方案切换栏，形式页收起概念卡，复盘图与回应组件页用各自的默认帧，概念动画在弹框里不带帧（播 20 秒循环）、预览图停在第三拍落定的 f26，再用 Homebrew 的 `cwebp` 缩到 640 像素宽：
+体验站的“原型体验”面板与首页共用 `site/.vitepress/theme/prototypes.mjs` 列出的全部原型，顺序、默认帧与弹框里加的 `embed=1`、`card=0` 都照合页 `all.html`。卡片预览图是 `site/previews/<id>.webp`（640×400，共约 560 KB），原型界面明显变化后按同样的参数重截：原版与 A/B/C/D 隐藏方案切换栏，形式页收起概念卡，复盘图与回应组件页用各自的默认帧，概念动画在弹框里不带帧（播 20 秒循环）、预览图停在第三拍落定的 f26，再用 Homebrew 的 `cwebp` 缩到 640 像素宽：
 
 ```sh
 out=.local/previews

@@ -19,9 +19,11 @@ const last = frames.length - 1;
 const C = { ink: '#1f2d26', ink2: '#5d6b63', paper: '#f6f5ef' };
 
 // ---------- choreography: seconds within one 4.0 s round (spec.md 末行) ----------
-// The cursor swings 0.5 s, the bundle follows 0.3 s after it lands; the note and the bundle stay until the hard cut.
-const T = { shares: 2.2, sharesDur: 0.6, cursor: 2.9, swing: 0.5, bundleDelay: 0.3, bundleDur: 0.3, end: 4.0 };
-const PHASES = [['输入涌入', 0, 1.6], ['归并压缩', 1.6, 2.2], ['份额分配', 2.2, 2.8], ['回应路径', 2.9, 3.6]];
+// Inputs spawn over 0.6 s and take 0.4–0.7 s to reach the ring; shares settle at 1.3–1.8; the cursor swings at 1.9
+// and lands at 2.4; the bundle comes in from 2.7 (0.3 s a line, neighbours 0.1 s apart, spread at most 0.4 s);
+// 1.3 s to read; hard cut at 4.0.
+const T = { flow: 0.6, travel: 0.4, travelJitter: 0.3, shares: 1.3, sharesDur: 0.5, cursor: 1.9, swing: 0.5, bundle: 2.7, bundleDur: 0.3, end: 4.0 };
+const PHASES = [['输入涌入', 0, 1.0], ['归并压缩', 1.0, 1.3], ['份额分配', 1.3, 1.8], ['回应路径', 1.9, 2.7]];
 const HERO = { intro: 1.5, b1: 4.0, b2: 9.0, b3: 5.5 };
 
 const clamp01 = x => (x < 0 ? 0 : x > 1 ? 1 : x);
@@ -83,15 +85,16 @@ function roundScene(seg, t) {
   const callout = swinging ? null : T0 < T.cursor ? fc : tc;
   // The old note fades just before the swing; the new one fades in once the cursor has landed.
   const calloutAlpha = swinging ? 0 : T0 < T.cursor ? (same ? 1 : clamp01((T.cursor - T0) / 0.12)) : clamp01((T0 - land) / 0.15 + (same ? 1 : 0));
-  const bq = tc ? clamp01((T0 - land - T.bundleDelay) / T.bundleDur) : 0;
+  const bt = tc ? T0 - T.bundle : -1;
   const duck = 1 - 0.6 * Math.max(win(T0, T.shares - 0.1, T.shares + T.sharesDur + 0.1), same ? 0 : win(T0, T.cursor, land + 0.25));
   return {
     i: seg.i, kind: 'round', T: T0, layout, labels: afterShares ? settled[seg.i] : settled[seg.j], cursor, callout, calloutAlpha,
     asks: T0 < T.cursor ? from.askRoots : r.askRoots, cursorRoot: (T0 < T.cursor ? fc : tc)?.root ?? null,
-    bundle: bq > 0 ? { round: r, q: bq, alpha: 1 } : null,
+    bundle: bt > 0 ? { round: r, t: bt } : null,
     inputs: [{ round: r, T: T0, mode: 'full', target: settled[seg.i] }],
+    load: lerp(from.inputs, r.inputs, easeOutCubic(clamp01(T0 / 0.5))),
     counters: {
-      cum: r.cumulative - r.inputs + r.inputs * easeOutCubic(clamp01((T0 - 0.2) / 1.7)),
+      cum: r.cumulative - r.inputs + r.inputs * easeOutCubic(clamp01((T0 - 0.2) / 1.0)),
       read: r.inputs, used: r.used, decl: r.declarations,
       items: (afterShares ? r : from).sectors.length, blank: (afterShares ? r : from).blank,
       open: (T0 < T.cursor ? from : r).openAsks, urgent: (T0 < T.cursor ? from : r).urgent,
@@ -119,7 +122,7 @@ function lapseScene(seg, t) {
   return {
     i, kind: 'lapse', lapse: { a: seg.a, b: seg.b, k, n }, layout, labels: settled[i], cursor,
     callout: same || q >= 1 ? tc : null, calloutAlpha: same ? 1 : clamp01((q - 1) * 4 + (q >= 1 ? 1 : 0)),
-    asks: r.askRoots, cursorRoot: tc?.root ?? null, bundle: null,
+    asks: r.askRoots, cursorRoot: tc?.root ?? null, bundle: null, load: lerp(prev.inputs, r.inputs, f),
     inputs: [{ round: prev, T: local + d, mode: 'lapse', d }, { round: r, T: local, mode: 'lapse', d }].filter(x => x.round.index >= seg.a),
     counters: {
       cum: lerp(prev.cumulative, r.cumulative, f), read: roll('inputs'), used: roll('used'), decl: roll('declarations'),
@@ -134,7 +137,7 @@ function holdScene(i, extra = {}) {
   return {
     i, kind: 'hold', T: T.end, layout: settled[i], labels: settled[i], cursor: { angle: cursorAngle(r.cursor, settled[i]), hollow: !r.cursor, c: r.cursor },
     callout: r.cursor, calloutAlpha: 1, asks: r.askRoots, cursorRoot: r.cursor?.root ?? null,
-    bundle: r.cursor ? { round: r, q: 1, alpha: 1 } : null,
+    bundle: r.cursor ? { round: r, t: 99 } : null, load: r.inputs,
     inputs: r.inputs ? [{ round: r, T: 99, mode: 'rest', target: settled[i] }] : [],
     counters: { cum: r.cumulative, read: r.inputs, used: r.used, decl: r.declarations, items: r.sectors.length, blank: r.blank, open: r.openAsks, urgent: r.urgent },
     progress: 1, duck: 1, ...extra,
@@ -278,7 +281,7 @@ function buildDOM() {
         <div class="dl-callout" hidden><div class="dl-c-k"><i></i>要你回 · 要紧</div><div class="dl-c-q"></div><div class="dl-c-d"></div></div>
       </div>
       <div class="dl-panels">
-        <section class="dl-p"><h4>输入 · 片段</h4><div class="dl-feed"></div></section>
+        <section class="dl-p"><h4>输入 · 片段</h4><div class="dl-feed-w"><div class="dl-feed">${'<div></div>'.repeat(7)}</div></div></section>
         <section class="dl-p"><h4>处置 · 本轮</h4><canvas class="dl-grid"></canvas></section>
         <section class="dl-p"><h4>一轮四段</h4><ol class="dl-pipe">${PHASES.map(([name]) => `<li><span>${name}</span><i><u></u></i></li>`).join('')}</ol></section>
         <section class="dl-p"><h4>已分配 · 逐轮 <b class="dl-alloc-v"></b></h4><canvas class="dl-alloc"></canvas></section>
@@ -311,12 +314,13 @@ const P = (r, a) => pt(r, a).map(v => v.toFixed(2)).join(',');
 
 function measure() {
   const W = els.main.clientWidth, H = els.main.clientHeight;
-  const tb = { x2: els.title.offsetLeft + els.title.offsetWidth, y2: els.title.offsetTop + els.title.offsetHeight };
+  // The ring sits a little left of centre (centred when the concept card is folded) and never moves with the
+  // narration: the guard below assumes the title card at its tallest (two lines), whatever it shows now.
+  const tb = { x2: els.title.offsetLeft + els.title.offsetWidth, y2: els.title.offsetTop + 116 };
   const R = Math.max(96, Math.min(H * 0.34, W * 0.21, 250));
   const cy = H * 0.53;
-  // The title card has a fixed height (two lines of narration), so the ring and its outer labels can clear it.
-  const need = R + 40;
-  let cx = Math.max(W * 0.36, R + 70);
+  const need = R + 34;
+  let cx = Math.max(W * (document.body.classList.contains('fs-no-card') ? 0.5 : 0.45), R + 70);
   if (tb.y2 + 10 > cy - need) { const dy = cy - tb.y2 - 10; cx = Math.max(cx, tb.x2 + 6 + Math.sqrt(Math.max(0, need * need - dy * dy))); }
   cx = Math.min(cx, W - R - 160);
   const laneA = [-24, -12, 0, 12, 24].map(d => (d * Math.PI) / 180);
@@ -326,6 +330,7 @@ function measure() {
     W, H, R, Rin: R * 0.74, cx, cy, dpr: Math.min(2, devicePixelRatio || 1),
     laneIn: R + 58, lanes: laneA.map(a => ({ a, out: exit(a, 20) - 4 })),
     bg: Array.from({ length: 27 }, (_, k) => (-52 + k * 4) * Math.PI / 180).filter(a => laneA.every(b => Math.abs(a - b) > 0.03)).map(a => ({ a, out: exit(a) })),
+    glyphR: [70, 84, 98].map(d => R + d), bgIn: R + 110,
   };
 }
 
@@ -351,8 +356,9 @@ function buildStatic() {
   const [sx1, sy1] = pt(g.Rin - 20, STOP), [sx2, sy2] = pt(g.R + 20, STOP);
   node('line', { x1: sx1, y1: sy1, x2: sx2, y2: sy2, class: 'dl-stop' }, els.ticks);
   node('text', { x: sx2 + 6, y: sy2 + 4, class: 'dl-stop-n' }, els.ticks).textContent = '0 / 64';
-  node('text', { x: g.cx, y: g.cy + g.R * 0.2, class: 'dl-hero', 'font-size': (g.R * 0.66).toFixed(1) }, els.hub).textContent = String(BUDGET);
-  node('text', { x: g.cx, y: g.cy + g.R * 0.2 + 22, class: 'dl-hero-s' }, els.hub).textContent = '份 · 每层预算';
+  // The hub's 64: digits about a sixth of the ring's diameter, so the sector names are read first.
+  node('text', { x: g.cx, y: g.cy + g.R * 0.1, class: 'dl-hero', 'font-size': (g.R * 0.46).toFixed(1) }, els.hub).textContent = String(BUDGET);
+  node('text', { x: g.cx, y: g.cy + g.R * 0.1 + 22, class: 'dl-hero-s' }, els.hub).textContent = '份 · 每层预算';
   sectorEls.clear(); labelEls.clear(); els.sectors.replaceChildren(); els.labels.replaceChildren();
   lastKey = ''; calloutSize = null; ticksShown = BUDGET; hubShown = 1;
 }
@@ -362,6 +368,7 @@ function resize() {
   buildStatic();
   ctxField = sizeCanvas(els.field, g.W, g.H);
   ctxMarks = sizeCanvas(els.marks, g.W, g.H);
+  buildField(ctxField);
   for (const c of [els.grid, els.alloc, els.wave]) { c._ctx = null; }
 }
 
@@ -479,11 +486,12 @@ function placeCallout(s, tx, ty, tw) {
 // ---------- drawing: canvas (concept field, information marks) ----------
 let ctxField = null, ctxMarks = null;
 const laneOf = e => g.lanes[Math.max(0, Math.min(g.lanes.length - 1, e.lane))];
+const hash = (k, salt) => { const h = Math.sin(k * 12.9898 + salt * 78.233) * 43758.5453; return h - Math.floor(h); };
 
 function drawMarks(s) {
   const ctx = ctxMarks;
   ctx.clearRect(0, 0, g.W, g.H);
-  // The five lanes and their count this round.
+  // The five lanes and their count this round (information: data.json byStream).
   ctx.save();
   ctx.setLineDash([3, 5]); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(31,45,38,.32)';
   const counts = rounds[s.i].byLane;
@@ -491,7 +499,7 @@ function drawMarks(s) {
     const [x1, y1] = pt(g.laneIn, L.a), [x2, y2] = pt(L.out, L.a);
     ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
     ctx.save(); ctx.setLineDash([]);
-    ctx.font = '11px ui-monospace, "SF Mono", Menlo, monospace'; ctx.textAlign = 'right'; ctx.fillStyle = C.ink2;
+    ctx.font = '11px ui-monospace, "SF Mono", Menlo, monospace'; ctx.textAlign = 'right';
     const [lx, ly] = pt(L.out - 6, L.a);
     ctx.fillStyle = C.paper; ctx.fillRect(lx - 70, ly - 17, 72, 14);
     ctx.fillStyle = C.ink2;
@@ -499,21 +507,24 @@ function drawMarks(s) {
     ctx.restore();
   });
   ctx.restore();
-  for (const batch of s.inputs) drawInputs(ctx, batch, s);
+  for (const batch of s.inputs) drawInputs(ctx, batch);
   if (s.bundle) drawBundle(ctx, s);
 }
 
-function drawInputs(ctx, { round, T: t, mode, d, target }, s) {
+// The round's real inputs (information layer): each one a small cluster of 3–5 ink dashes running in along its
+// lane. Used ones are drawn into their sector, deferred ones park outside the ring, noise and duplicates go out.
+function drawInputs(ctx, { round, T: t, mode, d, target }) {
   const n = round.events.length;
   if (!n) return;
-  const spread = mode === 'lapse' ? d : 1.1;
+  const spread = mode === 'lapse' ? d * 0.8 : T.flow;
+  ctx.lineCap = 'butt';
   for (const e of round.events) {
     const L = laneOf(e);
-    const spawn = mode === 'rest' ? -9 : (e.k / n) * spread + e.r1 * (mode === 'lapse' ? 0.02 : 0.08);
-    const travel = mode === 'lapse' ? 0.28 + e.r2 * 0.22 : 0.45 + e.r2 * 0.45;
+    const spawn = mode === 'rest' ? -9 : (e.k / n) * spread + e.r1 * (mode === 'lapse' ? 0.02 : 0.05);
+    const travel = mode === 'lapse' ? 0.24 + e.r2 * 0.16 : T.travel + e.r2 * T.travelJitter;
     let u = (t - spawn) / travel;
     if (u < 0) continue;
-    let alpha = 1, r, a = L.a + (e.r3 - 0.5) * 0.05 * (1 - Math.min(1, u));
+    let alpha = 1, r = null, gather = 0, a = L.a + (e.r3 - 0.5) * 0.06 * (1 - Math.min(1, u));
     const disp = e.disposition;
     if (mode === 'rest' && disp !== 'deferred') continue;
     if (disp === 'noise' || disp === 'duplicate' || disp === 'unjudged') {
@@ -523,14 +534,14 @@ function drawInputs(ctx, { round, T: t, mode, d, target }, s) {
     } else if (disp === 'deferred') {
       const park = 0.84 + e.r3 * 0.12;
       if (u > park) u = park;
-      if (u >= park) alpha = 0.45;
+      if (u >= park) { alpha = 0.5; gather = 0.6; }
       if (mode === 'full' && t > 3.5) alpha *= clamp01(1 - (t - 3.5) / 0.35);
       if (mode === 'lapse' && u >= park) alpha *= clamp01(1 - (t - spawn - travel * park) / 0.2);
-      if (mode === 'rest') alpha = 0.4;
+      if (mode === 'rest') alpha = 0.45;
       if (alpha <= 0.01) continue;
     } else if (u > 1) {
-      // Used: absorbed into its sector along the rim; a used input without an active root fades at the rim.
-      const over = (t - spawn - travel) / (0.3 + e.r1 * 0.3);
+      // Used: drawn along the rim into its sector; one without an active root fades at the rim.
+      const over = (t - spawn - travel) / (0.25 + e.r1 * 0.2);
       if (mode === 'lapse' || !e.root || !target?.map.get(e.root)) { if (over > 0.5) continue; alpha = 1 - over * 2; u = 1; }
       else {
         const goal = midOf(target, e.root);
@@ -539,120 +550,217 @@ function drawInputs(ctx, { round, T: t, mode, d, target }, s) {
         const w = easeInOutCubic(clamp01(over));
         a = L.a + shortest(L.a, goal) * w;
         r = lerp(g.laneIn, (g.R + g.Rin) / 2, w * w);
+        gather = w;
       }
     }
     if (r == null) r = lerp(L.out, g.laneIn, Math.min(1, u));
-    const [x, y] = pt(r, a);
-    ctx.globalAlpha = alpha * (e.machine ? 0.4 : 0.9);
-    if (e.self) {
-      ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2;
-      ctx.beginPath(); ctx.arc(x, y, 2.6, 0, Math.PI * 2); ctx.stroke();
-    } else {
-      ctx.strokeStyle = e.machine ? C.ink2 : C.ink; ctx.lineWidth = 1.8;
-      const dx = Math.cos(a) * 3.2, dy = Math.sin(a) * 3.2;
-      ctx.beginPath(); ctx.moveTo(x - dx, y - dy); ctx.lineTo(x + dx, y + dy); ctx.stroke();
+    const size = 3 + Math.floor(e.r3 * 3), ca = Math.cos(a), sa = Math.sin(a);
+    const [x0, y0] = pt(r, a);
+    ctx.globalAlpha = alpha * (e.machine ? 0.55 : 0.95);
+    ctx.strokeStyle = e.machine ? C.ink2 : C.ink;
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    for (let m = 0; m < size; m += 1) {
+      // Trailing dashes sit further out on the lane, a little to either side; they close up as the input is taken in.
+      const back = m * 9 * (1 - gather), side = m ? ((m % 2) * 2 - 1) * 2.4 * (1 - gather) : 0, half = 6 - m * 0.7;
+      const x = x0 + ca * back - sa * side, y = y0 + sa * back + ca * side;
+      ctx.moveTo(x - ca * half, y - sa * half); ctx.lineTo(x + ca * half, y + sa * half);
     }
+    ctx.stroke();
+    if (e.self) { ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(x0, y0, 6.5, 0, Math.PI * 2); ctx.stroke(); }
   }
   ctx.globalAlpha = 1;
 }
 function flash(ctx, a, alpha) {
-  ctx.globalAlpha = alpha * 0.8; ctx.strokeStyle = C.ink; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(g.cx, g.cy, g.R + 1.5, a - 0.03, a + 0.03); ctx.stroke();
+  ctx.globalAlpha = alpha * 0.8; ctx.strokeStyle = C.ink; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(g.cx, g.cy, g.R + 1.5, a - 0.035, a + 0.035); ctx.stroke();
   ctx.globalAlpha = 1;
 }
 
-// The bundle: the used inputs related to the cursor's item, each from its lane around the ring into the tag.
+// The bundle: one line for each used input related to the cursor's item. The lines come in from far off the left
+// edge, slightly fanned out, swing onto an orbit just outside the ring, run round it and converge on the tag.
+function bundlePath(k, n, end, tw) {
+  const f = n > 1 ? k / (n - 1) : 0.5;
+  const delta = shortest(Math.PI, end), dir = delta >= 0 ? 1 : -1;
+  const rho = g.R + 34 + f * 22, ex = g.cx - rho, ey = g.cy;
+  const fan = Math.min(g.H * 0.5, 70 + n * 12);
+  const y0 = Math.max(12, Math.min(g.H - 12, g.cy + dir * g.H * 0.2 + (f - 0.5) * fan));
+  const x0 = -12, pts = [];
+  // From the edge: a cubic that arrives at the orbit's leftmost point already moving along the orbit.
+  const c1x = x0 + (ex - x0) * 0.5, c1y = y0, c2x = ex, c2y = ey + dir * 80;
+  for (let j = 0; j <= 28; j += 1) {
+    const u = j / 28, v = 1 - u;
+    pts.push([v ** 3 * x0 + 3 * v * v * u * c1x + 3 * v * u * u * c2x + u ** 3 * ex, v ** 3 * y0 + 3 * v * v * u * c1y + 3 * v * u * u * c2y + u ** 3 * ey]);
+  }
+  // Round the ring, closing in to the tag's radius over the last part and stopping at the tag's edge.
+  const stop = (tw / 2 + 6) / (g.R + 46);
+  const sweep = Math.abs(delta) > stop ? delta - dir * stop : 0;
+  const steps = Math.max(4, Math.round(Math.abs(sweep) * 18));
+  for (let j = 1; j <= steps; j += 1) {
+    const u = j / steps, rr = lerp(rho, g.R + 46, easeInOutCubic(clamp01((u - 0.6) / 0.4)));
+    pts.push(pt(rr, Math.PI + sweep * u));
+  }
+  return pts;
+}
 function drawBundle(ctx, s) {
-  const { round, q, alpha } = s.bundle;
-  const list = round.related;
-  if (!list.length || alpha <= 0) return;
-  const end = s.cursor.angle, n = list.length;
+  const { round, t } = s.bundle;
+  const list = round.related, n = list.length;
+  if (!n || s.cursor.hollow) return;
+  const step = n > 1 ? Math.min(0.1, 0.4 / (n - 1)) : 0;
   ctx.save();
-  ctx.globalAlpha = alpha * 0.75; ctx.strokeStyle = C.ink; ctx.lineWidth = 0.9;
-  list.forEach((e, k) => {
-    const start = laneOf(e).a + (e.r3 - 0.5) * 0.06;
-    const r0 = g.R + 74 + (n > 1 ? (k / (n - 1)) * 40 : 20);
-    const d = shortest(start, end);
-    const steps = 48, upto = Math.max(1, Math.round(steps * q));
-    ctx.beginPath();
-    for (let j = 0; j <= upto; j += 1) {
-      const w = j / steps;
-      const r = lerp(r0, g.R + 58, easeInOutCubic(clamp01((w - 0.62) / 0.38)));
-      const [x, y] = pt(r, start + d * w);
-      if (j) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+  ctx.globalAlpha = 0.7; ctx.strokeStyle = C.ink; ctx.lineJoin = 'round';
+  for (let k = 0; k < n; k += 1) {
+    const q = easeOutCubic(clamp01((t - k * step) / T.bundleDur));
+    if (q <= 0) continue;
+    const pts = bundlePath(k, n, s.cursor.angle, tagWidth);
+    // Draw the first q of the path by length.
+    let total = 0;
+    for (let j = 1; j < pts.length; j += 1) total += Math.hypot(pts[j][0] - pts[j - 1][0], pts[j][1] - pts[j - 1][1]);
+    let left = total * q;
+    ctx.lineWidth = 1.5 + (k % 3) * 0.25;
+    ctx.beginPath(); ctx.moveTo(...pts[0]);
+    for (let j = 1; j < pts.length && left > 0; j += 1) {
+      const [ax, ay] = pts[j - 1], [bx, by] = pts[j], seg = Math.hypot(bx - ax, by - ay);
+      if (seg <= left) ctx.lineTo(bx, by); else ctx.lineTo(ax + (bx - ax) * (left / seg), ay + (by - ay) * (left / seg));
+      left -= seg;
     }
     ctx.stroke();
-  });
+  }
   ctx.restore();
 }
 
-// Concept layer: background lanes with grey traffic, a rotating band of glyphs and field fragments, wires on the left.
-// Grey only, no readable numbers, never inside the hub; it keeps running across cuts and dims while the information moves.
-const glyphs = (() => {
-  const texts = rounds.flatMap(r => [...r.fragments, ...r.channels.slice(0, 6)]).filter(Boolean);
-  return Array.from({ length: 84 }, (_, k) => {
-    const h = Math.sin(k * 91.7) * 43758.5453, f = h - Math.floor(h);
-    return { a: (k / 84) * Math.PI * 2, r: 70 + f * 46, block: k % 3 === 0, text: texts[(k * 37) % Math.max(1, texts.length)]?.replace(/\d/g, '·').slice(0, 16) || '', bits: Math.floor(f * 4096) };
+// Concept layer: traffic on every lane, three rows of glyphs round the ring, wires on the left. Grey only, no
+// readable numbers, never inside the hub; it keeps running across cuts and dims while the information moves.
+const GLYPH_FONT = '8.5px ui-monospace, "SF Mono", Menlo, monospace';
+const TIERS = [
+  { name: 'far', speed: 30, half: 3, width: 2, color: 'rgba(93,107,99,0.32)' },
+  { name: 'mid', speed: 54, half: 4.5, width: 2.6, color: 'rgba(60,74,67,0.58)' },
+  { name: 'near', speed: 88, half: 6, width: 3.4, color: 'rgba(31,45,38,0.86)' },
+];
+const MAX_CLUSTERS = 11;
+let traffic = [], glyphRows = [];
+const glyphTexts = [...new Set(rounds.flatMap(r => [...r.fragments, ...r.channels.slice(0, 8)])
+  .map(text => text.replace(/\d/g, '·').slice(0, 14)).filter(text => text.trim().length > 3))];
+const wires = Array.from({ length: 30 }, (_, k) => ({ y: k / 30, f: hash(k, 3) }));
+
+function buildField(ctx) {
+  // Clusters of 3–5 dashes on each lane, in three depths: far ones small, light and slow; near ones large, nearly ink.
+  const all = [...g.lanes.map(L => ({ ...L, from: g.laneIn, main: true })), ...g.bg.map(L => ({ ...L, from: g.bgIn, main: false }))];
+  traffic = all.filter(L => L.out - L.from > 40).map((L, li) => ({
+    ...L,
+    clusters: Array.from({ length: MAX_CLUSTERS }, (_, m) => {
+      const h = hash(li * 31 + m, 1), tier = h < 0.4 ? 0 : h < 0.75 ? 1 : 2;
+      return { tier, speed: TIERS[tier].speed * (0.85 + hash(li * 31 + m, 2) * 0.3), phase: hash(li * 31 + m, 4),
+        size: 3 + Math.floor(hash(li * 31 + m, 5) * 3), side: (hash(li * 31 + m, 6) - 0.5) * 5 };
+    }),
+  }));
+  // Three rows of field fragments and bit blocks, evenly spaced round the ring, upright along the tangent.
+  ctx.font = GLYPH_FONT;
+  let next = 0;
+  glyphRows = g.glyphR.map((rad, row) => {
+    const items = [];
+    const circ = Math.PI * 2 * rad, gap = 14;
+    let used = 0;
+    for (;;) {
+      const block = items.length % 4 === 3;
+      const text = block ? '' : glyphTexts[(next += 7) % Math.max(1, glyphTexts.length)] || '';
+      const w = block ? 12 : ctx.measureText(text).width;
+      if (used + w + gap > circ) break;
+      items.push({ block, text, w, bits: Math.floor(hash(items.length + row * 97, 7) * 4096), dark: (items.length + row) % 2 === 0 });
+      used += w + gap;
+    }
+    const space = (circ - items.reduce((sum, it) => sum + it.w, 0)) / Math.max(1, items.length);
+    let pos = 0;
+    for (const it of items) { it.a = (pos + it.w / 2) / rad; pos += it.w + space; }
+    return { rad, items, speed: [0.012, -0.009, 0.016][row] };
   });
-})();
-const wires = Array.from({ length: 34 }, (_, k) => { const h = Math.sin(k * 12.9898) * 43758.5453; return { y: (k / 34), f: h - Math.floor(h), end: 2.2 + (k / 34) * 1.9 }; });
+}
 
 function drawField(s, c) {
   const ctx = ctxField;
   ctx.clearRect(0, 0, g.W, g.H);
-  const base = s.intro ? s.intro.concept : 1;
-  const alpha = base * s.duck;
+  const alpha = (s.intro ? s.intro.concept : 1) * s.duck;
   if (alpha <= 0.01) return;
   ctx.save();
   ctx.globalAlpha = alpha;
-  // Background lanes and traffic, denser in busier rounds.
-  const busy = 0.6 + Math.min(1.4, rounds[s.i].inputs / 120);
-  ctx.lineWidth = 1;
-  g.bg.forEach((L, k) => {
-    const r0 = g.R + 128, len = L.out - r0;
-    if (len < 40) return;
-    ctx.strokeStyle = 'rgba(31,45,38,.07)'; ctx.setLineDash([2, 6]);
-    ctx.beginPath(); ctx.moveTo(...pt(r0, L.a)); ctx.lineTo(...pt(L.out, L.a)); ctx.stroke();
-    ctx.setLineDash([]);
-    const speed = 26 + ((k * 37) % 11) * 7, count = Math.round((3 + (k % 4)) * busy);
-    for (let m = 0; m < count; m += 1) {
-      const u = 1 - ((c * speed / len + m / count + k * 0.13) % 1);
-      const r = r0 + len * u;
-      const fade = Math.min(1, (r - r0) / 60);
-      ctx.fillStyle = `rgba(93,107,99,${(0.32 * fade).toFixed(3)})`;
-      const [x, y] = pt(r, L.a);
-      ctx.fillRect(x - 2.5, y - 1, 5, 2);
+  drawTraffic(ctx, s, c);
+  drawGlyphs(ctx, c);
+  drawWires(ctx, c);
+  ctx.restore();
+}
+
+function drawTraffic(ctx, s, c) {
+  // Busier rounds put more clusters on every lane; the count follows the round's inputs (it eases between rounds).
+  const busy = Math.max(0.5, Math.min(2.6, 0.45 + (s.load ?? 0) / 90));
+  const paths = TIERS.map(() => [new Path2D(), new Path2D()]);
+  for (const L of traffic) {
+    const len = L.out - L.from, ca = Math.cos(L.a), sa = Math.sin(L.a);
+    const shown = (L.main ? 4 : 2.6) * busy;
+    for (let m = 0; m < MAX_CLUSTERS; m += 1) {
+      const vis = clamp01(shown - m);
+      if (vis <= 0) break;
+      const cl = L.clusters[m], tier = TIERS[cl.tier];
+      const u = (cl.phase + (c * cl.speed) / len) % 1;
+      const r = L.out - u * len;
+      const fade = Math.min(1, (L.out - r) / 30, (r - L.from) / 40) * vis;
+      if (fade <= 0.05) continue;
+      const path = paths[cl.tier][fade > 0.6 ? 0 : 1];
+      for (let k = 0; k < cl.size; k += 1) {
+        const rr = r + k * (tier.half * 2 + 4), side = cl.side + (k ? ((k % 2) * 2 - 1) * 1.8 : 0);
+        if (rr > L.out) break;
+        const x = g.cx + rr * ca - sa * side, y = g.cy + rr * sa + ca * side;
+        path.moveTo(x - ca * tier.half, y - sa * tier.half); path.lineTo(x + ca * tier.half, y + sa * tier.half);
+      }
+    }
+  }
+  const base = ctx.globalAlpha;
+  TIERS.forEach((tier, k) => {
+    ctx.strokeStyle = tier.color; ctx.lineWidth = tier.width;
+    ctx.globalAlpha = base; ctx.stroke(paths[k][0]);
+    ctx.globalAlpha = base * 0.45; ctx.stroke(paths[k][1]);
+  });
+  ctx.globalAlpha = base;
+}
+
+function drawGlyphs(ctx, c) {
+  // Each row turns at its own pace, with an eased surge every two seconds (spec.md: two surges per 4 s).
+  const surge = Math.floor(c / 2) + easeInOutCubic((c / 2) % 1);
+  const d = g.dpr;
+  ctx.font = GLYPH_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  glyphRows.forEach(row => {
+    const phi = c * row.speed + Math.sign(row.speed) * 0.03 * surge;
+    for (const it of row.items) {
+      const a = it.a + phi;
+      const x = g.cx + row.rad * Math.cos(a), y = g.cy + row.rad * Math.sin(a);
+      if (x < -40 || x > g.W + 40 || y < -40 || y > g.H + 40) continue;
+      // Along the tangent and always the right way up.
+      let rot = a + Math.PI / 2;
+      if (Math.cos(rot) < 0) rot += Math.PI;
+      const cr = Math.cos(rot), sr = Math.sin(rot);
+      ctx.setTransform(d * cr, d * sr, -d * sr, d * cr, d * x, d * y);
+      if (it.block) {
+        ctx.fillStyle = it.dark ? 'rgba(31,45,38,.32)' : 'rgba(31,45,38,.16)';
+        for (let b = 0; b < 12; b += 1) if (it.bits >> b & 1) ctx.fillRect((b % 4) * 3.2 - 6, Math.floor(b / 4) * 3.2 - 4.5, 2.4, 2.4);
+      } else {
+        ctx.fillStyle = it.dark ? 'rgba(70,84,77,.62)' : 'rgba(93,107,99,.34)';
+        ctx.fillText(it.text, 0, 0);
+      }
     }
   });
-  // Glyph band: rotates slowly, with an eased surge every two seconds (spec.md: two surges per 4 s).
-  const phi = c * 0.012 + 0.035 * (Math.floor(c / 2) + easeInOutCubic((c / 2) % 1));
-  ctx.font = '8.5px ui-monospace, "SF Mono", Menlo, monospace';
-  ctx.textBaseline = 'middle';
-  for (const gl of glyphs) {
-    const a = gl.a + phi, r = g.R + gl.r;
-    const [x, y] = pt(r, a);
-    if (x < 0 || x > g.W || y < 0 || y > g.H) continue;
-    ctx.save(); ctx.translate(x, y); ctx.rotate(a);
-    if (gl.block) {
-      ctx.fillStyle = 'rgba(31,45,38,.22)';
-      for (let b = 0; b < 12; b += 1) if (gl.bits >> b & 1) ctx.fillRect((b % 4) * 3.2, Math.floor(b / 4) * 3.2 - 5, 2.4, 2.4);
-    } else {
-      ctx.fillStyle = 'rgba(93,107,99,.5)';
-      ctx.fillText(gl.text, 0, 0);
-    }
-    ctx.restore();
-  }
-  // Wires from the left edge to the outside of the glyph band, drifting.
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+}
+
+function drawWires(ctx, c) {
+  // Thin wires from the left edge to just outside the glyph rows, drifting.
   ctx.lineWidth = 0.7;
   for (const w of wires) {
-    const a = Math.PI * (0.62 + w.f * 0.76), [ex, ey] = pt(g.R + 122, a);
+    const a = Math.PI * (0.62 + w.f * 0.76), [ex, ey] = pt(g.R + 108, a);
     const sy = g.H * w.y, sway = Math.sin(c * 0.35 + w.f * 9) * 18;
-    ctx.strokeStyle = `rgba(31,45,38,${(0.06 + w.f * 0.12).toFixed(3)})`;
+    ctx.strokeStyle = `rgba(31,45,38,${(0.04 + w.f * 0.07).toFixed(3)})`;
     ctx.beginPath(); ctx.moveTo(0, sy);
-    ctx.bezierCurveTo(g.W * 0.08, sy + sway, ex - 90 * Math.cos(a) * -1, ey + sway * 0.5, ex, ey);
+    ctx.bezierCurveTo(g.W * 0.08, sy + sway, ex + 90 * Math.cos(a), ey + sway * 0.5, ex, ey);
     ctx.stroke();
   }
-  ctx.restore();
 }
 
 // ---------- header, title card, panels ----------
@@ -702,59 +810,109 @@ function panelCtx(canvas) {
   if (!canvas._ctx || canvas._w !== w || canvas._h !== h) { canvas._w = w; canvas._h = h; canvas._ctx = sizeCanvas(canvas, w, h, false); }
   return canvas._ctx;
 }
+// The five panels move with the round: the feed rolls in a line per arriving input, the disposition grid lights a
+// cell per input, the allocation line grows by one round when the shares land, and the signal window steps along
+// the fortnight at each cut. Between beats the feed keeps scrolling and the grid is swept, so stills never freeze.
+const FEED_LINES = 7, FEED_H = 12;
+const span = (() => {
+  const ws = rounds.map(r => r.window).filter(Boolean);
+  const from = Math.min(...ws.map(w => Date.parse(w.from)), Date.parse(frames[0].at));
+  const to = Math.max(...ws.map(w => Date.parse(w.to)), Date.parse(frames[last].at));
+  return { from, to };
+})();
+function feedPosition(s, c, n) {
+  if (s.kind === 'round') { const flow = T.flow + T.travel; return s.T < flow ? n * clamp01((s.T - 0.3) / (flow - 0.3)) : n + (s.T - flow) * 2.5; }
+  if (s.kind === 'lapse') return s.progress * n;
+  return c * 2.5;
+}
 function paintPanels(s, c) {
   const r = rounds[s.i];
-  // Feed: field fragments of this round, scrolling; grey and clipped (concept layer).
-  const rate = s.kind === 'round' && s.T < 1.6 ? 9 : 2.5;
-  // Digits are blanked: the concept layer shows no readable numbers (story.md).
+  const n = r.events.length;
+  // 输入 · 片段: digits blanked, the concept layer shows no readable numbers (story.md).
   const lines = r.channels.length ? r.channels.map(line => line.replace(/\d/g, '·')) : ['—'];
-  const start = Math.floor(c * rate) % lines.length;
-  put(els.feed, Array.from({ length: 6 }, (_, k) => lines[(start + k) % lines.length]).join('\n'));
-  // Disposition grid: one cell per input of this round, lit as it arrives.
+  const p = Math.max(0, feedPosition(s, c, n)), base = Math.floor(p);
+  const key = `${s.i}:${base}`;
+  if (els.feed.dataset.key !== key) {
+    els.feed.dataset.key = key;
+    [...els.feed.children].forEach((div, k) => {
+      const idx = base - (FEED_LINES - 1) + k;
+      div.textContent = n && idx >= 0 ? lines[idx % lines.length] : '';
+    });
+  }
+  els.feed.style.transform = `translateY(${((1 - (p - base)) * FEED_H).toFixed(1)}px)`;
+  // 处置 · 本轮: one cell per input, lit (with a short flash) as it arrives; swept by a slow highlight between beats.
   let ctx = panelCtx(els.grid);
   if (ctx) {
     const w = els.grid._w, h = els.grid._h, cols = 24, rows = 10, cw = w / cols, ch = h / rows;
     ctx.clearRect(0, 0, w, h);
-    const n = r.events.length;
+    const sweep = Math.floor(c * 30) % (cols * rows);
     for (let k = 0; k < cols * rows; k += 1) {
       const e = r.events[k];
-      const arrived = e && (s.kind !== 'round' || s.T > (k / Math.max(1, n)) * 1.1 + 0.45);
-      const flick = Math.sin(k * 7.1 + c * 3.3) > 0.94 ? 0.12 : 0;
-      ctx.fillStyle = !e ? `rgba(31,45,38,${0.04 + flick})` : !arrived ? 'rgba(31,45,38,.06)'
-        : e.disposition === 'used' ? 'rgba(31,45,38,.62)' : e.disposition === 'deferred' ? 'rgba(31,45,38,.28)' : 'rgba(31,45,38,.12)';
+      const at = (k / Math.max(1, n)) * T.flow + T.travel;
+      const age = s.kind === 'round' ? s.T - at : s.kind === 'lapse' ? (s.progress - (k / Math.max(1, n)) * 0.8) * (HERO.b2 / s.lapse.n) : 9;
+      let alpha;
+      if (!e) alpha = 0.04 + (Math.abs(k - sweep) < 3 ? 0.08 : 0);
+      else if (age < 0) alpha = 0.06;
+      else {
+        const shade = e.disposition === 'used' ? 0.62 : e.disposition === 'deferred' ? 0.3 : 0.13;
+        alpha = age < 0.3 ? lerp(0.95, shade, age / 0.3) : shade + (Math.abs(k - sweep) < 2 ? 0.15 : 0);
+      }
+      ctx.fillStyle = `rgba(31,45,38,${alpha.toFixed(3)})`;
       ctx.fillRect((k % cols) * cw + 0.5, Math.floor(k / cols) * ch + 0.5, cw - 1.5, ch - 1.5);
     }
   }
-  // Allocation per round against the hard stop (information: data.json rounds.allocated).
+  // 已分配 · 逐轮 (information: data.json rounds.allocated): the line grows one round as the shares land.
   ctx = panelCtx(els.alloc);
   if (ctx) {
-    const w = els.alloc._w, h = els.alloc._h, n = rounds.length - 1;
+    const w = els.alloc._w, h = els.alloc._h, m = rounds.length - 1;
     ctx.clearRect(0, 0, w, h);
-    const x = k => 4 + ((k - 1) / Math.max(1, n - 1)) * (w - 30), y = v => h - 4 - (v / BUDGET) * (h - 12);
+    const x = k => 4 + ((k - 1) / Math.max(1, m - 1)) * (w - 30), y = v => h - 4 - (v / BUDGET) * (h - 12);
     ctx.strokeStyle = C.ink; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(0, y(BUDGET)); ctx.lineTo(w, y(BUDGET)); ctx.stroke();
     ctx.font = '9px ui-monospace, Menlo, monospace'; ctx.fillStyle = C.ink2; ctx.textAlign = 'right'; ctx.fillText('64', w, y(BUDGET) + 10);
-    const upto = s.kind === 'round' && s.T < T.shares ? s.i - 1 : s.i;
+    const grow = s.kind === 'round' ? clamp01((s.T - T.shares) / T.sharesDur) : s.kind === 'lapse' ? clamp01(s.progress * 4) : 1;
     ctx.lineWidth = 1;
-    for (const [from, to, style] of [[1, n, 'rgba(31,45,38,.15)'], [1, upto, C.ink]]) {
-      if (to < from) continue;
-      ctx.strokeStyle = style; ctx.beginPath();
-      for (let k = from; k <= to; k += 1) { const X = x(k), Y = y(rounds[k].allocated); if (k === from) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
+    ctx.strokeStyle = 'rgba(31,45,38,.15)'; ctx.beginPath();
+    for (let k = 1; k <= m; k += 1) { if (k === 1) ctx.moveTo(x(k), y(rounds[k].allocated)); else ctx.lineTo(x(k), y(rounds[k].allocated)); }
+    ctx.stroke();
+    let hx = null, hy = null;
+    if (s.i >= 1) {
+      ctx.strokeStyle = C.ink; ctx.beginPath();
+      ctx.moveTo(x(1), y(rounds[1].allocated));
+      for (let k = 2; k < s.i; k += 1) ctx.lineTo(x(k), y(rounds[k].allocated));
+      if (s.i === 1) { hx = x(1); hy = y(rounds[1].allocated); }
+      else { hx = lerp(x(s.i - 1), x(s.i), grow); hy = lerp(y(rounds[s.i - 1].allocated), y(r.allocated), grow); ctx.lineTo(hx, hy); }
       ctx.stroke();
+      ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(hx, hy, 2.6, 0, Math.PI * 2); ctx.fill();
     }
-    if (upto >= 1) { ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(x(upto), y(rounds[upto].allocated), 2.6, 0, Math.PI * 2); ctx.fill(); }
   }
-  // Signal: a grey waveform (concept layer).
+  // 信号 · 窗口: the fortnight as an axis, this round's signal window as a bracket that steps along at each cut,
+  // and a grey waveform running inside it (texture).
   ctx = panelCtx(els.wave);
   if (ctx) {
     const w = els.wave._w, h = els.wave._h;
     ctx.clearRect(0, 0, w, h);
+    const X = at => 2 + ((at - span.from) / Math.max(1, span.to - span.from)) * (w - 4);
+    const prev = rounds[Math.max(0, s.i - 1)].window || r.window, cur = r.window;
+    const move = s.kind === 'round' ? easeOutCubic(clamp01(s.T / 0.4)) : s.kind === 'lapse' ? easeOutCubic(clamp01(s.progress * 3)) : 1;
+    const axisY = h - 3;
+    ctx.strokeStyle = 'rgba(31,45,38,.3)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, axisY); ctx.lineTo(w, axisY); ctx.stroke();
+    for (const fr of frames) { const fx = X(Date.parse(fr.at)); ctx.beginPath(); ctx.moveTo(fx, axisY); ctx.lineTo(fx, axisY - 3); ctx.stroke(); }
+    let x0 = 0, x1 = w;
+    if (cur) {
+      x0 = lerp(X(Date.parse(prev.from)), X(Date.parse(cur.from)), move);
+      x1 = Math.max(x0 + 3, lerp(X(Date.parse(prev.to)), X(Date.parse(cur.to)), move));
+      ctx.fillStyle = 'rgba(31,45,38,.1)'; ctx.fillRect(x0, 0, x1 - x0, axisY);
+      ctx.fillStyle = C.ink; ctx.fillRect(x0, axisY - 1.5, x1 - x0, 3);
+    }
     ctx.strokeStyle = 'rgba(31,45,38,.45)'; ctx.lineWidth = 1;
-    for (const [amp, off] of [[0.32, 0.3], [0.22, 0.72]]) {
+    for (const [amp, off] of [[0.3, 0.3], [0.2, 0.62]]) {
       ctx.beginPath();
-      for (let X = 0; X <= w; X += 2) {
-        const v = Math.sin(X * 0.07 + c * 2.1 + off * 9) * 0.6 + Math.sin(X * 0.023 - c * 0.9) * 0.4 + (Math.sin(X * 1.7 + c * 13) > 0.97 ? 0.8 : 0);
-        const Y = h * off + v * h * amp * 0.5;
-        if (X) ctx.lineTo(X, Y); else ctx.moveTo(X, Y);
+      for (let px = 0; px <= w; px += 2) {
+        const inside = px >= x0 && px <= x1 ? 1 : 0.35;
+        const v = (Math.sin(px * 0.07 + c * 2.1 + off * 9) * 0.6 + Math.sin(px * 0.023 - c * 0.9) * 0.4 + (Math.sin(px * 1.7 + c * 13) > 0.97 ? 0.8 : 0)) * inside;
+        const py = h * off + v * h * amp * 0.5;
+        if (px) ctx.lineTo(px, py); else ctx.moveTo(px, py);
       }
       ctx.stroke();
     }
@@ -844,15 +1002,15 @@ export function boot() {
       else startPlay(player.mode === 'frame' ? player.index + 1 : 1);
     }
   });
-  // Re-measure whenever the stage or the title card changes size (also once styles and fonts have settled).
+  // Re-measure whenever the stage changes size (also once styles and fonts have settled). The ring does not follow
+  // the title card's height, so a one-line and a two-line narration leave it where it is.
   let timer = null, seen = '';
   const remeasure = () => {
-    const key = `${els.main.clientWidth}x${els.main.clientHeight}:${els.title.offsetWidth}x${els.title.offsetHeight}`;
+    const key = `${els.main.clientWidth}x${els.main.clientHeight}`;
     if (key !== seen) { seen = key; clearTimeout(timer); timer = setTimeout(resize, 60); }
   };
   new ResizeObserver(remeasure).observe(els.main);
-  new ResizeObserver(remeasure).observe(els.title);
-  document.fonts?.ready.then(remeasure);
+  document.fonts?.ready.then(() => { seen = ''; remeasure(); });
   window.foldDial = {
     player, rounds, hold, startPlay, startHero,
     perf: () => {
