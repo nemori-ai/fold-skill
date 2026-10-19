@@ -1,5 +1,20 @@
-/* 04 让位图（完整版）. Rows are absolutely placed and never move; a frame change only reveals or hides rows. */
+/* 04 让位图（完整版）. Rows are absolutely placed and never move; a frame change only reveals or hides rows.
+   A round being posted (yield.mjs): its labels wait for the settle, the cells fly on the canvas above. */
 .st-figure { overflow: hidden; }
+/* The interaction module's cards (motion/ix.css) in this page's paper theme. No vermilion here: the identity colours
+   already hold warm reds (猫看病, 主水管, Ture 发烧), so open questions are marked in ink. */
+.st-figure { --ix-ask: var(--ink); --ix-ask-urgent: var(--ink); --ix-font: 13px/1.5 var(--sans); --ix-q-font: 600 14px/1.35 var(--sans); --ix-t-font: 600 14.5px/1.35 var(--sans); --ix-z-peek: 6; --ix-z-detail: 7; --ix-z-leader: 5; }
+.st-figure .ix-peek { width: 252px; box-shadow: 0 6px 18px rgb(0 0 0 / .08); }
+.st-figure .ix-detail { box-shadow: 0 10px 28px rgb(0 0 0 / .1); }
+.st-figure .ix-ask i, .st-figure .ix-d-ask i { background: transparent; border: 1.4px solid var(--ink); }
+.y-pk-title { font: 12px/1.4 var(--sans) !important; color: var(--ink) !important; margin-bottom: 2px; }
+.y-pk-line { font: 12px/1.45 var(--sans) !important; color: var(--ink) !important; margin-top: 2px; }
+.y-pk-rounds, .y-pk-hint { margin-top: 5px; padding-top: 4px; border-top: 1px solid var(--ix-rule); }
+.y-dc-peers { display: flex; flex-wrap: wrap; gap: 2px 10px; margin: 0 0 3px; font: 11.5px var(--mono); }
+.y-dc-peers span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.y-dc-peers i { width: 9px; height: 9px; border-radius: 2px; background: var(--c); }
+.y-dc-peers i.is-free { outline: 1px dashed var(--ink-3); outline-offset: -1px; }
+
 .y-head { position: absolute; left: 0; right: 0; top: 0; height: 30px; font-size: 12.5px; }
 .y-head > b, .y-head > span { position: absolute; top: 0; font-weight: 600; white-space: nowrap; }
 .y-h-spine { text-align: center; font: 10px var(--sans) !important; color: var(--ink-2); top: 2px !important; }
@@ -16,12 +31,18 @@
 .y-when time { margin-left: auto; padding-right: 6px; font: 10.5px var(--mono); color: var(--ink-2); transition: color 120ms; }
 .y-when:hover time { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
 .y-row.is-current .y-when time { color: var(--ink); font-weight: 600; }
-.y-resp { display: flex; justify-content: center; gap: 1px; }
-.y-ans, .y-ann { font-size: 13px; line-height: 1; cursor: pointer; border-radius: 3px; padding: 1px 2px; }
-.y-ans sub { font: 8.5px var(--mono); }
-.y-ans:hover { background: var(--ink); color: var(--paper); }
+.y-resp { display: flex; justify-content: flex-start; align-items: center; gap: 2px; padding-left: 1px; }
+.y-ans, .y-ann, .y-lapse { font-size: 13px; line-height: 1; cursor: pointer; border-radius: 3px; padding: 1px 1px; }
+.y-ans sub, .y-lapse sub { font: 8.5px var(--mono); }
+.y-ans { transition: opacity 120ms linear; }
+.y-lapse { display: inline-flex; align-items: center; gap: 1px; padding: 2px 1px; }
+.y-lapse i { display: block; width: 7px; height: 7px; border: 1.3px solid var(--ink); border-radius: 50%; }
+.y-ans:hover, .y-ans.is-lit, .y-lapse:hover, .y-lapse.is-lit { background: var(--ink); color: var(--paper); }
+.y-lapse:hover i, .y-lapse.is-lit i { border-color: var(--paper); }
 .y-ann { cursor: default; color: var(--ink-2); }
 .y-key-ans { font-weight: 400; margin-right: 5px; }
+.st-key .y-key-lapse { width: 7px; height: 7px; border: 1.3px solid var(--ink); border-radius: 50%; vertical-align: 0; }
+.st-key .y-key-cell { width: 6px; height: 11px; background: rgb(120 128 118 / .85); vertical-align: -1px; box-shadow: -7px 0 0 -1px rgb(120 128 118 / .25); margin-left: 7px; }
 
 .y-wing { display: flex; height: 100%; align-items: center; }
 .y-l { justify-content: flex-end; }
@@ -54,13 +75,13 @@
 .y-rest:hover:not(.is-open) { box-shadow: inset 0 0 0 1px var(--ink-3); }
 
 .y-spine { position: relative; height: 100%; display: grid; place-items: center; }
-.y-spine span { position: relative; z-index: 1; padding: 0 3px; background: var(--paper); font: 11px var(--mono); }
+.y-spine span { position: relative; z-index: 1; padding: 0 3px; background: var(--paper); font: 11px var(--mono); cursor: pointer; }
+.y-spine span.is-before { color: var(--ink-3); }
+.y-spine span.is-lit { outline: 1.6px solid var(--ink); border-radius: 2px; }
 .y-row.is-quiet .y-spine span { color: var(--ink-3); }
-.y-still, .y-flow { position: absolute; left: 4px; right: 4px; top: 50%; height: 1px; }
-.y-still { background: var(--line); }
-.y-flow { background: var(--ink-3); transform-origin: left center; transform: scaleX(0); }
+.y-still { position: absolute; left: 4px; right: 4px; top: 50%; height: 1px; background: var(--line); }
 
-.y-note { min-width: 0; padding-left: 14px; display: flex; flex-direction: column; justify-content: center; line-height: 1.2; }
+.y-note { min-width: 0; padding-left: 14px; display: flex; flex-direction: column; justify-content: center; line-height: 1.2; cursor: pointer; }
 .y-t { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink-2); }
 .y-g { font-size: 10px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .y-row.is-current .y-t { color: var(--ink); font-weight: 600; }
@@ -70,33 +91,50 @@
 .y-row.is-future .y-wing, .y-row.is-future .y-spine, .y-row.is-future .y-note, .y-row.is-future .y-resp { opacity: 0; visibility: hidden; transition: opacity 160ms linear, visibility 0s linear 160ms; }
 .y-row.is-future .y-when { opacity: .4; }
 
-/* A new round sweeps left to right: the givers from their outer end to the spine, then the takers out from the spine. */
+/* A round being posted: names and numbers wait for the settle; ↩ lands as the first action, ○ at the settle. */
+.y-row.is-posting .y-wing, .y-row.is-posting .y-spine, .y-row.is-posting .y-note, .y-row.is-posting .y-resp { transition: none; }
+.y-row.is-posting .y-seg em, .y-row.is-posting .y-sub em, .y-row.is-posting .y-rest > b { visibility: hidden; }
+.y-row.is-posting:not(.is-answered) .y-ans { opacity: 0; }
+.y-row.is-posting .y-lapse { opacity: 0; }
+
+/* Several rounds at once (a jump, a held arrow key): they sweep out one after another, no cells. */
 .y-row.enter .y-l .y-fill { animation: y-sweep 220ms var(--st-ease) var(--d, 0ms) both; }
-.y-row.enter .y-flow { animation: y-flow 240ms linear calc(var(--d, 0ms) + 150ms) both; }
 .y-row.enter .y-spine span { animation: y-num 220ms ease-out calc(var(--d, 0ms) + 170ms) both; }
 .y-row.enter .y-r .y-fill { animation: y-sweep 260ms var(--st-ease) calc(var(--d, 0ms) + 230ms) both; }
 .y-row.enter .y-note, .y-row.enter .y-resp { animation: y-fade 260ms ease-out calc(var(--d, 0ms) + 320ms) both; }
 @keyframes y-sweep { from { clip-path: inset(-4px 100% -4px 0); } to { clip-path: inset(-4px 0 -4px 0); } }
-@keyframes y-flow { 0% { transform: scaleX(0); opacity: 1; } 65% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
 @keyframes y-num { from { opacity: 0; transform: translateX(-5px); } }
 @keyframes y-fade { from { opacity: 0; transform: translateX(-4px); } }
 
-.y-now { position: absolute; left: -6px; right: -4px; top: 0; border: 1.3px solid var(--ink); border-radius: 3px; pointer-events: none; transition: transform 320ms var(--st-ease); }
+.y-now { position: absolute; left: -6px; right: -4px; top: 0; border: 1.3px solid var(--ink); border-radius: 3px; pointer-events: none; }
+.y-cells { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; }
+/* The carry: the blank is one account, so the only line joining rows runs down the spine behind its numbers. */
+.y-carry { position: absolute; width: 1px; background: var(--ink); pointer-events: none; }
+.y-carry[hidden] { display: none; }
+.y-seg.is-traced, .y-sub.is-traced { z-index: 2; outline: 1.6px solid var(--ink); outline-offset: 0; }
 
-
-/* Focus: one item lit in every round; same-round counterparts stay in colour, the rest recede. */
-.is-focus .y-seg, .is-focus .y-sub, .is-focus .y-rest { opacity: .18; }
+/* Focus: hovered, the thing is outlined in every row and the rest go to 70 %; opened, to 18 %. */
+.is-focus .y-seg, .is-focus .y-sub, .is-focus .y-rest { opacity: var(--y-op, .7); }
 .is-focus .y-rest.has-lit, .is-focus .y-rest.is-peer { opacity: 1; }
-.is-focus .y-rest.has-lit .y-sub:not(.is-lit):not(.is-peer) { opacity: .25; }
+.is-focus .y-rest.has-lit .y-sub:not(.is-lit):not(.is-peer) { opacity: calc(var(--y-op, .7) * .6); }
 .is-focus .is-lit, .is-focus .is-peer { opacity: 1; }
-.is-focus .y-seg.is-lit, .is-focus .y-sub.is-lit { z-index: 2; outline: 1.6px solid var(--ink); outline-offset: 0; }
-.y-seg:focus-visible, .y-sub:focus-visible, .y-rest:focus-visible, .y-ans:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; z-index: 3; }
+.is-focus .y-seg.is-lit, .is-focus .y-sub.is-lit, .is-focus .y-rest.is-lit { z-index: 2; outline: 1.6px solid var(--ink); outline-offset: 0; }
+.y-seg.is-popped, .y-sub.is-popped { z-index: 3; }
+.y-l .y-seg.is-popped { box-shadow: 8px 0 0 var(--paper); }
+.y-r .y-seg.is-popped { box-shadow: -8px 0 0 var(--paper); }
+.y-seg.is-key, .y-sub.is-key, .y-rest.is-key, .y-ans.is-key, .y-lapse.is-key, .y-spine span.is-key { outline: 2px solid var(--ink); outline-offset: 1px; z-index: 3; }
 
-/* Side panel */
-.y-eq { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; margin: 2px 0 6px !important; }
-.y-eq b { font-size: 15px; }
-.y-eq span { color: var(--ink-2); }
-.y-eq small { flex-basis: 100%; color: var(--ink-2); font-size: 11px; }
+/* Side panel: this round, the hero number on top. */
+.y-hero { display: flex; align-items: baseline; justify-content: center; gap: 14px; margin: 2px 0 0; }
+.y-hero b { font: 500 56px/1 var(--mono); letter-spacing: -.02em; min-width: 1.3em; text-align: center; font-variant-numeric: tabular-nums; }
+.y-hero small { font-size: 11px; color: var(--ink-2); }
+.y-eq { display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 2px 8px; margin: 4px 0 8px !important; }
+.y-eq b { font: 600 14px var(--mono); font-variant-numeric: tabular-nums; }
+.y-eq i { font-style: normal; color: var(--ink-3); transition: color 150ms; }
+.y-ov[data-phase="post"] .y-eq i { color: var(--ink); }
+.y-eq small { flex-basis: 100%; text-align: center; color: var(--ink-2); font-size: 11px; }
+.y-eq small b { font: 500 11px var(--mono); }
+.y-ov[data-phase="pre"] .y-post, .y-ov[data-phase="post"] .y-pre, .y-ov[data-ans="0"] .y-answered { display: none !important; }
 .y-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
 .y-cols h4 { margin-top: 6px; }
 .y-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 4px; align-items: baseline; padding: 2px 0; }
@@ -105,15 +143,34 @@
 .y-answers li { display: block; }
 .y-answers button { border: 0; background: none; padding: 2px 0; text-align: left; font-size: 12px; line-height: 1.5; color: var(--ink); }
 .y-answers button:hover { text-decoration: underline; }
+.y-asks ul { margin: 0; padding: 0; list-style: none; }
+.y-asks li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 6px; align-items: baseline; padding: 3px 0; border-top: 1px solid var(--faint); line-height: 1.45; }
+.y-asks li > b { font: 500 10px var(--mono); padding: 0 4px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink-2); white-space: nowrap; }
+.y-asks li.is-open > b { border-color: var(--ink); color: var(--ink); }
+.y-asks li > span, .y-asks li > s { font-size: 12px; }
+.y-asks li > small { grid-column: 2 / 4; font-size: 10.5px; color: var(--ink-2); }
+.y-asks li > a { grid-row: 1; grid-column: 3; font: 600 11px var(--mono); color: var(--ink); white-space: nowrap; text-underline-offset: 3px; }
+.y-asks li.is-answered > s { color: var(--ink-2); }
+.y-asks li.is-lapsed > span { color: var(--ink-3); }
+.y-asks .y-pre li > span { color: var(--ink-2); }
 .y-chip { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; cursor: pointer; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .y-chip::before { content: ""; flex: none; width: 9px; height: 9px; border-radius: 2px; background: var(--c); }
 .y-chip-free { cursor: default; color: var(--ink-2); }
 .y-chip-free::before { background: transparent; outline: 1px dashed var(--ink-3); outline-offset: -1px; }
 .y-chip:hover { text-decoration: underline; text-underline-offset: 2px; }
 .y-title-chip { display: inline-block; width: 11px; height: 11px; margin-right: 7px; border-radius: 2px; background: var(--c); vertical-align: 0; }
+.y-acct { font: 11.5px/1.6 var(--mono); }
+.y-acct small { color: var(--ink-3); font-size: 10.5px; }
+.y-carry-note { font-size: 11.5px; color: var(--ink-2); border-left: 1px solid var(--ink); padding-left: 8px; }
+.y-closes li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 8px; align-items: baseline; padding: 3px 0; border-top: 1px solid var(--faint); font-size: 12px; }
+.y-closes li.is-later { opacity: .5; }
+.y-closes button { border: 0; background: none; padding: 0; }
+.y-closes time { font: 10.5px var(--mono); color: var(--ink-2); }
+.y-closes b { font: 600 11px var(--mono); }
 .y-exch li { display: grid; grid-template-columns: auto 1fr; gap: 1px 8px; padding: 4px 0; border-top: 1px solid var(--faint); }
 .y-exch li.is-later { opacity: .5; }
 .y-exch li.is-now time { font-weight: 600; color: var(--ink); }
+.y-exch li.is-carry { box-shadow: inset 1px 0 0 var(--ink); padding-left: 6px; }
 .y-exch button { border: 0; background: none; padding: 0; }
 .y-exch time { font: 10.5px var(--mono); color: var(--ink-2); }
 .y-exch b { font: 600 11px var(--mono); }
@@ -125,3 +182,9 @@
 .y-answer p { font-size: 12.5px; }
 .y-answer time { font: 10.5px var(--mono); color: var(--ink-2); }
 .y-fine { font-size: 11px; }
+.y-more { margin-top: 14px; }
+.y-more > summary { font-size: 11px; letter-spacing: .04em; color: var(--ink-2); }
+
+.y-tell { border: 1px solid var(--line); border-radius: 6px; background: transparent; padding: 4px 10px; font-size: 12px; color: var(--ink); white-space: nowrap; transition: background-color 140ms, border-color 140ms; }
+.y-tell:hover { border-color: var(--ink-3); background: var(--faint); }
+.y-tell[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }

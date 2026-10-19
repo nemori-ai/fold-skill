@@ -54,7 +54,7 @@ make prototype
 | 身份线 | 追一件事的来龙去脉：改名、撤下、并入 | 不承载作答；标出问题的开与闭 | [sketches/lineage.html](forms/sketches/lineage.html) | [review-a.md](forms/polish/review-a.md) |
 | 回应时序 | 我欠了谁什么回应，开了多久 | 不承载作答；所有类型的开闭与期限；还开着的问题旁“去回答 →”链到同一帧的 D | [sketches/timing.html](forms/sketches/timing.html) | [timing-motion.md](forms/polish/timing-motion.md) |
 | 来源矩阵 | 某件事背后是谁在推动 | 不承载作答 | [sketches/provenance.html](forms/sketches/provenance.html) | [review-b.md](forms/polish/review-b.md) |
-| 让位图 | 一件事变大，份额从谁那里来 | 不承载作答；作答之后份额让给了谁 | [sketches/yield.html](forms/sketches/yield.html) | [review-b.md](forms/polish/review-b.md) |
+| 让位图 | 一件事变大，份额从谁那里来；直接打开时讲一遍三拍：从哪来、问题关上、退回的份额到哪去 | 不承载作答；作答之后份额让给了谁；悬停色块看概要，点击展开详情，开着的问题链到同一帧的 D | [sketches/yield.html](forms/sketches/yield.html) | [review-b.md](forms/polish/review-b.md)、[yield-motion.md](forms/polish/yield-motion.md) |
 | 批次记谱 | 每一轮整理读了多少、丢了多少、动了几件 | 不承载作答；每轮登记、失效与答掉的问题；侧栏问题旁的“去回答 →”链到同一帧的 D | [sketches/notation.html](forms/sketches/notation.html) | [notation-motion.md](forms/polish/notation-motion.md) |
 | 整理脉冲（动画） | 官网首屏：一轮整理演成 4.25 秒的一次脉冲 | 不承载作答；详情里链到 D 作答；朱红只标新登记的问题、你的回应与答掉的记号 | [motion/pulse.html](forms/motion/pulse.html) | [story.md](forms/motion/pulse/story.md) |
 | 份额拨盘（动画） | 第一次看 Fold 的人，20 秒：64 份是怎样的硬约束，满了谁让位 | 不承载作答；详情里链到 D 作答；游标只指要紧的问题 | [motion/dial.html](forms/motion/dial.html) | [story.md](forms/motion/dial/story.md) |
