@@ -55,7 +55,9 @@ export function createModel(onChange=()=>{}) {
   const params=new URLSearchParams(location.search),frames=scenario.frames;
   const stamps=frames.map(f=>Date.parse(f.at));
   const start=stamps[0],end=Date.parse(scenario.endAt);
-  let index=Math.min(frames.length-1,Math.max(0,Math.floor(Number(params.get('frame')??6))||0));
+  // ?frame= is a frame index or a frame id (f26, cold-01): links from other forms land on that frame.
+  const asked=params.get('frame'),byId=asked==null?-1:frames.findIndex(f=>f.id===asked);
+  let index=byId>=0?byId:Math.min(frames.length-1,Math.max(0,Math.floor(Number(asked??6))||0));
   let cursor=params.has('at')?Math.min(end,Math.max(start,Number(params.get('at'))||stamps[index])):stamps[index];
   index=stamps.reduce((last,t,i)=>t<=cursor?i:last,0);
   let layerId=params.get('layer')||null,selectedId=params.get('item')||null;
