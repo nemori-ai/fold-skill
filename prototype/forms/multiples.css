@@ -1,10 +1,17 @@
-.mx-wrap { padding: 22px 28px 50px; --mx-t: calc(110ms * var(--lv-slow, 1)); }
-.mx-kicker { font: 11px var(--mono); letter-spacing: .14em; color: var(--ink-2); }
-.mx-head h2 { margin: 4px 0 6px; font-size: 20px; line-height: 1.35; }
-.mx-headrow { display: flex; gap: 20px; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
-.mx-head p { margin: 0; max-width: 700px; font-size: 12.5px; line-height: 1.65; color: var(--ink-2); }
+/* 两周小倍数：底片（29 个同尺度小方阵）+ 右栏（此刻的放大方阵、换手数、问题、前 8 件）。整张底片要在 1440×900 的一屏里：
+   页头一行，日子的行距收紧，一天超过三帧的旁注在放不下时收起（.is-tight，悬停一帧看旁白）。概要卡与详情卡是
+   motion/ix.css 的结构，这里只把问题的记号改成黑点（朱红会撞上两种偏红的身份色）。 */
+.mx-wrap { position: relative; padding: 12px 28px 10px; --mx-t: calc(110ms * var(--lv-slow, 1));
+  --ix-ask: #111; --ix-ask-urgent: #111; --ix-z-peek: 6; --ix-z-detail: 7; --ix-z-leader: 5; }
+.mx-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; min-height: 30px; }
+.mx-kicker { flex: none; font: 11px var(--mono); letter-spacing: .14em; color: var(--ink-2); }
+.mx-head h2 { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 15px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mx-tools { flex: none; display: flex; gap: 8px; align-items: center; align-self: center; }
+.mx-show { height: 30px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+.mx-show:hover, .mx-show:focus-visible { border-color: var(--ink); outline: none; }
+.mx-show.is-on { background: var(--ink); border-color: var(--ink); color: var(--surface); }
 .mx-mode { display: inline-flex; flex: none; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
-.mx-mode button { height: 26px; padding: 0 12px; border: 0; border-radius: 6px; background: none; font-size: 12.5px; color: var(--ink-2); }
+.mx-mode button { height: 24px; padding: 0 12px; border: 0; border-radius: 6px; background: none; font-size: 12.5px; color: var(--ink-2); }
 .mx-mode button[aria-checked="true"] { background: var(--ink); color: var(--surface); }
 .mx-mode button:disabled { opacity: .4; cursor: not-allowed; }
 .mx-mode button:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
@@ -12,10 +19,11 @@
 .mx-body { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 24px; align-items: start; }
 .mx-weeks-wrap { position: relative; }
 .mx-weeks { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.mx-week h3 { margin: 0 0 6px; font-size: 12px; letter-spacing: .1em; color: var(--ink-2); font-weight: 600; }
-.mx-day { display: grid; grid-template-columns: 36px auto minmax(0, 1fr); gap: 4px 10px; padding: 5px 0; border-top: 1px solid var(--line); }
+.mx-week h3 { margin: 0 0 4px; font-size: 12px; letter-spacing: .1em; color: var(--ink-2); font-weight: 600; }
+.mx-day { display: grid; grid-template-columns: 36px auto minmax(0, 1fr); gap: 2px 10px; padding: 3px 0; border-top: 1px solid var(--line); }
 .mx-notes { min-width: 0; padding-top: 3px; }
 .mx-day.is-busy .mx-notes { grid-column: 2 / -1; columns: 2; column-gap: 16px; padding-top: 0; }
+.mx-wrap.is-tight .mx-day.is-busy .mx-notes { display: none; }
 .mx-notes p { margin: 0 0 3px; font-size: 11.5px; line-height: 1.4; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
 .mx-notes p b { margin-right: 6px; font: 10px var(--mono); }
 .mx-notes p.is-on { color: var(--ink); font-weight: 600; }
@@ -23,38 +31,59 @@
 .mx-date b { display: block; font: 600 17px/1.1 var(--mono); }
 .mx-date span { font-size: 11px; color: var(--ink-2); }
 .mx-row { display: flex; flex-wrap: wrap; gap: 10px; min-width: 148px; }
-.mx-frame { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 3px; cursor: pointer; }
+.mx-frame { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 3px; cursor: pointer; transition: opacity calc(150ms * var(--lv-slow, 1)); }
+.mx-weeks.is-dim .mx-frame:not(.is-keep) { opacity: var(--mx-dim, 1); transition: none; }
 .mx-frame svg { display: block; }
 .mx-time { padding: 0; border: 0; background: none; font: 9.5px var(--mono); color: var(--ink-2); }
 .mx-frame.is-on .mx-time { color: var(--ink); font-weight: 600; }
 .mx-time em { margin-left: 3px; font-style: normal; color: var(--ink); }
-.mx-cursor { position: absolute; left: 0; top: 0; border: 1.5px solid var(--ink); border-radius: 5px; pointer-events: none;
-  transition: transform var(--mx-cursor-t, 260ms) cubic-bezier(.3, .7, .2, 1), width 200ms, height 200ms; }
-.mx-cell { }
 .mx-blank { fill: #ebe7dc; }
 .mx-dot { fill: #111; transition: opacity var(--mx-t); pointer-events: none; }
 
-.mx-side { position: sticky; top: 0; display: flex; flex-direction: column; gap: 14px; }
-.mx-side section { padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
-.mx-now { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; }
+/* The overlay over the film: the cursor (hard cut), its two-frame trail (concept layer, grey), the N outline. */
+.mx-over { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.mx-cursor { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.mx-trails rect { fill: none; stroke: #a9a395; stroke-width: 1.5; opacity: 0; }
+.mx-keyring { fill: none; stroke: var(--ink); stroke-width: 1; stroke-dasharray: 2 2; opacity: 0; }
+.mx-outline { fill: none; stroke: #111; stroke-width: 1; }
+
+.mx-side { position: sticky; top: 0; display: flex; flex-direction: column; gap: 10px; }
+.mx-side section { padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.mx-now-k { margin-bottom: 7px; font: 10.5px var(--mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mx-now-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; }
 .mx-big svg { display: block; overflow: visible; }
 .mx-big-blank rect { fill: #ebe7dc; }
-.mx-bigcell { transition-property: transform, fill, opacity; transition-timing-function: cubic-bezier(.3, .7, .2, 1); transform-box: fill-box; transform-origin: 50% 50%; cursor: pointer; }
-.mx-bigcell.is-new { opacity: 0; }
-.mx-bigcell.is-leaving { opacity: 0; }
-.mx-bigdot { fill: #111; pointer-events: none; animation: mx-pop ease-out both; }
-@keyframes mx-pop { from { opacity: 0; } 60% { opacity: 0; } to { opacity: 1; } }
-.mx-now-when { font: 10.5px var(--mono); color: var(--ink-2); }
-.mx-now-title { margin: 2px 0 6px; font-size: 12.5px; font-weight: 600; line-height: 1.45; }
-.mx-now-n { font-size: 11.5px; color: var(--ink-2); line-height: 1.6; }
+.mx-bigcell { cursor: pointer; }
+.mx-ghosts { fill: rgb(150 144 130 / .16); stroke: #9d978a; stroke-width: 1; pointer-events: none; }
+.mx-leaving { pointer-events: none; }
+.mx-big-outline { fill: none; stroke: #111; stroke-width: 1.5; pointer-events: none; }
+.mx-bigdot { fill: #111; pointer-events: none; }
+/* The hero number: how many of the 64 cells changed hands this round. */
+.mx-hero { display: flex; flex-direction: column; min-width: 0; padding-top: 2px; }
+.mx-hero > b { font: 600 50px/1 var(--mono); color: var(--ink); letter-spacing: -.02em; }
+.mx-hero > small { margin-top: 3px; font-size: 11px; color: var(--ink-2); }
+.mx-hero-sub { margin-top: 6px; font: 11px/1.4 var(--mono); color: var(--ink); }
+/* One reserved two-line slot under the counts: at rest the round's largest changes, in the show only the three holds' notes. */
+.mx-beat { height: 2.9em; margin: 5px 0 0; padding-top: 5px; border-top: 1px solid var(--line); font-size: 11.5px; line-height: 1.45; color: var(--ink);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; box-sizing: content-box; }
+.mx-now-title { min-height: 2.9em; margin: 8px 0 3px; font-size: 12.5px; font-weight: 600; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* While 这一件 is open its panel replaces the now text, the legend and the questions. */
+.mx-now.is-item .mx-now-title, .mx-now.is-item .mx-beat { visibility: hidden; }
+.mx-now-n { display: flex; flex-direction: column; margin-top: 10px; font-size: 11px; color: var(--ink-2); line-height: 1.5; }
 .mx-now-n b { font-family: var(--mono); color: var(--ink); }
-.mx-asks h3, .mx-legend h3 { margin: 0 0 6px; font-size: 12.5px; }
+
+.mx-asks h3, .mx-legend h3 { margin: 0 0 5px; font-size: 12.5px; }
+.mx-asks h3 b { margin-left: 4px; font: 600 11.5px var(--mono); }
 .mx-legend h3 small { font-weight: 400; color: var(--ink-2); font-size: 11px; margin-left: 4px; }
-.mx-ask { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 7px; align-items: start; width: 100%; padding: 3px 2px; border: 0; border-radius: 4px; background: none; text-align: left; font-size: 11.5px; line-height: 1.45; }
+.mx-ask { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 7px; align-items: start; width: 100%; padding: 2px; border: 0; border-radius: 4px; background: none; text-align: left; font-size: 11.5px; line-height: 1.45; color: var(--ink); }
 .mx-ask i { width: 10px; height: 10px; margin-top: 3px; border-radius: 2px; }
-.mx-ask span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mx-ask span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mx-ask em { font: 600 10px var(--mono); font-style: normal; color: var(--ink); padding: 1px 4px; border: 1px solid var(--ink); border-radius: 3px; }
 .mx-ask:hover { background: var(--paper); }
-.mx-item { display: grid; grid-template-columns: 11px minmax(0, 1fr) 112px 22px; align-items: center; gap: 7px; width: 100%; padding: 3px; border: 0; border-radius: 4px; background: none; text-align: left; transition: opacity var(--mx-t); }
+.mx-ask.is-closed { color: var(--ink-2); }
+.mx-ask.is-closed i { background: none; border: 1px solid var(--ink-2); }
+.mx-ask.is-closed s { color: var(--ink-2); }
+.mx-item { display: grid; grid-template-columns: 11px minmax(0, 1fr) 112px 22px; align-items: center; gap: 7px; width: 100%; padding: 2px 3px; border: 0; border-radius: 4px; background: none; text-align: left; transition: opacity var(--mx-t); }
 .mx-item:hover, .mx-item:focus-visible { background: var(--paper); outline: none; }
 .mx-item i { width: 11px; height: 11px; border-radius: 2px; }
 .mx-item span { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -63,13 +92,33 @@
 .mx-item.is-other { cursor: default; }
 .mx-item.is-stream { grid-template-columns: 11px minmax(0, 1fr) 28px; }
 .mx-spark { display: block; overflow: visible; }
-.mx-spark-now { stroke: var(--ink); stroke-width: 1; opacity: .5; transition: transform calc(260ms * var(--lv-slow, 1)) cubic-bezier(.3, .7, .2, 1); }
-.mx-areas { display: block; margin: 2px 0 8px; overflow: visible; }
+.mx-spark-now { stroke: var(--ink); stroke-width: 1; opacity: .5; transition: transform calc(200ms * var(--lv-slow, 1)) cubic-bezier(.3, .7, .2, 1); }
+.mx-areas { display: block; margin: 2px 0 6px; overflow: visible; }
 .mx-area { transition: opacity var(--mx-t); }
 .mx-streams { display: flex; flex-direction: column; }
-.mx-small { margin: 8px 0 0; font-size: 11px; color: var(--ink-2); line-height: 1.6; }
+.mx-small { margin: 4px 0 0; font-size: 11px; color: var(--ink-2); line-height: 1.5; }
+
+/* The cards (motion/ix.css): questions are black dots here; a closed one is struck through with how it closed. */
+.mx-wrap .ix-ask i, .mx-wrap .ix-d-ask i { border-radius: 50%; }
+.mx-wrap .ix-ask.is-closed i { background: none; border: 1px solid var(--ink-2); }
+.mx-wrap .ix-ask.is-closed span { color: var(--ink-2); font-weight: 400; }
+.mx-wrap .ix-peek { width: 252px; }
+.mx-peek-round { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--ix-rule); }
+.mx-swatch { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 2px; vertical-align: 1px; }
+.mx-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mx-moves { margin: 5px 0 0; font: 10.5px/1.5 var(--mono); color: var(--ink); }
+.mx-bar-ask { fill: #111; }
+.mx-after { grid-column: 2; margin-top: 2px; color: var(--ink) !important; }
+.mx-dossier { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--ix-rule); font-size: 12px; }
+.mx-dossier summary { cursor: pointer; font: 600 10px var(--mono); letter-spacing: .06em; color: var(--ink-2); }
+.mx-dossier .lv-dossier { margin-top: 6px; }
+.mx-dossier .lv-dossier h2 { font-size: 14px; }
+
+/* The concept card's key list. */
+.mx-keys { margin: 0 0 8px; font-size: 12px; line-height: 1.6; color: var(--ink-2); }
+.mx-keys b { display: block; color: var(--ink); }
+.mx-keys kbd { padding: 0 4px; border: 1px solid var(--line); border-radius: 3px; font: 10.5px var(--mono); color: var(--ink); background: var(--paper); }
 
 @media (prefers-reduced-motion: reduce) {
-  .mx-cursor, .mx-cell, .mx-bigcell, .mx-spark-now, .mx-item, .mx-dot { transition: none !important; }
-  .mx-bigdot { animation: none; }
+  .mx-frame, .mx-spark-now, .mx-item, .mx-dot { transition: none !important; }
 }
