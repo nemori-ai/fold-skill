@@ -1,0 +1,169 @@
+{
+  "about": "份额拨盘（dial）画面上会出现的数字，每条 {value, source}。全部取自 prototype/data/<数据集>/scenario.mjs，经 prototype/engine.mjs 的 replayScenario 重放；动画页和其他形式一样直接读这份回放，不读本文件。本文件只供第 6 步（ship）拿静帧逐项对照。",
+  "rules": {
+    "round": "frames[0] 是空状态（phase: initial），不算一轮；其后每帧一轮。",
+    "inputs": "frame.events.length。不用 signal.received：composite 去掉了 21 封营销邮件，个别帧会差 1（如 f23 received 116、events 115）。",
+    "used": "event.disposition === 'used' 的条数；未采用 = deferred + noise + duplicate + unjudged。",
+    "shares": "records[i].state.root：items[].share 是扇区份数，used 是已分配份数，留白 = 64 − used。只画根层。",
+    "yield": "相邻两轮根层 share 之差；回执不记录“谁让给谁”的配对，画面只能并排同一轮的增与减，不能画成一条从 A 到 B 的线。",
+    "openAsks": "prototype/variants/shared.mjs currentAsk：ask 已登记，且登记时的条目版本 = 此刻条目的 updated_at；含子层（与 sketches/stage.mjs askLife 同）。",
+    "urgent": "prototype/forms/watch.mjs isUrgent：ask.due_at（没有则取条目 due_at，done 除外）在本帧时刻 24 小时内或已过，或条目 weight 为 critical / high。",
+    "cursor": "要紧问题按 watch.mjs urgencyKey（档位、24 小时内、期限、份额）排第一的那条，指向它所在的根层扇区；没有要紧问题时为 null。",
+    "related": "event.relatedIds：每条 used 输入都带（composite 1177/1177，story 84/84），用来把输入吸进对应扇区；子条目归到它的根。"
+  },
+  "composite": {
+    "persona": { "value": "Jonas Berglund", "source": "scenario.persona.name" },
+    "budget": { "value": 64, "source": "engine.mjs BUDGET；每一层固定 64 份" },
+    "weightTiers": { "value": [24, 12, 6, 3, 1], "source": "engine.mjs WEIGHTS：critical / high / normal / low / trace" },
+    "frames": { "value": 29, "source": "scenario.frames.length：f00 空状态 + 28 轮" },
+    "span": { "value": "08-03 00:00 → 08-17 00:00，每 12 小时一轮", "source": "frames[0].at、frames[28].at，timeZone Europe/Stockholm；signal.reason" },
+    "inputs": { "value": 3196, "source": "rules.inputs，28 轮求和" },
+    "inputsByStream": { "value": { "work": 1676, "community": 738, "family": 388, "life": 326, "subscription": 68 }, "source": "event.stream 计数" },
+    "selfInputs": { "value": 583, "source": "event.self === true" },
+    "machineInputs": { "value": 433, "source": "event.author_kind：bot 332 + automation 101" },
+    "dispositions": { "value": { "used": 1177, "deferred": 1117, "noise": 864, "duplicate": 33, "unjudged": 5 }, "source": "event.disposition 计数" },
+    "notUsedOverall": { "value": 0.632, "source": "(3196 − 1177) / 3196" },
+    "notUsedPerRound": { "value": { "median": 0.63, "min": ["f15", 0.24], "max": ["f27", 0.89] }, "source": "每轮 (inputs − used) / inputs；f15 71 条用 54，f27 66 条用 7" },
+    "inputsPerRound": { "value": { "max": ["f20", 234], "min": [["f11", 54], ["f25", 54]] }, "source": "rules.inputs 逐轮" },
+    "usedPerRound": { "value": { "median": 38, "min": [["f11", 7], ["f27", 7]], "max": ["f08", 94] }, "source": "rules.used 逐轮" },
+    "reviewRounds": { "value": 0, "source": "frame.signal.type === 'review' 的轮数；28 轮都是 events。份额一格没动的只有 f27（66 条进来，用 7 条）" },
+    "declarationsPerRound": { "value": { "median": 8, "min": ["f27", 2], "max": ["f18", 22], "total": 264 }, "source": "frame.batch.declarations.length" },
+    "rootItemsPerRound": { "value": { "min": ["f01", 10], "max": ["f17", 26], "final": 14, "distinct": 60 }, "source": "rules.shares：root.items.length；distinct = 两周出现过的根层条目" },
+    "oneShareItemsMax": { "value": ["f15", 17], "source": "root.items 中 share === 1 的件数最多的一轮" },
+    "allocatedPerRound": { "value": { "min": ["f23", 39], "max": 64, "roundsAt64": 13, "firstAt64": "f02" }, "source": "rules.shares：root.used" },
+    "maxShare": { "value": { "share": 24, "item": "母亲换水管", "first": "f03", "roundsWithA24": 15 }, "source": "root.items[].share 最大值；短名取 scenario.categories[id].short" },
+    "asks": { "value": { "distinct": 26, "registrations": 85, "answered": 11, "lapsed": 8 }, "source": "frame.asks 的 id 去重与登记次数；answered / lapsed 按 rules.openAsks 关上时有无 event.feedback[].ask 区分" },
+    "openAsksPerRound": { "value": { "median": 6.5, "min": 3, "max": 8 }, "source": "rules.openAsks；min 在 f23–f25，max 在 f04、f08、f15" },
+    "urgentPerRound": { "value": { "median": 1, "min": 0, "max": 3, "roundsWith1or2": 21 }, "source": "rules.urgent；28 轮里 16 轮 1 件、5 轮 2 件、4 轮 3 件（f18–f21）、3 轮 0 件（f23–f25）" },
+    "feedback": { "value": { "links": 160, "answeringAsks": 32, "viaSource": 160 }, "source": "event.feedback[] 计数；全部 via: source" },
+    "largestSingleYield": { "value": { "frame": "f23", "gave": [["母亲换水管", 24, 6], ["猫看病", 24, 12]], "blank": [0, 25] }, "source": "rules.yield；单件让出最多（−18）。f23 旁白“打了诊所；母亲自己定了”" },
+    "beats": {
+      "b1": {
+        "value": { "frames": ["f00", "f01"], "inputs": 76, "byStream": { "work": 43, "family": 14, "community": 13, "life": 5, "subscription": 1 }, "used": 38, "deferred": 15, "noise": 17, "duplicate": 6, "declarations": 10, "rootItems": 10, "allocated": 57, "blank": 7, "largest": [["母亲换水管", 12], ["猫看病", 12]], "openAsks": 5, "urgent": 1, "cursor": ["ask-05", "Smilla 约上兽医了吗？", "猫看病"] },
+        "source": "f01 的 events / batch / asks；rules.shares、rules.cursor；问法取 ask.short"
+      },
+      "b2": {
+        "value": { "frames": ["f02", "f25"], "rounds": 24, "cumulativeInputs": [207, 2893], "firstFull": "f02", "maxBlank": ["f23", 25], "cursorLongestStay": ["ask-08", "母亲九月住哪？", "母亲换水管", "f03–f21", 19] },
+        "source": "rules.inputs 累加；rules.shares；rules.cursor 逐轮（见 rounds）"
+      },
+      "b3": {
+        "value": { "frame": "f26", "title": "车道下的铜管裂了", "inputs": 158, "byStream": { "work": 56, "community": 49, "life": 35, "family": 16, "subscription": 2 }, "used": 40, "deferred": 84, "noise": 31, "duplicate": 3, "declarations": 8, "rootItems": 14, "allocated": [52, 63], "blank": [12, 1], "grew": [["主水管", 12, 24], ["FTPS 计时", 1, 6], ["后刹", 1, 3]], "shrank": [["猫看病", 12, 6], ["Ture 发烧", 3, 1]], "openAsks": 5, "urgent": 1, "cursor": ["ask-23", "主水管：挖开换还是免挖？", "主水管"], "askDue": "08-17 10:00", "relatedToCursor": 16, "cumulativeInputs": 3051 },
+        "source": "f26 的 events / batch / asks，对 f25 求差；relatedToCursor = f26 里 relatedIds 含 driveway-wet 的 used 输入；askDue 取 ask-23.due_at"
+      }
+    },
+    "rounds": {
+      "columns": ["frame", "at", "inputs", "used", "declarations", "rootItems", "allocated", "openAsks", "urgent", "cursor"],
+      "source": "rules 各项逐帧；at 为 Europe/Stockholm 本地时间",
+      "rows": [
+        ["f00", "08-03 00:00", 0, 0, 0, 0, 0, 0, 0, null],
+        ["f01", "08-03 12:00", 76, 38, 10, 10, 57, 5, 1, "ask-05→猫看病"],
+        ["f02", "08-04 00:00", 131, 38, 12, 13, 64, 6, 2, "ask-05→猫看病"],
+        ["f03", "08-04 12:00", 132, 48, 11, 13, 63, 7, 2, "ask-08→母亲换水管"],
+        ["f04", "08-05 00:00", 125, 62, 8, 14, 64, 8, 2, "ask-08→母亲换水管"],
+        ["f05", "08-05 12:00", 70, 35, 7, 14, 58, 6, 1, "ask-08→母亲换水管"],
+        ["f06", "08-06 00:00", 158, 38, 12, 17, 64, 7, 1, "ask-08→母亲换水管"],
+        ["f07", "08-06 12:00", 110, 38, 7, 18, 64, 7, 1, "ask-08→母亲换水管"],
+        ["f08", "08-07 00:00", 203, 94, 8, 16, 64, 8, 2, "ask-08→母亲换水管"],
+        ["f09", "08-07 12:00", 77, 39, 7, 17, 64, 7, 1, "ask-08→母亲换水管"],
+        ["f10", "08-08 00:00", 126, 48, 11, 18, 50, 7, 1, "ask-08→母亲换水管"],
+        ["f11", "08-08 12:00", 54, 7, 4, 19, 51, 6, 1, "ask-08→母亲换水管"],
+        ["f12", "08-09 00:00", 83, 28, 8, 21, 63, 7, 1, "ask-08→母亲换水管"],
+        ["f13", "08-09 12:00", 66, 39, 6, 23, 64, 7, 1, "ask-08→母亲换水管"],
+        ["f14", "08-10 00:00", 97, 62, 9, 21, 62, 7, 1, "ask-08→母亲换水管"],
+        ["f15", "08-10 12:00", 71, 54, 15, 25, 62, 8, 1, "ask-08→母亲换水管"],
+        ["f16", "08-11 00:00", 154, 82, 13, 23, 61, 7, 1, "ask-08→母亲换水管"],
+        ["f17", "08-11 12:00", 72, 34, 8, 26, 64, 7, 1, "ask-08→母亲换水管"],
+        ["f18", "08-12 00:00", 151, 58, 22, 19, 64, 5, 3, "ask-08→母亲换水管"],
+        ["f19", "08-12 12:00", 107, 28, 13, 19, 64, 6, 3, "ask-08→母亲换水管"],
+        ["f20", "08-13 00:00", 234, 66, 12, 18, 64, 6, 3, "ask-08→母亲换水管"],
+        ["f21", "08-13 12:00", 97, 31, 9, 19, 62, 6, 3, "ask-08→母亲换水管"],
+        ["f22", "08-14 00:00", 172, 34, 14, 11, 64, 5, 2, "ask-16→猫看病"],
+        ["f23", "08-14 12:00", 115, 34, 6, 11, 39, 3, 0, null],
+        ["f24", "08-15 00:00", 158, 59, 8, 15, 51, 3, 0, null],
+        ["f25", "08-15 12:00", 54, 22, 7, 14, 52, 3, 0, null],
+        ["f26", "08-16 00:00", 158, 40, 8, 14, 63, 5, 1, "ask-23→主水管"],
+        ["f27", "08-16 12:00", 66, 7, 2, 14, 63, 5, 1, "ask-23→主水管"],
+        ["f28", "08-17 00:00", 79, 14, 7, 14, 64, 7, 1, "ask-23→主水管"]
+      ]
+    }
+  },
+  "story": {
+    "persona": { "value": "林苒", "source": "scenario.persona.name" },
+    "budget": { "value": 64, "source": "engine.mjs BUDGET" },
+    "frames": { "value": 37, "source": "scenario.frames.length：cold-00 空状态 + 36 轮" },
+    "span": { "value": "10-12 08:30 → 10-25 19:40，不定时", "source": "frames[0].at、frames[36].at，timeZone Asia/Shanghai" },
+    "inputs": { "value": 112, "source": "rules.inputs，36 轮求和" },
+    "inputsByStream": { "value": null, "source": "story 的事件没有 stream 字段，有 25 种 channel（团队群 25、用户消息 18、客户邮件 9 …）；车道只能按 channel 归组，见 story.md" },
+    "selfInputs": { "value": 26, "source": "event.from === persona.name（story 没有 self 字段）" },
+    "dispositions": { "value": { "used": 84, "noise": 12, "duplicate": 10, "deferred": 6 }, "source": "event.disposition 计数" },
+    "notUsedPerRound": { "value": { "median": 0.33, "min": ["cold-02、f07、f11、f12、f18、f19、f23", 0], "max": ["f06", 0.67] }, "source": "每轮 (inputs − used) / inputs，不计 0 条输入的轮" },
+    "inputsPerRound": { "value": { "max": ["f01", 9], "typical": 3 }, "source": "rules.inputs 逐轮；36 轮里 30 轮恰好 3 条" },
+    "reviewRounds": { "value": { "count": 2, "frames": ["f17", "f27"] }, "source": "frame.signal.type === 'review'，窗口内 0 条输入；f27 没有声明，f17 有 1 条声明但根层份额不变" },
+    "declarationsPerRound": { "value": { "median": 3, "max": ["f12", 9], "total": 126 }, "source": "frame.batch.declarations.length" },
+    "rootItemsPerRound": { "value": { "min": ["cold-01", 1], "max": ["f03", 9], "final": 7, "distinct": 10 }, "source": "rules.shares：root.items.length" },
+    "allocatedPerRound": { "value": { "min": ["cold-01", 6], "minAfterColdStart": ["f34", 32], "max": 64, "roundsAt64": 3 }, "source": "rules.shares：root.used；到 64 的是 f05、f06、f22" },
+    "maxShare": { "value": { "share": 24, "item": "试用", "first": "f05", "roundsWithA24": 15 }, "source": "root.items[].share 最大值" },
+    "asks": { "value": { "distinct": 39, "registrations": 44, "answered": 11, "lapsed": 26 }, "source": "同 composite.asks" },
+    "openAsksPerRound": { "value": { "median": 4, "min": 1, "max": 6 }, "source": "rules.openAsks，含子层；min 在 cold-01、f24、f26、f27" },
+    "urgentPerRound": { "value": { "median": 3, "min": 0, "max": 6, "roundsWith1or2": 13 }, "source": "rules.urgent；手写情境档位普遍偏高，“只有一两件”在 story 上不成立，36 轮里只有 13 轮" },
+    "feedback": { "value": { "links": 15, "answeringAsks": 12, "annotations": 3, "reminders": 1 }, "source": "event.feedback[]（reply 12、button 3）、frame.annotations、event.reminder" },
+    "largestSingleYield": { "value": { "frame": "f15", "gave": [["试用", 24, 6], ["发布", 12, 3]], "took": [["妈妈", 12, 24]], "blank": [3, 18] }, "source": "rules.yield；单件让出最多（−18），同轮妈妈 +12" },
+    "beats": {
+      "b1": {
+        "value": { "frames": ["cold-00", "cold-01"], "inputs": 3, "used": 2, "noise": 1, "rootItems": 1, "allocated": 6, "blank": 58, "largest": [["发布", 6]], "openAsks": 1, "urgent": 0, "cursor": null },
+        "source": "cold-01 的 events / batch / asks"
+      },
+      "b2": {
+        "value": { "frames": ["cold-02", "f14"], "rounds": 15, "cumulativeInputs": [6, 55], "firstFull": "f05" },
+        "source": "rules.inputs 累加；rules.shares"
+      },
+      "b3": {
+        "value": { "frame": "f15", "title": "陪妈妈改约周日11点，双方已确认", "inputs": 3, "used": 2, "duplicate": 1, "declarations": 4, "rootItems": 6, "allocated": [61, 46], "blank": [3, 18], "grew": [["妈妈", 12, 24]], "shrank": [["试用", 24, 6], ["发布", 12, 3]], "openAsks": 2, "urgent": 2, "cursor": ["ask-21", "周日 11 点见妈妈", "妈妈"], "answeredThisRound": ["ask-17", "change"], "cumulativeInputs": 58 },
+        "source": "f15 的 events / batch / asks，对 f14 求差；story 的 ask 没有 short，问法取 prompt"
+      }
+    },
+    "rounds": {
+      "columns": ["frame", "at", "inputs", "used", "declarations", "rootItems", "allocated", "openAsks", "urgent", "cursor"],
+      "source": "rules 各项逐帧；at 为 Asia/Shanghai 本地时间",
+      "rows": [
+        ["cold-00", "10-12 08:30", 0, 0, 0, 0, 0, 0, 0, null],
+        ["cold-01", "10-12 08:42", 3, 2, 1, 1, 6, 1, 0, null],
+        ["cold-02", "10-12 08:52", 3, 3, 2, 2, 18, 2, 1, "ask-01→发布"],
+        ["f01", "10-12 09:10", 9, 8, 8, 8, 49, 6, 3, "ask-03→发布"],
+        ["f02", "10-12 13:40", 3, 2, 3, 8, 55, 6, 3, "ask-03→发布"],
+        ["f03", "10-12 20:30", 3, 2, 1, 9, 58, 6, 4, "ask-03→发布"],
+        ["f04", "10-13 09:20", 3, 2, 3, 8, 61, 6, 5, "ask-03→发布"],
+        ["f05", "10-13 14:40", 3, 2, 6, 8, 64, 6, 5, "ask-11→试用"],
+        ["f06", "10-13 18:20", 3, 1, 1, 8, 64, 6, 5, "ask-11→试用"],
+        ["f07", "10-14 09:10", 3, 3, 7, 8, 62, 4, 3, "ask-10→妈妈"],
+        ["f08", "10-14 18:10", 3, 2, 6, 8, 50, 4, 3, "ask-10→妈妈"],
+        ["f09", "10-15 09:40", 3, 2, 3, 8, 59, 6, 6, "ask-15→厨房"],
+        ["f10", "10-15 14:30", 3, 2, 2, 6, 55, 5, 5, "ask-15→厨房"],
+        ["f11", "10-15 21:00", 3, 3, 4, 6, 61, 5, 5, "ask-15→厨房"],
+        ["f12", "10-16 10:00", 3, 3, 9, 6, 61, 4, 4, "ask-18→试用"],
+        ["f13", "10-16 17:40", 3, 2, 3, 6, 61, 2, 2, "ask-17→妈妈"],
+        ["f14", "10-16 21:20", 4, 3, 0, 6, 61, 2, 2, "ask-17→妈妈"],
+        ["f15", "10-17 10:00", 3, 2, 4, 6, 46, 2, 2, "ask-21→妈妈"],
+        ["f16", "10-17 21:30", 3, 2, 2, 6, 52, 4, 4, "ask-21→妈妈"],
+        ["f17", "10-18 08:00", 0, 0, 1, 6, 52, 4, 4, "ask-21→妈妈"],
+        ["f18", "10-18 17:20", 3, 3, 6, 6, 52, 2, 1, "ask-19→试用"],
+        ["f19", "10-19 09:10", 3, 3, 5, 8, 55, 4, 2, "ask-25→发布"],
+        ["f20", "10-19 15:30", 3, 2, 3, 8, 58, 5, 3, "ask-27→费用"],
+        ["f21", "10-19 20:50", 3, 2, 2, 8, 52, 4, 3, "ask-27→费用"],
+        ["f22", "10-20 09:40", 3, 2, 3, 8, 64, 6, 5, "ask-29→试用"],
+        ["f23", "10-20 14:00", 3, 3, 5, 8, 62, 6, 5, "ask-29→试用"],
+        ["f24", "10-20 19:30", 4, 3, 5, 8, 50, 1, 0, null],
+        ["f25", "10-21 09:15", 3, 2, 4, 8, 62, 2, 1, "ask-32→发布"],
+        ["f26", "10-21 17:30", 3, 2, 3, 8, 61, 1, 0, null],
+        ["f27", "10-22 08:00", 0, 0, 0, 8, 61, 1, 1, "ask-26→苏禾"],
+        ["f28", "10-22 10:20", 3, 2, 2, 8, 55, 3, 3, "ask-33→链路"],
+        ["f29", "10-22 18:40", 3, 2, 2, 8, 51, 3, 2, "ask-33→链路"],
+        ["f30", "10-23 09:40", 5, 4, 6, 8, 60, 4, 4, "ask-37→妈妈"],
+        ["f31", "10-23 18:20", 3, 2, 4, 7, 45, 2, 2, "ask-37→妈妈"],
+        ["f32", "10-24 10:30", 3, 2, 2, 7, 43, 2, 2, "ask-37→妈妈"],
+        ["f33", "10-24 20:00", 3, 2, 2, 7, 52, 2, 2, "ask-38→苏禾"],
+        ["f34", "10-25 19:40", 3, 2, 6, 7, 32, 2, 2, "ask-39→苏禾"]
+      ]
+    }
+  }
+}
