@@ -342,6 +342,11 @@ export function flipList(container, { duration = 280, easing = 'cubic-bezier(.2,
  * Tiles whose rectangle and content did not change are not touched. update(entries, options):
  *   entries  [{ id, x, y, width, height, className, html, key, attrs }]  key changes → new body, old one crossfades
  *   options  { animate, links: [{from,to}], zoom: { from, to } (rects for dive/rise), scale (slow motion) }
+ *            timing(kind, id, { from, to }) → { delay, duration, easing?, from?, to? } | null  (optional; kind is
+ *              'move' | 'enter' | 'exit', times in ms; `from` overrides where an entering tile starts, `to` where a
+ *              leaving one goes). Without it every tile moves at once over `duration` × scale, as before.
+ *            timer: false  settle only when the animations finish (a host that pauses or pins them mid-way)
+ *   returns  the plan: { moves, enters, exits } with each tile's from / to rects (or null when nothing moved)
  * onRender(el, entry) runs after a body is (re)written, so the form can trim text to fit.
  */
 export function createFlipBoard(board, { tileClass = 'flip-tile', duration = 320, easing = 'cubic-bezier(.2,.75,.25,1)', onRender = () => {} } = {}) {
@@ -375,30 +380,33 @@ export function createFlipBoard(board, { tileClass = 'flip-tile', duration = 320
     transform: `translate(${rect.x - final.x}px,${rect.y - final.y}px)`,
     clipPath: `inset(0px ${Math.max(0, natural.width - rect.width)}px ${Math.max(0, natural.height - rect.height)}px 0px)`,
   });
-  function moveTile(el, from, to, ghost, scale) {
-    const t = duration * scale;
-    play(el.querySelector(':scope > .flip-shape'), [{ transform: shapeAt(from, to) }, { transform: 'none' }], { duration: t });
+  // `time` (from the host's timing option) gives one tile its own delay, duration and easing, in ms.
+  const timed = (time, fallback) => (time ? { duration: time.duration, delay: time.delay || 0, ...(time.easing ? { easing: time.easing } : {}) } : fallback);
+  function moveTile(el, from, to, ghost, scale, time = null) {
+    const opts = timed(time, { duration: duration * scale });
+    play(el.querySelector(':scope > .flip-shape'), [{ transform: shapeAt(from, to) }, { transform: 'none' }], opts);
     const body = el.querySelector(':scope > .flip-body');
     const settled = { transform: 'translate(0px,0px)', clipPath: 'inset(0px 0px 0px 0px)' };
-    if (!ghost) { play(body, [bodyAt(from, to), settled], { duration: t }); return; }
+    if (!ghost) { play(body, [bodyAt(from, to), settled], opts); return; }
     // Content changed: the old text hands over to the new one while the shape moves.
-    play(body, [{ ...bodyAt(from, to), opacity: 0, offset: 0 }, { opacity: 0, offset: 0.18 }, { ...settled, opacity: 1, offset: 1 }], { duration: t });
+    play(body, [{ ...bodyAt(from, to), opacity: 0, offset: 0 }, { opacity: 0, offset: 0.18 }, { ...settled, opacity: 1, offset: 1 }], opts);
     const natural = { width: ghost.offsetWidth, height: ghost.offsetHeight };
-    play(ghost, [{ ...bodyAt(from, to, natural), opacity: 1, offset: 0 }, { opacity: 0, offset: 0.6 }, { ...bodyAt(to, to, natural), opacity: 0, offset: 1 }], { duration: t });
+    play(ghost, [{ ...bodyAt(from, to, natural), opacity: 1, offset: 0 }, { opacity: 0, offset: 0.6 }, { ...bodyAt(to, to, natural), opacity: 0, offset: 1 }], opts);
   }
-  function enterTile(el, from, to, scale, delay = 0.18) {
-    const t = duration * scale;
-    play(el.querySelector(':scope > .flip-shape'), [{ transform: shapeAt(from, to), opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: t, delay: t * delay });
+  function enterTile(el, from, to, scale, delay = 0.18, time = null) {
+    const t = time ? time.duration : duration * scale, d = time ? time.delay || 0 : t * delay;
+    const easing = time?.easing ? { easing: time.easing } : {};
+    play(el.querySelector(':scope > .flip-shape'), [{ transform: shapeAt(from, to), opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: t, delay: d, ...easing });
     const body = el.querySelector(':scope > .flip-body');
-    play(body, [{ ...bodyAt(from, to), opacity: 0 }, { transform: 'translate(0px,0px)', clipPath: 'inset(0px 0px 0px 0px)', opacity: 1 }], { duration: t, delay: t * (delay + 0.12) });
+    play(body, [{ ...bodyAt(from, to), opacity: 0 }, { transform: 'translate(0px,0px)', clipPath: 'inset(0px 0px 0px 0px)', opacity: 1 }], { duration: t, delay: d + t * 0.12, ...easing });
   }
-  function exitTile(el, to, scale) {
-    const final = geometry(el), t = duration * scale * 0.8;
+  function exitTile(el, to, scale, time = null) {
+    const final = geometry(el), t = time ? time.duration : duration * scale * 0.8, d = time ? time.delay || 0 : 0;
     el.classList.add('is-leaving');
     el.setAttribute('aria-hidden', 'true');
     el.inert = true;
-    play(el.querySelector(':scope > .flip-shape'), [{ transform: 'none', opacity: 1 }, { transform: shapeAt(to, final), opacity: 0 }], { duration: t, easing: 'cubic-bezier(.4,0,.6,1)' });
-    play(el.querySelector(':scope > .flip-body'), [{ opacity: 1 }, { opacity: 0 }], { duration: t * 0.5, easing: 'linear' });
+    play(el.querySelector(':scope > .flip-shape'), [{ transform: 'none', opacity: 1 }, { transform: shapeAt(to, final), opacity: 0 }], { duration: t, delay: d, easing: time?.easing || 'cubic-bezier(.4,0,.6,1)' });
+    play(el.querySelector(':scope > .flip-body'), [{ opacity: 1 }, { opacity: 0 }], { duration: t * 0.5, delay: d, easing: 'linear' });
   }
   function write(el, entry, animate) {
     const body = el.querySelector(':scope > .flip-body');
@@ -417,7 +425,7 @@ export function createFlipBoard(board, { tileClass = 'flip-tile', duration = 320
     body.innerHTML = entry.html;
     return null;
   }
-  function update(entries, { animate = true, links = [], zoom = null, scale = 1 } = {}) {
+  function update(entries, { animate = true, links = [], zoom = null, scale = 1, timing = null, timer: useTimer = true } = {}) {
     const motion = animate && !reducedMotion() && typeof Element.prototype.animate === 'function';
     // 1. Where every tile is on screen right now, mid-flight included.
     const before = new Map();
@@ -467,7 +475,7 @@ export function createFlipBoard(board, { tileClass = 'flip-tile', duration = 320
     for (const [id, el] of revive) if (!next.has(id)) el.remove();
     live = next;
     for (const [el, entry] of written) onRender(el, entry);
-    if (!motion) { for (const [, record] of leaving) record.el.remove(); last = null; return; }
+    if (!motion) { for (const [, record] of leaving) record.el.remove(); last = null; return null; }
     // 3. Plan and play. Merged sources fly into their target; a dive or rise projects through the anchor.
     const finalRects = new Map([...live].map(([id, record]) => [id, record.rect]));
     const sourcesOf = new Map(), targetOf = new Map();
@@ -481,29 +489,37 @@ export function createFlipBoard(board, { tileClass = 'flip-tile', duration = 320
       if (!record.fresh && before.has(id) && !zoom) {
         const from = before.get(id);
         if (near(from, to) && !record.ghost) continue;
-        moveTile(record.el, from, to, record.ghost, scale);
-        plan.moves.push({ id, from, to });
+        moveTile(record.el, from, to, record.ghost, scale, timing ? timing('move', id, { from, to, changed: Boolean(record.ghost) }) : null);
+        plan.moves.push({ id, from, to, changed: Boolean(record.ghost) });
       } else {
         const sources = sourcesOf.get(id);
-        const from = sources ? union(sources.map(source => before.get(source))) : zoom ? projectRect(to, zoom.to, zoom.from) : shrunk(to, 0.6);
+        let from = sources ? union(sources.map(source => before.get(source))) : zoom ? projectRect(to, zoom.to, zoom.from) : shrunk(to, 0.6);
+        const time = timing ? timing('enter', id, { from, to, merged: Boolean(sources) }) : null;
+        if (time?.from) from = time.from;
         if (record.ghost) { record.ghost.remove(); record.ghost = null; }
-        enterTile(record.el, from, to, scale, zoom ? 0.1 : sources ? 0 : 0.18);
+        enterTile(record.el, from, to, scale, zoom ? 0.1 : sources ? 0 : 0.18, time);
         plan.enters.push({ id, from, to });
       }
     }
     for (const [id, record] of leaving) {
       const el = record.el, from = before.get(id) || geometry(el);
-      const target = targetOf.has(id) ? finalRects.get(targetOf.get(id)) : zoom ? projectRect(from, zoom.from, zoom.to) : shrunk(from, 0.55);
+      let target = targetOf.has(id) ? finalRects.get(targetOf.get(id)) : zoom ? projectRect(from, zoom.from, zoom.to) : shrunk(from, 0.55);
+      const time = timing ? timing('exit', id, { from, to: target, merged: targetOf.has(id) }) : null;
+      if (time?.to) target = time.to;
       exiting.set(id, el);
-      exitTile(el, target, scale);
-      plan.exits.push({ id, html: el.outerHTML, from, to: target });
+      exitTile(el, target, scale, time);
+      plan.exits.push({ id, html: el.outerHTML, from, to: target, merged: targetOf.has(id) });
     }
     if (running.length) {
       board.classList.add('is-moving');
-      timer = setTimeout(settle, duration * scale * 1.45 + 60);
+      if (useTimer) {
+        const longest = timing ? Math.max(...running.map(a => { const t = a.effect.getTiming(); return (t.delay || 0) + Number(t.duration || 0); })) : duration * scale * 1.45;
+        timer = setTimeout(settle, longest + 60);
+      }
       Promise.allSettled(running.map(animation => animation.finished)).then(() => { if (running.length && running.every(a => a.playState === 'finished')) settle(); });
     }
     last = plan.moves.length || plan.enters.length || plan.exits.length ? plan : null;
+    return last;
   }
   /** Play the last transition again on the settled board. */
   function replay(scale = 1) {

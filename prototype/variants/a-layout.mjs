@@ -16,6 +16,8 @@
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const EPSILON = 0.5;
 const TARGET = Math.log(1.25);
+// How strongly a paper is pulled toward where it stood last round (see layoutPapers).
+export const STABILITY = 6;
 
 function paperCost(share, width, height) {
   // A strip that ran out of room: never the best layout, and never NaN (NaN would disable pruning).
@@ -30,7 +32,8 @@ function paperCost(share, width, height) {
 
 // Exhaustive order-preserving strip partition with pruning. Up to 12 papers both
 // strip directions are tried; larger layers keep the conventional direction.
-function partition(entries, width, height, areaPerShare) {
+// `pull(entry, rect)` is an extra cost per paper (layoutPapers' stability term); layoutFill passes none.
+function partition(entries, width, height, areaPerShare, pull = null) {
   let best = null;
   const rects = [];
   // ax / ay count the gutters to the left of / above each paper. Gutters are local:
@@ -52,7 +55,7 @@ function partition(entries, width, height, areaPerShare) {
           const step = index - start;
           const rect = vertical ? { id: entries[index].id, x, y: y + offset, width: thickness, height: length, ax, ay: ay + step }
             : { id: entries[index].id, x: x + offset, y, width: length, height: thickness, ax: ax + step, ay };
-          rowCost += paperCost(entries[index].share, rect.width, rect.height) * (entries[index].costWeight ?? 1);
+          rowCost += paperCost(entries[index].share, rect.width, rect.height) * (entries[index].costWeight ?? 1) + (pull ? pull(entries[index], rect) : 0);
           rects.push(rect); offset += length;
         }
         if (vertical) search(end, x + thickness, y, w - thickness, h, cost + rowCost, ax + 1, ay);
@@ -65,7 +68,12 @@ function partition(entries, width, height, areaPerShare) {
   return best.rects;
 }
 
-export function layoutPapers(items, budget, width, height) {
+/**
+ * `previous` (optional): the layout this board showed last (a result of this function). Each paper that was on it is
+ * pulled toward where it stood, in the cluster's own proportions, so a round that changes two shares does not reshuffle
+ * the whole desk; `stability` weighs that pull against the paper shapes (0 turns it off).
+ */
+export function layoutPapers(items, budget, width, height, { previous = null, stability = STABILITY } = {}) {
   if (![budget, width, height].every(value => Number.isFinite(value) && value > 0)) {
     throw new Error('Paper layout needs a positive budget, width, and height.');
   }
@@ -90,7 +98,19 @@ export function layoutPapers(items, budget, width, height) {
   if (clusterWidth > width) { clusterWidth = width; clusterHeight = usedArea / width; }
   if (clusterHeight > height) { clusterHeight = height; clusterWidth = usedArea / height; }
 
-  const cells = partition(active, clusterWidth, clusterHeight, areaPerShare);
+  // Where each paper stood on the previous board, as a fraction of that cluster (its centre).
+  const before = new Map();
+  if (previous?.cluster && stability > 0) {
+    const c = previous.cluster;
+    for (const paper of previous.papers) before.set(paper.id, { x: (paper.cx - c.x) / c.width, y: (paper.cy - c.y) / c.height });
+  }
+  const pull = before.size ? (entry, rect) => {
+    const was = before.get(entry.id);
+    if (!was) return 0;
+    const dx = (rect.x + rect.width / 2) / clusterWidth - was.x, dy = (rect.y + rect.height / 2) / clusterHeight - was.y;
+    return stability * Math.sqrt(entry.share) * (dx * dx + dy * dy);
+  } : null;
+  const cells = partition(active, clusterWidth, clusterHeight, areaPerShare, pull);
   // Gutters use part of the slack on each axis; the rest stays as margin.
   const maxGap = clamp(Math.min(width, height) * 0.045, 6, 22);
   const gutter = (size, start, length, count) => cells.reduce((gap, cell) => cell[count] > 0
@@ -101,6 +121,7 @@ export function layoutPapers(items, budget, width, height) {
   const spanHeight = Math.max(...cells.map(cell => cell.y + cell.height + cell.ay * gapY));
   const left = (width - spanWidth) * 0.5;
   const top = (height - spanHeight) * 0.46;
+  result.cluster = { x: left, y: top, width: spanWidth, height: spanHeight };
   const byId = new Map(active.map(item => [item.id, item]));
   for (const cell of cells) {
     const item = byId.get(cell.id);
@@ -108,7 +129,8 @@ export function layoutPapers(items, budget, width, height) {
     result.papers.push({ id: cell.id, share: item.share, rank: item.rank,
       x: left + cell.x + cell.ax * gapX,
       y: top + cell.y + cell.ay * gapY,
-      width: cell.width, height: cell.height });
+      width: cell.width, height: cell.height,
+      cx: left + cell.x + cell.ax * gapX + cell.width / 2, cy: top + cell.y + cell.ay * gapY + cell.height / 2 });
   }
   return result;
 }
