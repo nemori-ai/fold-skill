@@ -77,6 +77,19 @@ const PAGES = {
     cut: `document.querySelector('.mx-now-k').textContent.startsWith('这一件')`,
     playReady: `new Promise(r => { const go = () => (foldMultiples.player.index >= 3 ? r(1) : setTimeout(go, 50)); go(); })`,
   },
+  timing: {
+    hook: 'foldTiming', held: 'forms/sketches/timing.html?frame=26', play: 'forms/sketches/timing.html?frame=3&mode=play',
+    prepare: null, index: 'foldTiming.player.index', step: 27,
+    // No concept card on this page: Tab starts from the bar's last control (the key help).
+    tabFrom: '[data-lv-help]',
+    // The hero question once it is registered (母亲九月住哪？ in composite), else the longest line on screen.
+    pick: 'foldTiming.pick()',
+    // 9 px past the end of its visible cell, on the lane's centre line (cells are hit up to 12 px past their end).
+    near: name => `(() => { const g = foldTiming.geom(${JSON.stringify(name)}); return { x: g.x1 + 9, y: g.y }; })()`,
+    blank: { x: 900, y: 42 },
+    cut: `document.querySelector('.lv-date').textContent.startsWith('这一件') && document.querySelector('.lv-side h2').textContent.startsWith('这一件')`,
+    playReady: `new Promise(r => { const go = () => (foldTiming.player.index >= 5 ? r(1) : setTimeout(go, 50)); go(); })`,
+  },
 };
 
 function args(argv) {

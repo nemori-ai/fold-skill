@@ -48,7 +48,8 @@
 //   trendH           份额小条图的高（px），缺省 32
 //   peekHTML(f, o), detailHTML(f, o)  卡里写什么：缺省是事项卡（本文件的 peekHTML / detailHTML，读 itemFacts）；
 //                    宿主的“一件”不是事项（批次记谱的一行、合计行）时自己给，参数与缺省的相同。详情里放一个
-//                    data-x="close" 的按钮就能收回；facts 至少要有 i 与 short（卡的缓存键与 aria-label）
+//                    data-x="close" 的按钮就能收回；facts 至少要有 i 与 short（卡的缓存键与 aria-label）；
+//                    回应时序的一件是一条回应路径，卡上是开了多久、离期限、登记几次与谁推动
 //
 // ---------- 宿主每帧做什么 ----------
 //   const X = ix.frame();     // {focus, dim, pop, popId, line, card, detail, peek, peekId, keyFocus}
@@ -57,7 +58,9 @@
 //   ix.paint();               // 摆卡、展开、画引线（在宿主画完几何之后，卡跟着刚摆好的名字走）
 //   ix.sync(key, items);      // 隐藏按钮：items = [{id, label}]（或返回它的函数），key 变了才重建
 // 其余：ix.reset()（导航）、ix.relayout()（尺寸变了）、ix.rects()（卡的可见矩形，给概念层遮罩）、ix.leaders()、
-//   ix.live()（还有东西在动）、ix.s（状态：hover / open / peek / via / fixed…）、ix.view、ix.X。
+//   ix.live()（还有东西在动）、ix.s（状态：hover / open / peek / via / fixed / presented…）、ix.view、ix.X。
+//   ix.present(id)：宿主自己的故事要把某一件展开给人看（回应时序第 3 拍的放大卡）。动作与收回和点击展开一样，
+//   只是不停宿主的表（ix.s.presented 为真）；悬停照样停表，人点了别的一件就照常接手。宿主到点调 ix.close() 收回。
 //   window.foldX = { ...自己的钩子, ...ix.hooks() }：hover / unhover / open / close / ixAt / ix / paused / pointOf，
 //   另有 ixState() 给 scripts/check-ix.mjs 读。
 //
@@ -258,7 +261,7 @@ export function createIx(host) {
   // State. `fixed` pins the open or close motion at that many seconds (ixAt, for stills and checks).
   const S = {
     hover: null, via: null, peek: null, peekAt: 0, peekOut: null, peekKey: '', peekBox: null,
-    open: null, openAt: 0, closeAt: null, viaKey: false, focusMoved: false, next: null, view: null, seen: ALL, detailKey: '', place: null,
+    open: null, openAt: 0, closeAt: null, viaKey: false, focusMoved: false, next: null, view: null, seen: ALL, detailKey: '', place: null, presented: false,
     dim: 0, dimId: null, fixed: null, resumeTimer: null, leaveTimer: null, lastAt: 0, pointer: 'mouse', held: false,
   };
   const REST = { focus: null, dim: 0, pop: 0, popId: null, line: 0, card: 0, detail: false, peek: 0, peekId: null, keyFocus: null };
@@ -269,11 +272,12 @@ export function createIx(host) {
 
   // ----- the clock: hovering or opening stops the host's play; 0.4 s after the last one ends it goes on -----
   function syncPause() {
-    if (S.hover || S.open) {
+    // A detail the host presents itself (present) leaves its clock running; hovering still holds it.
+    if (S.hover || (S.open && !S.presented)) {
       clearTimeout(S.resumeTimer); S.resumeTimer = null;
       if (!isHeld()) { S.held = true; H.pause(); }
     } else if (isHeld() && !S.resumeTimer) {
-      S.resumeTimer = setTimeout(() => { S.resumeTimer = null; if (!S.hover && !S.open) resumeNow(); }, IX.resume * 1000);
+      S.resumeTimer = setTimeout(() => { S.resumeTimer = null; if (!S.hover && !(S.open && !S.presented)) resumeNow(); }, IX.resume * 1000);
     }
   }
   function resumeNow() {
@@ -297,12 +301,12 @@ export function createIx(host) {
     if (!S.open) { const shown = S.peek && S.peekOut == null; S.peek = id; S.peekOut = null; S.peekKey = ''; S.peekAt = shown ? now() - IX.fadeIn : now(); }
     syncPause();
   }
-  function open(id, viaKey = false) {
+  function open(id, viaKey = false, presented = false) {
     if (!id || !H.has(id)) return;
     if (S.open === id && S.closeAt == null) return;
     if (S.open && S.open !== id) { S.next = { id, viaKey }; close(); return; }
     clearTimeout(S.leaveTimer); S.leaveTimer = null;
-    S.open = id; S.openAt = now(); S.closeAt = null; S.viaKey = viaKey; S.focusMoved = false;
+    S.open = id; S.openAt = now(); S.closeAt = null; S.viaKey = viaKey; S.focusMoved = false; S.presented = presented;
     S.view = H.facts(id); S.seen = H.seen(); S.detailKey = ''; S.place = null;
     if (S.peek && S.peekOut == null) S.peekOut = now();
     syncPause();
@@ -314,7 +318,7 @@ export function createIx(host) {
   }
   function finishClose() {
     const id = S.open, refocus = S.viaKey;
-    S.open = null; S.closeAt = null; S.view = null; S.viaKey = false; S.detailKey = ''; S.place = null;
+    S.open = null; S.closeAt = null; S.view = null; S.viaKey = false; S.detailKey = ''; S.place = null; S.presented = false;
     clearDetail();
     if (S.hover) { S.peek = S.hover; S.peekKey = ''; S.peekAt = now(); S.peekOut = null; }
     if (refocus) srEl.querySelector(`[data-ix="${CSS.escape(id)}"]`)?.focus({ preventScroll: true });
@@ -326,7 +330,7 @@ export function createIx(host) {
   function reset() {
     clearTimeout(S.leaveTimer); S.leaveTimer = null;
     if (srEl.contains(document.activeElement)) document.activeElement.blur();
-    Object.assign(S, { hover: null, via: null, peek: null, peekOut: null, open: null, closeAt: null, view: null, next: null, viaKey: false, dim: 0, detailKey: '', place: null, peekKey: '', peekBox: null });
+    Object.assign(S, { hover: null, via: null, peek: null, peekOut: null, open: null, closeAt: null, view: null, next: null, viaKey: false, dim: 0, detailKey: '', place: null, peekKey: '', peekBox: null, presented: false });
     clearDetail(); peekEl.hidden = true; if (lines) lines.peek.setAttribute('d', ''); stage.style.cursor = '';
     X = { ...REST };
     resumeNow();
@@ -508,6 +512,7 @@ export function createIx(host) {
     frame,
     paint() { paintPeek(); paintDetail(); },
     sync, reset, hover, open, close,
+    present: id => open(id, false, true),
     relayout() { S.peekKey = ''; S.place = null; },
     owns: node => Boolean(node && (srEl.contains(node) || peekEl.contains(node) || detailEl.contains(node))),
     live: () => Boolean(S.hover || S.open || S.peek || S.dim > 0 || S.leaveTimer),

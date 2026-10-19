@@ -1,6 +1,8 @@
-/* 02 回应时序（完整版）。朱红只表示你的回应；墨黑是问题格、期限与批次；灰是中线与已关上的格子。 */
+/* 02 回应时序（完整版）。朱红只表示你的回应；墨黑是问题格、期限、批次与游标；灰是中线、已关上的格子与
+   已被改掉的旧期限。概念层（批次条里的灰点、此刻线身后的拖尾）画在 SVG 下面的 canvas 里，不进泳道。 */
 .tm-canvas { position: absolute; inset: 0; }
-.tm-svg { display: block; overflow: visible; user-select: none; }
+.tm-concept { position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; }
+.tm-svg { position: relative; display: block; overflow: visible; user-select: none; }
 .tm-svg text { fill: var(--ink); font-family: var(--sans); }
 .tm-day { stroke: var(--line); }
 .tm-daynum { font: 600 12.5px var(--mono); text-anchor: middle; }
@@ -17,18 +19,18 @@
 .tm-group { font-size: 10.5px; font-weight: 600; letter-spacing: .12em; }
 .tm-svg .tm-group-n { fill: var(--ink-2); font-weight: 400; letter-spacing: 0; }
 
-.tm-lane { transition: opacity calc(110ms * var(--lv-slow, 1)); }
+/* Lanes: their opacity is set per frame (hover, open, the story's one), not transitioned here. */
 .tm-lane-hit { fill: transparent; }
 .tm-label { cursor: pointer; outline: none; transition: opacity calc(240ms * var(--lv-slow, 1)); }
 .tm-label text { font-weight: 550; }
 .tm-label.is-hidden { opacity: 0; pointer-events: none; }
 .tm-label.is-gone text { fill: var(--ink-3); }
-.tm-label:focus-visible text { text-decoration: underline; }
 .tm-life { stroke: var(--ink-3); stroke-width: 1; }
 .tm-life.is-out { stroke-dasharray: 1.5 3; }
 
+/* Cells cut on the batch tick: no fill or stroke transition. */
 .tm-cell { cursor: pointer; }
-.tm-cell polygon { fill: #fff; stroke: var(--ink); stroke-width: 1.3; transition: fill calc(180ms * var(--lv-slow, 1)), stroke calc(180ms * var(--lv-slow, 1)); }
+.tm-cell polygon { fill: #fff; stroke: var(--ink); stroke-width: 1.3; }
 .tm-cell text { font-size: 10px; pointer-events: none; }
 .tm-cell.is-answered polygon, .tm-k-answered { fill: color-mix(in oklch, var(--ink) 11%, var(--paper)); stroke: var(--ink-2); stroke-width: 1; }
 .tm-cell.is-lapsed polygon { fill: var(--paper); stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 3 2; }
@@ -36,54 +38,76 @@
 .tm-cell.is-replaced polygon, .tm-cell.is-withdrawn polygon, .tm-cell.is-merged polygon { fill: var(--paper); stroke: var(--ink-2); stroke-width: 1; }
 .tm-cell .tm-end { stroke: var(--ink); stroke-width: 2; opacity: 0; }
 .tm-cell.is-end-withdrawn:not(.is-open) .tm-end, .tm-cell.is-end-merged:not(.is-open) .tm-end { opacity: 1; }
-.tm-cell.is-hot polygon { stroke: var(--ink); stroke-width: 2; }
+.tm-cell.is-hot polygon, .tm-cell.is-key polygon { stroke: var(--ink); stroke-width: 2; }
+.tm-cell.is-key polygon { stroke-dasharray: none; }
+.tm-notch { fill: none; stroke: var(--ink); stroke-width: 1.2; pointer-events: none; }
+.tm-cell:not(.is-open) .tm-notch { stroke: var(--ink-2); }
+/* Ink dots: the inputs the closing declaration cites; they drop in with the closing cut. */
+.tm-src { fill: var(--ink); stroke: var(--paper); stroke-width: 1; opacity: 0; transform: translateY(-5px); pointer-events: none;
+  transition: opacity calc(160ms * var(--lv-slow, 1)), transform calc(220ms * var(--lv-slow, 1)) cubic-bezier(.2, .8, .3, 1); }
+.tm-src.is-known { opacity: 1; transform: none; }
 .tm-overdue { fill: url(#tm-hatch); pointer-events: none; }
 .tm-hatch-line { stroke: var(--ink); stroke-width: 1; opacity: .38; }
 
 .tm-tick line:not(.tm-hit) { stroke: var(--vermilion); stroke-width: 2; }
 .tm-tick circle, .tm-tick rect:not(.tm-hit) { fill: var(--vermilion); }
 .tm-tick.is-loose line:not(.tm-hit) { stroke-width: 1.5; opacity: .7; }
-.tm-tick { cursor: pointer; }
+.tm-tick { cursor: pointer; transition: opacity calc(300ms * var(--lv-slow, 1)); }
+.tm-svg.is-spot .tm-tick, .tm-svg.is-spot .tm-snooze { opacity: .18; }
+.tm-resp li { transition: color calc(300ms * var(--lv-slow, 1)); }
+.is-spot .tm-resp li { color: var(--ink-3); }
+.tm-l-you { transition: opacity calc(300ms * var(--lv-slow, 1)); }
+.is-spot .ix-detail .tm-l-you, .is-spot .ix-detail .tm-zm.is-move:not(.is-after-close) { opacity: .25; }
 .tm-reminder { fill: var(--paper); stroke: var(--ink); }
 
-.tm-due { opacity: 0; transition: opacity calc(200ms * var(--lv-slow, 1)); pointer-events: none; }
-.tm-due.is-known { opacity: 1; }
+/* Deadlines: one triangle per registration step; a step a later registration moved is grey. */
+.tm-due { opacity: 0; transform: translateY(-6px); pointer-events: none;
+  transition: opacity calc(180ms * var(--lv-slow, 1)), transform calc(260ms * var(--lv-slow, 1)) cubic-bezier(.2, .8, .3, 1); }
+.tm-due.is-known { opacity: 1; transform: none; }
 .tm-due path { fill: var(--ink); }
 .tm-due path.tm-far { fill: none; stroke: var(--ink); stroke-width: 1.4; }
 .tm-due line { stroke: var(--ink); stroke-width: 1.2; }
 .tm-due text { font: 9px var(--mono); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; opacity: 0; transition: opacity calc(160ms * var(--lv-slow, 1)); }
 .tm-due.is-ahead text, .tm-lane.is-hot .tm-due.is-known text { opacity: 1; }
-.tm-due.is-closed path, .tm-due.is-closed line { fill: var(--ink-3); stroke: var(--ink-3); }
-.tm-due.is-closed path.tm-far { fill: none; }
-.tm-due.is-far.is-closed { opacity: 0; }
+.tm-due.is-closed path, .tm-due.is-closed line, .tm-due.is-old path, .tm-due.is-old line { fill: var(--ink-3); stroke: var(--ink-3); }
+.tm-due.is-closed path.tm-far, .tm-due.is-old path.tm-far { fill: none; }
+.tm-due.is-old line { stroke-dasharray: 2 2; }
+.tm-due.is-far.is-closed, .tm-due.is-far.is-old { opacity: 0; }
 .tm-snooze { fill: none; stroke: var(--vermilion); stroke-width: 1.2; stroke-dasharray: 3 2; opacity: 0; transition: opacity calc(200ms * var(--lv-slow, 1)); }
 .tm-snooze.is-known { opacity: 1; }
 
 .tm-nowline { stroke: var(--ink); stroke-width: 1.3; }
-.tm-nowtext { font: 600 10px var(--mono); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; }
-.tm-openmark { transition: opacity calc(160ms * var(--lv-slow, 1)); cursor: pointer; }
+.tm-nowtext { font: 600 10px var(--mono); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; transition: opacity calc(160ms * var(--lv-slow, 1)); }
+.tm-openmark { cursor: pointer; }
 .tm-openmark .tm-chev { fill: none; stroke: var(--ink); stroke-width: 1.4; }
 .tm-openmark circle { fill: var(--ink); }
 .tm-openmark text { fill: var(--paper); font: 600 9.5px var(--mono); text-anchor: middle; pointer-events: none; }
 .tm-openmark.is-late circle { fill: var(--paper); stroke: var(--ink); stroke-width: 1.4; }
 .tm-openmark.is-late text { fill: var(--ink); }
 .tm-openmark.is-pending { opacity: 0 !important; pointer-events: none; }
-.tm-svg.has-hot .tm-openmark:not(.is-hot) { opacity: .25; }
 
-/* Highlight: everything but the hot lane steps back. */
-.tm-svg.has-hot .tm-lane:not(.is-hot) { opacity: .26; }
+/* The cursor: a heavy stretch of the now-line on its lane and a ring round the number; hollow on top when none is open. */
+.tm-cursor { pointer-events: none; }
+.tm-cursor-bar { fill: var(--ink); }
+.tm-cursor-ring { fill: none; stroke: var(--ink); stroke-width: 1.6; }
+.tm-cursor.is-hollow .tm-cursor-bar { display: none; }
+.tm-cursor.is-hollow .tm-cursor-ring { fill: var(--paper); stroke-width: 1.4; }
+/* The one under discussion: a bracket from registration to the line, and a dashed line on to its deadline. */
+.tm-one { pointer-events: none; }
+.tm-bracket { fill: none; stroke: var(--ink); stroke-width: 1; }
+.tm-svg .tm-bracket-n { font: 600 9.5px var(--mono); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; }
+.tm-count { stroke: var(--ink); stroke-width: 1.1; stroke-dasharray: 3 3; }
 
 /* Side column. */
 .tm-open h2 { margin: 0; font-size: 15px; }
 .tm-open h2 b { font: 600 22px var(--mono); margin: 0 2px; }
 .tm-sub { margin: 2px 0 8px; font-size: 11.5px; color: var(--ink-2); }
 .tm-rows { display: flex; flex-direction: column; gap: 4px; }
-.tm-row { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 8px; align-items: start; width: 100%; padding: 7px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); color: var(--ink); font: inherit; text-align: left; cursor: pointer;
-  transition: transform calc(320ms * var(--lv-slow, 1)) cubic-bezier(.3, .7, .2, 1), opacity calc(240ms * var(--lv-slow, 1)), border-color calc(110ms * var(--lv-slow, 1)), background calc(110ms * var(--lv-slow, 1)); }
+.tm-row { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 8px; align-items: start; width: 100%; padding: 7px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); color: var(--ink); text-align: left; cursor: pointer;
+  transition: transform calc(320ms * var(--lv-slow, 1)) cubic-bezier(.3, .7, .2, 1), border-color calc(110ms * var(--lv-slow, 1)), background calc(110ms * var(--lv-slow, 1)); }
 .tm-row.is-new { opacity: 0; transform: translateY(6px); }
-.tm-row:hover, .tm-row.is-hot { border-color: var(--ink); }
-.tm-row:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
-.lv-side.has-hot .tm-row:not(.is-hot) { opacity: .55; }
+.tm-row:hover { border-color: var(--ink); }
+.tm-row-go { align-self: flex-end; margin: -2px 2px 4px 0; font: 600 11.5px var(--mono); color: var(--ink); text-underline-offset: 3px; }
 .tm-badge { display: grid; place-items: center; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; background: var(--ink); color: var(--paper); font: 600 10px var(--mono); }
 .tm-row.is-late .tm-badge { background: var(--paper); color: var(--ink); border: 1.4px solid var(--ink); }
 .tm-row-main { display: flex; flex-direction: column; min-width: 0; }
@@ -98,17 +122,94 @@
 .tm-frame { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
 .tm-frame h3 { margin: 0 0 6px; font-size: 12px; }
 .tm-units { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 4px; }
-.tm-unit { width: 13px; height: 13px; border-radius: 3px; border: 1.3px solid var(--ink); background: #fff; cursor: pointer; transition: background calc(180ms * var(--lv-slow, 1)), border-color calc(180ms * var(--lv-slow, 1)); }
+.tm-unit { width: 13px; height: 13px; border-radius: 3px; border: 1.3px solid var(--ink); background: #fff; cursor: pointer; }
 .tm-unit.is-answered { background: color-mix(in oklch, var(--ink) 18%, var(--paper)); border-color: var(--ink-2); }
 .tm-unit.is-lapsed { border-style: dashed; border-color: var(--ink-2); background: var(--paper); }
 .tm-unit.is-replaced, .tm-unit.is-withdrawn, .tm-unit.is-merged { border-color: var(--ink-3); background: var(--paper); }
-.tm-unit.is-hot { outline: 2px solid var(--ink); outline-offset: 1px; }
 .tm-tally p { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 0; font-size: 11.5px; color: var(--ink-2); }
 .tm-tally p b { color: var(--ink); font-family: var(--mono); }
 .tm-frame-title { margin: 0 0 4px; font-weight: 600; font-size: 12.5px; }
 .tm-narr { margin: 0 0 4px; font-size: 12px; line-height: 1.6; color: var(--ink-2); }
 .tm-frame-n { margin: 0; font: 10.5px var(--mono); color: var(--ink-2); }
 
+/* 这一件: the story's hero, or the detail the reader opened. The hero number is the only type this large. */
+.tm-one-panel h2 { margin: 0; font-size: 15px; }
+.tm-one-panel h2 small { margin-left: 6px; font: 11px var(--mono); color: var(--ink-2); }
+.tm-one-item { margin: 4px 0 0; font-size: 11.5px; color: var(--ink-2); }
+.tm-one-q { margin: 2px 0 0; font-size: 15px; font-weight: 600; line-height: 1.35; }
+.tm-one-prompt { margin: 3px 0 0; font-size: 12px; line-height: 1.5; color: var(--ink-2); }
+.tm-hero { display: flex; align-items: baseline; gap: 6px; margin: 10px 0 0; }
+.tm-hero b { font: 600 48px/1 var(--mono); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.tm-hero-k, .tm-hero-u { font-size: 13px; color: var(--ink-2); }
+.tm-hero-sub { margin: 4px 0 8px; font: 11px var(--mono); color: var(--ink-2); }
+.tm-regs { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 10px; }
+.tm-regs i { width: 9px; height: 9px; border: 1.2px solid var(--ink); background: var(--paper); }
+.tm-regs i.is-reg { background: var(--ink); }
+.tm-one-panel section { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+.tm-one-panel h3 { margin: 0 0 4px; font-size: 12px; }
+.tm-one-panel h3 small { margin-left: 4px; font: 10.5px var(--mono); font-weight: 400; color: var(--ink-2); }
+.tm-one-panel h4 { margin: 8px 0 2px; font: 600 10.5px var(--mono); color: var(--ink-2); letter-spacing: .06em; }
+.tm-resp { margin: 0; padding: 0; list-style: none; font-size: 12px; line-height: 1.45; }
+.tm-resp li { padding: 3px 0; border-bottom: 1px dashed var(--line); color: var(--vermilion); font-weight: 550; }
+.tm-resp li.is-current { background: color-mix(in oklch, var(--vermilion) 8%, transparent); }
+.tm-resp time { display: block; font: 400 10px var(--mono); color: var(--ink-2); }
+.tm-resp small { display: block; font-weight: 400; font-size: 10.5px; color: var(--ink-2); }
+.tm-reason { margin: 2px 0 4px; font-size: 12px; line-height: 1.5; }
+.tm-srcs { margin: 0; padding: 0 0 0 14px; font: 10.5px/1.6 var(--mono); color: var(--ink-2); list-style: '● '; }
+.tm-srcs li::marker { color: var(--ink); font-size: 8px; }
+.tm-muted { margin: 2px 0; font-size: 11px; color: var(--ink-2); }
+.tm-one-links, .tm-d-go { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 12px 0 0; }
+.tm-go { font: 600 12px var(--mono); color: var(--ink); text-underline-offset: 3px; }
+.tm-go-note { flex-basis: 100%; font-size: 11.5px; color: var(--ink-2); }
+.tm-dossier { border: 0; padding: 0; background: none; font: 11.5px var(--mono); color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.tm-dossier:hover, .tm-dossier:focus-visible { color: var(--ink); }
+.tm-tell { font-size: 12px !important; white-space: nowrap; }
+.is-telling .tm-tell { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* The cards (motion/ix.css) on this paper page: wider summaries; your own moves in vermilion. */
+.lv-page .ix-peek { width: 290px; }
+.lv-page .ix-q.is-you { color: var(--vermilion); }
+.lv-page .ix-detail { z-index: 26; box-shadow: 0 10px 30px rgb(0 0 0 / .08); }
+.lv-page .ix-peek { z-index: 27; }
+.lv-page .ix-leaders { z-index: 26; }
+.ix-detail h6 { margin: 6px 0 2px; font: 600 10px var(--mono); color: var(--ix-fg-3); letter-spacing: .06em; }
+.ix-detail .ix-d-fb li.is-current { background: color-mix(in oklch, var(--vermilion) 8%, transparent); }
+.ix-detail .ix-d-fb li.is-after { color: var(--vermilion); }
+.ix-detail div.is-after.is-later { display: none; }
+.ix-detail .is-later { visibility: hidden; }
+.tm-d-prompt { margin: 0 0 4px; font-size: 12.5px; line-height: 1.5; }
+.ix-detail .lv-chips { margin: 2px 0 0; }
+.ix-detail .tm-reason { font-size: 12px; }
+.ix-detail .tm-d-go { margin-top: 10px; }
+/* The magnified timelines inside the detail. */
+.tm-z, .tm-l { display: block; overflow: visible; }
+.tm-z text, .tm-l text { font: 9.5px var(--mono); fill: var(--ink-2); }
+.tm-z-axis { stroke: var(--ink-3); }
+.tm-z-tick { stroke: var(--ink-3); }
+.tm-z .tm-z-hour { text-anchor: middle; font-size: 8.5px; fill: var(--ink-3); }
+.tm-z-later { fill: var(--faint); }
+.tm-z-now { stroke: var(--ink); stroke-width: 1.3; }
+.tm-z-lead { stroke: var(--line); }
+.tm-zm circle { fill: var(--ink); }
+.tm-zm path { fill: var(--ink); }
+.tm-zm.is-due-old path { fill: var(--ink-3); }
+.tm-zm .tm-z-close { stroke: var(--ink); stroke-width: 1.4; stroke-dasharray: 2 2; }
+.tm-zm.is-src text, .tm-zm.is-close text { fill: var(--ink); }
+.tm-zm.is-answer line:not(.tm-z-lead), .tm-zm.is-move line:not(.tm-z-lead) { stroke: var(--vermilion); stroke-width: 2; }
+.tm-zm.is-move line:not(.tm-z-lead) { stroke-width: 1.6; }
+.tm-zm.is-answer text, .tm-zm.is-move text { fill: var(--vermilion); font-weight: 600; }
+.tm-zm.is-later { visibility: hidden; }
+.tm-l-cell polygon { fill: #fff; stroke: var(--ink); stroke-width: 1.2; }
+.tm-l-cell.is-answered polygon { fill: color-mix(in oklch, var(--ink) 11%, var(--paper)); stroke: var(--ink-2); }
+.tm-l-cell.is-lapsed polygon { fill: var(--paper); stroke: var(--ink-2); stroke-dasharray: 3 2; }
+.tm-l-cell.is-replaced polygon, .tm-l-cell.is-withdrawn polygon, .tm-l-cell.is-merged polygon { fill: var(--paper); stroke: var(--ink-2); }
+.tm-l-you { stroke: var(--vermilion); stroke-width: 1.6; }
+.tm-l-you.is-loose { opacity: .7; stroke-width: 1.2; }
+.tm-l-src { fill: var(--ink); }
+.tm-l-due { fill: var(--ink); }
+.tm-l-due.is-old { fill: var(--ink-3); }
+.tm-l .tm-l-end { font-size: 8.5px; fill: var(--ink-3); }
+
 @media (prefers-reduced-motion: reduce) {
-  .tm-row, .tm-lane, .tm-label, .tm-due, .tm-openmark, .tm-cell polygon { transition: none !important; }
+  .tm-row, .tm-label, .tm-due, .tm-src, .tm-nowtext { transition: none !important; }
 }
