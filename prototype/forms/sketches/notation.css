@@ -1,10 +1,17 @@
-/* 05 批次记谱（完整版）. One fixed row per round; frame changes only reveal rows and move the 此刻 rule. */
+/* 05 批次记谱（完整版）. One fixed row per round; frame changes write rows in and take them back, and move the 此刻 rule.
+   The grains, ash and traces are on a canvas under the rows (notation.mjs); the rest is DOM. Hover and detail cards are
+   the shared module's (../motion/ix.css); the detail card takes the side panel's place and look. */
 .st-figure { overflow: hidden; }
-.n-head, .n-row { display: grid; grid-template-columns: var(--when) var(--gap) var(--inputs) var(--asks) var(--ops) var(--trace) var(--receipt) minmax(0, 1fr); align-items: center; }
+.n-body { position: relative; }
+.n-score { position: absolute; inset: 0; }
+.n-canvas { position: absolute; left: 0; top: 0; pointer-events: none; }
+.n-head, .n-row { display: grid; grid-template-columns: var(--when) var(--gap) var(--inputs) var(--ops) var(--trace) var(--asks) var(--receipt) minmax(0, 1fr); align-items: center; }
 .n-head { position: absolute; left: 0; right: 0; top: 0; height: 22px; border-bottom: 1px solid var(--ink); font-size: 12px; }
 .n-head b { font-weight: 600; white-space: nowrap; }
+.n-head b.is-grey { color: var(--ink-3); }
 .n-head small { font-weight: 400; color: var(--ink-3); font-size: 10.5px; margin-left: 3px; }
 .n-head b:last-child { color: var(--ink-2); font-weight: 500; }
+.n-head b:last-child.is-grey { color: var(--ink-3); }
 .n-rows { position: absolute; inset: 0; }
 .n-row { position: absolute; left: 0; right: 0; top: 0; cursor: pointer; }
 .n-row::after { content: ""; position: absolute; inset: 1px 0; border-radius: 3px; background: var(--ink); opacity: 0; pointer-events: none; transition: opacity 100ms linear; }
@@ -18,76 +25,145 @@
 .n-gap i { height: 2px; background: var(--ink-3); }
 .n-gap small { font: 8.5px var(--mono); color: var(--ink-3); }
 
-.n-inputs { position: relative; display: flex; align-items: center; gap: 5px; height: 100%; }
-.n-bar { position: relative; height: 9px; transform-origin: left center; }
-.n-d { position: absolute; top: 2px; bottom: 0; }
-.n-used { background: var(--ink); }
-.n-duplicate { background: var(--ink-2); }
-.n-deferred { background: var(--ink-3); }
-.n-noise { background: var(--line); }
-.n-unjudged { background: var(--faint); box-shadow: inset 0 0 0 1px var(--line); }
-.n-self { position: absolute; left: 0; top: -1px; height: 2.5px; background: var(--vermilion); border-radius: 1px; }
+/* 收到: the bar itself is on the canvas (ink grains, outline, ash, vermilion top edge); the count sits after it. */
+.n-inputs, .n-ops { position: relative; height: 100%; }
+.n-count, .n-empty, .n-ann, .n-quiet { position: absolute; top: 50%; transform: translateY(-50%); white-space: nowrap; }
 .n-count { font: 9.5px var(--mono); color: var(--ink-2); }
-.n-empty { font-size: 10.5px; color: var(--ink-2); }
+.n-empty { left: 2px; font-size: 10.5px; color: var(--ink-2); }
 .n-ann { font-size: 12px; color: var(--vermilion); }
 
-.n-asks, .n-ops { display: flex; align-items: center; gap: 5px; white-space: nowrap; overflow: hidden; }
+/* 改动: one mark per moved item, placed by the script so the traces know where to land. */
+.n-m { position: absolute; top: 50%; height: 1.3em; margin-top: -.65em; line-height: 1.3em; text-align: center; font-style: normal; border-radius: 2px; color: var(--ink); }
+.n-m::before { content: ""; position: absolute; inset: -3px 0; }
+.n-m.is-off { visibility: hidden; }
+.n-m.is-hollow { color: transparent; -webkit-text-stroke: .7px var(--ink); }
+.n-m:hover, .n-m.is-hit { background: var(--ink); color: var(--paper); -webkit-text-stroke: 0; }
+.n-quiet { font: 9.5px var(--mono); color: var(--ink-3); }
+.n-faint { font: 9.5px var(--mono); color: var(--ink-3); }
+
+/* 问题 */
+.n-asks { display: flex; align-items: center; gap: 1px; white-space: nowrap; overflow: hidden; font-size: 10.5px; line-height: 1; }
+.n-a { position: relative; font-style: normal; padding: 1px 1px; border-radius: 2px; }
+.n-a::before { content: ""; position: absolute; inset: -3px -1px; }
+.n-a:hover { background: var(--ink); color: var(--paper); }
 .n-tally { font-size: 10.5px; letter-spacing: 1px; line-height: 1; }
-.n-tally i { font-style: normal; display: inline-block; padding: 0 .5px; border-radius: 2px; transition: background-color 100ms, color 100ms; }
-.n-tally i:hover, .n-tally i.is-hit { background: var(--ink); color: var(--paper); }
-.is-trace .n-tally i:not(.is-hit) { opacity: .35; }
 .n-tally small { font: 9px var(--mono); color: var(--ink-2); letter-spacing: 0; margin-left: 1px; }
+.n-fresh { color: var(--ink); }
 .n-lapsed { color: var(--ink-2); text-decoration: line-through; text-decoration-thickness: 1px; }
 .n-you { color: var(--vermilion); }
-.n-quiet, .n-faint { font: 9.5px var(--mono); color: var(--ink-3); }
 .n-k { font-weight: 400; margin: 0 2px 0 4px; }
+
+/* The trace column: the hovered or open item's mark in every round it changed; the open item's leader lights them. */
 .n-trace { display: grid; place-items: center; font-size: 11px; }
-.n-trace b { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: var(--paper); font-weight: 400; font-size: 10px; animation: n-pop 160ms var(--st-ease); }
-@keyframes n-pop { from { transform: scale(.4); opacity: 0; } }
+.n-trace b { width: 17px; height: 17px; display: grid; place-items: center; border-radius: 50%; background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); font-weight: 400; font-size: 9.5px; }
+.n-trace b.is-lit { background: var(--ink); color: var(--paper); }
 .n-receipt { font: 10px var(--mono); color: var(--ink-3); white-space: nowrap; }
 .n-say { min-width: 0; }
 .n-title { display: block; color: var(--ink-2); line-height: 1.15; white-space: nowrap; }
 .n-title.is-two { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
 .n-row.is-current .n-title, .n-row.is-current .n-when time { color: var(--ink); font-weight: 600; }
-.is-trace .n-row:not(.is-traced):not(.is-future) .n-title { color: var(--ink-3); }
 
-/* Future rounds: only the time stays, faint. */
-.n-row > :not(.n-when) { transition: opacity 160ms linear, visibility 0s; }
-.n-row.is-future > :not(.n-when) { opacity: 0; visibility: hidden; transition: opacity 160ms linear, visibility 0s linear 160ms; }
-.n-row.is-future .n-when { opacity: .4; }
+/* Rounds after 此刻: only the time stays, faint (the script fades them out first when stepping back). */
+.n-row.is-future > :not(.n-when) { opacity: 0 !important; visibility: hidden; }
+.n-row.is-future .n-when { opacity: .4 !important; }
 .n-row.is-future::after { display: none; }
+.n-now { position: absolute; left: -6px; right: -4px; top: 0; border-top: 1.4px solid var(--ink); border-bottom: 1.4px solid var(--ink); pointer-events: none; transition: transform 320ms var(--st-ease), border-width 120ms linear; }
+.n-now.is-open { border-top-width: 2.2px; border-bottom-width: 2.2px; }
 
-/* A round lands: the inputs bar runs out, then the marks, then the narration. */
-.n-row.enter .n-bar { animation: n-grow 260ms var(--st-ease) var(--d, 0ms) both; }
-.n-row.enter .n-count, .n-row.enter .n-empty { animation: n-in 200ms ease-out calc(var(--d, 0ms) + 180ms) both; }
-.n-row.enter .n-asks, .n-row.enter .n-ops { animation: n-in 220ms ease-out calc(var(--d, 0ms) + 120ms) both; }
-.n-row.enter .n-receipt, .n-row.enter .n-say { animation: n-in 240ms ease-out calc(var(--d, 0ms) + 220ms) both; }
-@keyframes n-grow { from { transform: scaleX(0); } }
-@keyframes n-in { from { opacity: 0; transform: translateY(-3px); } }
-.n-now { position: absolute; left: -6px; right: -4px; top: 0; border-top: 1.4px solid var(--ink); border-bottom: 1.4px solid var(--ink); pointer-events: none; transition: transform 320ms var(--st-ease); }
+/* The bottom row: totals up to 此刻. */
+.n-total { border-top: 1px solid var(--ink); }
+.n-total .n-when { flex-direction: column; align-items: flex-start; justify-content: center; gap: 1px; }
+.n-t-label { font: 600 13px/1 var(--sans) !important; }
+.n-t-note { font: 9.5px var(--mono); color: var(--ink-2); }
+.n-total .n-count { top: calc(50% - 4px); font-size: 10.5px; color: var(--ink); font-weight: 600; }
+.n-t-scale { position: absolute; top: calc(50% + 9px); font: 8.5px var(--mono); color: var(--ink-3); white-space: nowrap; }
+.n-total .n-ops { display: flex; flex-wrap: wrap; align-items: baseline; align-content: center; gap: 1px 6px; }
+.n-t-moved { font: 700 15px/1 var(--mono); }
+.n-t-split { font: 10px var(--mono); color: var(--ink); }
+.n-t-quiet { flex-basis: 100%; font: 9.5px var(--mono); color: var(--ink-3); }
+.n-t-asks { font: 10px var(--mono); }
+.n-t-rc { font: 10px var(--mono); color: var(--ink-3); }
+.n-t-say { font-size: 12px; color: var(--ink); }
+.n-t-say b { font: 600 12px var(--mono); }
+.n-brace { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.n-brace path { fill: none; stroke: var(--ink-3); stroke-width: .9; stroke-dasharray: 1; }
+
+/* The opening: the ledger in the empty narration column, and two thin annotations. */
+.n-opening .n-now { opacity: 0; }
+.n-opening .st-side-inner { visibility: hidden; }
+.n-overlay { position: absolute; inset: 0; pointer-events: none; }
+.n-ledger { position: absolute; }
+.n-l { display: flex; align-items: baseline; gap: 8px; margin: 0; }
+.n-l span, .n-l small { font: 11px var(--mono); color: var(--ink-2); }
+.n-l span { min-width: 3.2em; }
+.n-l b { display: inline-block; transform-origin: 0 0; font: 600 19px/1.1 var(--mono); color: var(--ink); }
+.n-l-used { margin-top: 10px; }
+.n-l-used b { font-size: 34px; }
+.n-l-moved { margin-top: 14px; }
+.n-l-moved b { font-weight: 700; line-height: .92; letter-spacing: -.03em; }
+.n-l-sub { margin: 3px 0 0; font: 11px var(--mono); color: var(--ink-2); }
+.n-anno i { position: absolute; height: 0; border-top: 1px solid var(--ink); transform-origin: 0 50%; }
+.n-anno span { position: absolute; transform: translateY(-50%); font-size: 11.5px; font-weight: 600; white-space: nowrap; color: var(--ink); }
+
+/* Replay, beside the frame bar's ▶ */
+.st-nav .n-replay { width: auto; padding: 0 9px; font-size: 12px; margin-left: 4px; }
+
+/* Cards (ix.mjs). The summary is a little wider than the module's; the detail is the side panel. */
+.n-body > .ix-peek { width: 312px; }
+.n-pk { margin-top: 3px; font-size: 12px; line-height: 1.45; color: var(--ink); }
+.n-pk b { font: 600 12px var(--mono); }
+.n-pk small { color: var(--ink-2); font-size: 11px; }
+.n-pk-c { margin-top: 6px; padding-top: 5px; border-top: 1px solid var(--ix-rule); font: 10.5px var(--mono); color: var(--ink-2); }
+.n-pk-ask { display: grid; grid-template-columns: 12px minmax(0, 1fr); margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--ix-rule); font: 600 12px/1.35 var(--sans); }
+.n-pk-ask b { font-weight: 400; }
+.n-pk-ask small { grid-column: 2; font: 10.5px var(--mono); color: var(--ink-2); }
+.ix-detail.n-side { border: 0; border-left: 1px solid var(--ink); background: var(--paper); padding: 2px 4px 16px 18px; font: 12.5px/1.5 var(--sans); color: var(--ink); }
+.ix-detail.n-side .ix-trend { height: 30px; margin-top: 2px; }
 
 /* Side panel */
 .n-narr { font-size: 13px; }
+.n-acct .n-flow { font-size: 12.5px; line-height: 1.7; }
+.n-flow b { font: 600 13px var(--mono); }
 .n-split { display: flex; flex-wrap: wrap; gap: 2px 12px; }
 .n-split span { white-space: nowrap; }
-.n-sw { display: inline-block; width: 10px; height: 8px; margin-right: 4px; position: static; }
+.n-sw { display: inline-block; width: 10px; height: 8px; margin-right: 4px; vertical-align: 0; }
+.n-sw.n-used { background: var(--ink); }
+.n-sw.n-duplicate { background: var(--ink-2); }
+.n-sw.n-deferred { background: var(--ink-3); }
+.n-sw.n-noise { background: var(--line); }
+.n-sw.n-unjudged { background: var(--faint); box-shadow: inset 0 0 0 1px var(--line); }
 .n-yours h4 { color: var(--vermilion); }
 .n-acts li { position: relative; padding: 2px 0 2px 12px; line-height: 1.5; }
 .n-acts li::before { content: "↩"; position: absolute; left: 0; color: var(--vermilion); }
 .n-acts small, .n-asklist small { margin-left: 6px; color: var(--ink-2); font-size: 10.5px; }
 .n-annot { color: var(--vermilion); }
-.n-asklist li, .n-opslist li { display: grid; grid-template-columns: 58px 1fr; gap: 0 6px; padding: 3px 0; line-height: 1.5; border-top: 1px solid var(--faint); }
-.n-asklist b, .n-opslist b { font-size: 11px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
-.n-opslist li { grid-template-columns: 72px 1fr; }
+.n-asklist li { display: grid; grid-template-columns: 16px 1fr; gap: 0 4px; padding: 4px 0; line-height: 1.5; border-top: 1px solid var(--faint); }
+.n-asklist li > b { font-weight: 400; }
+.n-open { color: var(--ink-3); }
+.n-answer { display: inline-block; margin-left: 8px; font: 600 11px var(--mono); color: var(--ink) !important; text-underline-offset: 3px; white-space: nowrap; }
+.n-closed { display: block; font-style: normal; font-size: 11px; color: var(--ink-2); }
+.n-opslist li { display: grid; grid-template-columns: 72px 1fr; gap: 0 6px; padding: 3px 0; line-height: 1.5; border-top: 1px solid var(--faint); }
+.n-opslist b { font-size: 11px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
 .n-chips { display: flex; flex-wrap: wrap; gap: 2px 9px; }
 .n-chips small { font: 9.5px var(--mono); color: var(--ink-2); margin-left: 2px; }
 .n-chip { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; font-size: 12px; }
 .n-chip::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--c); }
 .n-chip:hover, .n-chip:focus-visible { text-decoration: underline; text-underline-offset: 2px; }
 .n-title-chip { display: inline-block; width: 11px; height: 11px; margin-right: 7px; border-radius: 2px; background: var(--c); }
+.n-pushed li, .n-into li { padding: 4px 0; border-top: 1px solid var(--faint); line-height: 1.45; }
+.n-pushed li > b { margin-right: 4px; font-weight: 400; }
+.n-pushed small, .n-into small { margin-left: 6px; font: 10.5px var(--mono); color: var(--ink-2); }
+.n-into small { display: block; margin-left: 0; }
+.n-pushed span, .n-into span { display: block; font-size: 11.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.n-streams li { display: grid; grid-template-columns: 1fr auto 52px; gap: 0 8px; padding: 2px 0; align-items: baseline; }
+.n-streams b { font: 600 11px var(--mono); }
+.n-streams small { font: 10px var(--mono); color: var(--ink-2); text-align: right; }
+.n-ext li { padding: 3px 0; line-height: 1.5; }
+.n-ext button, .n-hist button { border: 0; background: none; padding: 0; font: 10.5px var(--mono); color: var(--ink); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.n-ext span { display: block; font: 10.5px var(--mono); color: var(--ink-2); }
 .n-hist li { display: grid; grid-template-columns: auto 74px 1fr; gap: 0 8px; padding: 2px 0; align-items: baseline; }
 .n-hist li.is-now time { color: var(--ink); font-weight: 600; }
-.n-hist button { border: 0; background: none; padding: 0; }
+.n-hist button { text-decoration: none; }
 .n-hist time { font: 10.5px var(--mono); color: var(--ink-2); }
 .n-hist b { font-size: 11.5px; font-weight: 500; }
 .n-hist span { font: 10.5px var(--mono); color: var(--ink-2); }

@@ -52,6 +52,19 @@ const PAGES = {
     // Play on from f03 (the page counts 5.6 s a round from the cut); hover once the turn has settled.
     playReady: `new Promise(r => { foldWatch.play(); setTimeout(r, 1700); })`,
   },
+  // 批次记谱：一行就是“一件”（这一轮），打开它时此刻跳到那一行，所以挑此刻这一行；详情就是侧栏。
+  notation: {
+    hook: 'foldNotation', held: 'forms/sketches/notation.html?frame=20', play: 'forms/sketches/notation.html?frame=2',
+    prepare: null, index: 'foldSketch.index', step: 21,
+    pick: '`row:${foldSketch.index}`',
+    // 9 px past the end of the row's bar, level with it: still the row (a row is hit across its whole height and width).
+    near: name => `(() => { const b = foldNotation.geom(${JSON.stringify(name)}); return { x: b.x1 + 9, y: (b.y0 + b.y1) / 2 }; })()`,
+    blank: { x: 700, y: 92 },
+    cut: `(() => { const d = document.querySelector('.n-body > .ix-detail'); return Boolean(d && !d.hidden && d.style.visibility !== 'hidden' && /^这一(轮|件)/.test(d.querySelector('.st-side-kicker')?.textContent || '')); })()`,
+    playReady: `(foldSketch.play(), new Promise(r => setTimeout(r, 1700)))`,
+    // No concept card here: Tab starts from the frame bar's last control, the tick strip.
+    tabFrom: '.st-ticks',
+  },
 };
 
 function args(argv) {

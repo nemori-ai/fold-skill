@@ -51,7 +51,7 @@
     <div class="fg-thumb"><iframe src="${go(`sketches/${f.id}.html`)}" title="${esc(f.name)}缩略" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></div>
     <div class="fg-text"><header><b>${String(f.no).padStart(2, '0')}</b><h2><a class="fg-link" href="${go(`sketches/${f.id}.html`)}">${esc(f.name)}</a></h2></header>
     <p>${esc(f.relation)}</p>
-    <div class="fg-meta"><span>默认帧 ${esc(scenario.sketchFrames?.[f.id] || f.frame)}</span><span>${esc(f.color)}</span><span>完整版 · 可逐帧</span></div>
+    <div class="fg-meta"><span>默认帧 ${esc(f.last ? scenario.frames.at(-1).id : scenario.sketchFrames?.[f.id] || f.frame)}</span><span>${esc(f.color)}</span><span>${esc(f.usage || '完整版 · 可逐帧')}</span></div>
     <div class="fg-enter">进入 →</div></div></article>`).join('');
   const fit = () => document.querySelectorAll('.fg-thumb').forEach(t => t.style.setProperty('--s', t.clientWidth / 1440));
   new ResizeObserver(fit).observe(document.querySelector('.fg'));
