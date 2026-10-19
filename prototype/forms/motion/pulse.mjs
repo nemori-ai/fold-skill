@@ -8,16 +8,22 @@
 // 两层共用一套以根为圆心的极坐标：根弧半径 r0，扇形外沿半径 R，64 条份额线是从根出发的射线。云在外沿之外的
 // 环带里，事件沿射线朝根落下；收拢弧与根同心、张角等于扇形，从云的最外沿一路收到根。云里一颗主粒子就是一条
 // 真实事件：采用的被弧带进扇形、落到所属条目在根上的格子，停一拍，再化成一束光顺着枝流到梢；暂缓的停在
-// 外沿外侧成一圈余烬；噪音在原地熄灭。
+// 外沿外侧成一圈余烬；噪音在原地熄灭。每根枝就是一条份额射线从根到梢被点亮（直线，静止时与射线重合）。
+//
+// 交互与份额拨盘同一标准（story.md 末节“交互”）：悬停枝条看概要，点击展开详情，两者都让本轮的时钟停住；
+// 事实取自 dial-model.mjs 的 itemFacts，按本页“哪条输入进了哪件”的规则算，卡上的条数就是枝上走过的光。
 //
 // 地址参数：?frame=<帧> 打开某一轮并演一次；?from=<帧> 从某一轮起连播；都没有时从 f00 空状态起连播，
-// 播完 28 轮接片尾，收回根，再从 f00 开始。?data= 选数据集，?card=0 收起概念卡，?perf 显示帧率。
+// 播完 28 轮接片尾，收回根，再从 f00 开始。?data= 选数据集，?card=0 收起概念卡，?perf 显示帧率，
+// ?debug=geom 画出每根枝与射线的角度差。
 import { scenario, records, frames, askLife, isSelf, shortOf, dayTime, reduced, esc, formatDate } from '../sketches/stage.mjs';
 import { notice } from '../../variants/shared.mjs?v=feedback-loop-1';
 import { formById, notesHref } from '../catalog.mjs';
 import { followFrames } from '../../embed.mjs';
 import { withDataset } from '../../data/select.mjs';
 import { createField } from './pulse-field.mjs';
+// Hover and detail read the same facts as 份额拨盘 (one rule for both pages; see `into` below).
+import { itemFacts, lanes as factLanes } from './dial-model.mjs';
 
 // ---------- timing (seconds) ----------
 const ROUND = 4.25, OPEN = 1.0, END = 3.0, REWIND = 1.0;
@@ -86,13 +92,13 @@ const rounds = frames.map((frame, i) => {
   for (const d of frame.batch?.declarations || []) for (const s of d.sources || []) if (s.ref?.startsWith('event:')) cited.set(s.ref.slice(6), d.id);
   const counts = Object.fromEntries(DISP.map(d => [d, 0]));
   const streams = {};
-  const events = [...frame.events].sort((a, b) => Date.parse(a.at) - Date.parse(b.at)).map(e => {
+  const events = frame.events.map((e, k) => [e, k]).sort((a, b) => Date.parse(a[0].at) - Date.parse(b[0].at)).map(([e, k]) => {
     const disp = DISP.includes(e.disposition) ? e.disposition : 'unjudged';
     counts[disp] += 1;
     if (e.stream) streams[e.stream] = (streams[e.stream] || 0) + 1;
     const ref = cited.get(e.id) || e.relatedIds?.[0];
     return {
-      id: e.id, disp, stream: e.stream || null, self: isSelf(e),
+      id: e.id, k, disp, stream: e.stream || null, self: isSelf(e),
       machine: e.author_kind === 'bot' || e.author_kind === 'automation',
       target: disp === 'used' && ref ? rootAt(i, ref) : null,
     };
@@ -129,8 +135,11 @@ const rounds = frames.map((frame, i) => {
   cumulative += events.length;
   answeredSoFar += answered.size;
   freshSoFar += fresh.size;
+  // Which item each input (by its index in frame.events) went into, for the facts the hover and detail show.
+  const targetOf = [];
+  for (const e of events) targetOf[e.k] = e.target;
   return {
-    i, frame, events, counts, streams, moved, used: counts.used,
+    i, frame, events, targetOf, counts, streams, moved, used: counts.used,
     before: new Map(prevItems.map(x => [x.id, x.share])), after: new Map(nextItems.map(x => [x.id, x.share])), gone,
     open, prevOpen: [...prevOpen.values()].map(a => ask(a, i - 1)), fresh, answered, lapsed, pulses,
     cumulative, answeredSoFar, freshSoFar,
@@ -144,6 +153,7 @@ const form = formById('pulse');
 const params = new URLSearchParams(location.search);
 const hideCard = params.get('card') === '0';
 const perfOn = params.has('perf');
+const debugGeom = params.get('debug') === 'geom';
 const intParam = name => (/^\d+$/.test(params.get(name) || '') ? Math.min(LAST, Number(params.get(name))) : null);
 const fromParam = intParam('from'), frameParam = intParam('frame');
 
@@ -183,6 +193,9 @@ document.body.innerHTML = `<header class="fs-bar pl-bar">
         <section class="pl-panel pl-dim" data-p="pipe"></section>
       </div>
       <div class="pl-perf" ${perfOn ? '' : 'hidden'}></div>
+      <div class="pl-peek" hidden></div>
+      <div class="pl-detail" role="dialog" tabindex="-1" hidden></div>
+      <div class="pl-sr-items" role="group" aria-label="枝条：聚焦看概要，回车展开详情"></div>
       <p class="pl-sr" aria-live="polite"></p>
     </main>
     <aside class="fs-card" aria-label="概念卡">${card()}</aside>
@@ -196,6 +209,7 @@ const el = {
   signal: $('.pl-signal'), say: $('.pl-say'), heroLabel: $('.pl-hero-label'), n: $('.pl-n'), unit: $('.pl-unit'),
   moved: $('.pl-moved'), asked: $('.pl-asked'), count: $('.pl-count'), perf: $('.pl-perf'), sr: $('.pl-sr'),
   round: $('[data-p="round"]'), asks: $('[data-p="asks"]'), pipe: $('[data-p="pipe"]'), top: $('.pl-top'), hero: $('.pl-hero'), panels: $('.pl-panels'),
+  heroRow: $('.pl-hero-row'), peek: $('.pl-peek'), detail: $('.pl-detail'), items: $('.pl-sr-items'),
 };
 
 // ---------- geometry ----------
@@ -246,6 +260,7 @@ function measure() {
   particleCache.clear();
   buildBackdrop();
   G.masks = null;
+  ix.peekKey = ''; ix.place = null;
 }
 // Cell c of the 64 (fractional c allowed) sits at this angle on the root arc; 0 is straight up.
 const cellAngle = c => -G.fan / 2 + G.fan * (c / 64);
@@ -274,10 +289,27 @@ function masks() {
 // Branch k of n sits at an angle by its stable order; its 64-cell span on the root follows the same order,
 // so branches do not cross. Presence, width and length are interpolated inside beat 2, driven by the light
 // that runs up each branch: a branch takes its new share a little with every light that reaches its tip.
+//
+// Every branch is one of the 64 share rays lit from the root out to its tip: a straight line from the root's
+// centre, on exactly the ray the information layer draws and the concept layer's current runs along
+// (cellAngle(c + 0.5)). A wedge of odd width has a ray at its middle; an even wedge's middle falls on the line
+// between two rays, and the branch takes the one on its own side of the fan (items on the left the left one,
+// items on the right the right one), so neighbours spread apart. In motion the offset from the wedge's middle
+// to its ray moves from the old layout's to the new one's as the wedge itself moves, so nothing jumps and every
+// held frame is back on a ray. ?debug=geom draws the check (foldPulse.geom() returns it).
 const NO_RUNS = new Map();
 const arrived = (run, t) => run.reach.reduce((sum, at) => sum + smooth01((t - at) / 0.18), 0) / run.reach.length;
+const sideOf = id => (order.get(id) ?? 0) % 2;   // 0 left of the middle, 1 right (place)
+const restDelta = (m, side) => clamp(Math.round(m - 0.5 + (side ? 1e-6 : -1e-6)) + 0.5, 0.5, 63.5) - m;
+// Wedge middles and ray offsets of a frame's settled tree, by item.
+const restCache = new Map();
+function restLayout(i) {
+  if (!restCache.has(i)) restCache.set(i, new Map(settledTree(i).list.map(b => [b.id, { m: b.m, d: b.delta }])));
+  return restCache.get(i);
+}
 function treeAt(r, t, runs = NO_RUNS) {
   const ids = [...new Set([...r.before.keys(), ...r.after.keys()])].sort(byOrder);
+  const was = r.i ? restLayout(r.i - 1) : new Map(), will = restLayout(r.i);
   // The root's cells are re-allotted while the arc carries the adopted inputs in, so each input lands on the cells
   // its item will hold; the branch takes its new width only when the light reaches its tip.
   const allot = easeInOut((t - RIM) / (ARC1 - 0.1 - RIM));
@@ -301,7 +333,10 @@ function treeAt(r, t, runs = NO_RUNS) {
       presence = 1 - w; share = sa * (1 - w); slot = share; alpha = 1 - w; grey = w;
       if (gone.merged) { mergeInto = gone.merged; mergeK = w; } else length = 1 - 0.8 * w;
     }
-    list.push({ id, presence, share, slot, reach, length, alpha, grey, mergeInto, mergeK });
+    // A new branch has no old layout and one on its way out no new one: each keeps the offset it has.
+    const p0 = was.get(id) || will.get(id), p1 = will.get(id) || p0;
+    const snap = p0 ? { m0: p0.m, d0: p0.d, m1: p1.m, d1: p1.d } : null;
+    list.push({ id, presence, share, slot, reach, length, alpha, grey, mergeInto, mergeK, snap });
   }
   return place(list);
 }
@@ -312,9 +347,8 @@ function place(list) {
   const fit = shares > 64 ? 64 / shares : 1;
   // Items alternate left and right by first appearance; on each side the oldest sit nearest the middle. Each takes
   // a wedge of the 64 cells as wide as its share, and the two sides meet at the middle unless one side needs more.
-  const side = b => (order.get(b.id) ?? 0) % 2;
-  const left = list.filter(b => side(b) === 0).sort((a, b) => byOrder(b.id, a.id));
-  const right = list.filter(b => side(b) === 1).sort((a, b) => byOrder(a.id, b.id));
+  const left = list.filter(b => sideOf(b.id) === 0).sort((a, b) => byOrder(b.id, a.id));
+  const right = list.filter(b => sideOf(b.id) === 1).sort((a, b) => byOrder(a.id, b.id));
   const width = bs => bs.reduce((sum, b) => sum + slotOf(b) * fit, 0);
   const L = width(left), R = width(right);
   const start = clamp(32, L, 64 - R) - L;
@@ -323,26 +357,31 @@ function place(list) {
   let c = start;
   for (const b of ordered) {
     b.c0 = c; b.c1 = c + slotOf(b) * fit; c = b.c1;
-    b.angle = cellAngle((b.c0 + b.c1) / 2);
+    // The ray: at rest the one nearest the wedge's middle; in motion the offset follows the wedge from the old
+    // layout to the new (see above). A wedge narrower than one cell (growing in, withering away) keeps it inside.
+    const m = (b.c0 + b.c1) / 2, s = b.snap;
+    const d = !s ? restDelta(m, sideOf(b.id)) : Math.abs(s.m1 - s.m0) > 1e-6 ? lerp(s.d0, s.d1, clamp((m - s.m0) / (s.m1 - s.m0))) : s.d0;
+    b.m = m; b.delta = d * clamp(b.c1 - b.c0);
+    b.angle = cellAngle(m + b.delta);
     // Larger shares reach further: 24 shares touch the edge of the fan, one share a little under half way.
     const rho = 0.42 + 0.58 * Math.sqrt(Math.max(0, b.reach ?? b.share) / 24);
-    b.base = onRoot(b.angle, 5);
-    const full = onFan(b.angle, rho);
-    b.tip = { x: lerp(b.base.x, full.x, b.length), y: lerp(b.base.y, full.y, b.length) };
+    b.tipR = lerp(G.baseR, G.R * rho, b.length);
     map.set(b.id, b);
   }
+  // A branch merging into another swings over onto the other's ray as it fades, straight from the root all the way.
+  // It sinks toward the root while it crosses, so it passes under the branches in between (the other may sit on
+  // the far side of the fan), and rises again along the other's ray.
   for (const b of ordered) if (b.mergeInto && map.has(b.mergeInto)) {
-    const to = map.get(b.mergeInto).tip;
-    b.tip = { x: lerp(b.tip.x, to.x, b.mergeK), y: lerp(b.tip.y, to.y, b.mergeK) };
+    const to = map.get(b.mergeInto), k = b.mergeK;
+    b.angle = lerp(b.angle, to.angle, k);
+    b.tipR = lerp(lerp(b.tipR, to.tipR, k), G.baseR + 8, 0.85 * Math.sin(Math.PI * k));
   }
-  // Rise first, then lean out.
-  for (const b of ordered) b.ctrl = { x: lerp(b.base.x, b.tip.x, 0.36), y: lerp(b.base.y, b.tip.y, 0.66) };
+  for (const b of ordered) { b.lift = 0; b.base = polar(b.angle, G.baseR); b.tip = polar(b.angle, b.tipR); }
   return { list: ordered, map, used: L + R, start };
 }
-const onBranch = (b, u) => {
-  const v = 1 - u;
-  return { x: v * v * b.base.x + 2 * v * u * b.ctrl.x + u * u * b.tip.x, y: v * v * b.base.y + 2 * v * u * b.ctrl.y + u * u * b.tip.y };
-};
+// The open item steps out along its own ray (IX.pop): its cells on the root, its base and its tip, still on the ray.
+function lift(b, d) { b.lift = d; b.base = polar(b.angle, G.baseR + d); b.tip = polar(b.angle, b.tipR + d); }
+const onBranch = (b, u) => ({ x: lerp(b.base.x, b.tip.x, u), y: lerp(b.base.y, b.tip.y, u) });
 // The tree held at a frame's end (no motion).
 function settledTree(i) {
   if (i < 0) return place([]);
@@ -509,6 +548,7 @@ function advance(at) {
 }
 function go(index, { autoplay = false } = {}) {
   index = clamp(Math.round(index), 0, LAST);
+  resetIx();
   play.playing = autoplay; play.frozen = null;
   enter(index, index === 0 ? 'open' : 'round');
   paintPlay();
@@ -526,8 +566,375 @@ function paintPlay() {
   $('[data-play]').setAttribute('aria-pressed', String(play.playing));
 }
 
+// ---------- interaction: hover a branch for a summary, click it for the detail (story.md 交互) ----------
+// The same standard as 份额拨盘 (dial.mjs, story.md 交互), on this page's geometry and in its own black and monospace.
+// Both read itemFacts (dial-model.mjs) with this page's own rule for which item an input went into (`into`), so the
+// counts are the lights drawn. Hovering or opening stops the round's clock where it is; the concept layer keeps its
+// wall clock. Open: 0 cut (title and panels switch to the item) → 0–0.3 s the branch steps out 8 px along its own ray
+// with its cells on the root (ease-out, overshoot 3.7 %) → 0.4–0.6 s the leader leaves the tip, out along the ray
+// past the rim, then to the card → 0.6–0.9 s the card unfolds from the leader's end. Close runs it back: card 0.2 s,
+// leader 0.15 s, branch 0.2 s, then the cut back; the round's clock goes on 0.4 s later.
+const IX = { pop: 8, popDur: 0.3, line: 0.4, lineDur: 0.2, card: 0.6, cardDur: 0.3, fold: 0.2, unline: 0.15, drop: 0.2,
+  fadeIn: 0.15, fadeOut: 0.12, dim: 0.15, resume: 0.4, grace: 0.15, hit: 10 };
+const into = (round, k) => rounds[round]?.targetOf[k] ?? null;
+const factsOf = (i, id) => itemFacts(i, id, into);
+const ix = {
+  hover: null, via: null, peek: null, peekAt: 0, peekOut: null, peekKey: '', peekBox: null,
+  open: null, openAt: 0, closeAt: null, viaKey: false, focusMoved: false, next: null, view: null, detailKey: '', place: null,
+  dim: 0, dimId: null, fixed: null, resumeTimer: null, leaveTimer: null, tail: false, lastAt: 0, pointer: 'mouse',
+};
+// What the interaction shows this frame: the focused item, how far the others are dimmed, the open motion.
+let X = { focus: null, dim: 0, pop: 0, popId: null, line: 0, card: 0, detail: false, peek: 0, peekId: null };
+// The round's clock stands still from hold.at until the interaction lets go.
+const hold = { at: null };
+const easeOutBack = k => { const u = clamp(k) - 1; return 1 + 2 * u ** 3 + u ** 2; };   // overshoots 3.7 % (as the dial)
+const interactive = () => play.seg === 'round' || play.seg === 'end';
+
+function ixFrame() {
+  const t = now(), rm = reduced();
+  const dt = ix.lastAt ? Math.min(0.1, t - ix.lastAt) : 1 / 60;
+  ix.lastAt = t;
+  const since = t0 => (rm ? 99 : ix.fixed != null ? ix.fixed : t - t0);
+  let pop = 0, line = 0, card = 0, detail = false;
+  if (ix.open) {
+    if (ix.closeAt == null) {
+      const e = since(ix.openAt);
+      pop = easeOutBack(e / IX.popDur);
+      line = easeOut((e - IX.line) / IX.lineDur);
+      card = clamp((e - IX.card) / IX.cardDur);
+      detail = true;
+    } else {
+      const e = since(ix.closeAt);
+      card = 1 - clamp(e / IX.fold);
+      line = 1 - easeInOut((e - IX.fold) / IX.unline);
+      pop = 1 - easeInOut((e - IX.fold - IX.unline) / IX.drop);
+      detail = e < IX.fold + IX.unline + IX.drop;
+      if (!detail) finishClose();
+    }
+  }
+  const target = ix.open || ix.hover ? 1 : 0;
+  ix.dim = rm ? target : target > ix.dim ? Math.min(target, ix.dim + dt / IX.dim) : Math.max(target, ix.dim - dt / IX.dim);
+  if (ix.fixed != null && !rm && ix.open && ix.closeAt == null && !ix.hover) ix.dim = clamp(ix.fixed / IX.dim);
+  if (ix.open || ix.hover) ix.dimId = ix.open || ix.hover;
+  let peek = 0;
+  if (ix.peek) {
+    peek = ix.peekOut != null ? 1 - clamp((t - ix.peekOut) / IX.fadeOut) : clamp((t - ix.peekAt) / IX.fadeIn);
+    if (rm) peek = ix.peekOut != null ? 0 : 1;
+    if (ix.peekOut != null && peek <= 0) { ix.peek = null; ix.peekOut = null; }
+  }
+  return { focus: ix.dim > 0 ? ix.dimId : null, dim: ix.dim, pop: ix.open ? pop : 0, popId: ix.open, line, card, detail: Boolean(ix.open) && detail, peek, peekId: ix.peek };
+}
+const ixLive = () => Boolean(ix.hover || ix.open || ix.peek || ix.dim > 0 || ix.leaveTimer);
+function syncPause() {
+  if (ix.hover || ix.open) {
+    clearTimeout(ix.resumeTimer); ix.resumeTimer = null;
+    if (hold.at == null) hold.at = now();
+  } else if (hold.at != null && !ix.resumeTimer) {
+    ix.resumeTimer = setTimeout(() => { ix.resumeTimer = null; if (!ix.hover && !ix.open) resumeNow(); }, IX.resume * 1000);
+  }
+}
+function resumeNow() {
+  clearTimeout(ix.resumeTimer); ix.resumeTimer = null;
+  if (hold.at != null) { play.t0 += now() - hold.at; hold.at = null; }
+}
+function setHover(id, via) {
+  clearTimeout(ix.leaveTimer); ix.leaveTimer = null;
+  if (!id) {
+    if (!ix.hover) return;
+    const clear = () => { ix.leaveTimer = null; ix.hover = null; ix.via = null; if (ix.peek && ix.peekOut == null) ix.peekOut = now(); syncPause(); };
+    // A short grace, so the pointer can travel from the branch onto its card.
+    if (via === 'now') clear(); else ix.leaveTimer = setTimeout(clear, IX.grace * 1000);
+    return;
+  }
+  ix.via = via;
+  if (ix.hover === id) return;
+  ix.hover = id;
+  if (!ix.open) { const shown = ix.peek && ix.peekOut == null; ix.peek = id; ix.peekOut = null; ix.peekKey = ''; ix.peekAt = shown ? now() - IX.fadeIn : now(); }
+  syncPause();
+}
+function openItem(id, viaKey = false) {
+  if (!id || !lastTree?.map.has(id) || !interactive()) return;
+  if (ix.open === id && ix.closeAt == null) return;
+  if (ix.open && ix.open !== id) { ix.next = { id, viaKey }; closeItem(); return; }
+  clearTimeout(ix.leaveTimer); ix.leaveTimer = null;
+  ix.open = id; ix.openAt = now(); ix.closeAt = null; ix.viaKey = viaKey; ix.focusMoved = false;
+  ix.view = factsOf(play.index, id); ix.seen = seenAt(); ix.detailKey = ''; ix.place = null;
+  if (ix.peek && ix.peekOut == null) ix.peekOut = now();
+  syncPause();
+}
+function closeItem() { if (ix.open && ix.closeAt == null) ix.closeAt = now(); }
+function finishClose() {
+  const id = ix.open, refocus = ix.viaKey;
+  ix.open = null; ix.closeAt = null; ix.view = null; ix.viaKey = false; ix.detailKey = ''; ix.place = null;
+  el.detail.hidden = true;
+  if (ix.hover) { ix.peek = ix.hover; ix.peekKey = ''; ix.peekAt = now(); ix.peekOut = null; }
+  if (refocus) el.items.querySelector(`[data-branch="${CSS.escape(id)}"]`)?.focus({ preventScroll: true });
+  const next = ix.next;
+  ix.next = null;
+  if (next) openItem(next.id, next.viaKey); else syncPause();
+}
+/** Any navigation (round, step, play, the embedding page) drops hover and detail at once and lets the clock go on. */
+function resetIx() {
+  clearTimeout(ix.leaveTimer); ix.leaveTimer = null;
+  if (el.items.contains(document.activeElement)) document.activeElement.blur();
+  Object.assign(ix, { hover: null, via: null, peek: null, peekOut: null, open: null, closeAt: null, view: null, next: null, viaKey: false, dim: 0, detailKey: '', place: null, peekKey: '' });
+  el.detail.hidden = true; el.peek.hidden = true; stage.style.cursor = '';
+  X = { focus: null, dim: 0, pop: 0, popId: null, line: 0, card: 0, detail: false, peek: 0, peekId: null };
+  resumeNow();
+}
+
+// Which branch is under a point of the stage: its name, the line itself within IX.hit px (the lines are thin), its tip
+// light, or its cells on the root. Nearest wins where neighbours' bands overlap near the root.
+const segDist = (x, y, a, b) => {
+  const dx = b.x - a.x, dy = b.y - a.y, L = dx * dx + dy * dy, k = L ? clamp(((x - a.x) * dx + (y - a.y) * dy) / L) : 0;
+  return Math.hypot(a.x + dx * k - x, a.y + dy * k - y);
+};
+function itemAt(x, y) {
+  if (!lastTree || !interactive()) return null;
+  const rr = Math.hypot(x - G.origin.x, y - G.origin.y), phi = Math.atan2(x - G.origin.x, G.origin.y - y);
+  let best = null, bestD = Infinity;
+  for (const b of lastTree.list) {
+    if (b.alpha < 0.15 || b.length < 0.2) continue;
+    const lb = b.labelBox;
+    if (lb && x >= lb[0] - 2 && x <= lb[0] + lb[2] + 2 && y >= lb[1] - 2 && y <= lb[1] + lb[3] + 2) return b.id;
+    let d = Math.min(segDist(x, y, b.base, b.tip) - (0.7 + b.share * 0.34) / 2, Math.hypot(x - b.tip.x, y - b.tip.y) - (1.6 + b.share * 0.07) - 4);
+    if (Math.abs(rr - G.r0 - b.lift) <= 8 && phi >= cellAngle(b.c0) && phi <= cellAngle(b.c1)) d = Math.min(d, 0);
+    if (d <= IX.hit && d < bestD) { best = b.id; bestD = d; }
+  }
+  return best;
+}
+function pointerItem(event) {
+  const peek = event.target.closest?.('.pl-peek');
+  if (peek) return peek.dataset.id && lastTree?.map.has(peek.dataset.id) ? peek.dataset.id : null;
+  if (event.target.closest?.('.pl-detail, .pl-panels, .fs-bar')) return null;
+  const box = stage.getBoundingClientRect();
+  return itemAt(event.clientX - box.left, event.clientY - box.top);
+}
+const itemNamed = name => (lastTree?.map.has(name) ? name : lastTree?.list.find(b => shortOf(b.id) === name)?.id || null);
+
+// Rectangles on the stage (x0, y0, x1, y1) of the words the cards keep clear of.
+function rectOf(node, text = true) {
+  if (!node || (text && !node.textContent.trim())) return null;
+  const s = stage.getBoundingClientRect();
+  let r;
+  if (text) { const range = document.createRange(); range.selectNodeContents(node); r = range.getBoundingClientRect(); } else r = node.getBoundingClientRect();
+  return r.width > 0 && r.height > 0 ? { x0: r.left - s.left, y0: r.top - s.top, x1: r.right - s.left, y1: r.bottom - s.top } : null;
+}
+const meets = (a, b, pad = 0) => a && b && a.x0 < b.x1 + pad && b.x0 < a.x1 + pad && a.y0 < b.y1 + pad && b.y0 < a.y1 + pad;
+const nearestOn = (p, r) => ({ x: clamp(p.x, r.x0, r.x1), y: clamp(p.y, r.y0, r.y1) });
+// The nearest point on a rectangle's edge, also from inside it.
+function edgePoint(p, r) {
+  const q = nearestOn(p, r);
+  if (q.x !== p.x || q.y !== p.y) return q;
+  const d = [p.x - r.x0, r.x1 - p.x, p.y - r.y0, r.y1 - p.y], k = d.indexOf(Math.min(...d));
+  return k === 0 ? { x: r.x0, y: p.y } : k === 1 ? { x: r.x1, y: p.y } : k === 2 ? { x: p.x, y: r.y0 } : { x: p.x, y: r.y1 };
+}
+// Does segment a→b come within pad of rectangle r?
+function segMeets(a, b, r, pad) {
+  for (let k = 0; k <= 24; k += 1) { const x = lerp(a.x, b.x, k / 24), y = lerp(a.y, b.y, k / 24); if (x > r.x0 - pad && x < r.x1 + pad && y > r.y0 - pad && y < r.y1 + pad) return true; }
+  return false;
+}
+const labelRect = b => (b.labelBox ? { x0: b.labelBox[0], y0: b.labelBox[1], x1: b.labelBox[0] + b.labelBox[2], y1: b.labelBox[1] + b.labelBox[3] } : null);
+const wordRects = () => [rectOf(el.signal), rectOf(el.say), rectOf(el.heroLabel), rectOf(el.heroRow, false), rectOf(el.count)];
+
+// The summary card: what stream it comes from, its shares, how this round changed it, how many inputs went into it,
+// its open questions and their deadlines. Beside the tip on the side the branch leans to, clear of its name and line.
+// The cards keep the round's beats, as the panels do: held mid-round, they do not tell what has not happened yet —
+// which inputs went into it before the sweep has brought them to the root, its new share before “动了” lands, a question
+// registered this round before the strike.
+let roundT = ROUND;
+const seenAt = () => ({ inputs: roundT >= ARC1, share: roundT >= READOUT, asks: roundT >= STRIKE });
+// Only questions still open after the round (askLife, as the panel counts them: one on an item withdrawn this round
+// has lapsed), and none registered this round before the strike.
+const asksSeen = (f, seen) => f.asks.filter(a => rounds[f.i].open.some(o => o.id === a.id) && (seen.asks || !rounds[f.i].fresh.has(a.id)));
+function peekHTML(i, id, seen) {
+  const f = factsOf(i, id), share = seen.share ? f.share : f.before;
+  return `<div class="pl-c-k">${esc(f.stream.length ? `来自${f.stream.join(' · ')}` : `第 ${i} 轮`)}</div>
+    <div class="pl-c-q">${esc(share ? `${f.short} ${share} 份` : f.short)}</div>
+    <div class="pl-c-d">${esc(seen.share ? f.change?.text || '' : '本轮的份额还没落定')}</div>
+    <div class="pl-c-d">${esc(!seen.inputs ? '本轮的输入还在路上' : f.inputs.length ? `本轮进了 ${f.inputs.length} 条输入` : '本轮没有输入进它')}</div>
+    ${asksSeen(f, seen).map(a => `<div class="pl-c-ask"><i></i><span>${esc(a.short)}</span>${a.due ? `<small>${esc(a.due)}</small>` : ''}</div>`).join('')}`;
+}
+function placePeek(b, bw, bh) {
+  const lb = labelRect(b), facing = Math.sin(b.angle) >= 0 ? 1 : -1;
+  const from = lb ? { x: facing > 0 ? lb.x1 + 3 : lb.x0 - 3, y: (lb.y0 + lb.y1) / 2 } : { x: b.tip.x, y: b.tip.y };
+  const avoid = [...wordRects(), lb, { x0: b.tip.x - 8, y0: b.tip.y - 8, x1: b.tip.x + 8, y1: b.tip.y + 8 }];
+  const clear = (x, y) => {
+    const r = { x0: x, y0: y, x1: x + bw, y1: y + bh };
+    return x >= 8 && x + bw <= G.W - 8 && y >= 8 && y + bh <= G.panelY - 8 && avoid.every(a => !meets(a, r, 8)) && !segMeets(b.base, b.tip, r, 6);
+  };
+  for (const dir of [facing, -facing]) {
+    for (const dy of [0, -(bh / 2 + 16), bh / 2 + 16, -(bh + 24), bh + 24]) {
+      const y = clamp(from.y - bh / 2 + dy, 8, G.panelY - bh - 8);
+      for (let k = 0; k < 90; k += 1) {
+        const x = dir > 0 ? from.x + 18 + k * 6 : from.x - 18 - bw - k * 6;
+        if (x < 8 || x + bw > G.W - 8) break;
+        if (clear(x, y)) return { x, y, from };
+      }
+    }
+  }
+  return { x: clamp(from.x + 18, 8, G.W - bw - 8), y: clamp(from.y - bh / 2, 8, G.panelY - bh - 8), from };
+}
+function paintPeek(i) {
+  const b = X.peekId && lastTree?.map.get(X.peekId);
+  const show = b && X.peek > 0.01 && !ix.open;
+  if (!show) { if (!el.peek.hidden) el.peek.hidden = true; ix.peekBox = null; return; }
+  const seen = seenAt(), key = `${i}:${X.peekId}:${Object.values(seen).join()}`;
+  if (ix.peekKey !== key) {
+    ix.peekKey = key;
+    el.peek.dataset.id = X.peekId;
+    el.peek.innerHTML = peekHTML(i, X.peekId, seen);
+    el.peek.hidden = false;
+    const bw = el.peek.offsetWidth, bh = el.peek.offsetHeight, p = placePeek(b, bw, bh);
+    ix.peekBox = { x0: p.x, y0: p.y, x1: p.x + bw, y1: p.y + bh, from: p.from };
+    el.peek.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
+  }
+  el.peek.hidden = false;
+  el.peek.style.opacity = X.peek.toFixed(3);
+}
+
+// ---------- the detail card ----------
+function detailHTML(v, seen) {
+  const d = withDataset(`../../index.html?variant=d&frame=${v.i}`);
+  const share = seen.share ? v.share : v.before, trend = v.trend.map((s, k) => (k === v.i ? share : s)), open = asksSeen(v, seen);
+  const groups = new Map();
+  for (const x of v.inputs) { if (!groups.has(x.source)) groups.set(x.source, []); groups.get(x.source).push(x); }
+  const sorted = [...groups].sort((a, b) => b[1].length - a[1].length);
+  const rest = sorted.slice(3).reduce((n, [, list]) => n + list.length, 0);
+  const inputs = sorted.slice(0, 3).map(([source, list]) => `<li><small>${esc(source)} · ${list.length} 条</small>${[...new Map(list.map(x => [x.title, x])).values()].slice(0, 2)
+    .map(x => `<span>${x.from ? `<em>${esc(x.from)}</em> ` : ''}${esc(x.title)}</span>`).join('')}</li>`).join('')
+    + (rest ? `<li class="pl-d-none">另有 ${rest} 条，来自 ${sorted.length - 3} 个来源</li>` : '');
+  // Shares in every round: one bar a round, this round bright, later rounds faint.
+  const n = LAST, W = 300, H = 32, top = Math.max(24, ...trend), bw = W / n;
+  const bars = trend.slice(1).map((s, k) => {
+    const h = s ? Math.max(1.5, (s / top) * (H - 2)) : 1;
+    return `<rect x="${(k * bw + bw * 0.15).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${(bw * 0.7).toFixed(1)}" height="${h.toFixed(1)}" class="${k + 1 === v.i ? 'is-now' : k + 1 > v.i ? 'is-later' : s ? '' : 'is-off'}"/>`;
+  }).join('');
+  const asks = open.length ? open.slice(0, 2).map(a => `<div class="pl-d-ask"><i></i><p>${esc(a.prompt)}</p>
+      <small>${esc(a.due || '没有期限')}</small><a href="${esc(d)}">去回答 →</a></div>`).join('') : '<p class="pl-d-none">没有开着的问题</p>';
+  const fb = v.feedback.length ? `<ul class="pl-d-fb">${v.feedback.slice(-3).map(x => `<li><time>${esc(dayTime(x.at))}</time>${esc(x.text)}</li>`).join('')}</ul>`
+    : '<p class="pl-d-none">到这一轮还没有你的回应</p>';
+  return `<div class="pl-d-k"><span>第 ${v.i} / ${LAST} 轮${v.stream.length ? ` · 来自${esc(v.stream.join(' · '))}` : ''}</span>
+      <button type="button" data-x="close" aria-label="收回（Esc）" title="收回（Esc）">×</button></div>
+    <div class="pl-d-t">${esc(v.title)}</div>
+    <div class="pl-d-s"><b>${esc(v.short)} ${share}</b> / 64 份${!seen.share ? ' · 本轮的份额还没落定' : v.change ? ` · ${esc(v.change.text)}` : ''}</div>
+    ${v.summary ? `<p class="pl-d-sum">${esc(v.summary)}</p>` : ''}
+    ${v.children.length ? `<section><h5>子层<b>${v.children.length} 件</b></h5><ul class="pl-d-kids">${v.children.map(c => `<li><span>${esc(c.title)}</span><b>${c.share}</b></li>`).join('')}</ul></section>` : ''}
+    <section><h5>份额 · 逐轮<b>第 ${v.i} 轮 ${share} 份</b></h5><svg class="pl-d-trend" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${bars}</svg>
+      <div class="pl-d-axis"><span>第 1 轮</span><span>第 ${n} 轮</span></div></section>
+    <section><h5>本轮进了它<b>${seen.inputs ? `${v.inputs.length} 条` : '…'}</b></h5>${!seen.inputs ? '<p class="pl-d-none">还在路上：弧把它们合到根上之后才知道</p>' : inputs ? `<ul class="pl-d-in">${inputs}</ul>` : '<p class="pl-d-none">本轮没有输入进它</p>'}</section>
+    <section><h5>开着的问题<b>${open.length ? `${open.length} 条` : ''}</b></h5>${asks}</section>
+    <section><h5>你的回应<b>${v.feedback.length ? `共 ${v.feedback.length} 条` : ''}</b></h5>${fb}</section>`;
+}
+// Where the card goes, and its leader. The card hugs the stage edge on the side the branch leans to (else the other),
+// below the words at the top, above the panels, and never over the open branch, its tip or its name: beside it if it
+// is clear, else above it, else below. The leader leaves the tip and runs on out along the branch's own ray until it
+// is past the rim (or meets the card), then straight to the card's nearest edge.
+function detailPlace(b) {
+  const w = Math.round(clamp(G.W * 0.27, 270, 340)), bottom = G.panelY - 12, words = wordRects();
+  const lb = labelRect(b), tip = polar(b.angle, b.tipR + IX.pop);
+  const keep = { x0: Math.min(b.base.x, tip.x) - 14, y0: Math.min(b.base.y, tip.y) - 14, x1: Math.max(b.base.x, tip.x) + 14, y1: Math.max(b.base.y, tip.y) + 14 };
+  // The name moves out with the branch, IX.pop along the ray.
+  if (lb) { const m = IX.pop + 6; keep.x0 = Math.min(keep.x0, lb.x0 - m); keep.y0 = Math.min(keep.y0, lb.y0 - m); keep.x1 = Math.max(keep.x1, lb.x1 + m); keep.y1 = Math.max(keep.y1, lb.y1 + m); }
+  const facing = Math.sin(b.angle) < -0.02 ? -1 : 1;
+  el.detail.style.clipPath = 'inset(0 100% 100% 0)';
+  el.detail.hidden = false;
+  let choice = null;
+  // On each side: full width, or narrower if that keeps it clear of the branch beside it.
+  const room = side => Math.floor(side > 0 ? G.W - G.pad - keep.x1 - 4 : keep.x0 - 4 - G.pad);
+  const tries = [facing, -facing].flatMap(side => [[side, w], ...(room(side) >= 250 && room(side) < w ? [[side, room(side)]] : [])]);
+  for (const [side, cw] of tries) {
+    const w = cw, x = side > 0 ? G.W - G.pad - w : G.pad;
+    const col = { x0: x, x1: x + w, y0: 0, y1: G.H };
+    const top = Math.max(G.pad, ...words.filter(r => r && meets(r, col)).map(r => r.y1 + 14));
+    el.detail.style.width = `${w}px`; el.detail.style.maxHeight = `${Math.max(120, bottom - top)}px`;
+    let h = Math.min(el.detail.offsetHeight, bottom - top);
+    let y = clamp(tip.y - h * 0.35, top, bottom - h);
+    const box = yy => ({ x0: x, y0: yy, x1: x + w, y1: yy + h });
+    if (!meets(box(y), keep)) { choice = { x, y, w, h, side }; break; }
+    const above = keep.y0 - 12 - top, below = bottom - keep.y1 - 12;
+    if (above >= Math.min(h, 200)) { h = Math.min(h, above); y = keep.y0 - 12 - h; choice = { x, y, w, h, side }; break; }
+    if (below >= Math.min(h, 200)) { h = Math.min(h, below); y = keep.y1 + 12; choice = { x, y, w, h, side }; break; }
+    if (!choice) { h = Math.min(h, Math.max(above, below, 160)); choice = { x, y: above >= below ? Math.max(top, keep.y0 - 12 - h) : keep.y1 + 12, w, h, side }; }
+  }
+  el.detail.style.width = `${choice.w}px`; el.detail.style.maxHeight = `${choice.h}px`;
+  choice.h = Math.min(choice.h, el.detail.offsetHeight);
+  const card = { x0: choice.x, y0: choice.y, x1: choice.x + choice.w, y1: choice.y + choice.h };
+  // The leader: out along the ray from just past the tip to beyond the rim, stopping where it meets the card.
+  const r0 = b.tipR + IX.pop + 5, rMax = Math.max(r0 + 14, G.R + 16);
+  let bend = polar(b.angle, rMax);
+  for (let rr = r0; rr <= rMax; rr += 2) { const p = polar(b.angle, rr); if (p.x > card.x0 - 6 && p.x < card.x1 + 6 && p.y > card.y0 - 6 && p.y < card.y1 + 6) { bend = p; break; } }
+  const end = edgePoint(bend, card);
+  // Which edge of the card the leader meets decides how it unfolds: along that edge first, then away from it.
+  const ax = end.x - card.x0, ay = end.y - card.y0;
+  const edge = ax <= 0.5 ? 'left' : ax >= choice.w - 0.5 ? 'right' : ay <= 0.5 ? 'top' : 'bottom';
+  return { ...choice, card, path: [polar(b.angle, r0), bend, end], ax, ay, edge };
+}
+function paintDetail() {
+  const id = ix.open, b = id && lastTree?.map.get(id);
+  if (!id || !b || !ix.view) { if (!el.detail.hidden) el.detail.hidden = true; return; }
+  const key = `${ix.view.i}:${id}`;
+  if (ix.detailKey !== key) {
+    ix.detailKey = key; ix.place = null;
+    el.detail.innerHTML = detailHTML(ix.view, ix.seen);
+    el.detail.setAttribute('aria-label', `${ix.view.short} · 第 ${ix.view.i} 轮`);
+    el.detail.scrollTop = 0;
+  }
+  if (!ix.place) ix.place = detailPlace(b);
+  const p = ix.place, q = X.card;
+  el.detail.hidden = false;
+  // Unfold from the leader's end: first along the edge it meets, then away from that edge.
+  const kv = easeOut(q / 0.45), kh = easeOut((q - 0.15) / 0.85), cutW = (1 - kh) * (p.w - 1), cutH = (1 - kh) * (p.h - 1);
+  let ins = [0, 0, 0, 0];   // top, right, bottom, left
+  if (p.edge === 'left' || p.edge === 'right') ins = [(1 - kv) * p.ay, p.edge === 'left' ? cutW : 0, (1 - kv) * (p.h - p.ay), p.edge === 'right' ? cutW : 0];
+  else ins = [p.edge === 'bottom' ? cutH : 0, (1 - kv) * (p.w - p.ax), p.edge === 'top' ? cutH : 0, (1 - kv) * p.ax];
+  el.detail.style.clipPath = q >= 1 ? 'none' : `inset(${ins.map(v => `${v.toFixed(1)}px`).join(' ')})`;
+  el.detail.style.visibility = q > 0 ? '' : 'hidden';
+  el.detail.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
+  p.visible = q > 0 ? { x0: p.x + ins[3], y0: p.y + ins[0], x1: p.x + p.w - ins[1], y1: p.y + p.h - ins[2] } : null;
+  if (ix.viaKey && !ix.focusMoved && q >= 1) { ix.focusMoved = true; el.detail.focus({ preventScroll: true }); }
+}
+// The concept layer steps aside under the cards, as it does under the words.
+function cardMasks() {
+  const list = [];
+  if (ix.peekBox && X.peek > 0.05 && !el.peek.hidden) { const r = ix.peekBox; list.push([r.x0, r.y0, r.x1 - r.x0, r.y1 - r.y0, 18]); }
+  const v = ix.place?.visible;
+  if (v && v.x1 - v.x0 > 1 && v.y1 - v.y0 > 1) list.push([v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0, 18]);
+  return list;
+}
+// The leaders, on the information layer under the names (their dark outline breaks the line where it passes).
+function drawLeaders() {
+  info.lineWidth = 1; info.setLineDash([]); info.lineCap = 'butt';
+  if (ix.open && ix.place && X.line > 0) {
+    const pts = ix.place.path, lens = [Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y), Math.hypot(pts[2].x - pts[1].x, pts[2].y - pts[1].y)];
+    let left = X.line * (lens[0] + lens[1]);
+    info.strokeStyle = ink(0.75);
+    info.beginPath(); info.moveTo(pts[0].x, pts[0].y);
+    for (let k = 0; k < 2 && left > 0; k += 1) {
+      const f = Math.min(1, left / (lens[k] || 1));
+      info.lineTo(lerp(pts[k].x, pts[k + 1].x, f), lerp(pts[k].y, pts[k + 1].y, f));
+      left -= lens[k];
+    }
+    info.stroke();
+  }
+  if (ix.peekBox && X.peek > 0.01 && !ix.open) {
+    const r = ix.peekBox, to = nearestOn(r.from, r);
+    info.strokeStyle = ink(0.55 * X.peek);
+    info.beginPath(); info.moveTo(r.from.x, r.from.y); info.lineTo(to.x, to.y); info.stroke();
+  }
+}
+// Keyboard: one visually hidden button per branch on screen; focus is a hover, Enter opens.
+function syncItems() {
+  if (!lastTree || el.items.contains(document.activeElement)) return;
+  const list = interactive() ? lastTree.list.filter(b => b.alpha >= 0.15 && b.length >= 0.2) : [];
+  const key = `${play.index}:${list.map(b => b.id).join(',')}`;
+  if (el.items.dataset.key === key) return;
+  el.items.dataset.key = key;
+  el.items.innerHTML = list.map(b => `<button type="button" data-branch="${esc(b.id)}" aria-label="${esc(`${shortOf(b.id)} ${Math.round(b.share)} 份`)}"></button>`).join('');
+}
+
 // ---------- drawing ----------
-let lastFrameAt = 0, lastDim = -1, panelKey = '', textKey = '';
+let lastFrameAt = 0, lastDim = -1, panelKey = '', textKey = '', lastTree = null;
 const frameTimes = [], cpuTimes = [];
 let livePoints = 0, livePeak = 0;
 
@@ -538,10 +945,11 @@ function render(wall) {
   const dt = play.frozen ? 1 / 60 : lastFrameAt ? Math.min(0.1, wall - lastFrameAt) : 1 / 60;
   if (!play.frozen && lastFrameAt) { frameTimes.push(wall - lastFrameAt); if (frameTimes.length > 1800) frameTimes.shift(); }
   lastFrameAt = wall;
-  let t = (play.frozen ? play.frozen.t : wall - play.t0);
+  // Hovering or opening a branch stops the round's clock (hold); the concept layer's own clock (T) runs on.
+  let t = (play.frozen ? play.frozen.t : (hold.at ?? wall) - play.t0);
   const T = play.frozen ? play.frozen.T : wall;
   const len = segLength(play.seg);
-  if (!play.frozen && play.playing && t >= len) { advance(wall); t = 0; }
+  if (!play.frozen && play.playing && hold.at == null && t >= len) { advance(wall); t = 0; }
   t = Math.min(t, len);
   // Reduced motion: each beat jumps to its end state.
   if (still && play.seg === 'round') t = t < B2 ? B2 : t < B3 ? B3 : ROUND;
@@ -557,7 +965,13 @@ function render(wall) {
   else tree = settledTree(i);
   // The rewind draws every branch back into the root before f00 begins again.
   const retract = seg === 'rewind' ? easeInOut(t / (REWIND * 0.85)) : 0;
-  if (retract) tree = place(tree.list.map(b => ({ ...b, share: b.share * (1 - retract), slot: (b.slot ?? b.share) * (1 - retract), presence: 1 - retract, length: 1 - retract, alpha: 1 - retract })));
+  if (retract) tree = place(tree.list.map(b => ({ ...b, share: b.share * (1 - retract), slot: (b.slot ?? b.share) * (1 - retract), presence: 1 - retract, length: 1 - retract, alpha: 1 - retract,
+    snap: { m0: b.m, d0: b.delta, m1: b.m, d1: b.delta } })));
+  lastTree = tree; roundT = inRound ? t : ROUND;
+  if (!interactive() && (ix.hover || ix.open || ix.peek)) resetIx();
+  X = ixFrame();
+  const popped = X.popId && X.pop > 0 ? tree.map.get(X.popId) : null;
+  if (popped) lift(popped, IX.pop * X.pop);
 
   const fresh = inRound ? r.open.filter(a => r.fresh.has(a.id)) : [];
   const dimOn = inRound && fresh.length > 0 && !still;
@@ -572,9 +986,19 @@ function render(wall) {
   if (seg === 'rewind') duck *= 0.8;
 
   // --- concept layer ---
+  // Hovered or open: the rays and particles inside the item's wedge (out to the edge of the picture) and its own
+  // inputs keep their light; everything else drops to 40 %.
+  const fw = X.focus && X.dim > 0 ? tree.map.get(X.focus) : null;
+  const fa0 = fw ? cellAngle(fw.c0) - 0.004 : 0, fa1 = fw ? cellAngle(fw.c1) + 0.004 : 0, fDim = 1 - 0.6 * X.dim, fIn2 = (G.r0 - 12) ** 2;
+  const fk = (x, y) => {
+    const dx = x - G.origin.x, dy = G.origin.y - y;
+    if (dx * dx + dy * dy < fIn2) return fDim;
+    const phi = Math.atan2(dx, dy);
+    return phi >= fa0 && phi <= fa1 ? 1 : fDim;
+  };
   let np = 0, nl = 0;
-  const pushPoint = (x, y, s, a, ring = 0) => { if (np >= MAX_POINTS || a <= 0.003) return; const o = np * 5; pointBuf[o] = x; pointBuf[o + 1] = y; pointBuf[o + 2] = s; pointBuf[o + 3] = a; pointBuf[o + 4] = ring; np += 1; };
-  const pushLine = (x0, y0, a0, x1, y1, a1) => { if (nl + 2 > MAX_LINES || (a0 <= 0.002 && a1 <= 0.002)) return; const o = nl * 3; lineBuf[o] = x0; lineBuf[o + 1] = y0; lineBuf[o + 2] = a0; lineBuf[o + 3] = x1; lineBuf[o + 4] = y1; lineBuf[o + 5] = a1; nl += 2; };
+  const pushPoint = (x, y, s, a, ring = 0, keep = false) => { if (fw && !keep) a *= fk(x, y); if (np >= MAX_POINTS || a <= 0.003) return; const o = np * 5; pointBuf[o] = x; pointBuf[o + 1] = y; pointBuf[o + 2] = s; pointBuf[o + 3] = a; pointBuf[o + 4] = ring; np += 1; };
+  const pushLine = (x0, y0, a0, x1, y1, a1) => { if (fw) { a0 *= fk(x0, y0); a1 *= fk(x1, y1); } if (nl + 2 > MAX_LINES || (a0 <= 0.002 && a1 <= 0.002)) return; const o = nl * 3; lineBuf[o] = x0; lineBuf[o + 1] = y0; lineBuf[o + 2] = a0; lineBuf[o + 3] = x1; lineBuf[o + 4] = y1; lineBuf[o + 5] = a1; nl += 2; };
   const T2 = still ? 0 : T;
   // Under the afterglow a still light piles up to 1/(1-keep) of itself; what stays put deposits only (1-keep) per frame,
   // so it settles at its own alpha, and only what moves leaves a trail. Canvas 2D has no afterglow.
@@ -629,6 +1053,8 @@ function render(wall) {
       const ts = P.ts[p];
       if (t < ts) continue;
       const land = ts + P.dur[p], fate = P.fate[p];
+      // The hovered or open item's own inputs stay lit wherever they are.
+      const mine = fw !== null && fate === 1 && P.target[p] >= 0 && P.targets[P.target[p]] === fw.id;
       let phi = P.phi[p], rad, a = P.alpha[p], s = P.size[p];
       if (t < land) {
         // Falling in along its ray toward the root: fast, then settling.
@@ -645,7 +1071,7 @@ function render(wall) {
         if (!still) phi += (Math.sin(T * 1.3 + P.seed[p]) * 0.5) / P.r1[p];
         a *= norm * (1 + (still ? 0 : (fate === 5 ? 1.2 : 2.6) * Math.exp(-since / 0.12)));
         // Each input carries a soft halo, so the 234 read as the cloud and the motes and stars as texture.
-        if (fate !== 5) { const at = polar(phi, rad); pushPoint(at.x, at.y, s * 2.6, a * 0.2, 2); }
+        if (fate !== 5) { const at = polar(phi, rad); pushPoint(at.x, at.y, s * 2.6, a * 0.2, 2, mine); }
       } else {
         const since = t - P.tt[p];
         if (fate === 1) {
@@ -662,11 +1088,11 @@ function render(wall) {
             if (t >= ARC1 - 0.02 || still) {
               // It rests on its cell until its light leaves; the light is drawn with the branches.
               if (t >= P.leave[p] || still) continue;
-              pushPoint(b.base.x, b.base.y, s * 1.15, a * norm * 1.4);
+              pushPoint(b.base.x, b.base.y, s * 1.15, a * norm * 1.4, 0, mine);
               continue;
             }
             a *= 1 + 0.25 * k;   // moving at full strength, so the afterglow draws its track
-            if (k > 0) { const at = polar(phi, rad); pushPoint(at.x, at.y, s * 2.2, 0.5 * k, 2); }   // inside the fan only the adopted are left: they glow
+            if (k > 0) { const at = polar(phi, rad); pushPoint(at.x, at.y, s * 2.2, 0.5 * k, 2, mine); }   // inside the fan only the adopted are left: they glow
           }
         } else if (fate === 2) {
           // Carried to the rim, dimming as it goes, and left there as an ember.
@@ -690,7 +1116,7 @@ function render(wall) {
         }
       }
       const at = polar(phi, rad);
-      pushPoint(at.x, at.y, s, a, P.ring[p]);
+      pushPoint(at.x, at.y, s, a, P.ring[p], mine);
     }
     // The light running up each branch: its glow and track here, its bright core with the branches.
     if (!still) for (const [id, run] of P.runs) {
@@ -717,7 +1143,8 @@ function render(wall) {
     }
   }
   livePoints = np; livePeak = Math.max(livePeak, np);
-  field.frame({ points: pointBuf, pointCount: np, lines: lineBuf, lineCount: nl, duck, flash, masks: G.masks, dt, still: still || Boolean(play.frozen && play.frozen.still) });
+  const cards = cardMasks();
+  field.frame({ points: pointBuf, pointCount: np, lines: lineBuf, lineCount: nl, duck, flash, masks: cards.length ? [...G.masks, ...cards] : G.masks, dt, still: still || Boolean(play.frozen && play.frozen.still) });
 
   // --- information layer ---
   drawInfo({ i, r, t, seg, tree, P, dim, fresh, still });
@@ -728,6 +1155,10 @@ function render(wall) {
   const words = seg === 'rewind' && !still ? smooth01(Math.abs(1 - (2 * t) / REWIND) * 1.15) : 1;
   if (swap) paintText({ i: 0, r: rounds[0], t: OPEN, seg: 'open', P: null, dim: dim * words, fresh: [] });
   else paintText({ i, r, t, seg, P, dim: dim * words, fresh });
+  // The cards follow the names just placed; their masks reach the concept layer on the next frame.
+  paintPeek(i);
+  paintDetail();
+  syncItems();
   if (perfOn) paintPerf();
 }
 
@@ -757,7 +1188,7 @@ function strokePath(pts, upto = 1) {
 }
 const ink = a => `rgba(${INK[0]}, ${INK[1]}, ${INK[2]}, ${clamp(a).toFixed(3)})`;
 const vermA = a => VERM.replace('rgb(', 'rgba(').replace(')', `, ${clamp(a).toFixed(3)})`);
-const cellCenter = b => onRoot(b.angle, 0);
+const cellCenter = b => onRoot(b.angle, b.lift || 0);
 // A path along a branch from fraction u0 to u1 of its full length.
 function traceBranch(b, u0, u1) {
   const n = Math.max(2, Math.ceil((u1 - u0) * 24));
@@ -777,13 +1208,18 @@ function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
   // Root: 64 cells. Items fill contiguous cells in the same order as their branches; the rest is open budget.
   const openingGlow = seg === 'open' && !still ? bump(t, 0.4, 0.95) : 0;
   const O = G.origin, used0 = tree.start, used1 = tree.start + tree.used;
+  // Hovered or open: that item's branch, cells, lines, name and threads keep full strength, the others drop to 70 %,
+  // and the share lines inside its wedge come up a little.
+  const fw = X.focus && X.dim > 0 ? tree.map.get(X.focus) : null, others = 1 - 0.3 * X.dim;
+  const fo = b => (fw && b.id !== fw.id ? others : 1);
   // The 64 share lines: always on screen. Unallocated shares are the faintest grey; allocated ones sit under their branch.
   info.lineWidth = 1;
   for (let c = 0; c < 64; c += 1) {
     const covered = clamp(Math.min(c + 1, used1) - Math.max(c, used0));
     const phi = cellAngle(c + 0.5), a = onRoot(phi, 10), b = onFan(phi, 1);
+    const mine = fw && c + 0.5 > fw.c0 && c + 0.5 < fw.c1;
     info.setLineDash(covered > 0.5 ? [] : [1.5, 4.5]);
-    info.strokeStyle = ink((covered > 0.5 ? 0.06 + 0.1 * covered : 0.15) * (1 - openingGlow) * D + 0.5 * openingGlow * D);
+    info.strokeStyle = ink(((covered > 0.5 ? 0.06 + 0.1 * covered : 0.15) * (1 - openingGlow) * D + 0.5 * openingGlow * D) * (!fw ? 1 : mine ? 1 : others) + (mine ? 0.12 * X.dim * D : 0));
     info.beginPath(); info.moveTo(a.x, a.y); info.lineTo(b.x, b.y); info.stroke();
   }
   info.setLineDash([]);
@@ -793,7 +1229,7 @@ function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
   // The root: 64 cells on an arc. Items fill contiguous cells under their branches; the rest is open budget.
   const gap = 0.0045;
   info.lineWidth = 7; info.lineCap = 'butt';
-  info.strokeStyle = ink((0.13 + 0.5 * openingGlow) * D);
+  info.strokeStyle = ink((0.13 + 0.5 * openingGlow) * D * (fw ? others : 1));
   for (let c = 0; c < 64; c += 1) {
     const lo = Math.max(c, used0), hi = Math.min(c + 1, used1);
     if (hi - lo >= 0.98) continue;
@@ -801,12 +1237,13 @@ function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
   }
   for (const b of tree.list) {
     if (b.c1 - b.c0 <= 0.01) continue;
-    info.strokeStyle = ink((0.72 * b.alpha * (1 - b.grey * 0.6) + 0.1) * D);
+    info.strokeStyle = ink((0.72 * b.alpha * (1 - b.grey * 0.6) + 0.1) * D * fo(b));
     for (let c = Math.floor(b.c0 + 1e-6); c < Math.ceil(b.c1 - 1e-6); c += 1) {
       const lo = Math.max(b.c0, c), hi = Math.min(b.c1, c + 1);
       // A sliver narrower than the gaps would make canvas draw the long way round.
       if (cellAngle(hi) - cellAngle(lo) <= 2 * gap + 0.002) continue;
-      info.beginPath(); info.arc(O.x, O.y, G.r0, cellAngle(lo) + gap - Math.PI / 2, cellAngle(hi) - gap - Math.PI / 2); info.stroke();
+      // The open item's cells step out with its branch, on a concentric arc.
+      info.beginPath(); info.arc(O.x, O.y, G.r0 + b.lift, cellAngle(lo) + gap - Math.PI / 2, cellAngle(hi) - gap - Math.PI / 2); info.stroke();
     }
   }
   info.font = `11px ${MONO}`;
@@ -831,11 +1268,11 @@ function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
     if (b.alpha <= 0.01 || b.length <= 0.01) continue;
     const run = runOf(b);
     const lw = 0.7 + Math.max(0, b.share) * 0.34;
-    const greyA = b.alpha * 0.9 * D, inkA = 0.88 * b.alpha * D;
+    const greyA = b.alpha * 0.9 * D * fo(b), inkA = 0.88 * b.alpha * D * fo(b);
     const col = k => (b.grey ? `rgba(${lerp(INK[0], 120, b.grey) | 0}, ${lerp(INK[1], 120, b.grey) | 0}, ${lerp(INK[2], 120, b.grey) | 0}, ${(greyA * k).toFixed(3)})` : ink(inkA * k));
     const lit = run ? easeInOut((t - run.leave[0]) / FLOW) : 1;
     const wait = run ? 1 - 0.5 * smooth01((t - RIM) / 0.4) : 1;
-    info.beginPath(); info.moveTo(b.base.x, b.base.y); info.quadraticCurveTo(b.ctrl.x, b.ctrl.y, b.tip.x, b.tip.y);
+    info.beginPath(); info.moveTo(b.base.x, b.base.y); info.lineTo(b.tip.x, b.tip.y);
     info.strokeStyle = ink(0.02 * b.alpha * D); info.lineWidth = lw + 2; info.stroke();
     info.strokeStyle = col(lit >= 1 ? 1 : wait); info.lineWidth = lw; info.stroke();
     if (lit > 0 && lit < 1) { traceBranch(b, 0, lit); info.strokeStyle = col(1); info.stroke(); }
@@ -847,7 +1284,7 @@ function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
   for (const b of tree.list) {
     const run = runOf(b);
     if (!run || b.alpha <= 0.02) continue;
-    const lw = 0.7 + Math.max(0, b.share) * 0.34, tipR = 1.6 + b.share * 0.07;
+    const lw = 0.7 + Math.max(0, b.share) * 0.34, tipR = 1.6 + b.share * 0.07, D = dim * fo(b);
     let resting = false, tipHot = 0;
     run.leave.forEach((at, k) => {
       if (t >= ARC1 - 0.02 && t < at) resting = true;
@@ -865,7 +1302,7 @@ function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
     });
     const after = t - run.reach[run.reach.length - 1];
     if (after >= 0 && after < 0.35) {
-      info.beginPath(); info.moveTo(b.base.x, b.base.y); info.quadraticCurveTo(b.ctrl.x, b.ctrl.y, b.tip.x, b.tip.y);
+      info.beginPath(); info.moveTo(b.base.x, b.base.y); info.lineTo(b.tip.x, b.tip.y);
       info.strokeStyle = ink(0.13 * (1 - after / 0.35) * b.alpha * D); info.lineWidth = lw + 6; info.stroke();
     }
     if (resting) {
@@ -884,6 +1321,7 @@ function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
       info.beginPath(); info.arc(b.tip.x, b.tip.y, tipR + 1.8 * tipHot, 0, Math.PI * 2); info.fill();
     }
   }
+  drawLeaders();
   // Names at the larger tips and at every tip with a question open, outlined so the cloud never covers them.
   const openIds = new Set((inRound && t < STRIKE ? r.prevOpen : seg === 'open' ? [] : r.open).map(a => a.item));
   info.font = `11.5px ${MONO}`;
@@ -901,9 +1339,10 @@ function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
     }
     if (!box) continue;
     placed.push(box);
+    b.labelBox = box;   // the name is part of the branch's hover target
     info.textAlign = align;
     info.lineWidth = 4; info.strokeStyle = `rgba(9, 10, 11, ${(0.9 * b.alpha).toFixed(3)})`; info.strokeText(label, tx, ty);
-    info.fillStyle = ink(0.8 * b.alpha * D); info.fillText(label, tx, ty);
+    info.fillStyle = ink((fw && b.id === fw.id ? 0.8 + 0.2 * X.dim : 0.8) * b.alpha * D * fo(b)); info.fillText(label, tx, ty);
   }
   // Vermilion: registered questions only. Open threads, responses running up, strikes.
   const threads = [];
@@ -931,7 +1370,7 @@ function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
   info.lineCap = 'round'; info.lineJoin = 'round';
   for (const th of threads) {
     const seen = bolt(th.a.id, th.b);
-    const dimK = th.strike ? 1 : D;
+    const dimK = th.strike ? 1 : D * fo(th.b);
     if (th.grey) { info.strokeStyle = `rgba(150, 150, 150, ${(th.alpha * dimK).toFixed(3)})`; info.lineWidth = 1; strokePath(seen, th.to); continue; }
     if (th.hot) {
       info.strokeStyle = vermA(0.1 * th.hot); info.lineWidth = 18; strokePath(seen, th.to);
@@ -947,6 +1386,7 @@ function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
     }
     info.strokeStyle = vermA(th.alpha * dimK); info.lineWidth = th.hot ? 2.2 : 1.1; strokePath(seen, th.to);
   }
+  if (debugGeom) drawGeom(tree);
   // A response to a registered question runs from the root up its thread.
   if (inRound) r.pulses.forEach((pu, k) => {
     const b = tree.map.get(pu.item);
@@ -959,6 +1399,45 @@ function drawInfo({ i, r, t, seg, tree, P, dim, fresh, still }) {
     info.fillStyle = vermA(0.25); info.beginPath(); info.arc(x, yy, 7, 0, Math.PI * 2); info.fill();
     info.fillStyle = vermA(1); info.beginPath(); info.arc(x, yy, 2.6, 0, Math.PI * 2); info.fill();
   });
+}
+
+// ---------- ?debug=geom: every branch against the rays, read back from the drawn coordinates ----------
+// Angles are measured from the root's centre (0 up, positive to the right) off the points actually drawn: the
+// branch's base and tip, the information layer's 64 share lines (cellAngle(c + 0.5)) and the concept layer's
+// rays, taken from its own backdrop segments. All differences are in degrees.
+function geomOf(tree) {
+  if (!tree || !G) return [];
+  const deg = a => (a * 180) / Math.PI;
+  const angleOf = (x, y) => Math.atan2(x - G.origin.x, G.origin.y - y);
+  const lines = Array.from({ length: 64 }, (_, c) => { const p = onFan(cellAngle(c + 0.5), 1); return angleOf(p.x, p.y); });
+  const concept = [...new Set(backdrop.map(([, , , x1, y1]) => Math.round(angleOf(x1, y1) * 1e9)))].map(v => v / 1e9);
+  const nearest = (list, a) => list.reduce((best, x) => (Math.abs(x - a) < Math.abs(best - a) ? x : best), Infinity);
+  return tree.list.filter(b => b.alpha > 0.02 && b.length > 0.02).map(b => {
+    const base = angleOf(b.base.x, b.base.y), tip = angleOf(b.tip.x, b.tip.y), ray = nearest(lines, tip);
+    return {
+      id: b.id, short: shortOf(b.id), share: Number(b.share.toFixed(3)), cells: [Number(b.c0.toFixed(3)), Number(b.c1.toFixed(3))],
+      ray: Number(((tip - cellAngle(0)) / (G.fan / 64) - 0.5).toFixed(3)),
+      base: deg(base), tip: deg(tip), dBase: deg(base - nearest(lines, base)), dTip: deg(tip - ray), dConcept: deg(tip - nearest(concept, tip)),
+      inWedge: tip >= cellAngle(b.c0) - 1e-9 && tip <= cellAngle(b.c1) + 1e-9, merging: Boolean(b.mergeInto),
+    };
+  });
+}
+function drawGeom(tree) {
+  const rows = geomOf(tree);
+  info.save();
+  info.font = `10.5px ${MONO}`; info.textAlign = 'left'; info.textBaseline = 'top';
+  info.strokeStyle = 'rgba(80, 220, 255, 0.9)'; info.fillStyle = 'rgba(80, 220, 255, 0.95)'; info.lineWidth = 1;
+  for (const b of tree.list) {
+    if (b.alpha <= 0.02 || b.length <= 0.02) continue;
+    for (const p of [b.base, b.tip]) { info.beginPath(); info.moveTo(p.x - 4, p.y); info.lineTo(p.x + 4, p.y); info.moveTo(p.x, p.y - 4); info.lineTo(p.x, p.y + 4); info.stroke(); }
+  }
+  const worst = rows.reduce((m, x) => Math.max(m, Math.abs(x.dBase), Math.abs(x.dTip), Math.abs(x.dConcept)), 0);
+  const text = [`geom · ${rows.length} 枝 · 最大角度差 ${worst.toFixed(4)}°`, ...rows.map(x => `${x.short.padEnd(8, '　')} ${String(x.share).padStart(6)} 份  射线 ${x.ray}  Δ根 ${x.dBase.toFixed(4)}°  Δ梢 ${x.dTip.toFixed(4)}°  Δ概念 ${x.dConcept.toFixed(4)}°${x.inWedge ? '' : '  楔形外'}`)];
+  const x0 = G.W - G.pad - 520, y0 = G.pad + 40;
+  info.fillStyle = 'rgba(9, 10, 11, 0.85)'; info.fillRect(x0 - 8, y0 - 6, 528, text.length * 14 + 10);
+  info.fillStyle = 'rgba(80, 220, 255, 0.95)';
+  text.forEach((line, k) => info.fillText(line, x0, y0 + k * 14));
+  info.restore();
 }
 
 const fmt = n => String(Math.round(n));
@@ -985,6 +1464,9 @@ function paintText({ i, r, t, seg, P, dim, fresh }) {
     if (fresh.length && t >= STRIKE) asked = ` · 新问 ${fresh.length}`;
     count = `第 ${i} / ${LAST} 轮 · 累计 ${(i ? rounds[i - 1].cumulative : 0) + nShown} 条`;
   }
+  // An open item takes the narration: one cut on open, one on close (as the dial's title card).
+  const view = X.detail && seg !== 'open' ? ix.view : null;
+  if (view) { signal = `这一件 · ${f.id} · ${dayTime(f.at)}`; say = `第 ${view.i} 轮 · ${view.title}`; }
   const key = `${signal}|${say}|${label}|${fmt(nShown)}|${moved}|${asked}|${count}`;
   if (key !== textKey) {
     textKey = key; G.masks = null;   // the words moved: the concept layer steps aside from where they are now
@@ -996,7 +1478,7 @@ function paintText({ i, r, t, seg, P, dim, fresh }) {
   // Beat 2 lowers the hero to half; the readout keeps full strength.
   const heroK = inRound ? lerp(1, 0.5, easeOut((t - B2) / 0.3)) : seg === 'open' ? 0.45 : 1;
   el.n.style.opacity = (heroK * dim).toFixed(3);
-  paintPanels({ i, r, t, seg, P, fresh });
+  paintPanels({ i, r, t, seg, P, fresh, view });
   if (Math.abs(dim - lastDim) > 0.005) {
     lastDim = dim;
     stage.querySelectorAll('.pl-dim').forEach(node => { if (node !== el.n) node.style.opacity = dim.toFixed(3); });
@@ -1004,8 +1486,9 @@ function paintText({ i, r, t, seg, P, dim, fresh }) {
   }
 }
 
-function paintPanels({ i, r, t, seg, P, fresh }) {
+function paintPanels({ i, r, t, seg, P, fresh, view }) {
   const inRound = seg === 'round';
+  if (view) { paintItemPanels({ i, r, t, seg }, view); return; }
   const n = r.events.length;
   const landed = inRound && P ? countUpTo(P.landed, t) : seg === 'open' ? 0 : n;
   const out = inRound && P ? countUpTo(P.resolved, t) : seg === 'open' ? 0 : n - r.used;
@@ -1048,6 +1531,43 @@ function paintPanels({ i, r, t, seg, P, fresh }) {
   lastDim = -1;
 }
 
+// While one item is open the three panels take its view, on the round's own beats: a value shows once its beat has
+// come (its inputs once the sweep has brought them to the root, its share once “动了” lands, questions after the
+// strike), so a round held mid-way does not tell what has not happened yet.
+function paintItemPanels({ i, r, t, seg }, v) {
+  const inRound = seg === 'round';
+  const at = k => !inRound || t >= k;
+  const askPhase = inRound ? (t < 0.3 ? 0 : t < SHIFT ? 1 : t < STRIKE ? 2 : 3) : 3;
+  const stageNo = inRound ? STAGES.filter(([k]) => t >= k).length - 1 : -1;
+  const key = `item|${v.id}|${i}|${at(ARC1)}|${at(READOUT)}|${askPhase}|${stageNo}`;
+  if (key === panelKey) return;
+  panelKey = key;
+  const n = v.inputs.length;
+  const byLane = factLanes.map((lane, k) => ({ label: lane.label, n: v.inputs.filter(x => x.lane === k).length })).filter(x => x.n);
+  el.round.innerHTML = `<h3>这一件 <small>${esc(frames[i].id)} · ${esc(v.short)}</small></h3>
+    <dl><dt>份额</dt><dd>${at(READOUT) ? v.share : v.before}<small>/ 64${at(READOUT) ? (v.change ? ` · ${esc(v.change.text)}` : '') : ' · …'}</small></dd>
+      <dt>进了它</dt><dd>${at(ARC1) ? n : '…'}<small>条 · 本轮采用的输入</small></dd>
+      <dt>来自</dt><dd>${esc(v.stream.join(' · ') || '—')}<small>按它到这一轮采用的输入</small></dd></dl>
+    ${at(ARC1) && byLane.length ? `<div class="pl-lanes">${byLane.map(x => `<i style="flex:${x.n}" title="${esc(`${x.label} ${x.n}`)}"></i>`).join('')}</div><p class="pl-lane-words">${esc(byLane.map(x => `${x.label} ${x.n}`).join(' · '))}</p>` : ''}`;
+  // Its questions: before the strike, last round's (answered struck, lapsed grey); after it, this round's, with deadlines.
+  const dueOf = id => v.asks.find(a => a.id === id)?.due || '';
+  const rows = askPhase < 3
+    ? r.prevOpen.filter(a => a.item === v.id).map(a => ({ a, state: r.answered.has(a.id) && askPhase >= 1 ? 'answered' : r.lapsed.has(a.id) && askPhase >= 2 ? 'lapsed' : '' }))
+    : r.open.filter(a => a.item === v.id).map(a => ({ a, state: inRound && r.fresh.has(a.id) ? 'fresh' : '' }));
+  const mark = { fresh: '新', answered: '答', lapsed: '失效' };
+  el.asks.innerHTML = `<h3>它的问题 <b>${rows.filter(x => !x.state || x.state === 'fresh').length}</b><small>${esc(v.short)}</small></h3>
+    <ul>${rows.slice(0, 4).map(({ a, state }) => `<li class="${state ? `is-${state}` : ''}"><b>${mark[state] || '·'}</b>${esc(a.short)}${dueOf(a.id) ? `<small>${esc(dueOf(a.id))}</small>` : ''}</li>`).join('')}</ul>
+    ${rows.length ? '' : '<p class="pl-more">没有开着的问题</p>'}`;
+  // The four stages: lit where the round touched it (itemFacts phases), each value on its beat.
+  const asked = asksSeen(v, { asks: true }).length;
+  const values = [[ARC1, `${n} 条`], [ARC1, `采用 ${n}`], [READOUT, v.change?.text || '—'], [STRIKE, asked ? `问 ${asked}` : '—']];
+  el.pipe.innerHTML = `<h3>流水线 <small>这一件</small></h3><ol>${['收到', '归并', '分配', '回应'].map((name, k) => {
+    const shown = at(values[k][0]), touched = k === 3 ? asked > 0 : v.phases[k];
+    return `<li class="${shown && touched ? 'is-on' : ''}"><span>${k + 1}</span>${name}<em>${shown ? esc(values[k][1]) : '…'}</em></li>`;
+  }).join('')}</ol>`;
+  lastDim = -1;
+}
+
 let perfTick = 0;
 function paintPerf() {
   if ((perfTick += 1) % 15 || !frameTimes.length) return;
@@ -1059,7 +1579,10 @@ function paintPerf() {
 let raf = 0;
 function loop(ms) {
   raf = requestAnimationFrame(loop);
-  if (play.frozen?.done) return;
+  // A held still stops drawing, except while a hover or detail moves on it (and for one frame after).
+  const live = ixLive();
+  if (play.frozen?.done && !live && !ix.tail) return;
+  ix.tail = live;
   const c0 = performance.now();
   render(ms / 1000);
   if (!play.frozen) { cpuTimes.push(performance.now() - c0); if (cpuTimes.length > 1800) cpuTimes.shift(); }
@@ -1071,7 +1594,12 @@ new ResizeObserver(() => { measure(); textKey = ''; panelKey = ''; if (play.froz
 measure();
 document.addEventListener('click', event => {
   const b = event.target.closest('button');
-  if (!b) return;
+  // Keyboard proxies: Enter or Space on a focused branch opens it, again folds it.
+  if (b?.dataset.branch) { const id = b.dataset.branch; if (ix.open === id && ix.closeAt == null) closeItem(); else openItem(id, true); return; }
+  // A click outside the stage (the bar, the concept card) also folds an open detail back.
+  if (!b) { if (ix.open && !event.target.closest('.pl-stage, a')) closeItem(); return; }
+  if (b.closest('.pl-detail')) return;
+  if ('play' in b.dataset) resetIx();
   if (b.dataset.step) go(play.index + Number(b.dataset.step));
   else if (b.dataset.frame) go(Number(b.dataset.frame));
   else if ('play' in b.dataset) togglePlay();
@@ -1079,10 +1607,34 @@ document.addEventListener('click', event => {
 });
 document.addEventListener('keydown', event => {
   if (event.target.matches('input,textarea,select,[contenteditable]') || event.metaKey || event.ctrlKey || event.altKey) return;
+  // Esc folds the open detail back (or drops the summary); Enter and Space on a branch or in the card are theirs.
+  if (event.key === 'Escape') { if (ix.open) { event.preventDefault(); closeItem(); } else if (ix.hover) setHover(null, 'now'); return; }
+  if ((event.key === ' ' || event.key === 'Enter') && event.target.closest?.('.pl-sr-items, .pl-detail')) return;
   if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); go(play.index + (event.key === 'ArrowLeft' ? -1 : 1)); }
   else if (event.key === 'Home' || event.key === 'End') { event.preventDefault(); go(event.key === 'Home' ? 0 : LAST); }
-  else if (event.key === ' ' && !event.target.closest('button, a, summary')) { event.preventDefault(); togglePlay(); }
+  else if (event.key === ' ' && !event.target.closest('button, a, summary')) { event.preventDefault(); resetIx(); togglePlay(); }
 });
+// Hover: the pointer over a branch, its name, its tip or its cells (itemAt); touch has no hover, so the first tap on
+// a branch is the hover and a second tap (or a tap on its card) opens it.
+stage.addEventListener('pointermove', event => {
+  if (event.pointerType === 'touch') return;
+  const id = pointerItem(event);
+  stage.style.cursor = id ? 'pointer' : '';
+  if (id) setHover(id, 'pointer');
+  else if (ix.via === 'pointer') setHover(null);
+});
+stage.addEventListener('pointerleave', () => { if (ix.via === 'pointer') setHover(null); });
+stage.addEventListener('pointerdown', event => { ix.pointer = event.pointerType || 'mouse'; });
+stage.addEventListener('click', event => {
+  if (event.target.closest('.pl-detail')) { if (event.target.closest('[data-x="close"]')) closeItem(); return; }
+  if (event.target.closest('a, button')) return;
+  const id = pointerItem(event);
+  if (id && ix.pointer === 'touch' && ix.hover !== id && ix.open !== id) { setHover(id, 'touch'); return; }
+  if (id) { if (ix.open === id && ix.closeAt == null) closeItem(); else openItem(id); return; }
+  if (ix.open) closeItem(); else if (ix.hover && ix.via !== 'key') setHover(null, 'now');
+});
+el.items.addEventListener('focusin', event => { const id = event.target.dataset?.branch; if (id) setHover(id, 'key'); });
+el.items.addEventListener('focusout', event => { if (ix.via === 'key' && !el.items.contains(event.relatedTarget)) setHover(null, 'now'); });
 // Start: ?from= plays on from that round, ?frame= plays one round and holds, neither plays from the empty state.
 if (fromParam != null) go(fromParam, { autoplay: true });
 else if (frameParam != null) go(frameParam);
@@ -1094,17 +1646,34 @@ window.foldPulse = {
   rounds, get index() { return play.index; },
   seek(index, t, seg = 'round') {
     index = clamp(Math.round(index), 0, LAST);
+    seg = seg === 'round' && index === 0 ? 'open' : seg;
+    // Another moment drops hover and detail; the same one (a resize re-runs it) keeps them.
+    if (index !== play.index || seg !== play.seg) resetIx();
     play.playing = false; paintPlay();
-    enter(index, seg === 'round' && index === 0 ? 'open' : seg);
+    enter(index, seg);
     // Run the last 0.3 s at 60 fps so the afterglow builds, then hold.
-    const T = now();
-    play.frozen = null;
+    const T = now(), held = hold.at;
+    play.frozen = null; hold.at = null;
     for (let k = 18; k >= 1; k -= 1) { play.t0 = T - (t - k / 60); lastFrameAt = T - 1 / 60; render(T); }
+    hold.at = held;
     play.frozen = { t, T, still: false, done: false };
     play.t0 = T - t;
     return { index, t, seg: play.seg };
   },
   resume() { play.frozen = null; play.t0 = now(); },
+  // Interaction hooks for stills and checks, as foldDial's: a branch by id or by its short name (母亲换水管, 猫看病).
+  // ixAt(seconds) pins the open or close motion at that moment; ixAt(null) lets it run.
+  hover: name => setHover(itemNamed(name), 'pointer'), unhover: () => setHover(null, 'now'),
+  open: name => openItem(itemNamed(name)), close: () => closeItem(), ixAt: at => { ix.fixed = at ?? null; }, ix,
+  paused: () => hold.at != null,
+  // Where a branch's middle is on the page (for driving a real pointer in checks).
+  pointOf: name => {
+    const b = lastTree?.map.get(itemNamed(name));
+    if (!b) return null;
+    const box = stage.getBoundingClientRect();
+    return { x: box.left + (b.base.x + b.tip.x) / 2, y: box.top + (b.base.y + b.tip.y) / 2 };
+  },
+  facts: (i, id) => factsOf(i, id),
   go, play: () => { if (!play.playing) togglePlay(); }, pause: () => { play.playing = false; paintPlay(); },
   stats() {
     const s = [...frameTimes].sort((a, b) => a - b), mean = s.reduce((x, y) => x + y, 0) / (s.length || 1);
@@ -1112,6 +1681,9 @@ window.foldPulse = {
       cpuMs: cpuTimes.length ? cpuTimes.reduce((x, y) => x + y, 0) / cpuTimes.length : null, cpuP95Ms: cpuTimes.length ? [...cpuTimes].sort((x, y) => x - y)[Math.floor(cpuTimes.length * 0.95)] : null };
   },
   resetStats() { frameTimes.length = 0; cpuTimes.length = 0; livePeak = 0; },
+  // The branches of the frame on screen against the rays (?debug=geom draws the same); geom(i, t) computes the tree
+  // of round i at second t without drawing it.
+  geom: (i, t) => geomOf(i == null ? lastTree : treeAt(rounds[i], t, rounds[i].events.length ? particlesFor(i).runs : NO_RUNS)),
   // What the cloud of round i is made of: bright particles by fate, against the round's inputs.
   census(index) {
     const P = rounds[index].events.length ? particlesFor(index) : null, n = { inputs: rounds[index].events.length, bright: 0, motes: 0, adopted: 0, embers: 0, out: 0, dissolve: 0, lights: 0 };

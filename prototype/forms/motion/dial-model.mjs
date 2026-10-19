@@ -146,11 +146,18 @@ function subtreeOf(snapshot, id) {
   return out;
 }
 const sourceOf = event => String(event.channel || '').split(' · ')[0] || '来源';
-const factCache = new Map();
-/** Facts about root item `id` in round i: name, share and its change, streams, inputs, open asks, responses, trend. */
-export function itemFacts(i, id) {
+const factCache = new Map(), intoCaches = new WeakMap();
+/**
+ * Facts about root item `id` in round i: name, share and its change, streams, inputs, open asks, responses, trend.
+ * `into(round, k)` optionally says which root item input k of a round (its index in frame.events) was taken into,
+ * for a page that assigns inputs by its own rule and must count the same ones it draws (整理脉冲 follows the batch's
+ * cited sources first); without it, the ring's rule (relatedIds, rounds[].events[].root).
+ */
+export function itemFacts(i, id, into = null) {
+  const cache = !into ? factCache : intoCaches.get(into) || intoCaches.set(into, new Map()).get(into);
   const key = `${i}:${id}`;
-  if (factCache.has(key)) return factCache.get(key);
+  if (cache.has(key)) return cache.get(key);
+  const takes = (round, e) => (into ? into(round, e.k) : e.root) === id;
   const r = rounds[i], prev = rounds[Math.max(0, i - 1)];
   const record = records[i], state = record.state, stored = record.snapshot.items[id];
   const live = getItem(state, id);
@@ -163,11 +170,11 @@ export function itemFacts(i, id) {
           : share < before ? { kind: 'down', text: `变小 ${before} → ${share}` } : { kind: 'same', text: `不变 ${share} 份` };
   // Which stream feeds it: the lanes of every input taken into it so far (a second one if it brings a third as many).
   const perLane = lanes.map(() => 0);
-  for (let k = 1; k <= i; k += 1) for (const e of rounds[k].events) if (e.root === id) perLane[e.lane] += 1;
+  for (let k = 1; k <= i; k += 1) for (const e of rounds[k].events) if (takes(k, e)) perLane[e.lane] += 1;
   const ranked = perLane.map((n, lane) => ({ n, lane })).filter(x => x.n).sort((a, b) => b.n - a.n);
   const stream = ranked.filter((x, k) => !k || x.n * 3 >= ranked[0].n).slice(0, 2).map(x => lanes[x.lane].label);
   // This round's inputs taken into it, with the source and a clipped title from the original event.
-  const inputs = r.events.filter(e => e.root === id).map(e => {
+  const inputs = r.events.filter(e => takes(i, e)).map(e => {
     const event = frames[i].events[e.k];
     return { k: e.k, lane: e.lane, at: Date.parse(event.at), source: sourceOf(event), from: event.from || '', self: e.self,
       title: clip(String(event.subject || event.text || '').replace(/\s+/g, ' ').trim(), 30) };
@@ -197,6 +204,6 @@ export function itemFacts(i, id) {
     // Which of the round's four phases touched it: inputs came in, were taken in, its share moved, it asks you.
     phases: [inputs.length > 0, inputs.length > 0, Boolean(change) && change.kind !== 'same', asks.length > 0],
   };
-  factCache.set(key, value);
+  cache.set(key, value);
   return value;
 }
