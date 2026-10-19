@@ -48,7 +48,7 @@ make prototype
 | A 空间排布 | 桌前，生活急事要当场二选一 | choose、稍后；也能批准、定时间、回一句 | [?variant=a&frame=26](./index.html?variant=a&frame=26) | [spatial.md](forms/polish/spatial.md) |
 | B 时间展开 | 期限落在此刻之后的哪里，谁先到 | schedule、choose，任何事项都可稍后提醒 | [?variant=b&frame=26](./index.html?variant=b&frame=26) | [temporal.md](forms/polish/temporal.md) |
 | C 流动形态 | 可以推后的事沉下去，到点浮起 | defer；其余用回应组件 | [?variant=c&frame=25](./index.html?variant=c&frame=25) | [temporal.md](forms/polish/temporal.md) |
-| D 手机首页 | 离开半天回来，先答最急的 3 件 | approve、choose 一键；confirm、reply、schedule、defer | [?variant=d&frame=26](./index.html?variant=d&frame=26) | [home.md](forms/polish/home.md) |
+| D 手机首页 | 离开半天回来，先答最急的 3 件；作答时卡原地收成回执，下一轮整理先确认回执、再带着让出的份额沉到进行中 | approve、choose 一键；confirm、reply、schedule、defer；轻点卡从卡长出详情，长按看概要，左滑知道了 | [?variant=d&frame=26](./index.html?variant=d&frame=26) | [home.md](forms/polish/home.md)、[home-motion.md](forms/polish/home-motion.md) |
 | 腕上一瞥 | 抬腕两秒：要不要现在掏手机；换轮时刻度重分、新要你回的闪一下、数字落定 | confirm 与两项的 choose；其余转到手机；悬停刻度或事项名看概要，点击展开详情 | [forms/watch.html](forms/watch.html?frame=26) | [home.md](forms/polish/home.md)、[watch-motion.md](forms/polish/watch-motion.md) |
 | 两周小倍数 | 复盘两周注意力怎样移动；直接打开放一遍约 24 秒，看出它是成块挪的 | 不承载作答；黑点 = 一个开着的问题，展开后仍开着的问题链到同一帧的 D；悬停一帧或一格看概要，点击展开详情 | [forms/multiples.html](forms/multiples.html?frame=26) | [review-a.md](forms/polish/review-a.md)、[multiples-motion.md](forms/polish/multiples-motion.md) |
 | 身份线 | 追一件事的来龙去脉：改名、撤下、并入 | 不承载作答；标出问题的开与闭 | [sketches/lineage.html](forms/sketches/lineage.html) | [review-a.md](forms/polish/review-a.md) |

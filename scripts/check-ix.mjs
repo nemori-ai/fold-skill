@@ -2,6 +2,8 @@
 // 悬停出概要卡并停住播放、命中区放宽、移开后宽限与恢复、点击展开并切到“这一件”、Esc / 再点 / 点空白收回、
 // Tab + Enter 展开且焦点进卡、Esc 后焦点回到事项、触屏两下、连播中悬停不进下一轮、移开后接着播、→ 立即收起。
 // 共 16 项，每个接入 ix.mjs 的页面都跑同一套；各页只在 PAGES 里写自己的地址、挑哪一件、怎样算“切到这一件”。
+// D 手机首页（home）没有悬停，另走一套触屏流程（runHome，iPhone 尺寸、CDP 触屏事件）：长按代替悬停、轻点从卡长出详情、
+// 下拉收回、左滑知道了、作答与撤回、手指保护、换轮时回执跟着条目走，以及键盘与连播的同一组打断规则。
 // 只用 Node 22 内置的 WebSocket 驱动本机 Chrome（无头），不装依赖。原型需先在本地提供服务。
 //
 //   node scripts/check-ix.mjs --base http://127.0.0.1:4173                 # 全部页面，默认数据
@@ -101,6 +103,9 @@ const PAGES = {
     // Playing on (half-speed posting, 1.6 s a round) from f10: hover once a round has settled.
     playReady: `(foldYield.play(), new Promise(r => { const go = () => (foldSketch.index >= 12 && foldYield.settled() ? r(1) : setTimeout(go, 50)); go(); }))`,
   },
+  // D 手机首页：触屏流程见 runHome。held 是作答与让位最重的一帧，rows 是它的下一轮（有“进行中与结果”的行可长按、左滑），
+  // follow 是问题原样重登记的一帧。
+  home: { hook: 'foldHome', touch: true, held: 'index.html?variant=d&frame=f22', rows: 'index.html?variant=d&frame=f23', follow: 'index.html?variant=d&frame=f26' },
 };
 
 function args(argv) {
@@ -262,13 +267,183 @@ async function run(cdp, base, data, name) {
   return { results, errors };
 }
 
+// D: a phone (390 × 844, touch). Long press is its hover; a tap answers or opens; the detail grows out of the card.
+async function runHome(cdp, base, data, name) {
+  const P = PAGES[name];
+  const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+  const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+  const S = (m, p) => cdp.send(m, p, sessionId);
+  const errors = [];
+  cdp.listeners.add(m => {
+    if (m.sessionId !== sessionId) return;
+    if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.exception?.description || m.params.exceptionDetails.text);
+    if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') errors.push(m.params.args.map(a => a.value ?? a.description).join(' '));
+  });
+  await S('Runtime.enable'); await S('Page.enable');
+  await S('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 3, mobile: true });
+  await S('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const ev = async expr => {
+    const { result, exceptionDetails } = await S('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true });
+    if (exceptionDetails) throw new Error(exceptionDetails.exception?.description || exceptionDetails.text);
+    return result.value;
+  };
+  const open = async url => {
+    const u = new URL(url, `${base.replace(/\/$/, '')}/`);
+    if (data) u.searchParams.set('data', data);
+    await S('Page.navigate', { url: u.href });
+    for (let t = 0; t < 75; t += 1) { if (await ev('document.readyState') === 'complete') break; await wait(200); }
+    await wait(1500);
+  };
+  const touch = (type, x, y) => S('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
+  const tap = async (x, y) => { await touch('touchStart', x, y); await wait(40); await touch('touchEnd'); };
+  const hold = async (x, y, ms) => { await touch('touchStart', x, y); await wait(ms); await touch('touchEnd'); };
+  const drag = async (x, y, dx, dy, ms = 240, steps = 12) => {
+    await touch('touchStart', x, y);
+    for (let i = 1; i <= steps; i += 1) { await wait(ms / steps); await touch('touchMove', x + (dx * i) / steps, y + (dy * i) / steps); }
+    await touch('touchEnd');
+  };
+  const KEYS = { Escape: 27, Enter: 13, Tab: 9, ArrowRight: 39 };
+  const key = async k => {
+    await S('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: k, code: k, windowsVirtualKeyCode: KEYS[k] });
+    if (k === 'Enter') await S('Input.dispatchKeyEvent', { type: 'char', text: '\r' });
+    await S('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code: k, windowsVirtualKeyCode: KEYS[k] });
+  };
+  const H = P.hook;
+  const state = async () => ({ ...(await ev(`${H}.ixState()`)), index: await ev(`${H}.model.snapshot().index`), waiting: await ev(`${H}.waiting()`),
+    dim: await ev(`document.querySelector('.d-scroll').classList.contains('is-dim')`) });
+  // Centre of an element on screen, scrolled to the middle first (on a phone the page scrolls as a whole).
+  const at = async selector => ev(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); if (!el) return null; el.scrollIntoView({ block: 'center' });
+    const r = el.getBoundingClientRect(); return { x: Math.round(r.left + Math.min(r.width / 2, 150)), y: Math.round(r.top + Math.min(r.height / 2, 40)), id: el.dataset.id || el.closest('[data-id]')?.dataset.id || null }; })()`);
+  const blank = async () => ev(`(() => { scrollTo(0, 0); const r = document.querySelector('.d-date').getBoundingClientRect(); return { x: Math.round(r.left + 20), y: Math.round(r.top + r.height / 2) }; })()`);
+  const keyed = id => `document.querySelector('[data-key="i:' + CSS.escape(${JSON.stringify(id)}) + '"]')`;
+  const results = [];
+  const check = (label, ok, info) => results.push({ ok: Boolean(ok), label, info: JSON.stringify(info) });
+  const closed = s => !s.open && !s.detail;
+
+  // 1: a link with ?frame= lands on that frame, as the end state: nothing plays but the one new-question outline.
+  await open(P.held);
+  const landing = await ev(`({ id: ${H}.model.snapshot().frame.id,
+    running: document.getAnimations().filter(a => a.playState === 'running' && a.animationName !== 'd-new').length })`);
+  check('带 ?frame= 进来：落在那一帧，不演开场', landing.id === 'f22' && landing.running === 0, landing);
+  // 2–6: long press is the hover; a tap elsewhere folds it; moving cancels it; a tap on the summary opens the row.
+  await open(P.rows);
+  const row = await at('.d-line');
+  await hold(row.x, row.y, 600); await wait(250);
+  let s = await state();
+  check(`长按 0.45 秒：${row.id} 出概要卡，其余降到七成`, s.hover === row.id && s.peek && s.dim && closed(s), s);
+  let b = await blank();
+  await tap(b.x, b.y); await wait(400);
+  s = await state();
+  check('点空白：概要卡收起，不展开', !s.peek && !s.dim && closed(s), s);
+  const other = await at('.d-line');
+  await touch('touchStart', other.x, other.y); await wait(120);
+  for (let i = 1; i <= 4; i += 1) { await touch('touchMove', other.x, other.y - i * 5); await wait(30); }
+  await wait(500); await touch('touchEnd'); await wait(300);
+  s = await state();
+  check('按住时移动超过 10 px：取消长按', !s.peek && !s.hover, s);
+  await ev(`${H}.close()`); await wait(600);
+  const again = await at('.d-line');
+  await hold(again.x, again.y, 600); await wait(250);
+  const peek = await ev(`(() => { const r = document.querySelector('.d-peek').getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }; })()`);
+  await tap(peek.x, peek.y); await wait(800);
+  s = await state();
+  check('长按后点概要卡：从这一行长出详情', s.open === again.id && s.detail && s.clip === 'none' && !s.peek, s);
+  await key('Escape'); await wait(700);
+  s = await state();
+  check('Esc 收回：详情收起、亮度恢复、焦点回到这一行', closed(s) && !s.dim && s.focus === 'proxy', s);
+  // 7–10: a tap on a card grows the detail (0.48 s); a short pull springs back, a long one closes it; ‹ closes it.
+  await blank();
+  const lead = await at('.d-card:not(.is-answered) [data-part="prompt"]');
+  await tap(lead.x, lead.y); await wait(700);
+  s = await state();
+  check(`轻点卡：0.48 秒后详情到全屏（${lead.id}）`, s.open === lead.id && s.detail && s.clip === 'none' && s.focus === 'detail', s);
+  await drag(195, 260, 0, 70, 200); await wait(450);
+  s = await state();
+  check('详情到顶时短下拉 70 px：弹回全屏', s.open === lead.id && s.detail && s.clip === 'none', s);
+  await drag(195, 240, 0, 420, 300); await wait(700);
+  s = await state();
+  check('下拉超过四分之一屏：跟手收回', closed(s) && !s.dim, s);
+  await tap(lead.x, lead.y); await wait(700);
+  const back = await ev(`(() => { const r = document.querySelector('.d-detail [data-d="back"]').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+  await tap(back.x, back.y); await wait(700);
+  s = await state();
+  check('点 ‹ 返回：收回', closed(s), s);
+  // 11–12: swipe a row of 进行中与结果 left: past 80 px it says 知道了; short of it, it springs back.
+  const line = await at('.d-line:not(.is-read)');
+  await drag(line.x + 100, line.y, -50, 0, 200); await wait(400);
+  const short = await ev(`(() => { const el = ${keyed(line.id)}; return { read: el.classList.contains('is-read'), t: getComputedStyle(el).transform }; })()`);
+  check('左滑 50 px：回弹，不算知道了', !short.read && short.t === 'none', short);
+  await drag(line.x + 100, line.y, -120, 0, 240); await wait(700);
+  const swiped = await ev(`(() => { const el = ${keyed(line.id)}; return { read: !el || el.classList.contains('is-read'), status: el?.querySelector('.d-status')?.textContent }; })()`);
+  s = await state();
+  check('左滑过 80 px：这一行知道了，不展开', swiped.read && closed(s), { ...swiped, open: s.open });
+  // 13–16: tap a button: the card folds into a receipt, the count drops; the finger guard; focus on 撤回; undo.
+  await blank();
+  const w0 = (await state()).waiting;
+  const btn = await at('.d-card:not(.is-answered) [data-rs-act]');
+  await tap(btn.x, btn.y); await wait(250);
+  check('焦点落在“撤回”', await ev(`document.activeElement?.matches('[data-rs-undo]') ?? false`), await ev('document.activeElement?.outerHTML.slice(0, 80)'));
+  await tap(btn.x, btn.y); await wait(1000);
+  s = await state();
+  const answered = await ev(`${H}.facts(${JSON.stringify(btn.id)})`);
+  check('轻点按钮作答：卡收成回执、数字减一', answered.mark === 'receipt' && s.waiting === w0 - 1, { answered, w0, waiting: s.waiting });
+  check('0.25 秒后再点同一处：手指保护，不落到补上来的卡', s.waiting === w0 - 1 && closed(s), s);
+  const undo = await at(`[data-key="i:${btn.id}"] [data-rs-undo]`);
+  await tap(undo.x, undo.y); await wait(800);
+  s = await state();
+  const undone = await ev(`${H}.facts(${JSON.stringify(btn.id)})`);
+  check('撤回：卡回到原样、数字加一', s.waiting === w0 && undone.mark !== 'receipt' && !undone.answered, { undone, waiting: s.waiting });
+  // 17–18: while playing, a long press holds the round. → folds the summary at once and goes to the next round.
+  await ev(`${H}.model.togglePlay(), 1`); await wait(150);
+  const i0 = (await state()).index;
+  const held = await at('.d-line');
+  await hold(held.x, held.y, 600);
+  await wait(4000);
+  s = await state();
+  check('连播中长按：停住，不进下一轮', s.peek && s.paused && s.index === i0, { i0, ...s });
+  await key('ArrowRight'); await wait(400);
+  s = await state();
+  check('→ 换轮：概要立即收起，到下一轮', !s.peek && !s.hover && s.index === i0 + 1, { i0, ...s });
+  // 19–21: keyboard: Tab onto a row shows its summary; Enter opens; Esc folds and gives focus back.
+  await ev(`(document.querySelector('.d-zone-head [data-ack-many]') || document.querySelector('.d-card:last-of-type')).focus(), 1`);
+  await key('Tab'); await wait(400);
+  s = await state();
+  check('Tab 到行：概要卡出现', s.hover && s.peek && s.focus === 'proxy', s);
+  await key('Enter'); await wait(800);
+  s = await state();
+  check('回车展开，焦点进详情', s.open && s.detail && s.focus === 'detail', s);
+  await key('Escape'); await wait(700);
+  s = await state();
+  check('Esc 收回，焦点回到行', closed(s) && s.focus === 'proxy', s);
+  // 22–23: the receipt follows the item into the next 整理: under its row once the question closed, still a receipt when
+  // the same question was registered again (the count does not bounce back), “你答过上一版” on the card when it was rewritten.
+  const follows = async url => {
+    await open(url);
+    const id = await ev(`${H}.top()`);
+    await ev(`${H}.answer(${JSON.stringify(id)}), 1`); await wait(1200);
+    const before = await ev(`${H}.facts(${JSON.stringify(id)})`), w = await ev(`${H}.waiting()`);
+    await ev(`${H}.go(${H}.model.snapshot().index + 1), 1`); await wait(1800);
+    const after = await ev(`${H}.facts(${JSON.stringify(id)})`), w1 = await ev(`${H}.waiting()`);
+    const ok = !after.present || (after.ask === before.ask ? after.answered && ['receipt', 'done-row'].includes(after.mark)
+      : after.ask ? after.mark === 'prior' : after.mark === 'row');
+    return { ok, id, before, after, w, w1 };
+  };
+  const f1 = await follows(P.held);
+  check('换轮后回执跟着条目走（作答那一帧 → 下一轮）', f1.ok, f1);
+  const f2 = await follows(P.follow);
+  check('问题原样重登记：仍是回执、不算等你回应', f2.ok, f2);
+  await cdp.send('Target.closeTarget', { targetId });
+  return { results, errors };
+}
+
 const options = args(process.argv.slice(2));
 const cdp = await launch();
 let failed = 0;
 try {
   for (const name of options.only) {
     if (!PAGES[name]) throw new Error(`未知页面 ${name}；可选：${Object.keys(PAGES).join(', ')}`);
-    const { results, errors } = await run(cdp, options.base, options.data, name);
+    const { results, errors } = await (PAGES[name].touch ? runHome : run)(cdp, options.base, options.data, name);
     const bad = results.filter(r => !r.ok).length + errors.length;
     failed += bad;
     console.log(`${bad ? '✗' : '✓'} ${name}${options.data ? ` · ${options.data}` : ''}：${results.filter(r => r.ok).length} / ${results.length} 项通过`);
