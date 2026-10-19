@@ -381,3 +381,10 @@
 [Commons：Penny Magazine 1833 Stratigraphic Column](https://commons.wikimedia.org/wiki/File:Penny_Magazine_1833_021_Stratigraphic_Column.jpg)，[Commons：Williston Basin stratigraphic column](https://commons.wikimedia.org/wiki/File:Williston_Basin_stratigraphic_column.jpg)。
 视觉：一根竖柱分层，层厚是时间或沉积量；左右两栏写层名与产地，大括号把几层归为一组；彩色版用颜色表示岩性。
 未采用为独立草图：单件事的“地层柱传记”与草图 01 的一条线重叠。它的右栏写法被草图 01 吸收：站名只在标题改写时出现。
+
+## 第三轮：概念动画
+
+**74. 视频 B：纸底的“工作室仪表”**（看片：X 用户 @francescoinweb3 发布的 24 秒竖幅视频，1080×1350、60fps；本机下载逐帧拆过，视频与抽帧不入库）
+[X：@francescoinweb3](https://x.com/francescoinweb3)。
+怎样传递信息：纸白底、墨黑与灰阶，一圈转盘、几条车道、一束细线和八块小仪表占满画面，大约八成是一直在动的质感；承载信息的只有左上的标题卡、一个实心黑游标、它那条车道上的几个黑标签和一个注释框。整段是 6 步 × 4.00 秒，切点只有一帧：标题、游标、注释、仪表同一帧换，转盘与细线不切；每步先留 0.4 秒没有焦点，游标才落下，+0.67 秒注释浮现，+3.73 秒退。秒数的拆解见 [motion/dial/spec.md](motion/dial/spec.md)。
+对 Fold 的启发：质感层可以很密而不抢信息，条件是它只用灰、不进信息块、在信息动的那一刻让位；“一帧硬切 + 0.4 秒空白”的节拍让一轮整理成为可数的一拍，正好对应 Fold 的一轮批次。份额拨盘取了节拍、硬切、单个黑游标与灰色质感层；没有取像素小虫（吉祥物式拟物）和静止的装饰计数，红色也不给“量”，只给等你回的问题。

@@ -1,8 +1,8 @@
-// The 21 prototypes the site offers, in the order of prototype/all.html, and the shared state of the
+// The prototypes the site offers, in the order of prototype/all.html, and the shared state of the
 // gallery panel and the viewer. The nav menu (PrototypeMenu), the home page and the overlays
 // (PrototypeLayer) all read this one list.
 import { reactive } from 'vue'
-import { forms, withdrawn, sketches } from '../../../prototype/forms/catalog.mjs'
+import { forms, withdrawn, sketches, motions } from '../../../prototype/forms/catalog.mjs'
 import { datasets, defaultDataset } from '../../../prototype/data/select.mjs'
 
 // Short lines and default frames follow prototype/README.md「十二种形式」and all.html; names and the
@@ -12,6 +12,7 @@ import { datasets, defaultDataset } from '../../../prototype/data/select.mjs'
 const desk = (id, name, line, frame) => ({ id, name, line, page: '/prototype/', query: id === 'original' ? {} : { variant: id }, embed: { embed: 1 }, frame })
 const form = id => forms.find(f => f.id === id)
 const sketch = id => sketches.find(f => f.id === id)
+const motion = id => motions.find(f => f.id === id)
 
 const entries = [
   desk('original', '原版树图', '在电脑前掌握两周局面，顺手处理工作评审', 26),
@@ -28,6 +29,8 @@ const entries = [
     ['yield', '一件事变大，份额从谁那里来'],
     ['notation', '每一轮整理读了多少、丢了多少、动了几件'],
   ].map(([id, line]) => ({ id, name: sketch(id).name, line, page: `/prototype/forms/sketches/${id}.html` })),
+  // Round-three concept animations open without a frame, so the viewer plays their 20-second loop.
+  { id: 'dial', name: motion('dial').name, line: '64 份是怎样的硬约束：一轮整理演成 20 秒动画', page: '/prototype/forms/motion/dial.html', embed: { card: 0 } },
   { id: 'respond', name: '回应组件', line: '六种回应控件逐类演示，附反馈记录', page: '/prototype/forms/respond.html' },
   ...withdrawn.map(f => ({ id: f.id, name: f.name, line: f.question, page: `/prototype/forms/${f.id}.html`, embed: { card: 0 }, withdrawn: true })),
 ]

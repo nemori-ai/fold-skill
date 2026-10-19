@@ -56,6 +56,9 @@ make prototype
 | 来源矩阵 | 某件事背后是谁在推动 | 不承载作答 | [sketches/provenance.html](forms/sketches/provenance.html) | [review-b.md](forms/polish/review-b.md) |
 | 让位图 | 一件事变大，份额从谁那里来 | 不承载作答；作答之后份额让给了谁 | [sketches/yield.html](forms/sketches/yield.html) | [review-b.md](forms/polish/review-b.md) |
 | 批次记谱 | 每一轮整理读了多少、丢了多少、动了几件 | 不承载作答；每轮登记、失效与答掉的问题 | [sketches/notation.html](forms/sketches/notation.html) | [review-b.md](forms/polish/review-b.md) |
+| 份额拨盘（动画） | 第一次看 Fold 的人，20 秒：64 份是怎样的硬约束，满了谁让位 | 不承载作答；游标只指要紧的问题 | [motion/dial.html](forms/motion/dial.html) | [story.md](forms/motion/dial/story.md) |
+
+表末的动画是第三轮的概念动画，不算在十二种里：官网首屏用，只读同一份回放，默认循环 20 秒三拍，空格连播全部轮次，←/→ 逐帧并停住，`?frame=` 直接停在那帧。
 
 入口里的 `frame` 是帧序号，composite 的 29 帧从 `f00`（空状态）到 `f28`；复盘类不带 `frame` 时打开数据集自己的默认帧。[形式画廊](forms/index.html)把它们并排放在一起，[回应组件页](forms/respond.html)逐类演示六种回应控件。
 
