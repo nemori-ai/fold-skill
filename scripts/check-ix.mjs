@@ -140,6 +140,17 @@ const PAGES = {
     cut: `document.querySelector('#frame-title').textContent.startsWith('这一件') && Boolean(document.querySelector('.tree-card .tc-kicker')?.textContent.startsWith('这一件'))`,
     playReady: `(foldTree.play(), new Promise(r => setTimeout(r, 1700)))`,
   },
+  // A 空间排布：一张纸片就是一件。held 是让位之后桌面空着 25 份的一帧（纸片四周有空桌面，9 px 外不压到别的纸）；
+  // 空白点在页头（桌面满着的轮次里，桌面上没有空白处）。连播走页面自己的时钟（一轮 5.6 秒）。
+  a: {
+    hook: 'foldA', held: 'index.html?variant=a&frame=23', play: 'index.html?variant=a&frame=3',
+    prepare: null, index: 'foldA.index', step: 24, tabFrom: '.a-breadcrumb [data-a-action="root"]',
+    pick: 'foldA.pick()',
+    near: name => `foldA.nearOf(${JSON.stringify(name)}, 9)`,
+    blank: { x: 760, y: 34 },
+    cut: `document.querySelector('.a-frame-title').textContent.startsWith('这一件') && Boolean(document.querySelector('.a-breadcrumb .a-this'))`,
+    playReady: `new Promise(r => { foldA.play(); setTimeout(r, 1700); })`,
+  },
 };
 
 function args(argv) {
