@@ -52,7 +52,7 @@ make prototype
 | 腕上一瞥 | 抬腕两秒：要不要现在掏手机；换轮时刻度重分、新要你回的闪一下、数字落定 | confirm 与两项的 choose；其余转到手机；悬停刻度或事项名看概要，点击展开详情 | [forms/watch.html](forms/watch.html?frame=26) | [home.md](forms/polish/home.md)、[watch-motion.md](forms/polish/watch-motion.md) |
 | 两周小倍数 | 复盘两周注意力怎样移动；直接打开放一遍约 24 秒，看出它是成块挪的 | 不承载作答；黑点 = 一个开着的问题，展开后仍开着的问题链到同一帧的 D；悬停一帧或一格看概要，点击展开详情 | [forms/multiples.html](forms/multiples.html?frame=26) | [review-a.md](forms/polish/review-a.md)、[multiples-motion.md](forms/polish/multiples-motion.md) |
 | 身份线 | 追一件事的来龙去脉：改名、撤下、并入 | 不承载作答；标出问题的开与闭 | [sketches/lineage.html](forms/sketches/lineage.html) | [review-a.md](forms/polish/review-a.md) |
-| 回应时序 | 我欠了谁什么回应，开了多久 | 不承载作答；所有类型的开闭与期限 | [sketches/timing.html](forms/sketches/timing.html) | [review-a.md](forms/polish/review-a.md) |
+| 回应时序 | 我欠了谁什么回应，开了多久 | 不承载作答；所有类型的开闭与期限；还开着的问题旁“去回答 →”链到同一帧的 D | [sketches/timing.html](forms/sketches/timing.html) | [timing-motion.md](forms/polish/timing-motion.md) |
 | 来源矩阵 | 某件事背后是谁在推动 | 不承载作答 | [sketches/provenance.html](forms/sketches/provenance.html) | [review-b.md](forms/polish/review-b.md) |
 | 让位图 | 一件事变大，份额从谁那里来 | 不承载作答；作答之后份额让给了谁 | [sketches/yield.html](forms/sketches/yield.html) | [review-b.md](forms/polish/review-b.md) |
 | 批次记谱 | 每一轮整理读了多少、丢了多少、动了几件 | 不承载作答；每轮登记、失效与答掉的问题；侧栏问题旁的“去回答 →”链到同一帧的 D | [sketches/notation.html](forms/sketches/notation.html) | [notation-motion.md](forms/polish/notation-motion.md) |
@@ -74,6 +74,7 @@ make prototype
 - 原版与 A/B/C/D 共用底栏：在同一时刻切换方案，保留层级与选中的事项；「回放片段」直达各章，「状态」打开数据核对区（完整状态 JSON、原始输入、声明与回执、变化对比）。←/→ 逐帧，空格播放，Alt+←/→ 切换方案。
 - 腕上一瞥、小倍数与五张复盘图的页头各有帧导航：←/→ 逐帧，空格播放，当前帧写进地址栏 `frame=`；让位图、来源矩阵与批次记谱的侧栏底部链到同一帧的其他形式。
 - 批次记谱直接打开（不带 `frame=`）时停在最后一帧，先演 12 秒的开场：读、丢、动三拍同时作用在全部行上，任意键或点一下跳到终态，R 或顶栏“重演”从头演到此刻；嵌入与带 `frame=` 的链接不演。换帧时新的一行演 0.9 秒的缩短版。悬停一行看这一轮的账，悬停记号看这一件，点击展开到侧栏，与两个动画共用 `forms/motion/ix.mjs`（见 [notation-motion.md](forms/polish/notation-motion.md)）。
+- 回应时序直接打开（不带 `frame=`）时先讲一遍约 24 秒：开得最久的“母亲九月住哪？”从登记、等 19 轮到别人先开口，落在最后一帧；任意键或点一下跳到终态，顶栏“▶ 讲一遍”重讲；嵌入与带 `frame=` 的链接不讲。之后 ▶ 连播、←/→ 逐帧都按同一节拍走：此刻线缓出，批次刻度上硬切。悬停一条时序线看概要，点击弹出 8 px、引线出到详情卡，右栏切到“这一件”，同样共用 `forms/motion/ix.mjs`（见 [timing-motion.md](forms/polish/timing-motion.md)）。
 - 本页作答只存在浏览器内存里：按下即“已保存”，推进到下一轮整理后显示“已收到”，随时可撤回；不写回演示数据，也不调用模型。
 - 原版与 A/B/C/D 都保留未分配份额：原版与 A 用面积、B 用带宽、C 用液滴面积与 64 格预算带、D 用先后与字号表达份额，精确份数在详情里。
 - `prefers-reduced-motion` 时切帧与作答直接到终态。

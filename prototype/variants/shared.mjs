@@ -172,3 +172,9 @@ export function familyMove(event) {
   if (app === 'Förskoleappen') return '在幼儿园 App 里回复老师';
   return say(`用${FAMILY_APPS[app] || ` ${app} `}回复${familyName(who)}`);
 }
+/** Who wrote a family-stream input and where, worded as above: {who: '母亲', where: '短信'}, {who: 'Ulrika', where: '兄妹群'}. */
+export function familyPlace(event) {
+  if (event?.stream !== 'family') return null;
+  const [app, chat = ''] = String(event.channel || '').split(' · ');
+  return { who: FAMILY_NAMES[event.from] || event.from || '', where: FAMILY_GROUPS[chat] || String(FAMILY_APPS[app] || app).trim() };
+}

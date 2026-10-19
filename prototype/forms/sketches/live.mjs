@@ -149,11 +149,14 @@ export function stationsOf(id) {
 
 // ---------- ask paths ----------
 
-/** One path per ask id: registered at `from`, re-registered on each rewrite, closed at `to`. */
+/** One path per ask id: registered at `from`, re-registered on each rewrite, closed at `to`.
+ *  A registration only counts while its item is active in that frame (as stage.mjs `askLife` reads it: only questions
+ *  on the root tree are open); the hand-written story registers `ask-08` once more in the frame that withdraws it. */
 export const askPaths = (() => {
   const byKey = new Map();
   frames.forEach((frame, index) => {
     for (const [itemId, ask] of Object.entries(frame.asks || {})) {
+      if (records[index].snapshot.items[itemId]?.status !== 'active') continue;
       const key = ask.id || `${itemId}@${frame.id}`;
       if (!byKey.has(key)) byKey.set(key, { key, item: itemId, ask, regs: [], from: index, to: null, end: null, answers: [] });
       const path = byKey.get(key);
@@ -407,8 +410,10 @@ export function createDrawer(host, { onClose, fixed = false } = {}) {
 
 // ---------- the sketch page frame ----------
 
-/** Header, frame bar (prev / play / next, scrubber), figure, side column and key for a sketch page. */
-export function mountLivePage({ id, no, name, relation, key, storyFrame = frames.length - 1, side = true, onFrame, onKey, playEvery = 1300 }) {
+/** Header, frame bar (prev / play / next, scrubber), figure, side column and key for a sketch page.
+ *  `tools` is extra HTML for the bar (before the key help); `onPlay` replaces the built-in frame timer (the page plays
+ *  itself and commits frames with goFrame(i, {from: 'play'})). Frames asked for by all.html arrive as from 'embed'. */
+export function mountLivePage({ id, no, name, relation, key, storyFrame = frames.length - 1, side = true, onFrame, onKey, playEvery = 1300, tools = '', onPlay = null }) {
   let index = chosenFrame(id, Math.min(storyFrame, frames.length - 1));
   document.title = `Fold · ${name}`;
   document.body.className = 'lv-page';
@@ -421,7 +426,7 @@ export function mountLivePage({ id, no, name, relation, key, storyFrame = frames
       <div class="lv-nav"><button data-lv-step="-1" aria-label="上一帧（←）" title="上一帧 ←">‹</button><button class="lv-play" data-lv-play aria-label="播放（空格）" title="播放 / 暂停 · 空格"><svg width="12" height="12" viewBox="0 0 12 12"><path class="lv-play-icon" d="M3 1.5 L10.5 6 L3 10.5 Z"/><path class="lv-pause-icon" d="M2.5 1.5 h2.6 v9 h-2.6 Z M6.9 1.5 h2.6 v9 h-2.6 Z"/></svg></button><button data-lv-step="1" aria-label="下一帧（→）" title="下一帧 →">›</button></div>
       <div class="lv-clock"><span class="lv-date"></span><span class="lv-title"></span></div>
       <div class="lv-scrub" role="slider" tabindex="0" aria-label="选择帧" aria-valuemin="0" aria-valuemax="${frames.length - 1}">${frames.map((f, i) => `<i data-i="${i}" title="${esc(`${dayTime(f.at)} ${f.title}`)}"${i > 0 && formatDate(f.at) !== formatDate(frames[i - 1].at) ? ' class="is-day"' : ''}></i>`).join('')}<b class="lv-scrub-head"></b></div>
-      <button class="lv-help-btn" data-lv-help aria-expanded="false">键盘</button>
+      ${tools}<button class="lv-help-btn" data-lv-help aria-expanded="false">键盘</button>
       <div class="lv-help" hidden><b>键盘</b><dl><dt>← →</dt><dd>上一帧 / 下一帧</dd><dt>Home End</dt><dd>第一帧 / 最后一帧</dd><dt>空格</dt><dd>播放 / 暂停</dd><dt>↑ ↓</dt><dd>在事项之间移动</dd><dt>Enter</dt><dd>打开详情</dd><dt>Esc</dt><dd>关上详情 / 取消固定</dd>${id === 'lineage' ? '<dt>E</dt><dd>展开或折起长尾</dd>' : ''}</dl></div>
     </div>
     <div class="lv-body${side ? '' : ' no-side'}"><main class="lv-figure" id="figure" tabindex="-1"></main>${side ? '<aside class="lv-side" aria-label="此刻"></aside>' : ''}</div>
@@ -431,7 +436,7 @@ export function mountLivePage({ id, no, name, relation, key, storyFrame = frames
   const scrub = $('.lv-scrub'), ticks = [...scrub.querySelectorAll('i')], head = $('.lv-scrub-head');
   let timer = null;
   // Embedded in all.html: the page above steps every prototype together.
-  const reportFrame = followFrames(i => setFrame(i));
+  const reportFrame = followFrames(i => setFrame(i, { from: 'embed' }));
   function setFrame(next, { from = 'nav' } = {}) {
     next = Math.max(0, Math.min(frames.length - 1, next));
     if (from !== 'play') stop();
@@ -453,6 +458,7 @@ export function mountLivePage({ id, no, name, relation, key, storyFrame = frames
   }
   function stop() { if (timer) { clearInterval(timer); timer = null; } $('.lv').classList.remove('is-playing'); }
   function togglePlay() {
+    if (onPlay) { onPlay(); return; }
     if (timer) { stop(); return; }
     if (index >= frames.length - 1) setFrame(0, { from: 'play' });
     $('.lv').classList.add('is-playing');
@@ -488,7 +494,7 @@ export function mountLivePage({ id, no, name, relation, key, storyFrame = frames
     figure: $('#figure'), side: $('.lv-side'), body: $('.lv-body'), root: $('.lv'),
     start() { setFrame(index, { from: 'init' }); },
     get index() { return index; },
-    goFrame: next => setFrame(next),
+    goFrame: (next, options) => setFrame(next, options),
     stop,
   };
 }
