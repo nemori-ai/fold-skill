@@ -59,49 +59,26 @@
 .pl-panel ol li.is-on { border-color: var(--pl-ink-2); color: var(--pl-ink); }
 .pl-panel ol li.is-on em { color: var(--pl-ink); }
 
-/* Interaction (pulse.mjs 交互): the summary card beside a hovered branch and the detail card an open branch unfolds.
-   The stage's own near-black, thin ink frame and monospace; vermilion only on open questions. */
 .pl-panel li small { flex: none; margin-left: auto; padding-left: 8px; color: var(--pl-ink-3); font-size: 10.5px; }
-.pl-peek, .pl-detail { position: absolute; left: 0; top: 0; z-index: 4; border: 1px solid var(--pl-ink-3); background: rgb(9 10 11 / .96); color: var(--pl-ink); font: 11.5px/1.5 var(--pl-mono); }
-.pl-peek[hidden], .pl-detail[hidden] { display: none; }
-.pl-peek { width: 236px; padding: 8px 11px 9px; cursor: pointer; will-change: transform, opacity; }
-.pl-c-k { font-size: 10.5px; color: var(--pl-ink-2); }
-.pl-c-q { margin: 2px 0 1px; font-size: 13.5px; color: var(--pl-ink); }
-.pl-c-d { font-size: 11px; color: var(--pl-ink-2); }
-.pl-c-ask, .pl-d-ask { display: grid; grid-template-columns: 7px minmax(0, 1fr); column-gap: 8px; align-items: baseline; }
-.pl-c-ask { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--pl-line); }
-.pl-c-ask i, .pl-d-ask i { width: 7px; height: 7px; background: var(--pl-vermilion); }
-.pl-c-ask small, .pl-d-ask small { grid-column: 2; font-size: 10.5px; color: var(--pl-ink-2); }
-.pl-detail { width: 320px; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--pl-ink-3) transparent; padding: 9px 13px 11px; outline: none; will-change: transform, clip-path; }
-.pl-d-k { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 10.5px; color: var(--pl-ink-2); }
-.pl-d-k button { flex: none; padding: 0 2px; border: 0; background: none; font: 16px/1 var(--pl-mono); color: var(--pl-ink-2); cursor: pointer; }
-.pl-d-k button:hover, .pl-d-k button:focus-visible { color: var(--pl-ink); }
-.pl-d-t { margin: 3px 0 1px; font-size: 14px; line-height: 1.4; color: var(--pl-ink); }
-.pl-d-s { font-size: 11px; color: var(--pl-ink-2); }
-.pl-d-s b { font-weight: 500; color: var(--pl-ink); }
-.pl-d-sum { margin: 6px 0 0; font-size: 11.5px; line-height: 1.55; color: var(--pl-ink-2); }
-.pl-detail section { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--pl-line); }
-.pl-detail h5 { display: flex; justify-content: space-between; margin: 0 0 4px; font-size: 10px; font-weight: 500; letter-spacing: .06em; color: var(--pl-ink-3); }
-.pl-detail h5 b { font-weight: 500; letter-spacing: 0; color: var(--pl-ink-2); }
-.pl-d-trend { display: block; width: 100%; height: 32px; }
-.pl-d-trend rect { fill: rgb(232 230 223 / .34); }
-.pl-d-trend rect.is-now { fill: var(--pl-ink); }
-.pl-d-trend rect.is-later { fill: rgb(232 230 223 / .1); }
-.pl-d-trend rect.is-off { fill: rgb(232 230 223 / .16); }
-.pl-d-axis { display: flex; justify-content: space-between; margin-top: 2px; font-size: 9.5px; color: var(--pl-ink-3); }
-.pl-d-in, .pl-d-fb, .pl-d-kids { margin: 0; padding: 0; list-style: none; font-size: 11px; line-height: 1.45; color: var(--pl-ink); }
-.pl-d-in li + li, .pl-d-fb li + li { margin-top: 4px; }
-.pl-d-in small, .pl-d-fb time { display: block; font-size: 10px; color: var(--pl-ink-3); }
-.pl-d-in span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pl-d-in em { font-style: normal; color: var(--pl-ink-2); }
-.pl-d-kids li { display: flex; justify-content: space-between; gap: 8px; }
-.pl-d-none { margin: 0; font-size: 10.5px; color: var(--pl-ink-3); }
-.pl-d-ask + .pl-d-ask { margin-top: 6px; }
-.pl-d-ask p { margin: 0; font-size: 12px; line-height: 1.45; color: var(--pl-ink); }
-.pl-d-ask a { grid-column: 2; justify-self: start; margin-top: 2px; font-size: 11px; color: var(--pl-ink); text-underline-offset: 3px; }
-.pl-d-ask a:hover, .pl-d-ask a:focus-visible { color: var(--pl-vermilion); }
-/* Keyboard: one visually hidden button per branch; focus is a hover, Enter opens. */
-.pl-sr-items { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Interaction: the summary and detail cards are the shared module's (ix.css); here only its variables, set to the
+   stage's own near-black, thin ink frame and monospace. Vermilion only on open questions. */
+.pl-page {
+  --ix-bg: rgb(9 10 11 / .96); --ix-fg: var(--pl-ink); --ix-fg-2: var(--pl-ink-2); --ix-fg-3: var(--pl-ink-3);
+  --ix-frame: var(--pl-ink-3); --ix-rule: var(--pl-line); --ix-leader: var(--pl-ink); --ix-mono: var(--pl-mono);
+  --ix-ask: var(--pl-vermilion); --ix-ask-urgent: var(--pl-vermilion); --ix-link-hover: var(--pl-vermilion);
+  --ix-scrollbar: var(--pl-ink-3) transparent; --ix-z-peek: 4; --ix-z-detail: 4;
+  --ix-peek-pad: 8px 11px 9px; --ix-mark: 7px; --ix-mark-gap: 8px; --ix-d-mark-gap: 8px; --ix-strong: 500;
+  --ix-font: 11.5px/1.5 var(--pl-mono); --ix-k-font: 10.5px/1.5 var(--pl-mono);
+  --ix-q-font: 13.5px/1.5 var(--pl-mono); --ix-q-margin: 2px 0 1px; --ix-d-font: 11px/1.5 var(--pl-mono);
+  --ix-ask-font: 11.5px/1.5 var(--pl-mono); --ix-ask-small-font: 10.5px/1.5 var(--pl-mono);
+  --ix-t-font: 14px/1.4 var(--pl-mono); --ix-sum-font: 11.5px/1.55 var(--pl-mono); --ix-sum-color: var(--pl-ink-2);
+  --ix-h-font: 500 10px/1.5 var(--pl-mono); --ix-h-b-size: 10px; --ix-h-b-color: var(--pl-ink-2);
+  --ix-axis-font: 9.5px/1.5 var(--pl-mono); --ix-list-font: 11px/1.45 var(--pl-mono); --ix-meta-font: 10px/1.45 var(--pl-mono);
+  --ix-kid-b-font: 700 11px/1.45 var(--pl-mono); --ix-none-size: 10.5px; --ix-none-lh: 1.5; --ix-none-lh-list: 1.45;
+  --ix-dask-p-font: 12px/1.45 var(--pl-mono); --ix-dask-small-font: 10.5px/1.5 var(--pl-mono); --ix-dask-a-font: 11px/1.5 var(--pl-mono);
+  --ix-trend-h: 32px; --ix-bar: rgb(232 230 223 / .34); --ix-bar-later: rgb(232 230 223 / .1); --ix-bar-off: rgb(232 230 223 / .16);
+}
 
 .pl-perf { position: absolute; right: var(--pad); top: calc(var(--pad) + 18px); font-size: 11px; color: var(--pl-ink-2); }
 .pl-perf[hidden] { display: none; }

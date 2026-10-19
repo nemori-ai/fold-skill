@@ -1,0 +1,109 @@
+/* 共用交互模块（ix.mjs）的样式：概要卡、详情卡、引线与隐藏按钮。这里只有结构；颜色、字与几处尺寸是 --ix-* 变量，
+   默认值是纸色主题（份额拨盘：纸底、墨框、正文用无衬线、数用等宽）。黑底等宽的页面（整理脉冲）在自己的 css 里
+   只覆盖这些变量，不复制结构。朱红只给开着的问题：--ix-ask 是其余的问题，--ix-ask-urgent 是要紧的那一个。 */
+:root {
+  --ix-bg: var(--paper);
+  --ix-fg: var(--ink);
+  --ix-fg-2: var(--ink-2);
+  --ix-fg-3: var(--ink-2);
+  --ix-frame: var(--ink);
+  --ix-rule: oklch(0.28 0.025 155 / .18);
+  --ix-leader: var(--ink);
+  --ix-mono: var(--mono);
+  --ix-ask: oklch(0.5 0.15 35);
+  --ix-ask-urgent: var(--vermilion);
+  --ix-link-hover: var(--ink);
+  --ix-scrollbar: auto;
+  --ix-z-peek: 2;
+  --ix-z-detail: 3;
+  --ix-z-leader: 1;
+  --ix-peek-pad: 8px 12px 9px;
+  --ix-mark: 8px;
+  --ix-mark-gap: 6px;
+  --ix-d-mark-gap: 7px;
+  --ix-strong: 600;
+  /* Type, one shorthand per kind of line (line-height included where the context sets one). */
+  --ix-font: 14px/1.55 var(--sans);
+  --ix-k-font: 10.5px var(--mono);
+  --ix-q-font: 600 15px/1.35 var(--sans);
+  --ix-q-margin: 3px 0 2px;
+  --ix-d-font: 11.5px var(--mono);
+  --ix-ask-font: 600 12.5px/1.35 var(--sans);
+  --ix-ask-small-font: 400 11px var(--mono);
+  --ix-t-font: 600 15px/1.35 var(--sans);
+  --ix-sum-font: 12.5px/1.5 var(--sans);
+  --ix-sum-color: var(--ink);
+  --ix-h-font: 600 10px var(--mono);
+  --ix-h-b-size: 10.5px;
+  --ix-h-b-color: var(--ink);
+  --ix-axis-font: 9.5px var(--mono);
+  --ix-list-font: 12px/1.45 var(--sans);
+  --ix-meta-font: 10px var(--mono);
+  --ix-kid-b-font: 600 11px var(--mono);
+  --ix-none-size: 11px;
+  --ix-none-lh: normal;
+  --ix-none-lh-list: normal;
+  --ix-dask-p-font: 600 13px/1.4 var(--sans);
+  --ix-dask-small-font: 11px var(--mono);
+  --ix-dask-a-font: 600 11.5px var(--mono);
+  --ix-trend-h: 34px;
+  --ix-bar: oklch(0.28 0.025 155 / .32);
+  --ix-bar-later: oklch(0.28 0.025 155 / .1);
+  --ix-bar-off: oklch(0.28 0.025 155 / .2);
+}
+
+.ix-peek, .ix-detail { position: absolute; left: 0; top: 0; border: 1px solid var(--ix-frame); background: var(--ix-bg); color: var(--ix-fg); font: var(--ix-font); }
+.ix-peek[hidden], .ix-detail[hidden] { display: none; }
+
+/* The summary card. */
+.ix-peek { z-index: var(--ix-z-peek); width: 236px; padding: var(--ix-peek-pad); cursor: pointer; will-change: transform, opacity; }
+.ix-k { display: flex; align-items: center; gap: 6px; font: var(--ix-k-font); color: var(--ix-fg-2); }
+.ix-q { margin: var(--ix-q-margin); font: var(--ix-q-font); color: var(--ix-fg); }
+.ix-d { font: var(--ix-d-font); color: var(--ix-fg-2); }
+.ix-ask, .ix-d-ask { display: grid; grid-template-columns: var(--ix-mark) minmax(0, 1fr); align-items: baseline; }
+.ix-ask { column-gap: var(--ix-mark-gap); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--ix-rule); font: var(--ix-ask-font); }
+.ix-ask i, .ix-d-ask i { width: var(--ix-mark); height: var(--ix-mark); background: var(--ix-ask); }
+.ix-ask.is-urgent i, .ix-d-ask.is-urgent i { background: var(--ix-ask-urgent); }
+.ix-ask small { grid-column: 2; font: var(--ix-ask-small-font); color: var(--ix-fg-2); }
+
+/* The detail card: unfolded from the end of its leader (clip-path set per frame). */
+.ix-detail { z-index: var(--ix-z-detail); width: 320px; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ix-scrollbar); padding: 9px 13px 11px; will-change: transform, clip-path; outline: none; }
+.ix-d-k { display: flex; justify-content: space-between; align-items: center; gap: 8px; font: var(--ix-k-font); color: var(--ix-fg-2); }
+.ix-d-k button { flex: none; border: 0; padding: 0 2px; background: none; font: 16px/1 var(--ix-mono); color: var(--ix-fg-2); cursor: pointer; }
+.ix-d-k button:hover, .ix-d-k button:focus-visible { color: var(--ix-fg); }
+.ix-d-t { margin: 3px 0 1px; font: var(--ix-t-font); color: var(--ix-fg); }
+.ix-d-s { font: var(--ix-d-font); color: var(--ix-fg-2); }
+.ix-d-s b { color: var(--ix-fg); font-weight: var(--ix-strong); }
+.ix-d-sum { margin: 6px 0 0; font: var(--ix-sum-font); color: var(--ix-sum-color); }
+.ix-detail section { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--ix-rule); }
+.ix-detail h5 { display: flex; justify-content: space-between; margin: 0 0 4px; font: var(--ix-h-font); color: var(--ix-fg-3); letter-spacing: .06em; }
+.ix-detail h5 b { color: var(--ix-h-b-color); font-weight: var(--ix-strong); font-size: var(--ix-h-b-size); letter-spacing: 0; }
+.ix-trend { display: block; width: 100%; height: var(--ix-trend-h); }
+.ix-trend rect { fill: var(--ix-bar); }
+.ix-trend rect.is-now { fill: var(--ix-fg); }
+.ix-trend rect.is-later { fill: var(--ix-bar-later); }
+.ix-trend rect.is-off { fill: var(--ix-bar-off); }
+.ix-axis { display: flex; justify-content: space-between; margin-top: 2px; font: var(--ix-axis-font); color: var(--ix-fg-3); }
+.ix-d-in, .ix-d-fb, .ix-d-kids { margin: 0; padding: 0; list-style: none; font: var(--ix-list-font); color: var(--ix-fg); }
+.ix-d-in li + li, .ix-d-fb li + li { margin-top: 4px; }
+.ix-d-in small, .ix-d-fb time { display: block; font: var(--ix-meta-font); color: var(--ix-fg-3); }
+.ix-d-in span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ix-d-in em { font-style: normal; color: var(--ix-fg-2); }
+.ix-d-kids li { display: flex; justify-content: space-between; gap: 8px; }
+.ix-d-kids b { font: var(--ix-kid-b-font); }
+.ix-none { margin: 0; font-family: var(--ix-mono); font-size: var(--ix-none-size); line-height: var(--ix-none-lh); color: var(--ix-fg-3); }
+.ix-d-in .ix-none { line-height: var(--ix-none-lh-list); }
+.ix-d-ask { column-gap: var(--ix-d-mark-gap); }
+.ix-d-ask + .ix-d-ask { margin-top: 6px; }
+.ix-d-ask p { margin: 0; font: var(--ix-dask-p-font); color: var(--ix-fg); }
+.ix-d-ask small { grid-column: 2; font: var(--ix-dask-small-font); color: var(--ix-fg-2); }
+.ix-d-ask a { grid-column: 2; justify-self: start; margin-top: 2px; font: var(--ix-dask-a-font); color: var(--ix-fg); text-underline-offset: 3px; }
+.ix-d-ask a:hover, .ix-d-ask a:focus-visible { color: var(--ix-link-hover); }
+
+/* Leaders drawn by the module (hosts may draw their own): the detail's revealed by its dash offset. */
+.ix-leaders { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: var(--ix-z-leader); }
+.ix-xline { fill: none; stroke: var(--ix-leader); stroke-width: 1; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+.ix-pline { fill: none; stroke: var(--ix-leader); stroke-width: 1; }
+
+/* Keyboard: one visually hidden button per item; focus is a hover, Enter opens. */
+.ix-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

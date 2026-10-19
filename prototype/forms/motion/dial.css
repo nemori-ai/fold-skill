@@ -66,51 +66,11 @@
 .dl-c-d { font: 11.5px var(--mono); color: var(--ink-2); }
 .dl-callout[data-id] { cursor: pointer; }
 
-/* Hover: the summary card is the callout's box. The cursor's own note grows in place (.dl-c-more) instead. */
+/* Hover: the summary and detail cards are the interaction module's (ix.css, paper theme by default: this page's
+   paper, ink frame and type). The cursor's own note grows in place (.dl-c-more) instead of opening a second card. */
 .dl-c-more { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--rule); font: 11.5px/1.5 var(--mono); color: var(--ink-2); }
 .dl-c-more[hidden] { display: none; }
 .dl-c-more b { color: var(--ink); font-weight: 600; }
-.dl-c-ask { display: grid; grid-template-columns: 8px minmax(0, 1fr); column-gap: 6px; align-items: baseline; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--rule); font-size: 12.5px; font-weight: 600; line-height: 1.35; }
-.dl-c-ask i { width: 8px; height: 8px; background: oklch(0.5 0.15 35); }
-.dl-c-ask.is-urgent i, .dl-d-ask.is-urgent i { background: var(--vermilion); }
-.dl-c-ask small { grid-column: 2; font: 400 11px var(--mono); color: var(--ink-2); }
-
-/* Detail: the same paper, ink frame and type, unfolded from the end of its leader (clip-path set per frame). */
-.dl-detail { position: absolute; left: 0; top: 0; z-index: 3; width: 320px; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 9px 13px 11px; background: var(--paper); border: 1px solid var(--ink); will-change: transform, clip-path; outline: none; }
-.dl-detail[hidden] { display: none; }
-.dl-d-k { display: flex; justify-content: space-between; align-items: center; gap: 8px; font: 10.5px var(--mono); color: var(--ink-2); }
-.dl-d-k button { flex: none; border: 0; padding: 0 2px; background: none; font: 16px/1 var(--mono); color: var(--ink-2); cursor: pointer; }
-.dl-d-k button:hover, .dl-d-k button:focus-visible { color: var(--ink); }
-.dl-d-t { margin: 3px 0 1px; font-size: 15px; font-weight: 600; line-height: 1.35; }
-.dl-d-s { font: 11.5px var(--mono); color: var(--ink-2); }
-.dl-d-s b { color: var(--ink); font-weight: 600; }
-.dl-d-sum { margin: 6px 0 0; font-size: 12.5px; line-height: 1.5; }
-.dl-detail section { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rule); }
-.dl-detail h5 { display: flex; justify-content: space-between; margin: 0 0 4px; font: 600 10px var(--mono); color: var(--ink-2); letter-spacing: .06em; }
-.dl-detail h5 b { color: var(--ink); font-weight: 600; font-size: 10.5px; letter-spacing: 0; }
-.dl-d-trend { display: block; width: 100%; height: 34px; }
-.dl-d-trend rect { fill: oklch(0.28 0.025 155 / .32); }
-.dl-d-trend rect.is-now { fill: var(--ink); }
-.dl-d-trend rect.is-later { fill: oklch(0.28 0.025 155 / .1); }
-.dl-d-trend rect.is-off { fill: oklch(0.28 0.025 155 / .2); }
-.dl-d-axis { display: flex; justify-content: space-between; margin-top: 2px; font: 9.5px var(--mono); color: var(--ink-2); }
-.dl-d-in, .dl-d-fb, .dl-d-kids { margin: 0; padding: 0; list-style: none; font-size: 12px; line-height: 1.45; }
-.dl-d-in li + li, .dl-d-fb li + li { margin-top: 4px; }
-.dl-d-in small, .dl-d-fb time { display: block; font: 10px var(--mono); color: var(--ink-2); }
-.dl-d-in span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dl-d-in em { font-style: normal; color: var(--ink-2); }
-.dl-d-kids li { display: flex; justify-content: space-between; gap: 8px; }
-.dl-d-kids b { font: 600 11px var(--mono); }
-.dl-d-none { margin: 0; font: 11px var(--mono); color: var(--ink-2); }
-.dl-d-ask { display: grid; grid-template-columns: 8px minmax(0, 1fr); column-gap: 7px; align-items: baseline; }
-.dl-d-ask + .dl-d-ask { margin-top: 6px; }
-.dl-d-ask i { width: 8px; height: 8px; background: oklch(0.5 0.15 35); }
-.dl-d-ask p { margin: 0; font-size: 13px; font-weight: 600; line-height: 1.4; }
-.dl-d-ask small { grid-column: 2; font: 11px var(--mono); color: var(--ink-2); }
-.dl-d-ask a { grid-column: 2; justify-self: start; margin-top: 2px; font: 600 11.5px var(--mono); color: var(--ink); text-underline-offset: 3px; }
-
-/* Keyboard: one visually hidden button per sector; the focused sector gets the ink outline (.is-focus). */
-.dl-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* Panels: three are texture (grey), two echo the timing and the allocation. */
 .dl-panels { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; padding: 8px 18px 12px; border-top: 1px solid var(--rule); }

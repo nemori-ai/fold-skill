@@ -5,7 +5,8 @@
 // 模式：默认 hero（20 秒三拍循环）；空格连播全部轮次（每轮 4 秒）；←/→ 逐帧并停住；?frame= 直接停在那帧；
 // 被合页 all.html 用 followFrames 驱动时只走单帧。prefers-reduced-motion 时每拍直接到终态，概念层不动。
 // 交互（story.md「交互」）：悬停或 Tab 到扇区看概要，点击展开详情；两者都让播放停在当前轮，离开或收回 0.4 秒后接着播。
-import { notice, frames, rounds, lanes, hero, BUDGET, orderOf, shortOf, scenario, itemFacts, dayTime } from './dial-model.mjs';
+import { notice, frames, rounds, lanes, hero, BUDGET, orderOf, shortOf, scenario, itemFacts } from './dial-model.mjs';
+import { createIx, placeBeside, summaryOf, IX } from './ix.mjs';
 import { motions } from '../catalog.mjs';
 import { followFrames } from '../../embed.mjs';
 import { withDataset, keepDataset, datasets, currentDataset } from '../../data/select.mjs';
@@ -287,9 +288,6 @@ function buildDOM() {
         <svg class="dl-ring" aria-label="64 份预算环"><g class="dl-pop"></g><g class="dl-ticks"></g><g class="dl-blank"></g><g class="dl-sectors"></g><g class="dl-asks"></g><path class="dl-xline" pathLength="1"/><g class="dl-labels"></g><path class="dl-leader"/><path class="dl-leader dl-peek-leader"/><g class="dl-cursor"><line class="dl-needle"/><rect class="dl-tag"/><text class="dl-tag-t"></text></g><g class="dl-hub"></g></svg>
         <div class="dl-title"><div class="dl-kicker"></div><h2></h2></div>
         <div class="dl-callout" hidden><div class="dl-c-k"><i></i>要你回 · 要紧</div><div class="dl-c-q"></div><div class="dl-c-d"></div><div class="dl-c-more" hidden></div></div>
-        <div class="dl-callout dl-peek" hidden></div>
-        <div class="dl-detail" role="dialog" tabindex="-1" hidden></div>
-        <div class="dl-sr" role="group" aria-label="环上的事项：Tab 逐个看概要，Enter 展开详情，Esc 收回"></div>
       </div>
       <div class="dl-panels">
         <section class="dl-p"><h4>输入 · 片段</h4><div class="dl-feed-w"><div class="dl-feed">${'<div></div>'.repeat(7)}</div></div></section>
@@ -306,7 +304,7 @@ function buildDOM() {
     cursor: $('.dl-cursor'), needle: $('.dl-needle'), tag: $('.dl-tag'), tagText: $('.dl-tag-t'), leader: $('.dl-leader'),
     title: $('.dl-title'), kicker: $('.dl-kicker'), h2: $('.dl-title h2'),
     callout: $('.dl-callout'), cq: $('.dl-c-q'), cd: $('.dl-c-d'), cmore: $('.dl-c-more'),
-    pop: $('.dl-pop'), xline: $('.dl-xline'), peek: $('.dl-peek'), peekLeader: $('.dl-peek-leader'), detail: $('.dl-detail'), sr: $('.dl-sr'),
+    pop: $('.dl-pop'), xline: $('.dl-xline'), peekLeader: $('.dl-peek-leader'),
     panelHeads: [...document.querySelectorAll('.dl-p h4')].map(h => ({ h, text: h.firstChild.textContent })),
     counts: Object.fromEntries([...document.querySelectorAll('.dl-count')].map(el => [el.dataset.c, el.querySelector('b')])),
     strip: [...document.querySelectorAll('.dl-strip i')], feed: $('.dl-feed'), grid: $('.dl-grid'), pipe: [...document.querySelectorAll('.dl-pipe li')],
@@ -373,7 +371,7 @@ function buildStatic() {
   node('text', { x: g.cx, y: g.cy + g.R * 0.1, class: 'dl-hero', 'font-size': (g.R * 0.46).toFixed(1) }, els.hub).textContent = String(BUDGET);
   node('text', { x: g.cx, y: g.cy + g.R * 0.1 + 22, class: 'dl-hero-s' }, els.hub).textContent = '份 · 每层预算';
   sectorEls.clear(); labelEls.clear(); els.sectors.replaceChildren(); els.labels.replaceChildren(); els.pop.replaceChildren();
-  lastKey = ''; calloutSize = null; ticksShown = BUDGET; hubShown = 1; ix.peekKey = ''; ix.detailSize = null;
+  lastKey = ''; calloutSize = null; ticksShown = BUDGET; hubShown = 1; ix?.relayout();
 }
 
 function resize() {
@@ -460,8 +458,7 @@ function drawRing(s) {
   els.tag.setAttribute('width', tw); els.tag.setAttribute('height', label ? 22 : 0);
   els.tagText.setAttribute('x', tx.toFixed(1)); els.tagText.setAttribute('y', (ty + 4.5).toFixed(1));
   placeCallout(s, tx, ty, tw);
-  paintPeek(s);
-  paintDetail(s);
+  ix.paint();
 }
 
 function placeCallout(s, tx, ty, tw) {
@@ -471,11 +468,11 @@ function placeCallout(s, tx, ty, tw) {
   const show = c && !s.cursor.hollow && alpha > 0.01;
   els.callout.hidden = !show;
   els.leader.setAttribute('d', '');
-  calloutRect = null;
+  calloutRect = null; calloutInPlace = false;
   if (!show) return;
   const due = c.due || '没有期限';
   // Hovering the cursor's own sector adds the summary to this note instead of opening a second card.
-  const more = X.peekId === c.root && X.peek > 0 ? summaryOf(s.i, c.root) : null;
+  const more = X.peekId === c.root && X.peek > 0 ? summaryOf(itemFacts(s.i, c.root)) : null;
   const moreKey = more ? `${s.i}:${c.root}` : '';
   if (els.cq.textContent !== c.short || els.cd.textContent !== due || els.cmore.dataset.key !== moreKey || !calloutSize) {
     els.cq.textContent = c.short; els.cd.textContent = due;
@@ -509,34 +506,20 @@ function placeCallout(s, tx, ty, tw) {
   const ex = side > 0 ? x : x + bw, ey = Math.max(y + 10, Math.min(y + bh - 10, ty));
   els.leader.setAttribute('d', `M${(side > 0 ? tx + tw / 2 : tx - tw / 2).toFixed(1)},${ty.toFixed(1)}L${ex.toFixed(1)},${ey.toFixed(1)}`);
   els.leader.style.opacity = alpha.toFixed(3);
-  calloutRect = { x1: x, y1: y, x2: x + bw, y2: y + bh };
-  X.inPlace = Boolean(more);
+  calloutRect = { x0: x, y0: y, x1: x + bw, y1: y + bh };
+  calloutInPlace = Boolean(more);
   if (els.callout.dataset.id !== c.root) els.callout.dataset.id = c.root;
 }
 
 // ---------- interaction: hover for a summary, click to open the detail (story.md 交互) ----------
-// Both read itemFacts (dial-model.mjs), the same replay the ring is drawn from. The hub's 64, the hard stop and the
-// 64 ticks never move, and the ring is never turned: a sector steps out along its own radius and a leader carries the
-// eye to the card. Open: 0 cut (play stops, title card and panels switch to the item) → 0–0.3 s the sector steps out
-// (ease-out, overshoot 3.7 %) → 0.4–0.6 s the leader is drawn (the first motion at 0.4 s, as after every cut) →
-// 0.6–0.9 s the card unfolds along it. Close runs it back: card 0.2 s, leader 0.15 s, sector 0.2 s, then the cut
-// back; play resumes 0.4 s later.
-const IX = { pop: 8, popDur: 0.3, line: 0.4, lineDur: 0.2, card: 0.6, cardDur: 0.3, fold: 0.2, unline: 0.15, drop: 0.2,
-  fadeIn: 0.15, fadeOut: 0.12, dim: 0.15, resume: 0.4, grace: 0.15, lead: 18 };
-const ix = {
-  hover: null, via: null, peek: null, peekAt: 0, peekOut: null, peekKey: '', peekSize: null, labelBox: null,
-  open: null, openAt: 0, closeAt: null, viaKey: false, focusMoved: false, next: null, view: null, detailKey: '', detailSize: null,
-  dim: 0, dimId: null, fixed: null, resumeTimer: null, leaveTimer: null,
-};
-// What the interaction shows this frame (ixFrame): the focused item, how far the others are dimmed, the open motion.
-let X = { focus: null, dim: 0, pop: 0, popId: null, line: 0, card: 0, detail: false, peek: 0, peekId: null, keyFocus: null, inPlace: false };
-let calloutRect = null, lastScene = null;
-
-function summaryOf(i, id) {
-  const f = itemFacts(i, id);
-  return { name: f.share ? `${f.short} ${f.share} 份` : f.short, from: f.stream.length ? `来自${f.stream.join(' · ')}` : '',
-    change: f.change?.text || '', inputs: f.inputs.length ? `本轮进了 ${f.inputs.length} 条输入` : '本轮没有输入进它', asks: f.asks };
-}
+// The state machine, the cards, the keys and touch are the shared module's (ix.mjs); this page tells it what is under
+// a point (by angle and radius), where a card hangs and how the leader runs on the ring. The hub's 64, the hard stop
+// and the 64 ticks never move, and the ring is never turned: a sector steps out along its own radius and a leader
+// carries the eye to the card. Both cards read itemFacts (dial-model.mjs), the same replay the ring is drawn from.
+let ix = null;
+// What the interaction shows this frame (ix.frame): the focused item, how far the others are dimmed, the open motion.
+let X = { focus: null, dim: 0, pop: 0, popId: null, line: 0, card: 0, detail: false, peek: 0, peekId: null, keyFocus: null };
+let calloutRect = null, calloutInPlace = false, lastScene = null;
 
 // Others drop to 70 %; the open sector steps out along its radius into a group drawn under the ticks, so the ticks
 // stay on top and nothing of the static ring moves.
@@ -561,116 +544,28 @@ function paintFocus(s) {
   }
 }
 
-// A box beside angle a, level with the point at R + 46 (where the cursor's tag sits), slid away from the ring until it
-// clears the ring, the title card, the edges and every rectangle in `avoid` (placeCallout's method, with more rows).
-// It stays on the item's own side, trying above and below before the other side, and its leader from `from` never
-// passes over the ring.
-function placeBox(a, bw, bh, from, avoid = []) {
-  const [tx, ty] = pt(g.R + 46, a);
-  const t = { x1: els.title.offsetLeft, y1: els.title.offsetTop, x2: els.title.offsetLeft + els.title.offsetWidth, y2: els.title.offsetTop + els.title.offsetHeight };
-  const hit = (x, y, r) => x < r.x2 + 8 && x + bw > r.x1 - 8 && y < r.y2 + 8 && y + bh > r.y1 - 8;
-  const near = (x, y) => [Math.max(x, Math.min(from[0], x + bw)), Math.max(y, Math.min(from[1], y + bh))];
-  const offRing = (x, y) => {
-    // Nearest point of the leader to the centre stays outside the ring.
-    const [ex, ey] = near(x, y), dx = ex - from[0], dy = ey - from[1], L = dx * dx + dy * dy;
-    const k = L ? clamp01(((g.cx - from[0]) * dx + (g.cy - from[1]) * dy) / L) : 0;
-    return Math.hypot(from[0] + dx * k - g.cx, from[1] + dy * k - g.cy) > g.R + 8;
-  };
-  const clear = (x, y) => {
-    const nx = Math.max(x, Math.min(g.cx, x + bw)), ny = Math.max(y, Math.min(g.cy, y + bh));
-    return Math.hypot(nx - g.cx, ny - g.cy) > g.R + 18 && !hit(x, y, t) && avoid.every(r => !r || !hit(x, y, r)) && offRing(x, y);
-  };
-  const first = Math.cos(a) >= -0.2 ? 1 : -1;
-  for (const dir of [first, -first]) {
-    for (const dy of [0, -(bh / 2 + 16), bh / 2 + 16, -(bh + 24), bh + 24]) {
-      const y = Math.max(8, Math.min(g.H - bh - 8, ty - bh / 2 + dy));
-      for (let k = 0; k < 120; k += 1) {
-        let x = dir > 0 ? tx + 22 + k * 6 : tx - 22 - bw - k * 6;
-        const out = x < 8 || x > g.W - bw - 8;
-        // Near an edge the box may sit flush with it (above or below the name) instead of beside it.
-        if (out) x = Math.max(8, Math.min(g.W - bw - 8, x));
-        if (clear(x, y)) return { x, y };
-        if (out) break;
-      }
-    }
-  }
-  return { x: Math.max(8, Math.min(g.W - bw - 8, tx + 22)), y: Math.max(8, Math.min(g.H - bh - 8, ty - bh / 2)) };
+const titleRect = () => ({ x0: els.title.offsetLeft, y0: els.title.offsetTop, x1: els.title.offsetLeft + els.title.offsetWidth, y1: els.title.offsetTop + els.title.offsetHeight });
+// The summary card: beside the hovered sector, level with the point at R + 46 (where the cursor's tag sits), slid away
+// from the ring until it clears the ring, the title card, the callout, the name and the tag. It stays on the item's own
+// side, trying above and below before the other side, and its leader (from the name, else the rim) never passes over
+// the ring. For the cursor's own sector the callout grows in place instead (placeCallout, inPlace).
+function peekPlace(id, w, h) {
+  const s = lastScene, live = s.layout.map.get(id), m = ang((live[0] + live[1]) / 2);
+  const b = labelEls.get(id)?.getBBox();
+  const lb = b && b.width ? { x0: b.x, y0: b.y, x1: b.x + b.width, y1: b.y + b.height } : null;
+  const tag = s.cursor.hollow || !tagWidth ? null : (([x, y]) => ({ x0: x - tagWidth / 2, y0: y - 11, x1: x + tagWidth / 2, y1: y + 11 }))(pt(g.R + 46, s.cursor.angle));
+  const [fx, fy] = lb ? [Math.cos(m) >= 0 ? lb.x1 + 3 : lb.x0 - 3, (lb.y0 + lb.y1) / 2] : pt(g.R + 14, m);
+  const [tx, ty] = pt(g.R + 46, m);
+  return placeBeside({ at: { x: tx, y: ty }, from: { x: fx, y: fy }, facing: Math.cos(m) >= -0.2 ? 1 : -1, w, h, gap: 22, steps: 120, flush: true,
+    bounds: { x0: 8, y0: 8, x1: g.W - 8, y1: g.H - 8 }, avoid: [titleRect(), calloutRect, lb, tag],
+    zone: { x: g.cx, y: g.cy, r: g.R + 18 }, leaderZone: { x: g.cx, y: g.cy, r: g.R + 8 } });
 }
 
-// The summary card: the callout's paper, ink frame and type, beside the hovered sector, with the same thin leader.
-// For the cursor's own sector the callout grows in place instead (placeCallout).
-function paintPeek(s) {
-  const id = X.peekId, live = id && s.layout.map.get(id);
-  const show = live && X.peek > 0.01 && !X.inPlace && !ix.open;
-  els.peek.hidden = !show;
-  els.peekLeader.setAttribute('d', '');
-  if (!show) return;
-  const key = `${s.i}:${id}`;
-  if (ix.peekKey !== key) {
-    ix.peekKey = key;
-    const m = summaryOf(s.i, id);
-    els.peek.dataset.id = id;
-    els.peek.innerHTML = `<div class="dl-c-k">${esc(m.from || `第 ${s.i} 轮`)}</div><div class="dl-c-q">${esc(m.name)}</div>
-      <div class="dl-c-d">${esc(m.change)}</div><div class="dl-c-d">${esc(m.inputs)}</div>
-      ${m.asks.map(a => `<div class="dl-c-ask${a.cursor ? ' is-urgent' : ''}"><i></i><span>${esc(a.short)}</span>${a.due ? `<small>${esc(a.due)}</small>` : ''}</div>`).join('')}`;
-    ix.peekSize = [els.peek.offsetWidth, els.peek.offsetHeight];
-    const label = labelEls.get(id), b = label?.getBBox();
-    ix.labelBox = b && b.width ? { x1: b.x, y1: b.y, x2: b.x + b.width, y2: b.y + b.height } : null;
-  }
-  const [bw, bh] = ix.peekSize;
-  const m = ang((live[0] + live[1]) / 2);
-  const tag = s.cursor.hollow || !tagWidth ? null : (([x, y]) => ({ x1: x - tagWidth / 2, y1: y - 11, x2: x + tagWidth / 2, y2: y + 11 }))(pt(g.R + 46, s.cursor.angle));
-  // The leader leaves from the sector's name when it has one (as the callout's leaves from the tag), else from the rim,
-  // and ends at the nearest point of the card.
-  const lb = ix.labelBox, outward = Math.cos(m) >= 0;
-  const from = lb ? [outward ? lb.x2 + 3 : lb.x1 - 3, (lb.y1 + lb.y2) / 2] : pt(g.R + 14, m);
-  const { x, y } = placeBox(m, bw, bh, from, [calloutRect, ix.labelBox, tag]);
-  els.peek.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
-  els.peek.style.opacity = X.peek.toFixed(3);
-  const ex = Math.max(x, Math.min(from[0], x + bw)), ey = Math.max(y, Math.min(from[1], y + bh));
-  const [sx, sy] = from;
-  els.peekLeader.setAttribute('d', `M${sx.toFixed(1)},${sy.toFixed(1)}L${ex.toFixed(1)},${ey.toFixed(1)}`);
-  els.peekLeader.style.opacity = X.peek.toFixed(3);
-}
-
-// ---------- the detail card ----------
-function detailHTML(f) {
-  const d = withDataset(`../../index.html?variant=d&frame=${f.i}`);
-  const groups = new Map();
-  for (const x of f.inputs) { if (!groups.has(x.source)) groups.set(x.source, []); groups.get(x.source).push(x); }
-  const sorted = [...groups].sort((a, b) => b[1].length - a[1].length);
-  const rest = sorted.slice(3).reduce((n, [, list]) => n + list.length, 0);
-  const inputs = sorted.slice(0, 3).map(([source, list]) => `<li><small>${esc(source)} · ${list.length} 条</small>${[...new Map(list.map(x => [x.title, x])).values()].slice(0, 2)
-    .map(x => `<span>${x.from ? `<em>${esc(x.from)}</em> ` : ''}${esc(x.title)}</span>`).join('')}</li>`).join('')
-    + (rest ? `<li class="dl-d-none">另有 ${rest} 条，来自 ${sorted.length - 3} 个来源</li>` : '');
-  // Share in every round: one bar a round, this round in ink, later rounds faint (as the allocation panel draws them).
-  const n = last, W = 300, H = 34, top = Math.max(24, ...f.trend), bw = W / n;
-  const bars = f.trend.slice(1).map((v, k) => {
-    const x = (k * bw + bw * 0.15).toFixed(1), w = (bw * 0.7).toFixed(1), h = v ? Math.max(1.5, (v / top) * (H - 2)) : 1;
-    return `<rect x="${x}" y="${(H - h).toFixed(1)}" width="${w}" height="${h.toFixed(1)}" class="${k + 1 === f.i ? 'is-now' : k + 1 > f.i ? 'is-later' : v ? '' : 'is-off'}"/>`;
-  }).join('');
-  const asks = f.asks.length ? f.asks.slice(0, 2).map(a => `<div class="dl-d-ask${a.cursor ? ' is-urgent' : ''}"><i></i><p>${esc(a.prompt)}</p>
-      <small>${esc(a.due || '没有期限')}</small><a href="${esc(d)}">去回答 →</a></div>`).join('') : '<p class="dl-d-none">没有开着的问题</p>';
-  const fb = f.feedback.length ? `<ul class="dl-d-fb">${f.feedback.slice(-3).map(x => `<li><time>${esc(dayTime(x.at))}</time>${esc(x.text)}</li>`).join('')}</ul>`
-    : '<p class="dl-d-none">到这一轮还没有你的回应</p>';
-  return `<div class="dl-d-k"><span>第 ${f.i} / ${last} 轮${f.stream.length ? ` · 来自${esc(f.stream.join(' · '))}` : ''}</span>
-      <button type="button" data-x="close" aria-label="收回（Esc）" title="收回（Esc）">×</button></div>
-    <div class="dl-d-t">${esc(f.title)}</div>
-    <div class="dl-d-s"><b>${esc(f.short)} ${f.share}</b> / ${BUDGET} 份${f.change ? ` · ${esc(f.change.text)}` : ''}</div>
-    ${f.summary ? `<p class="dl-d-sum">${esc(f.summary)}</p>` : ''}
-    ${f.children.length ? `<section><h5>子层<b>${f.children.length} 件</b></h5><ul class="dl-d-kids">${f.children.map(c => `<li><span>${esc(c.title)}</span><b>${c.share}</b></li>`).join('')}</ul></section>` : ''}
-    <section><h5>份额 · 逐轮<b>第 ${f.i} 轮 ${f.share} 份</b></h5><svg class="dl-d-trend" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${bars}</svg>
-      <div class="dl-d-axis"><span>第 1 轮</span><span>第 ${n} 轮</span></div></section>
-    <section><h5>本轮进了它<b>${f.inputs.length} 条</b></h5>${inputs ? `<ul class="dl-d-in">${inputs}</ul>` : '<p class="dl-d-none">本轮没有输入进它</p>'}</section>
-    <section><h5>开着的问题<b>${f.asks.length ? `${f.asks.length} 条` : ''}</b></h5>${asks}</section>
-    <section><h5>你的回应<b>${f.feedback.length ? `共 ${f.feedback.length} 条` : ''}</b></h5>${fb}</section>`;
-}
-
-// Where the card goes and the leader's path. The card takes the side the sector faces when there is room (else the
-// other side), hugs that edge of the stage and never comes into the hub. The leader leaves the stepped-out sector,
+// Where the detail card goes and the leader's path. The card takes the side the sector faces when there is room (else
+// the other side), hugs that edge of the stage and never comes into the hub. The leader leaves the stepped-out sector,
 // turns just outside the ticks and, when the sector faces away from the card, runs round the ring to it.
-function detailPlace(s, id) {
-  const live = s.layout.map.get(id);
+function detailPlace(id, el) {
+  const live = lastScene?.layout.map.get(id);
   if (!live) return null;
   const mid = ang((live[0] + live[1]) / 2);
   const title = els.title.offsetTop + els.title.offsetHeight;
@@ -682,11 +577,9 @@ function detailPlace(s, id) {
   if (side > 0 && x < g.cx + g.Rin + 10) { x = g.cx + g.Rin + 10; w = g.W - 12 - x; }
   if (side < 0 && x + w > g.cx - g.Rin - 10) w = g.cx - g.Rin - 10 - x;
   const minY = side < 0 ? title + 10 : 10;
-  els.detail.style.width = `${w}px`;
-  els.detail.style.maxHeight = `${Math.max(160, g.H - minY - 10)}px`;
-  els.detail.style.clipPath = 'inset(0 100% 100% 0)';
-  els.detail.hidden = false;
-  const h = els.detail.offsetHeight;
+  el.style.width = `${w}px`;
+  el.style.maxHeight = `${Math.max(160, g.H - minY - 10)}px`;
+  const h = el.offsetHeight;
   // The leader leaves the sector at its point nearest the card (kept off the sector's edges, and off the cursor's
   // needle, which sits at the middle of its sector), from the rim where the stepped-out sector now ends.
   const a0 = ang(live[0]), a1 = ang(live[1]), toward = side > 0 ? 0 : Math.PI, TAU = Math.PI * 2;
@@ -699,7 +592,7 @@ function detailPlace(s, id) {
   const turn = direct ? m : side > 0 ? (Math.sin(m) <= 0 ? -Math.PI / 3 : Math.PI / 3) : (Math.sin(m) <= 0 ? -2 * Math.PI / 3 : 2 * Math.PI / 3);
   // Just outside the ticks; a run over the top goes higher, clear of the hard stop and its “0 / 64”.
   const over = shortest(m, -Math.PI / 2), run = shortest(m, turn);
-  const Rl = g.R + (!direct && Math.sign(over) === Math.sign(run) && Math.abs(over) < Math.abs(run) ? 36 : IX.lead);
+  const Rl = g.R + (!direct && Math.sign(over) === Math.sign(run) && Math.abs(over) < Math.abs(run) ? 36 : 18);
   const rim = pt(g.R, m);
   const pts = [[rim[0] + push[0], rim[1] + push[1]], pt(Rl, m)];
   if (!direct) { const d = shortest(m, turn), steps = Math.max(2, Math.ceil(Math.abs(d) * 24)); for (let j = 1; j <= steps; j += 1) pts.push(pt(Rl, m + (d * j) / steps)); }
@@ -707,124 +600,7 @@ function detailPlace(s, id) {
   const y = Math.max(minY, Math.min(g.H - h - 10, ey - h * 0.3));
   const ay = Math.max(y + 14, Math.min(y + h - 14, ey));
   pts.push([side > 0 ? x : x + w, ay]);
-  return { x, y, w, h, side, ay: ay - y, d: `M${pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join('L')}` };
-}
-
-function paintDetail(s) {
-  const id = ix.open;
-  if (!id) { if (!els.detail.hidden) els.detail.hidden = true; if (els.xline.getAttribute('d')) els.xline.setAttribute('d', ''); return; }
-  const key = `${ix.view.i}:${id}`;
-  if (ix.detailKey !== key) {
-    ix.detailKey = key; ix.detailSize = null;
-    els.detail.innerHTML = detailHTML(ix.view);
-    els.detail.setAttribute('aria-label', `${ix.view.short} · 第 ${ix.view.i} 轮`);
-    els.detail.scrollTop = 0;
-  }
-  if (!ix.detailSize) { ix.detailSize = detailPlace(s, id); if (ix.detailSize) els.xline.setAttribute('d', ix.detailSize.d); }
-  const p = ix.detailSize;
-  if (!p) return;
-  els.detail.hidden = false;
-  els.xline.style.strokeDashoffset = (1 - X.line).toFixed(4);
-  // The card unfolds from the leader's end: first a short ink edge growing up and down, then the width.
-  const q = X.card, kv = easeOutCubic(clamp01(q / 0.45)), kh = easeOutCubic(clamp01((q - 0.15) / 0.85));
-  const cut = ((1 - kh) * (p.w - 1)).toFixed(1);
-  els.detail.style.clipPath = q >= 1 ? 'none' : `inset(${((1 - kv) * p.ay).toFixed(1)}px ${p.side > 0 ? cut : 0}px ${((1 - kv) * (p.h - p.ay)).toFixed(1)}px ${p.side > 0 ? 0 : cut}px)`;
-  els.detail.style.visibility = q > 0 ? '' : 'hidden';
-  els.detail.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
-  if (ix.viaKey && !ix.focusMoved && q >= 1) { ix.focusMoved = true; els.detail.focus({ preventScroll: true }); }
-}
-
-// ---------- interaction state ----------
-function ixFrame(dt) {
-  const now = wall(), rm = reduced();
-  const since = t0 => (rm ? 99 : ix.fixed != null ? ix.fixed : now - t0);
-  let pop = 0, line = 0, card = 0, detail = false;
-  if (ix.open) {
-    if (ix.closeAt == null) {
-      const e = since(ix.openAt);
-      pop = easeOutBack(clamp01(e / IX.popDur));
-      line = easeOutCubic(clamp01((e - IX.line) / IX.lineDur));
-      card = clamp01((e - IX.card) / IX.cardDur);
-      detail = true;
-    } else {
-      const e = since(ix.closeAt);
-      card = 1 - clamp01(e / IX.fold);
-      line = 1 - easeInOutCubic(clamp01((e - IX.fold) / IX.unline));
-      pop = 1 - easeInOutCubic(clamp01((e - IX.fold - IX.unline) / IX.drop));
-      detail = e < IX.fold + IX.unline + IX.drop;
-      if (!detail) finishClose();
-    }
-  }
-  const target = ix.open || ix.hover ? 1 : 0;
-  ix.dim = rm ? target : target > ix.dim ? Math.min(target, ix.dim + dt / IX.dim) : Math.max(target, ix.dim - dt / IX.dim);
-  // A pinned moment (test hook) shows the dimming where the open motion has it, not where the wall clock has it.
-  if (ix.fixed != null && !rm && ix.open && ix.closeAt == null && !ix.hover) ix.dim = clamp01(ix.fixed / IX.dim);
-  if (ix.open || ix.hover) ix.dimId = ix.open || ix.hover;
-  let peek = 0;
-  if (ix.peek) {
-    peek = ix.peekOut != null ? 1 - clamp01((now - ix.peekOut) / IX.fadeOut) : clamp01((now - ix.peekAt) / IX.fadeIn);
-    if (rm) peek = ix.peekOut != null ? 0 : 1;
-    if (ix.peekOut != null && peek <= 0) { ix.peek = null; ix.peekOut = null; }
-  }
-  return { focus: ix.dim > 0 ? ix.dimId : null, dim: ix.dim, pop, popId: ix.open, line, card, detail, peek, peekId: ix.peek,
-    keyFocus: ix.via === 'key' && !ix.open ? ix.hover : null, inPlace: false };
-}
-// Hovering or opening stops play where it is; 0.4 s after the last one ends it goes on from there.
-function syncPause() {
-  if (ix.hover || ix.open) {
-    clearTimeout(ix.resumeTimer); ix.resumeTimer = null;
-    if (pause.at == null) pause.at = wall();
-  } else if (pause.at != null && !ix.resumeTimer) {
-    ix.resumeTimer = setTimeout(() => { ix.resumeTimer = null; if (!ix.hover && !ix.open) resumeNow(); }, IX.resume * 1000);
-  }
-}
-function resumeNow() {
-  clearTimeout(ix.resumeTimer); ix.resumeTimer = null;
-  if (pause.at != null) { pause.total += wall() - pause.at; pause.at = null; }
-}
-function setHover(id, via) {
-  clearTimeout(ix.leaveTimer); ix.leaveTimer = null;
-  if (!id) {
-    if (!ix.hover) return;
-    const clear = () => { ix.hover = null; ix.via = null; if (ix.peek && ix.peekOut == null) ix.peekOut = wall(); syncPause(); };
-    // A short grace, so the pointer can travel from the sector onto its card.
-    if (via === 'now') clear(); else ix.leaveTimer = setTimeout(clear, IX.grace * 1000);
-    return;
-  }
-  ix.via = via;
-  if (ix.hover === id) return;
-  ix.hover = id;
-  if (!ix.open) { const shown = ix.peek && ix.peekOut == null; ix.peek = id; ix.peekOut = null; ix.peekAt = shown ? wall() - IX.fadeIn : wall(); }
-  syncPause();
-}
-function openItem(id, viaKey = false) {
-  if (!id || !lastScene?.layout.map.has(id)) return;
-  if (ix.open === id && ix.closeAt == null) return;
-  if (ix.open && ix.open !== id) { ix.next = { id, viaKey }; closeItem(); return; }
-  clearTimeout(ix.leaveTimer); ix.leaveTimer = null;
-  ix.open = id; ix.openAt = wall(); ix.closeAt = null; ix.viaKey = viaKey; ix.focusMoved = false;
-  ix.view = itemFacts(lastScene.i, id); ix.detailKey = ''; ix.detailSize = null;
-  if (ix.peek && ix.peekOut == null) ix.peekOut = wall();
-  syncPause();
-}
-function closeItem() { if (ix.open && ix.closeAt == null) ix.closeAt = wall(); }
-function finishClose() {
-  const id = ix.open, refocus = ix.viaKey;
-  ix.open = null; ix.closeAt = null; ix.view = null; ix.viaKey = false; ix.detailKey = ''; ix.detailSize = null;
-  els.detail.hidden = true; els.xline.setAttribute('d', '');
-  if (ix.hover) { ix.peek = ix.hover; ix.peekAt = wall(); ix.peekOut = null; }
-  if (refocus) els.sr.querySelector(`[data-sector="${CSS.escape(id)}"]`)?.focus({ preventScroll: true });
-  const next = ix.next;
-  ix.next = null;
-  if (next) openItem(next.id, next.viaKey); else syncPause();
-}
-/** Any navigation (frame, step, mode, the embedding page) drops hover and detail at once and lets play go on. */
-function resetIx() {
-  clearTimeout(ix.leaveTimer); ix.leaveTimer = null;
-  if (els.sr.contains(document.activeElement)) document.activeElement.blur();
-  Object.assign(ix, { hover: null, via: null, peek: null, peekOut: null, open: null, closeAt: null, view: null, next: null, viaKey: false, dim: 0, detailKey: '', detailSize: null });
-  els.detail.hidden = true; els.peek.hidden = true; els.xline.setAttribute('d', ''); els.main.style.cursor = '';
-  resumeNow();
+  return { x, y, w, h, path: pts.map(([px, py]) => ({ x: px, y: py })) };
 }
 
 // Which sector is under a point of the stage: by angle and radius, so it follows the ring however the DOM changes.
@@ -838,44 +614,23 @@ function idAt(x, y) {
   for (const [id, [a0, a1]] of s.layout.map) if (u >= a0 && u < a1 && a1 - a0 > 0.05) return id;
   return null;
 }
-// Sector names, the cursor's tag, its callout and the summary card carry data-id; anything else is hit by geometry.
-function pointerItem(event) {
-  const tagged = event.target.closest?.('[data-id]');
-  if (tagged && lastScene?.layout.map.has(tagged.dataset.id)) return tagged.dataset.id;
-  if (event.target.closest?.('.dl-detail, .dl-title, .dl-callout')) return null;
-  const box = els.main.getBoundingClientRect();
-  return idAt(event.clientX - box.left, event.clientY - box.top);
-}
 const itemNamed = name => (lastScene?.layout.map.has(name) ? name : [...(lastScene?.layout.map.keys() || [])].find(id => shortOf(id) === name) || null);
-// Keyboard: one visually hidden button per sector of the round, clockwise from 0; focus is a hover, Enter opens.
-function syncProxies(s) {
-  const key = String(s.i);
-  if (els.sr.dataset.key === key || els.sr.contains(document.activeElement)) return;
-  els.sr.dataset.key = key;
-  els.sr.innerHTML = rounds[s.i].sectors.map(x => `<button type="button" data-sector="${esc(x.id)}" aria-label="${esc(`${x.short} ${x.share} 份`)}"></button>`).join('');
-}
-function bindInteraction() {
-  let lastPointer = 'mouse';
-  els.main.addEventListener('pointermove', event => {
-    if (event.pointerType === 'touch') return;
-    const id = pointerItem(event);
-    els.main.style.cursor = id ? 'pointer' : '';
-    if (id) setHover(id, 'pointer');
-    else if (ix.via === 'pointer') setHover(null);
+
+// Sector names, the cursor's tag, its callout and the summary card carry data-id; anything else is hit by geometry.
+// Keyboard: one hidden button per sector of the round, clockwise from 0.
+function makeIx() {
+  return createIx({
+    stage: els.main,
+    facts: id => itemFacts(lastScene.i, id), index: () => lastScene.i,
+    has: id => Boolean(lastScene?.layout.map.has(id)), hit: idAt, named: itemNamed,
+    pointOf: id => { const live = lastScene?.layout.map.get(id); if (!live) return null; const [x, y] = pt((g.R + g.Rin) / 2, ang((live[0] + live[1]) / 2)); return { x, y }; },
+    // Hovering or opening stops play where it is (clock); the concept layer keeps its own clock.
+    pause: () => { pause.at = wall(); }, resume: () => { pause.total += wall() - pause.at; pause.at = null; }, paused: () => pause.at != null,
+    last, answerHref: f => withDataset(`../../index.html?variant=d&frame=${f.i}`),
+    peekPlace, detailPlace, inPlace: () => calloutInPlace, skip: '.dl-title, .dl-callout',
+    leaders: { detail: els.xline, peek: els.peekLeader }, trendH: 34,
+    label: '环上的事项：Tab 逐个看概要，Enter 展开详情，Esc 收回',
   });
-  els.main.addEventListener('pointerleave', () => { if (ix.via === 'pointer') setHover(null); });
-  els.main.addEventListener('pointerdown', event => { lastPointer = event.pointerType || 'mouse'; });
-  els.main.addEventListener('click', event => {
-    if (event.target.closest('.dl-detail')) { if (event.target.closest('[data-x="close"]')) closeItem(); return; }
-    if (event.target.closest('a, button')) return;
-    const id = pointerItem(event);
-    // Touch has no hover: the first tap on a sector is the hover, a second tap (or a tap on its card) opens it.
-    if (id && lastPointer === 'touch' && ix.hover !== id && ix.open !== id) { setHover(id, 'touch'); return; }
-    if (id) { if (ix.open === id && ix.closeAt == null) closeItem(); else openItem(id); return; }
-    if (ix.open) closeItem(); else if (ix.hover && ix.via !== 'key') setHover(null, 'now');
-  });
-  els.sr.addEventListener('focusin', event => { const id = event.target.dataset?.sector; if (id) setHover(id, 'key'); });
-  els.sr.addEventListener('focusout', event => { if (ix.via === 'key' && !els.sr.contains(event.relatedTarget)) setHover(null, 'now'); });
 }
 
 // ---------- drawing: canvas (concept field, information marks) ----------
@@ -1370,7 +1125,7 @@ function frame(now) {
   if (player.freeze != null && player.mode === 'hero') { t = player.segs[0].t0 + player.freeze; conceptClock = player.freeze; }
   const s = sceneAt(t);
   lastScene = s;
-  X = ixFrame(dt);
+  X = ix.frame();
   // First open: 0.4 s of stillness, the concept layer included (direct note 1).
   if (player.freeze == null && !reduced() && !(s.intro && s.intro.concept === 0)) conceptClock += dt;
   paintTicks(s.intro ? s.intro.ticks : BUDGET, s.intro ? s.intro.hub : 1);
@@ -1379,7 +1134,7 @@ function frame(now) {
   drawRing(s);
   paintText(s);
   paintPanels(s, conceptClock);
-  syncProxies(s);
+  ix.sync(s.i, () => rounds[s.i].sectors.map(x => ({ id: x.id, label: `${x.short} ${x.share} 份` })));
   if (perf.on) perf.work.push(performance.now() - now);
   requestAnimationFrame(frame);
 }
@@ -1400,6 +1155,7 @@ function paintTicks(n, hub) {
 export function boot() {
   keepDataset();
   buildDOM();
+  ix = makeIx();
   resize();
   const params = new URLSearchParams(location.search);
   const asked = params.get('frame');
@@ -1408,7 +1164,7 @@ export function boot() {
   // Inside all.html the page follows the bar's frame: single-frame only, no loop and no continuous play.
   // Embedded without a frame (the gallery thumbnail, the site's viewer) it plays the loop like a page of its own.
   const follow = () => { document.body.classList.add('dl-followed'); player.followed = true; };
-  report = followFrames(i => { follow(); player.freeze = null; resetIx(); hold(i, 'jump'); });
+  report = followFrames(i => { follow(); player.freeze = null; ix.reset(); hold(i, 'jump'); });
   if (window.parent !== window && asked != null) follow();
   if (Number.isInteger(index) && index >= 0 && index <= last) {
     player.index = index;
@@ -1419,17 +1175,13 @@ export function boot() {
     const at = Number(params.get('at'));
     if (params.has('at') && at >= 0 && at < 20) player.freeze = at;
   }
-  bindInteraction();
   document.addEventListener('click', event => {
     const b = event.target.closest('button');
-    // A click outside the stage (the panels, the concept card) also folds an open detail back.
-    if (!b) { if (ix.open && !event.target.closest('.dl-main, a')) closeItem(); return; }
-    // Keyboard proxies: Enter or Space on a focused sector opens it, again folds it.
-    if (b.dataset.sector) { const id = b.dataset.sector; if (ix.open === id && ix.closeAt == null) closeItem(); else openItem(id, true); return; }
-    if (b.closest('.dl-detail')) return;
+    // The keyboard proxies and the detail's own buttons are the interaction module's (ix.mjs).
+    if (!b || ix.owns(b)) return;
     player.freeze = null;
     // Navigation drops hover and detail at once, then does what it says.
-    if (b.dataset.step || b.dataset.frame || b.dataset.mode) resetIx();
+    if (b.dataset.step || b.dataset.frame || b.dataset.mode) ix.reset();
     if (b.dataset.step) hold(player.index + Number(b.dataset.step), 'step');
     else if (b.dataset.frame) hold(Number(b.dataset.frame), 'jump');
     else if (b.dataset.mode === 'hero' && !player.followed) { player.firstHero = false; startHero(); }
@@ -1442,14 +1194,14 @@ export function boot() {
   });
   document.addEventListener('keydown', event => {
     if (event.target.matches?.('input,textarea,select,[contenteditable]') || event.metaKey || event.ctrlKey || event.altKey) return;
-    // Esc folds the open detail back (or drops the summary); Enter and Space on a sector or in the card are theirs.
-    if (event.key === 'Escape') { if (ix.open) { event.preventDefault(); closeItem(); } else if (ix.hover) setHover(null, 'now'); return; }
-    if ((event.key === ' ' || event.key === 'Enter') && event.target.closest?.('.dl-sr, .dl-detail')) return;
+    // Esc folds the open detail back (or drops the summary): the interaction module's, as are Enter and Space on a
+    // sector or in the card.
+    if (event.key === 'Escape') return;
     player.freeze = null;
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); resetIx(); hold(player.index + (event.key === 'ArrowLeft' ? -1 : 1), 'step'); }
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); ix.reset(); hold(player.index + (event.key === 'ArrowLeft' ? -1 : 1), 'step'); }
     if (event.key === ' ' && !player.followed) {
       event.preventDefault();
-      resetIx();
+      ix.reset();
       if (player.mode === 'play') hold(player.index);
       else startPlay(player.mode === 'frame' ? player.index + 1 : 1);
     }
@@ -1473,13 +1225,11 @@ export function boot() {
         workMs: +(work.reduce((a, b) => a + b, 0) / Math.max(1, work.length)).toFixed(2), workP95ms: +p95(work).toFixed(2) };
     },
     resetPerf: () => { perf.on = true; perf.times = []; perf.work = []; },
-    // Test hooks for stills and checks: an item by id or by its short name on the ring (主水管, 猫看病).
-    // ixAt(seconds) pins the open or close motion at that moment; ixAt(null) lets it run.
-    hover: name => setHover(itemNamed(name), 'pointer'), unhover: () => setHover(null, 'now'),
-    open: name => openItem(itemNamed(name)), close: () => closeItem(), ixAt: at => { ix.fixed = at ?? null; }, ix,
-    paused: () => pause.at != null,
-    // Where a sector's middle is on the page (for driving a real pointer in checks).
-    pointOf: name => { const live = lastScene?.layout.map.get(itemNamed(name)); if (!live) return null; const box = els.main.getBoundingClientRect(), [x, y] = pt((g.R + g.Rin) / 2, ang((live[0] + live[1]) / 2)); return { x: box.left + x, y: box.top + y }; },
+    // Test hooks for stills and checks (ix.mjs): hover / unhover / open / close / ixAt / ix / paused / pointOf / ixState,
+    // an item by id or by its short name on the ring (主水管, 猫看病). ixAt(seconds) pins the open or close motion.
+    ...ix.hooks(),
+    // The ring's centre and radii on the stage (scripts/check-ix.mjs aims just outside the rim).
+    geom: () => ({ cx: g.cx, cy: g.cy, R: g.R, Rin: g.Rin }),
   };
   requestAnimationFrame(frame);
 }
