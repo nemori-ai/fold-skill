@@ -293,8 +293,9 @@ function treeAt(r, t, runs = NO_RUNS) {
       const g = run ? easeInOut((t - run.leave[0]) / FLOW) : easeOut((t - SHIFT) / 0.45);
       presence = g; length = g; share = sb * (run ? arrived(run, t) : g); slot = sb * allot; reach = sb;
     } else {
-      // A branch on its way out keeps its cells until it withers.
-      const start = clamp((run ? run.reach[run.reach.length - 1] : 0) + 0.05, SHIFT, 2.6);
+      // A branch on its way out keeps its cells until it withers; one that still takes light (an input that
+      // closed it) holds until 2.6 s, so the light is on its way up before it fades, and is gone by beat 3.
+      const start = run ? 2.6 : SHIFT;
       const w = easeInOut((t - start) / 0.5);
       const gone = r.gone.get(id) || { withdrawn: true };
       presence = 1 - w; share = sa * (1 - w); slot = share; alpha = 1 - w; grey = w;
