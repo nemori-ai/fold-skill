@@ -8,15 +8,17 @@ import { responseSentence } from '../forms/sketches/stage.mjs';
 
 // C · 流动形态。64 份是同一池水：每件 3 份以上的事是水面上的一滴，面积 = 份额；不足 3 份的沉到水面以下成为小珠，
 // 你推后的事在下一轮整理读到之后沉进水下的托盘，到点那一轮浮回原处。水面以下的一切按同一深度比例画（面积九分之一）。
-// 换轮按四段走（prototype/forms/polish/c-motion.md 3.2）：涌入（一粒一条输入，采用的落进它所属的那一滴，暂缓的沉到水底
-// 成泥，其余在半空淡掉）→ 长缩（所有份额同一条缓动、同起同落，任何时刻份额加留白都是 64）→ 沉浮（跨过 3 份的、推后的、
-// 到点的过水面）→ 数字落定（份数、标签、朱红环、64 格带与文字一帧硬切）。落定之后零运动。
+// 换轮按四段走（prototype/forms/polish/c-motion.md 3.2）：涌入（一粒一条采用的输入，落进它所属的那一滴或那颗小珠；水底的泥
+// 是暂缓的条数，不飞，长缩时原地淡入淡出到新数量）→ 长缩（所有份额同一条缓动、同起同落，任何时刻份额加留白都是 64）
+// → 沉浮（跨过 3 份的、推后的、到点的过水面）→ 数字落定（份数、标签、朱红环、64 格带与文字一帧硬切）。落定之后零运动。
 // 悬停与展开走 forms/motion/ix.mjs；顶层直接打开时讲一遍“沉下去、到点浮起”。
 const BUDGET = 64, SMALL = 3, SEDIMENT = 112, DEPTH = 1 / 3, BEAD_GAP = 24;
 const PLAY_MS = 5600;
 // Beat table, seconds from the cut (c-motion.md 3.2). A compressed round (the tell's second beat) scales it by FAST.
-const BEAT = { spawn: 0.4, air: 0.45, sinkAir: 0.35, water: 0.25, inflow: 1.0, review: 0.3, grow: 0.7, cross: 0.8, jump: 0.42, local: 0.6, layer: 0.5, fadeOld: 0.3, labelIn: 0.2 };
+const BEAT = { spawn: 0.4, air: 0.45, sinkAir: 0.35, water: 0.25, inflow: 1.0, review: 0.3, grow: 0.7, cross: 0.8, jump: 0.42, local: 0.6, layer: 0.5, labelIn: 0.2 };
 const FAST = 0.42;
+// The concept layer's ink: a falling grain (about 70 % of the first cut's size and ink: the rain was too busy), a speck of mud.
+const GRAIN = { r: 1.05, a: .29 }, MUD = { r: 1.3, a: .26 };
 const clamp = (n, a = 0, b = 1) => Math.max(a, Math.min(b, n));
 const lerp = (a, b, k) => a + (b - a) * k;
 const EASE = {
@@ -50,7 +52,8 @@ function inLayer(i, layerId, id) {
 }
 const DISP = new Set(['used', 'deferred', 'noise', 'duplicate']);
 const planCache = new Map();
-/** One grain per input of frame i: where it goes (the item of the layer it was taken into, as 整理脉冲 counts it). */
+/** Where each input of frame i goes (the item of the layer it was taken into, as 整理脉冲 counts it). Only the adopted
+ * ones that land in an item of the layer are drawn, one grain each; the deferred are the mud's count. */
 function grainPlan(i, layerId) {
   const key = `${i}|${layerId || ''}`;
   if (planCache.has(key)) return planCache.get(key);
@@ -146,7 +149,7 @@ export function mount(host, model) {
           <div class="c-overlay" aria-hidden="true"><div class="c-hero" hidden></div></div>
         </div>
         <div class="c-budget"><div class="c-budget-cells" role="img"></div><p class="c-budget-text"></p></div>
-        <p class="c-legend"><span><i class="c-key-drop"></i>液滴面积 ∝ 份额（3 份以上）</span><span><i class="c-key-bead"></i>水面以下：不足 3 份的小珠与你推后的事，按九分之一面积画</span><span><i class="c-key-ring"></i>朱红环 = 登记了问题；墨色环 = 你已回应</span><span><i class="c-key-grain"></i>一粒一条输入：采用的落进液滴，暂缓的沉到水底</span><span><i class="c-key-merge"></i>只有明确合并才融为一滴</span></p>
+        <p class="c-legend"><span><i class="c-key-drop"></i>液滴面积 ∝ 份额（3 份以上）</span><span><i class="c-key-bead"></i>水面以下：不足 3 份的小珠与你推后的事，按九分之一面积画</span><span><i class="c-key-ring"></i>朱红环 = 登记了问题；墨色环 = 你已回应</span><span><i class="c-key-grain"></i>一粒一条采用的输入，落进它所属的液滴；水底的泥 = 暂缓的条数</span><span><i class="c-key-merge"></i>只有明确合并才融为一滴</span></p>
       </section>
       <aside class="c-read" aria-label="阅读区"><div class="c-read-inner" tabindex="-1" aria-live="polite"></div></aside>
     </main>
@@ -162,7 +165,8 @@ export function mount(host, model) {
   let storeVersion = 0;
   let s = model.snapshot(), shown = s, disposed = false, geo = null, raf = 0, lastFrameAt = 0;
   let tr = null, pinned = null, held = false, heldAt = 0, paneView = null, X = null;
-  let grains = [], sediment = [], oldSediment = null, arrivals = [];
+  // The mud: slot j of the floor shows when j < n; a change of n fades slots in place from a0 (where they stood) over [t0, t1].
+  let grains = [], mud = { a0: [], n: 0, t0: 0, t1: 0 }, arrivals = [];
   const bodies = new Map(), placeCache = new Map(), orderCache = new Map(), scales = new Map(), boxCache = new Map();
   const stats = { frames: 0, total: 0, worst: 0, samples: [], begin: [], gaps: [] };
   const responder = createResponder({ store, snapshot: () => s, cls: 'c', onChange: (record, kind) => answered(record, kind) });
@@ -527,52 +531,52 @@ export function mount(host, model) {
     }
     // A drop that others flow into is drawn with them as one surface while they meet.
     for (const body of bodies.values()) if (body.mergeInto && bodies.get(body.mergeInto)) bodies.get(body.mergeInto).group = `m:${body.mergeInto}`;
-    // Grains: one per input of this round, from above the surface (c-motion.md 3.2 涌入).
-    oldSediment = sediment.length ? { list: sediment, from: now() } : oldSediment;
-    sediment = [];
+    // Grains: one per adopted input that lands in a drop or bead of this layer, from above the surface (c-motion.md 3.2 涌入).
     for (const g of prevGrains) g.fadeFrom = now();
     grains = turn ? planGrains(plan, scene, k) : [];
-    // Off the beat (back, a jump, a layer, the first view): this round's deferred inputs simply lie on the floor.
-    if (!turn && kind !== 'local') sediment = floorOf(grainPlan(s.index, s.layerId));
-    else if (kind === 'local') { sediment = oldSediment?.list || []; oldSediment = null; }
-    tr = { kind, free: kind === 'local', start: t0, settle, end: Math.max(settle, inflowEnd) + (turn ? BEAT.labelIn : 0), done: false, settled: false, grains: turn, k,
-      n: plan ? plan.list.length : 0, prevGrains, scene };
+    // The mud is the round's 暂缓 count and does not fly: in the grow beat (over the whole move off the beat) it fades in
+    // place to the new number, the extra in and the surplus out, from wherever it stood.
+    const mudN = grainPlan(s.index, s.layerId).counts.deferred || 0, mudFrom = mudAlphas(t);
+    const [m0, m1] = turn ? [inflowEnd, inflowEnd + BEAT.grow * k] : [0, Math.max(g1, c1)];
+    mud = { a0: mudFrom, n: mudN, t0: m0, t1: m1 };
+    const mudMoves = mudFrom.length !== mudN || mudFrom.some(a => a < .999);
+    tr = { kind, free: kind === 'local', start: t0, settle, end: Math.max(settle, inflowEnd, mudMoves ? m1 : 0) + (turn ? BEAT.labelIn : 0), done: false, settled: false, grains: turn, k,
+      inflowEnd, n: plan ? plan.list.length : 0, drawn: grains.length, prevGrains, scene };
     held = held && Boolean(ix?.s?.hover || (ix?.s?.open && !ix?.s?.presented));
     if (held) heldAt = t0;
     if (stats.begin.length < 600) stats.begin.push(now() - t0);
     if (kind === 'instant') { finish(); kick(); return; }
     kick();
   }
-  const floorOf = plan => plan.list.filter(g => g.disp === 'deferred').map(g => ({ x: 10 + g.h1 * (geo.w - 20), y: geo.h - 7 - g.h2 * 20 }));
+  // Only the adopted inputs that land in an item on screen fall; noise, duplicates, the unjudged and the deferred do not.
   function planGrains(plan, scene, k) {
-    const { w, h, fieldH } = geo;
-    return plan.list.map(g => {
-      const t0 = BEAT.spawn * k * g.when;
-      const p = g.target && scene.out.get(g.target);
-      const body = p && bodies.get(g.target);
-      if (p && body) {
-        // Into the drop (or bead) it was taken into: where that body is during the inflow.
-        const r = Math.max(4, body.r || p.r), under = body.depth > .5 || body.y > fieldH;
-        const x1 = body.x + (g.h1 - .5) * r * .6, y1 = body.y + (g.h2 - .5) * r * .4;
-        return { kind: 'used', t0, dur: (under ? BEAT.sinkAir + BEAT.water : BEAT.air) * k, x0: body.x + (g.h1 - .5) * Math.min(80, r * 1.4), y0: -6 - g.h3 * 24, x1, y1, under, stopR: under ? 0 : r * .55, tx: body.x, ty: body.y };
-      }
-      const x = 10 + g.h1 * (w - 20);
-      if (g.disp === 'deferred') return { kind: 'deferred', t0, dur: (BEAT.sinkAir + BEAT.water) * k, x0: x, y0: -6 - g.h3 * 24, x1: x, y1: h - 7 - g.h2 * 20, under: true };
-      return { kind: 'gone', t0, dur: BEAT.air * k, x0: x, y0: -6 - g.h3 * 24, x1: x + (g.h2 - .5) * 30, y1: fieldH * (.22 + .42 * g.h2) };
-    });
+    const out = [];
+    for (const g of plan.list) {
+      const p = g.target && scene.out.get(g.target), body = p && bodies.get(g.target);
+      if (!body) continue;
+      // Into the drop (or bead) it was taken into: where that body is during the inflow.
+      const r = Math.max(4, body.r || p.r), under = body.depth > .5 || body.y > geo.fieldH;
+      const x1 = body.x + (g.h1 - .5) * r * .6, y1 = body.y + (g.h2 - .5) * r * .4;
+      out.push({ t0: BEAT.spawn * k * g.when, dur: (under ? BEAT.sinkAir + BEAT.water : BEAT.air) * k, x0: body.x + (g.h1 - .5) * Math.min(80, r * 1.4), y0: -6 - g.h3 * 24, x1, y1, under, stopR: under ? 0 : r * .55, tx: body.x, ty: body.y });
+    }
+    return out;
   }
-  // A grain's position at time e (seconds since it was let go), and whether it is still drawn.
+  // A grain's position at time e (seconds since it was let go), and whether it has landed.
   function grainAt(g, e) {
     const u = clamp(e / g.dur);
-    if (!g.under) {
-      const k = EASE.in(u);
-      return { x: lerp(g.x0, g.x1, u), y: lerp(g.y0, g.y1, k), a: g.kind === 'gone' ? 1 - clamp((u - .45) / .55) : 1, done: u >= 1 };
-    }
-    // Through the air, then slower in the water, down to its target or the floor.
-    const surface = geo.fieldH, split = (g.kind === 'used' ? BEAT.sinkAir / (BEAT.sinkAir + BEAT.water) : BEAT.sinkAir / (BEAT.sinkAir + BEAT.water));
-    if (u < split) { const k = EASE.in(u / split); return { x: lerp(g.x0, g.x1, u), y: lerp(g.y0, surface, k), a: 1, done: false }; }
-    const k = EASE.out((u - split) / (1 - split));
-    return { x: lerp(g.x0, g.x1, u), y: lerp(surface, g.y1, k), a: 1, done: u >= 1 };
+    if (!g.under) return { x: lerp(g.x0, g.x1, u), y: lerp(g.y0, g.y1, EASE.in(u)), done: u >= 1 };
+    // Through the air, then slower in the water, down to its bead.
+    const surface = geo.fieldH, split = BEAT.sinkAir / (BEAT.sinkAir + BEAT.water);
+    if (u < split) return { x: lerp(g.x0, g.x1, u), y: lerp(g.y0, surface, EASE.in(u / split)), done: false };
+    return { x: lerp(g.x0, g.x1, u), y: lerp(surface, g.y1, EASE.out((u - split) / (1 - split))), done: u >= 1 };
+  }
+  // The mud's slots at clock t: slot j goes from where it stood toward shown (j < n) or gone, on the grow beat's easing.
+  function mudAlphas(t) {
+    const { a0, n, t0, t1 } = mud, u = t1 > t0 ? EASE.inOut(clamp((t - t0) / (t1 - t0))) : t >= t0 ? 1 : 0;
+    const out = [];
+    for (let j = 0; j < Math.max(a0.length, n); j += 1) out.push(lerp(a0[j] || 0, j < n ? 1 : 0, u));
+    while (out.length && out[out.length - 1] < .001) out.pop();
+    return out;
   }
   // The round is over: the dead are removed, everything rests on its final value.
   function finish() {
@@ -584,8 +588,7 @@ export function mount(host, model) {
       if (body.nextRing) { body.ringInk = body.nextRing.ink; body.dashed = body.nextRing.dashed; body.ringA = body.nextRing.a; }
       body.vx = body.vy = 0;
     }
-    for (const g of grains) if (g.kind === 'deferred') sediment.push({ x: g.x1, y: g.y1 });
-    grains = []; oldSediment = null;
+    grains = [];
     if (!tr.settled) settleInfo();
     tr.done = true;
   }
@@ -652,31 +655,31 @@ export function mount(host, model) {
     const dimK = 1 - .6 * (X?.dim || 0);
     gctx.fillStyle = 'rgb(48 62 66)';
     const dot = (x, y, r, a) => { if (a <= .01) return; gctx.globalAlpha = a; gctx.beginPath(); gctx.arc(x, y, r, 0, Math.PI * 2); gctx.fill(); };
-    if (oldSediment) {
-      const fade = 1 - clamp((now() - oldSediment.from) / 1000 / BEAT.fadeOld);
-      if (fade <= 0) oldSediment = null; else for (const p of oldSediment.list) dot(p.x, p.y, 1.3, .26 * fade * dimK);
-    }
-    for (const p of sediment) dot(p.x, p.y, 1.3, .26 * dimK);
-    let landed = 0;
+    mudAlphas(t).forEach((a, j) => { const p = mudSpot(j); dot(p.x, p.y, MUD.r, MUD.a * a * dimK); });
     for (const g of grains) {
       const e = t - g.t0;
       if (e < 0) continue;
       const q = grainAt(g, g.cut != null ? Math.min(e, g.cut) : e);
-      if (q.done) landed += 1;
-      if (g.kind === 'used' && !g.under && Math.hypot(q.x - g.tx, q.y - g.ty) < g.stopR) { if (!q.done) landed += 0; continue; }
-      if (q.done && g.kind !== 'deferred') continue;
-      dot(q.x, q.y, g.kind === 'deferred' && q.done ? 1.3 : 1.5, (g.kind === 'deferred' && q.done ? .26 : .42) * q.a * dimK);
+      // Gone once it is inside the drop it fell into (the drop hides it), or once it reaches its bead.
+      if (q.done || (!g.under && Math.hypot(q.x - g.tx, q.y - g.ty) < g.stopR)) continue;
+      dot(q.x, q.y, GRAIN.r, GRAIN.a * dimK);
     }
     for (const g of tr?.prevGrains || []) {
       if (!g.fadeFrom) continue;
       const fade = 1 - clamp((now() - g.fadeFrom) / 200);
       if (fade <= 0) continue;
       const q = grainAt(g, g.cut ?? 0);
-      dot(q.x, q.y, 1.5, .42 * fade * q.a * dimK);
+      dot(q.x, q.y, GRAIN.r, GRAIN.a * fade * dimK);
     }
     gctx.globalAlpha = 1;
-    return landed;
   }
+  // Where slot j of the mud lies: the same spot in every round, so a new count adds or drops specks in place.
+  const mudHash = [];
+  const mudSpot = j => {
+    while (mudHash.length <= j) { const n = mudHash.length; mudHash.push([hash01(`mud:${n}:x`), hash01(`mud:${n}:y`)]); }
+    const [hx, hy] = mudHash[j];
+    return { x: 10 + hx * (geo.w - 20), y: geo.h - 7 - hy * 20 };
+  };
   function writeOverlay(t, dt = 1 / 60) {
     const fade = (v, target, rate) => { const n = v + (target - v) * (1 - Math.exp(-dt * rate)); return Math.abs(n - target) < .004 ? target : n; };
     const ready = !tr || tr.settled;
@@ -719,11 +722,10 @@ export function mount(host, model) {
       body.vx = held || pinned != null ? 0 : (body.x - px) * 60; body.vy = held || pinned != null ? 0 : (body.y - py) * 60;
     }
     if (tr && !tr.settled && t >= tr.settle) settleInfo();
-    // The grains count up the round's inputs as they land (the one number that moves inside the inflow).
-    if (tr && !tr.done) {
-      const landed = tr.grains ? drawGrains(t) : (drawGrains(t), tr.n);
-      if (tr.grains && !tr.settled) setCount(Math.min(tr.n, landed));
-    } else drawGrains(Infinity);
+    drawGrains(tr && !tr.done ? t : Infinity);
+    // The signal row's count flips to the round's N at the end of the inflow (the one number that moves before the
+    // numbers settle); the grains are only the adopted inputs, so they do not count it up.
+    if (tr && !tr.done && tr.grains && !tr.settled) setCount(t >= tr.inflowEnd ? tr.n : '…');
     const list = [...bodies.values()].filter(body => body.alpha > .003 && body.r > .2).sort((a, b) => b.r - a.r).slice(0, MAX_DROPS);
     renderer.render(list.map(toDrop), groupBlend(list));
     writeOverlay(t, lastDt);
@@ -736,7 +738,7 @@ export function mount(host, model) {
     if (tr && !tr.done && pinned == null && !held && t >= tr.end) finish();
     const cost = now() - t0;
     stats.frames += 1; stats.total += cost; stats.worst = Math.max(stats.worst, cost); if (stats.samples.length < 6000) stats.samples.push(cost);
-    const moving = (tr && !tr.done) || ix.live() || oldSediment || tell || [...bodies.values()].some(b => b.fading);
+    const moving = (tr && !tr.done) || ix.live() || tell || [...bodies.values()].some(b => b.fading);
     host.dataset.cMotion = moving ? 'running' : 'idle';
     dirty = Boolean(moving);
     if (!moving) lastFrameAt = 0;
@@ -816,7 +818,7 @@ export function mount(host, model) {
     }
     const acted = frameActions(s.index).length, plan = grainPlan(s.index, s.layerId);
     const settled = count == null;
-    return `<span class="c-sig-kind">本轮输入</span><span class="c-sig-n">${settled ? s.frame.events.length : count}</span> 条${signal.coverage ? `（${esc(signal.coverage)}）` : ''}${settled && plan.counts.deferred ? ` · 暂缓 ${plan.counts.deferred} 条沉到水底` : ''}${settled && acted ? ` · 其中 ${acted} 处是你在各处的回应` : ''}${settled && arrivals.length ? ` · <b>◷ ${arrivals.length} 件到点浮起</b>` : ''}`;
+    return `<span class="c-sig-kind">本轮输入</span><span class="c-sig-n">${settled ? s.frame.events.length : count}</span> 条${signal.coverage ? `（${esc(signal.coverage)}）` : ''}${settled && plan.counts.deferred ? ` · 暂缓 ${plan.counts.deferred} 条在水底` : ''}${settled && acted ? ` · 其中 ${acted} 处是你在各处的回应` : ''}${settled && arrivals.length ? ` · <b>◷ ${arrivals.length} 件到点浮起</b>` : ''}`;
   }
   function renderSignal() { $('.c-signal').innerHTML = signalHTML(null); }
   let countShown = null;
@@ -912,7 +914,7 @@ export function mount(host, model) {
     const actsHTML = acts.length ? `<section><h3>本轮你在各处的回应 · ${acts.length}</h3>${acts.slice(0, 5).map(entry => actionHTML(entry, { cls: 'c', withTarget: getItem(s.state, entry.target) })).join('')}${acts.length > 5 ? `<details class="c-more"><summary>另 ${acts.length - 5} 条</summary>${acts.slice(5).map(entry => actionHTML(entry, { cls: 'c', withTarget: getItem(s.state, entry.target) })).join('')}</details>` : ''}</section>` : '';
     const dispositions = {}; for (const event of f.events) dispositions[event.disposition] = (dispositions[event.disposition] || 0) + 1;
     const words = { used: '采用', duplicate: '重复', noise: '噪音', deferred: '暂缓' };
-    return `<p class="c-read-kicker">本轮概览 · ${stamp(f.at)}</p><h2>${esc(f.title)}</h2><p class="c-read-summary">${esc(f.narrative)}</p>${arrivalHTML}${rows ? `<section><h3>本轮变化</h3><ul class="c-changes">${rows}</ul></section>` : ''}${trayHTML}${actsHTML}<section><h3>本轮输入 · ${f.events.length} 条</h3><p class="c-note">${Object.entries(dispositions).map(([key, count]) => `${words[key] || key} ${count}`).join(' · ')}${dispositions.deferred ? '；暂缓的沉到水底，下一轮整理时散去' : ''}</p><button type="button" class="c-json" data-lab-inspect="inputs">原始输入 ↗</button><button type="button" class="c-json" data-lab-inspect="batch">声明与回执 ↗</button></section>`;
+    return `<p class="c-read-kicker">本轮概览 · ${stamp(f.at)}</p><h2>${esc(f.title)}</h2><p class="c-read-summary">${esc(f.narrative)}</p>${arrivalHTML}${rows ? `<section><h3>本轮变化</h3><ul class="c-changes">${rows}</ul></section>` : ''}${trayHTML}${actsHTML}<section><h3>本轮输入 · ${f.events.length} 条</h3><p class="c-note">${Object.entries(dispositions).map(([key, count]) => `${words[key] || key} ${count}`).join(' · ')}${dispositions.deferred ? '；水底的泥 = 暂缓的条数，下一轮换成那一轮的' : ''}</p><button type="button" class="c-json" data-lab-inspect="inputs">原始输入 ↗</button><button type="button" class="c-json" data-lab-inspect="batch">声明与回执 ↗</button></section>`;
   }
   function renderRead(force = false) {
     const viewId = paneView;
@@ -1281,7 +1283,7 @@ export function mount(host, model) {
       if (layerMoved && kind !== 'instant') kind = 'layer';
       if (moved && !nextKind && player.on) playStop();
       renderTime();
-      if (kind === 'turn' || kind === 'fast') { countShown = null; $('.c-signal').innerHTML = signalHTML(0); }
+      if (kind === 'turn' || kind === 'fast') { countShown = null; $('.c-signal').innerHTML = signalHTML('…'); }
       begin(kind);
       if (kind === 'layer') renderPath();
     } else {
@@ -1303,7 +1305,7 @@ export function mount(host, model) {
     tell: () => startTell(), skip: () => stopTell(true), telling: () => Boolean(tell),
     // Pin the round's clock at t seconds after the cut (stills, checks); null lets it run.
     beatAt: t => { pinned = t == null ? null : Number(t); kick(); },
-    beat: () => (tr ? { kind: tr.kind, t: clockOf(), settle: tr.settle, end: tr.end, done: tr.done } : null),
+    beat: () => (tr ? { kind: tr.kind, t: clockOf(), settle: tr.settle, end: tr.end, done: tr.done, grains: tr.drawn } : null),
     // The largest drop above the surface, and a point d px outside its edge where nothing else is hit.
     pick: () => [...bodies.values()].filter(b => bodyOn(b.id) && b.place === 'field').sort((a, b) => b.r - a.r)[0]?.id || null,
     nearOf: (name, d = 9) => {
@@ -1319,8 +1321,12 @@ export function mount(host, model) {
       return best ? { x: box.left + best.x, y: box.top + best.y } : null;
     },
     geom: id => { const b = bodies.get(itemNamed(id)); if (!b) return null; const v = viewOf(b), box = stage.getBoundingClientRect(); return { x: box.left + v.x, y: box.top + v.y, r: v.r, place: b.place, share: b.share, depth: b.depth }; },
-    // Grains of round i by where they go: used (into an item on screen), deferred (to the floor), gone.
-    census: i => { const plan = grainPlan(i ?? s.index, s.layerId); return { n: plan.list.length, used: plan.list.filter(g => g.target).length, deferred: plan.counts.deferred || 0, ...plan.counts }; },
+    // Inputs of round i by where they go: n in all, used (taken into an item of this layer), drawn (grains: used and
+    // landing in an item on screen), deferred (the mud's count); the rest are not drawn.
+    census: i => {
+      const k = i ?? s.index, plan = grainPlan(k, s.layerId), on = new Set((getLayer(records[k].state, s.layerId)?.items || []).map(x => x.id));
+      return { n: plan.list.length, used: plan.list.filter(g => g.target).length, drawn: plan.list.filter(g => g.target && on.has(g.target)).length, deferred: plan.counts.deferred || 0, ...plan.counts };
+    },
     waiting: () => waitingOf(s),
     answer: (name, actionId) => {
       const id = itemNamed(name) || name, item = getItem(s.state, id), ask = currentAsk(s, id); if (!item) return null;
