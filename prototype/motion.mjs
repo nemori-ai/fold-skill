@@ -30,7 +30,7 @@ const easeInOutFn = bezier(0.45, 0, 0.25, 1);
 
 /**
  * What moves when, [start, duration] in seconds from the cut (tree-motion.md 3.2).
- *   grains   the concept layer: this round's inputs as grey grains, from the inputs column into the tiles
+ *   grains   the concept layer: this round's taken-in inputs as grey grains, from the inputs column into their tiles
  *   receipt  answers given before this round are confirmed first (the hollow tick fills, “已收到”)
  *   hero     the count of items waiting for you turns over (one place a step; two or more in one frame)
  *   exit / move / enter   leave, then shift, then arrive; out / in are a changed tile's old and new words
@@ -406,26 +406,20 @@ export function flipText(ctx, el, html, at) {
 // ---------- 4. the concept layer: grains ----------
 const hash01 = text => { let h = 2166136261; for (const c of String(text)) h = Math.imul(h ^ c.codePointAt(0), 16777619); return (h >>> 0) / 4294967296; };
 /**
- * This round's inputs as grains, two inputs a grain, at most `cap`: each { from, to, land, t0, d } in stage px. `inputs`
- * is [{ key, land: rect | null }]; landing ones end inside their tile, the rest stop short and go out on the way.
+ * This round's taken-in inputs as grains, one input a grain: each { from, to, t0, d } in stage px. `inputs` is
+ * [{ key, at, land: rect | null }]; only those with a `land` (a tile on the board) get a grain, which ends inside it.
+ * Past `cap`, the grains are spread evenly over the round by `at`, not the first `cap` of it.
  */
-export function planGrains(inputs, { start, board, span = [0, 0.5], cap = 120 } = {}) {
-  const groups = new Map();
-  for (const x of inputs) { const k = x.land ? `${x.land.x},${x.land.y}` : '-'; if (!groups.has(k)) groups.set(k, { land: x.land, list: [] }); groups.get(k).list.push(x); }
-  const total = Math.ceil(inputs.length / 2), keep = total > cap ? cap / total : 1;
-  const out = [];
-  for (const { land, list } of groups.values()) {
-    const n = Math.max(1, Math.round(Math.ceil(list.length / 2) * keep));
-    for (let j = 0; j < n; j += 1) {
-      const key = list[(j * 2) % list.length].key, r1 = hash01(`${key}:a`), r2 = hash01(`${key}:b`), r3 = hash01(`${key}:c`), r4 = hash01(`${key}:d`);
-      const from = { x: start.x, y: start.y0 + (start.y1 - start.y0) * r1 };
-      const to = land ? { x: land.x + land.width * (0.15 + 0.7 * r2), y: land.y + land.height * (0.2 + 0.6 * r3) }
-        : { x: board.x + board.width * (0.04 + 0.22 * r2), y: board.y + board.height * (0.1 + 0.8 * r3) };
-      const d = (span[1] - 0.14) * (0.8 + 0.2 * r4);
-      out.push({ from, to, land: Boolean(land), t0: span[0] + 0.12 * r4, d });
-    }
-  }
-  return out;
+export function planGrains(inputs, { start, span = [0, 0.5], cap = 40 } = {}) {
+  const when = x => (Number.isFinite(x.at) ? x.at : 0);
+  const list = inputs.filter(x => x.land).sort((a, b) => when(a) - when(b)); // stable: same `at` keeps input order
+  const kept = list.length > cap ? Array.from({ length: cap }, (_, i) => list[Math.floor((i + 0.5) * list.length / cap)]) : list;
+  return kept.map(({ key, land }) => {
+    const r1 = hash01(`${key}:a`), r2 = hash01(`${key}:b`), r3 = hash01(`${key}:c`), r4 = hash01(`${key}:d`);
+    const from = { x: start.x, y: start.y0 + (start.y1 - start.y0) * r1 };
+    const to = { x: land.x + land.width * (0.15 + 0.7 * r2), y: land.y + land.height * (0.2 + 0.6 * r3) };
+    return { from, to, t0: span[0] + 0.12 * r4, d: (span[1] - 0.14) * (0.8 + 0.2 * r4) };
+  });
 }
 /** Draw the grains at beat time t (seconds); returns whether any is still in flight. */
 export function drawGrains(c, grains, t, dpr = 1) {
@@ -440,12 +434,12 @@ export function drawGrains(c, grains, t, dpr = 1) {
     alive = true;
     const p = easeInOutFn(k);
     const x = g.from.x + (g.to.x - g.from.x) * p, y = g.from.y + (g.to.y - g.from.y) * p - Math.sin(Math.PI * p) * 10;
-    // Taken in: full until it lands. Not taken: goes out over the second half of its way, short of any tile.
-    const a = g.land ? 0.34 * Math.min(1, k * 4) * (k > 0.88 ? (1 - k) / 0.12 : 1) : 0.3 * Math.min(1, k * 4) * clamp((0.75 - k) / 0.35);
+    // Full until it lands, then goes out in the tile. 0.24 and r 1.2 px: seven tenths of the first cut's 0.34 and 1.7.
+    const a = 0.24 * Math.min(1, k * 4) * (k > 0.88 ? (1 - k) / 0.12 : 1);
     if (a <= 0.005) continue;
     c.globalAlpha = a;
     c.beginPath();
-    c.arc(x, y, 1.7, 0, Math.PI * 2);
+    c.arc(x, y, 1.2, 0, Math.PI * 2);
     c.fill();
   }
   c.globalAlpha = 1;

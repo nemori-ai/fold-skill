@@ -885,7 +885,7 @@ bindResponses($('inspector-body'),{...responders,open:(kind,key)=>{panel=kind===
 
 const stage=document.querySelector('.main-grid');
 {const link=document.createElement('link');link.rel='stylesheet';link.href='forms/motion/ix.css';document.head.append(link);}
-// The concept layer: this round's inputs as grey grains, on one canvas over the stage (below the cards and leaders).
+// The concept layer: this round's taken-in inputs as grey grains, on one canvas over the stage (below the cards and leaders).
 const grainCanvas=document.createElement('canvas');
 grainCanvas.className='tree-grains';grainCanvas.setAttribute('aria-hidden','true');
 stage.append(grainCanvas);
@@ -1045,7 +1045,7 @@ function sizeGrains() {
   const dpr=devicePixelRatio||1, w=stage.clientWidth, h=stage.clientHeight;
   if(grainCanvas.width!==Math.round(w*dpr)||grainCanvas.height!==Math.round(h*dpr)){grainCanvas.width=Math.round(w*dpr);grainCanvas.height=Math.round(h*dpr);grainCanvas.style.width=`${w}px`;grainCanvas.style.height=`${h}px`;}
 }
-/** Plan this turn's grains (two inputs a grain): taken-in ones end inside the tile they went to, the rest go out short. */
+/** Plan this turn's grains (one input a grain, at most 40): only inputs taken into a tile on the board, ending inside it. */
 function grainsFor(ctx) {
   const r=rounds[frameIndex];
   if(!r?.events?.length||!boards.current)return null;
@@ -1055,9 +1055,11 @@ function grainsFor(ctx) {
     const at=id&&(boardIds.has(id)?id:tails.current.has(id)?TAIL_ID:null), rect=at&&boards.current.rect(at);
     return rect?{x:b.x0+rect.x,y:b.y0+rect.y,width:rect.width,height:rect.height}:null;
   };
-  const inputs=r.events.map(e=>({key:`${frameIndex}:${e.k}`,land:landOf(e.root)}));
+  const events=frames[frameIndex].events;
+  const inputs=r.events.map(e=>({key:`${frameIndex}:${e.k}`,at:Date.parse(events[e.k]?.at),land:landOf(e.root)})).filter(x=>x.land);
+  if(!inputs.length)return null;
   sizeGrains();
-  return {ctx,list:planGrains(inputs,{start:{x:panel.x1,y0:panel.y0+48,y1:Math.min(panel.y1,b.y1)-12},board:{x:b.x0,y:b.y0,width:b.x1-b.x0,height:b.y1-b.y0},span:ctx.spec.grains})};
+  return {ctx,list:planGrains(inputs,{start:{x:panel.x1,y0:panel.y0+48,y1:Math.min(panel.y1,b.y1)-12},span:ctx.spec.grains})};
 }
 function paintGrains(X) {
   const g=grains;
