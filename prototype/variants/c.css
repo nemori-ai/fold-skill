@@ -83,7 +83,7 @@
 
 .c-stage { position: relative; margin-top: 10px; border-radius: 22px; background: radial-gradient(ellipse 70% 56% at 50% 40%, color-mix(in oklch, var(--c-tint, transparent) 16%, transparent), transparent 72%); transition: background .6s ease; touch-action: manipulation; overflow: hidden; }
 .c-canvas { position: absolute; inset: 0; display: block; z-index: 1; pointer-events: none; }
-/* One grain per input of the round; under the drops, quiet (the concept layer). */
+/* One grain per adopted input of the round, and the mud (the round's 暂缓 count); under the drops, quiet (the concept layer). */
 .c-grains { position: absolute; inset: 0; display: block; z-index: 1; pointer-events: none; }
 .c-empty { position: absolute; inset: 0 0 112px; display: grid; place-items: center; font-size: 14px; color: var(--c-faint); letter-spacing: .02em; }
 .c-empty::before { content: ""; position: absolute; width: 132px; height: 132px; border-radius: 50%; border: 1px dashed var(--c-line); }
