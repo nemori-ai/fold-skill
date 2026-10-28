@@ -37,6 +37,7 @@ const entries = [
   ].map(([id, line]) => ({ id, name: sketch(id).name, line, page: `/prototype/forms/sketches/${id}.html` })),
   // 结绳 opens on its default sample, the hand-written story (composite has no layers in two weeks).
   { id: 'khipu', name: sketch('khipu').name, line: '一件事里还有自己的 64 份，最深一件折合根层才几份', page: '/prototype/forms/sketches/khipu.html', query: { data: 'story' } },
+  { id: 'trays', name: form('trays').name, line: '答完这些要点几下：托盘几排就是几下，按掉一下矮一排', page: '/prototype/forms/trays.html', embed: { card: 0 }, frame: 26 },
   // Round-three concept animations open without a frame, so the viewer plays their loop.
   { id: 'pulse', name: motion('pulse').name, line: '一轮整理演成一次脉冲：上百条进来，要你开口的只有一两件', page: '/prototype/forms/motion/pulse.html', embed: { card: 0 } },
   { id: 'dial', name: motion('dial').name, line: '64 份是怎样的硬约束：一轮整理演成 20 秒动画', page: '/prototype/forms/motion/dial.html', embed: { card: 0 } },

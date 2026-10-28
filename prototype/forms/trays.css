@@ -1,0 +1,221 @@
+/* 11 回应托盘. Paper white, ink black and greys; vermilion only marks a registered question (its square, and one ring on
+   the round it arrives). A tray is a header plus one 46 px row a tap: the height is how many taps are left. */
+.tr-page {
+  --tr-card: #fff;
+  --tr-paper: var(--paper);
+  --tr-receipt: var(--paper);
+  --ink-3: oklch(0.62 0.012 140);
+  --tr-row: 40px;
+  --tr-gap: 6px;
+  --tr-side: 44px;
+  --tr-ease: cubic-bezier(.2,.75,.25,1);
+  --tr-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
+  --ix-fg: var(--ink); --ix-fg-2: var(--ink-2); --ix-fg-3: var(--ink-3); --ix-rule: var(--line); --ix-mono: var(--tr-sans);
+  --ix-ask: oklch(0.5 0.15 35); --ix-ask-urgent: var(--vermilion); --ix-mark: 7px; --ix-mark-gap: 7px; --ix-strong: 650;
+  --ix-k-font: 11.5px/1.4 var(--tr-sans); --ix-q-font: 700 15px/1.35 var(--tr-sans); --ix-q-margin: 2px 0 3px; --ix-d-font: 12.5px/1.5 var(--tr-sans);
+  --ix-ask-font: 600 13px/1.4 var(--tr-sans); --ix-ask-small-font: 400 11.5px/1.4 var(--tr-sans);
+  --ix-trend-h: 28px; --ix-bar: #c9c4b8; --ix-bar-later: #e7e3da; --ix-bar-off: #ddd8cd; --ix-axis-font: 10.5px var(--tr-sans);
+  --ix-list-font: 12.5px/1.5 var(--tr-sans); --ix-meta-font: 11px var(--tr-sans); --ix-none-size: 12px; --ix-none-lh: 1.5; --ix-none-lh-list: 1.5;
+}
+
+/* ---- the stage: one 390-wide column, a hairline round it on a desk; the whole screen on a phone ---- */
+.tr-wrap { min-height: 100%; height: 100%; display: flex; justify-content: center; align-items: flex-start; padding: 24px 24px 28px; background: var(--paper); }
+.tr-screen { position: relative; isolation: isolate; width: 390px; max-width: 100%; height: min(844px, 100%); overflow: hidden; background: var(--tr-paper);
+  border-radius: 22px; box-shadow: 0 0 0 1px var(--line); font-family: var(--tr-sans); color: var(--ink); -webkit-text-size-adjust: 100%; }
+.tr-scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.tr-scroll::-webkit-scrollbar { display: none; }
+
+/* ---- the head: one big number that never moves or resizes ---- */
+.tr-head { position: relative; padding: 16px 20px 12px; }
+.tr-kick { margin: 0; font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.tr-hero { position: relative; display: flex; align-items: flex-end; gap: 10px; margin: 2px 0 0; width: fit-content; border-radius: 12px; outline: none; -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; cursor: default; }
+.tr-hero:focus-visible { box-shadow: 0 0 0 2px var(--ink); }
+.tr-n { display: block; font: 600 68px/1 var(--mono); letter-spacing: -.03em; color: var(--ink); overflow: hidden; padding: 2px 0; }
+.tr-unit { display: flex; flex-direction: column; padding-bottom: 8px; line-height: 1.25; }
+.tr-u1 { font-size: 17px; font-weight: 650; }
+.tr-of { font-size: 17px; font-weight: 650; }
+.tr-split { margin: 6px 0 0; min-height: 2.9em; font-size: 13px; line-height: 1.45; color: var(--ink-2); text-wrap: pretty; }
+
+/* ---- the trays ---- */
+.tr-stack { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 0 16px 0; }
+.tr-tray { position: relative; margin-right: var(--tr-side); padding: 10px 12px 10px 14px; background: var(--tr-card); border-radius: 18px; box-shadow: 0 0 0 1px var(--line);
+  outline: none; cursor: pointer; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+.tr-tray:focus-visible { box-shadow: 0 0 0 2px var(--ink); }
+.tr-top { display: flex; align-items: center; gap: 8px; min-height: 22px; }
+.tr-title { flex: 1; min-width: 0; display: flex; align-items: center; gap: 7px; margin: 0; font-size: 15px; font-weight: 700; line-height: 22px; }
+.tr-title span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tr-sq { flex-shrink: 0; width: 7px; height: 7px; background: var(--vermilion); }
+.tr-tag { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 24px; margin: -1px 0; padding: 0 4px 0 10px; border: 0; border-radius: 99px; background: var(--ink); color: #fff; font-size: 12px; font-weight: 600; }
+.tr-tag span { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; font-size: 13px; color: #fffc; }
+.tr-meta { margin: 1px 0 0 14px; font-size: 11.5px; line-height: 16px; color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tr-row { position: relative; display: flex; align-items: center; gap: 6px; height: var(--tr-row); margin-top: var(--tr-gap); }
+.tr-meta + .tr-row { margin-top: 8px; }
+/* the concept layer: a grey tick a tap, beside its row, in the column right of the tray */
+.tr-row::after { content: ""; position: absolute; top: 9px; bottom: 9px; right: calc(-12px - var(--tr-side) / 2 - 2px); width: 3px; border-radius: 2px; background: #cfcabe; pointer-events: none; }
+.tr-side { position: absolute; top: 9px; right: calc(-1 * var(--tr-side)); width: calc(var(--tr-side) - 6px); margin: 0; display: flex; align-items: baseline; justify-content: center; gap: 1px;
+  font-variant-numeric: tabular-nums; pointer-events: none; }
+.tr-side b { font: 600 16px/24px var(--mono); color: var(--ink); }
+.tr-side small { font-size: 11px; color: var(--ink-2); }
+
+/* buttons: ink outline pills; the recommended one filled */
+.tr-btn { position: relative; flex: 0 1 auto; min-width: 0; height: var(--tr-row); padding: 0 14px; border: 0; border-radius: 99px; background: none; box-shadow: inset 0 0 0 1.25px var(--ink);
+  color: var(--ink); font-size: 14px; font-weight: 600; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; transition: transform .12s var(--tr-ease); }
+.tr-btn small { font-size: 10.5px; font-weight: 500; opacity: .75; }
+.tr-btn.is-fill { background: var(--ink); color: #fff; }
+.tr-btn:active { transform: scale(.97); }
+.tr-btn:focus-visible, .tr-chip:focus-visible, .tr-quiet:focus-visible, .tr-undo:focus-visible, .tr-send:focus-visible, .tr-tag:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.tr-quiet { flex-shrink: 0; height: var(--tr-row); margin-left: auto; padding: 0 6px; border: 0; background: none; color: var(--ink-2); font-size: 12.5px; white-space: nowrap; }
+.tr-then { margin-left: 2px; font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+.tr-press-row { display: contents; }
+
+/* chips: a day, a moment, a sentence or an amount; dashed and inert until the first tap opens the row */
+.tr-chip { position: relative; flex: 1 1 0; min-width: 0; height: var(--tr-row); padding: 0 6px; border: 0; border-radius: 12px; background: none; color: var(--ink);
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; transition: transform .12s var(--tr-ease); }
+.tr-chip b { font-size: 13.5px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.tr-chip small { font-size: 10px; color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tr-chip.is-say b { font-size: 12.5px; font-weight: 600; }
+.tr-chip.is-own { flex: 0 0 auto; padding: 0 10px; }
+.tr-chip:active { transform: scale(.97); }
+.tr-dash, .tr-ring { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+.tr-dash { border: 1.25px dashed #bdb8ac; opacity: 0; }
+.tr-ring { box-shadow: inset 0 0 0 1.25px var(--ink-2); opacity: 1; }
+.tr-chip.is-pending, .tr-field.is-pending, .tr-send.is-pending { color: var(--ink-3); cursor: pointer; }
+.tr-chip.is-pending b { color: var(--ink-3); font-weight: 600; }
+.tr-row:not(.is-live) .tr-dash { opacity: 1; }
+.tr-row:not(.is-live) .tr-ring { opacity: 0; }
+/* the second row of a write tray: a one-line field and a send button */
+.tr-field { position: relative; flex: 1; min-width: 0; height: var(--tr-row); border-radius: 12px; display: flex; align-items: center; }
+.tr-field input { position: relative; z-index: 1; width: 100%; height: 100%; padding: 0 12px; border: 0; border-radius: inherit; background: none; font: 15px var(--tr-sans); color: var(--ink); outline: none; -webkit-user-select: text; user-select: text; }
+.tr-field input:focus-visible { box-shadow: inset 0 0 0 2px var(--ink); }
+.tr-ph { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13.5px; color: var(--ink-3); pointer-events: none; }
+.tr-field input:not(:placeholder-shown) + .tr-ph { display: none; }
+.tr-send { position: relative; flex: 0 0 auto; width: 48px; height: var(--tr-row); border: 0; border-radius: 12px; background: none; font-size: 17px; font-weight: 700; display: grid; place-items: center; color: var(--ink); }
+.tr-row.is-custom { gap: 6px; }
+.tr-when { flex: 1; min-width: 0; height: var(--tr-row); padding: 0 10px; border: 1.25px solid var(--ink-2); border-radius: 12px; background: none; font: 14px var(--tr-sans); color: var(--ink); -webkit-user-select: text; user-select: text; }
+
+/* a tray that has been answered: one line, in place, until the next 整理 reads it */
+.tr-tray.is-receipt { display: flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 4px 0 12px; background: var(--tr-receipt); border-radius: 14px; }
+.tr-receipt { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; line-height: 1.35; color: var(--ink); }
+.tr-rt { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tr-rt b { font-weight: 650; }
+.tr-receipt small { flex-shrink: 0; font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.tr-check { position: relative; flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 10.5px; font-weight: 700; box-shadow: inset 0 0 0 1.25px var(--ink); color: var(--ink); }
+.tr-receipt.is-acknowledged .tr-check { background: var(--ink); color: #fff; box-shadow: none; }
+.tr-receipt.is-filling .tr-check { background: none; color: var(--ink); box-shadow: inset 0 0 0 1.25px var(--ink); }
+.tr-check-fill { position: absolute; inset: 0; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: #fff; font-style: normal; }
+.tr-receipt.is-source .tr-check, .tr-receipt.is-lapsed .tr-check { box-shadow: inset 0 0 0 1.25px var(--ink-3); color: var(--ink-2); }
+.tr-undo { flex-shrink: 0; min-height: 44px; padding: 0 10px; border: 0; background: none; color: var(--ink-2); font-size: 12.5px; font-weight: 600; border-radius: 10px; }
+
+/* ---- 已收到与关上: lines on the paper, below the trays ---- */
+.tr-ledger { position: relative; display: flex; flex-direction: column; padding: 0 16px; }
+.tr-ledger:not(:empty) { margin-top: 22px; }
+.tr-ledger-head { position: relative; margin: 0 0 2px; padding: 0 2px 6px; font-size: 12px; font-weight: 600; color: var(--ink-2); border-bottom: 1px solid var(--line); }
+.tr-line { position: relative; display: flex; align-items: center; min-height: 44px; padding: 0 2px; background: var(--tr-paper); box-shadow: inset 0 -1px 0 var(--line); outline: none; cursor: pointer;
+  -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: pan-y; }
+.tr-line:focus-visible { box-shadow: inset 0 0 0 2px var(--ink); }
+.tr-line .tr-receipt { color: var(--ink-2); }
+.tr-line.is-mine .tr-receipt { color: var(--ink); }
+.tr-swipe-hint { position: absolute; right: 4px; top: 50%; margin-top: -10px; height: 20px; line-height: 20px; font-size: 13px; font-weight: 600; color: var(--ink-3); white-space: nowrap; pointer-events: none; }
+.tr-swipe-hint.is-armed { color: var(--ink); }
+.tr-empty { padding: 34px 6px; text-align: center; color: var(--ink-3); font-size: 13px; }
+.tr-empty p { margin: 0 0 4px; font-size: 17px; font-weight: 650; color: var(--ink-2); }
+
+/* ---- the foot: the rule, written down; the keys ---- */
+.tr-foot { padding: 22px 20px 30px; }
+.tr-rule { margin: 0; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11.5px; line-height: 1.6; color: var(--ink-2); }
+.tr-keys { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin: 10px 0 0; font-size: 11.5px; color: var(--ink-3); }
+.tr-keys-b { display: inline-flex; gap: 6px; }
+.tr-keys button { min-height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: 99px; background: var(--tr-card); color: var(--ink); font-size: 12px; }
+.tr-keys button.is-on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.tr-keys button[hidden] { display: none; }
+
+/* ---- long press: the item darkens a little at 0.15 s, the rest dim to 70 % while its summary is up ---- */
+:is(.tr-tray, .tr-line, .tr-hero)::before { content: ""; position: absolute; inset: 0; z-index: 2; border-radius: inherit; background: var(--ink); opacity: 0; transition: opacity .15s; pointer-events: none; }
+:is(.tr-tray, .tr-line, .tr-hero).is-pressing::before { opacity: .05; }
+:is(.tr-stack, .tr-ledger) > [data-key], .tr-hero, .tr-split { transition: opacity .1s var(--undim-delay, 0s); }
+.tr-scroll.is-dim :is(:is(.tr-stack, .tr-ledger) > [data-key], .tr-hero, .tr-split, .tr-kick):not(.is-focus) { opacity: .7; transition: opacity .15s; }
+.tr-tray.is-pulse::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 1.5px solid var(--vermilion); opacity: 0; animation: tr-new 1.6s var(--tr-ease) var(--glow-delay, .25s) 1 both; pointer-events: none; }
+@keyframes tr-new { 0% { opacity: 0; } 18% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---- the summary card (ix.mjs peekHTML) ---- */
+.tr-peek { position: absolute; z-index: 8; box-sizing: border-box; width: 300px; padding: 10px 14px 11px; background: var(--tr-card); border-radius: 14px; box-shadow: 0 14px 34px -14px #0006, 0 0 0 1px var(--line);
+  transform-origin: 50% 0; cursor: pointer; font-variant-numeric: tabular-nums; }
+.tr-peek[hidden] { display: none; }
+.tr-peek .ix-d.is-taps { margin-top: 4px; color: var(--ink); font-weight: 600; }
+
+/* ---- the detail: the tray's box grows to the whole column ---- */
+.tr-detail { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; }
+.tr-detail[hidden] { display: none; }
+.tr-detail-bg { position: absolute; inset: 0; z-index: -1; background: var(--tr-paper); }
+.tr-detail.is-growing .tr-detail-bg { background: none; }
+.tr-detail-bar { flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 4px 14px 2px 6px; font-size: 12.5px; color: var(--ink-3); }
+.tr-detail-bar button { flex-shrink: 0; width: 44px; height: 44px; border: 0; background: none; font-size: 30px; line-height: 1; color: var(--ink); border-radius: 12px; }
+.tr-detail-bar span:nth-child(2) { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tr-detail-share { font-variant-numeric: tabular-nums; }
+.tr-detail-body { flex: 1; overflow-y: auto; padding: 0 20px 22px; scrollbar-width: none; overscroll-behavior: contain; }
+.tr-d-k { display: flex; align-items: center; gap: 7px; margin: 2px 0 0; font-size: 12px; color: var(--ink-2); }
+.tr-detail-body h2 { margin: 4px 0 4px; font-size: 21px; line-height: 1.34; text-wrap: pretty; }
+.tr-d-title { margin: 0; font-size: 13px; color: var(--ink-2); }
+.tr-detail-body section { margin-top: 18px; }
+.tr-detail-body h4 { margin: 0 0 6px; font-size: 13px; }
+.tr-detail-body section > p { margin: 0 0 6px; font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+.tr-d-facts { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.tr-d-facts span { font-size: 11.5px; line-height: 20px; padding: 0 8px; border-radius: 99px; background: #ece9e1; color: var(--ink-2); }
+.tr-d-reason { color: var(--ink) !important; }
+.tr-d-taps b { color: var(--ink); }
+.tr-d-sum { color: var(--ink) !important; }
+.tr-d-rule { font-size: 12px !important; }
+.tr-d-loop { margin: 0 0 6px; font-size: 13px; line-height: 1.5; }
+.tr-d-loop time { margin-right: 4px; font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.tr-source { margin-bottom: 10px; }
+.tr-source small { font-size: 11px; color: var(--ink-3); }
+.tr-source p { margin: 3px 0 0; padding: 8px 11px; background: var(--tr-card); border-radius: 4px 14px 14px 14px; font-size: 13px; line-height: 1.55; box-shadow: 0 0 0 1px var(--line); overflow-wrap: anywhere; }
+.tr-ixsec section { margin-top: 16px; }
+.tr-ixsec h5 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 6px; font-size: 13px; color: var(--ink); }
+.tr-ixsec h5 b { font-size: 12px; font-weight: 500; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.tr-d-json { margin-top: 18px; min-height: 32px; padding: 0; border: 0; background: none; font-size: 12px; color: var(--ink-3); }
+.tr-detail-actions { flex-shrink: 0; padding: 4px 16px 22px; background: var(--tr-card); box-shadow: 0 -1px 0 var(--line); }
+.tr-detail-actions[hidden] { display: none; }
+.tr-detail-actions .tr-row::after { display: none; }
+.tr-detail-actions .tr-row { margin-top: 8px; }
+.tr-detail-actions .tr-receipt { min-height: 44px; }
+.tr-detail-actions:has(.tr-receipt) { display: flex; align-items: center; padding-top: 6px; }
+.tr-face { z-index: 1; }
+
+/* ---- motion pieces shared with D (variants/d-motion.mjs) ---- */
+.tr-page .d-ghost { pointer-events: none; box-sizing: border-box; }
+.tr-page .d-count { position: relative; display: inline-block; min-width: .62em; font-variant-numeric: tabular-nums; }
+.tr-page .d-count-new { display: inline-block; }
+.tr-page .d-count-old { position: absolute; left: 0; top: 0; }
+.tr-page .d-box { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: -1; pointer-events: none; }
+.tr-page .d-box > i { position: absolute; left: 0; top: 0; display: block; transform-origin: 0 0; }
+.tr-page .is-morphing { isolation: isolate; background: transparent !important; box-shadow: none !important; }
+.tr-page .d-ghost.is-face { background: none !important; box-shadow: none !important; }
+.tr-page .d-ghost.is-face::before, .tr-page .d-ghost.is-face::after { display: none; }
+.tr-page .d-cover { position: absolute; inset: -2px -2px -6px; z-index: 5; display: block; background: var(--tr-paper); transform-origin: 50% 100%; pointer-events: none; }
+.tr-line > .d-cover { inset: 0; }
+.tr-detail > .d-box { z-index: 0; }
+.tr-detail.is-growing > :is(.tr-detail-bar, .tr-detail-body, .tr-detail-actions) { position: relative; z-index: 2; }
+.tr-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---- a phone: the column is the screen; the shell's bar folds into ‹ title › ---- */
+@media (max-width: 640px) {
+  .tr-page .fs-bar { height: 48px; gap: 4px; padding: 0 4px 0 2px; }
+  .tr-page .fs-home { display: grid; place-items: center; width: 40px; height: 44px; font-size: 0; }
+  .tr-page .fs-home::before { content: "⌂"; font-size: 17px; color: var(--ink-2); }
+  .tr-page :is(.fs-name, .fs-ticks, .fs-tools) { display: none; }
+  .tr-page .fs-nav { flex: 1; min-width: 0; display: flex; align-items: center; gap: 2px; }
+  .tr-page .fs-nav button { flex-shrink: 0; width: 44px; height: 44px; border: 0; font-size: 22px; background: none; }
+  .tr-page .fs-when { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; line-height: 1.25; }
+  .tr-page .fs-when > span { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tr-page .fs-body { grid-template-columns: minmax(0, 1fr); height: calc(100dvh - 48px); }
+  .tr-page .fs-card { display: none; }
+  .tr-wrap { padding: 0; }
+  .tr-screen { width: 100%; height: 100%; border-radius: 0; box-shadow: none; }
+}
+@media (max-height: 700px) and (min-width: 641px) { .tr-wrap { padding-top: 12px; padding-bottom: 12px; } }
+@media (prefers-reduced-motion: reduce) {
+  .tr-tray.is-pulse::after { animation: none; }
+  .tr-btn, .tr-chip { transition: none; }
+}

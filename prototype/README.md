@@ -63,6 +63,7 @@ make prototype
 | 等待链 | 谁在等你、你挡住了谁：每个开着的问题后面站着哪些人、各等了多久；直接打开讲一遍约 12 秒：答掉一件，放走一串人 | 不承载作答；朱红只给你这根脊与脊上的结；悬停一行或一个人看概要，点击展开，开着的问题旁“去回答 →”链到同一帧的 D | [sketches/chain.html](forms/sketches/chain.html) | [chain-motion.md](forms/polish/chain-motion.md) |
 | 拔河 | 家里与工作在 64 份里此消彼长，你实际在哪一边动手；直接打开讲一遍约 23 秒：份额说家里重、手却在工作上，家里坠到 59 : 5，一天后弹回 | 不承载作答；朱红短柱是你在来源处的回应（向上工作、向下家里）；悬停条上的一段、曲线上的一轮或一根柱看概要，点击展开详情，开着的问题链到同一帧的 D | [sketches/tug.html](forms/sketches/tug.html) | [tug-motion.md](forms/polish/tug-motion.md) |
 | 结绳 | 一件事里还有自己的 64 份，最深一件折合根层才几份；默认样张是手写情境，直接打开讲一遍约 9 秒，停在发布的子层画框里（composite 两周没有子层，只画根层与分组合计） | 不承载作答；朱红只标此刻开着的问题，详情卡与侧栏的“去回答 →”链到同一帧的 D；悬停垂绳看概要，点击展开，点有子层的垂绳长成画框 | [sketches/khipu.html?data=story](forms/sketches/khipu.html?data=story) | [khipu-motion.md](forms/polish/khipu-motion.md) |
+| 回应托盘 | 排队、通勤的几分钟，一口气答完：托盘几排就要点几下，按掉一下矮一排，答完原地收成回执，下一轮整理读到才让位；直接打开讲一遍约 8 秒 | confirm、approve、choose 一下；defer、schedule 两下（先点开再挑）；reply 有建议句一下、没有两下；照片、预填金额一下；轻点托盘长出详情，长按看概要，左滑知道了 | [forms/trays.html](forms/trays.html?frame=26) | [trays-motion.md](forms/polish/trays-motion.md) |
 | 整理脉冲（动画） | 官网首屏：一轮整理演成 4.25 秒的一次脉冲 | 不承载作答；详情里链到 D 作答；朱红只标新登记的问题、你的回应与答掉的记号 | [motion/pulse.html](forms/motion/pulse.html) | [story.md](forms/motion/pulse/story.md) |
 | 份额拨盘（动画） | 第一次看 Fold 的人，20 秒：64 份是怎样的硬约束，满了谁让位 | 不承载作答；详情里链到 D 作答；游标只指要紧的问题 | [motion/dial.html](forms/motion/dial.html) | [story.md](forms/motion/dial/story.md) |
 
@@ -86,6 +87,7 @@ make prototype
 - 变形直接打开（不带 `frame=`、不是从别处链进来）时先讲一遍约 7 秒，停在 f26（story 是 f15）：圆按收到的条数长出来，再原地变成份额，最后圈出收到最多与份额最多的两件；任意键或点一下跳到终态，顶栏“▶ 讲一遍”重讲；嵌入、合页与带 `frame=` 的链接不讲，默认停在最后一帧。顶栏“收到/给出”或 M 在两态之间原地变形 1 秒，所有圆同一条缓动、同起同落，数字落地才换。悬停一个圆看概要，点击沿它自己的方向弹出 8 px、引线出到详情卡，右栏切到“这一件”，共用 `forms/motion/ix.mjs`（见 [morph-motion.md](forms/polish/morph-motion.md)）。
 - 驻龄直接打开（不带 `frame=`、不是从别处链进来）时先讲一遍约 23 秒（story 约 21 秒）：从空状态起每一轮清出、加圈、新框，快放的轮次一闪而过，在“母亲换水管”一次清出 18 格的那一轮与最后一轮放慢，落在 f26（story 是 f19）；任意键跳到终态，顶栏“▶ 讲一遍”重讲；嵌入、合页与带 `frame=` 的链接不讲。悬停一块地盘看概要，点击沿它的方向弹出 8 px、引线沿格缝出到详情卡，右栏切到“这一件”，共用 `forms/motion/ix.mjs`（见 [age-motion.md](forms/polish/age-motion.md)）。
 - 等待链直接打开（不带 `frame=`、不是从别处链进来）时先讲一遍约 12 秒（story 约 9 秒）：等你的人一行行站到脊上、英雄数字跟着数；时间走到你的回答，结填成朱红、人还挂着；下一轮整理一到，答掉的那几行松开、滑进“不经过你”，数字落下；那一轮由规则选出（两周里被你的回答放走的人最多的一轮：composite f22→f23 是 9 → 2，story f25→f26 是 3 → 1）。任意键或点一下跳到终态，顶栏“▶ 重演”再讲；嵌入、合页与带 `frame=` 的链接不讲。“谁在等你”由规则从每件事这一版的依据里现算，不手工标注。一行或一个人都是一件：悬停看概要，点击弹出 8 px、引线出到详情卡，右栏切到“这一件”，共用 `forms/motion/ix.mjs`（见 [chain-motion.md](forms/polish/chain-motion.md)）。
+- 回应托盘直接打开（顶层、不带 `frame=`、没有来源页）时先讲一遍：composite 约 8 秒，从 f25 叠起到 f26，替你按一下“批准”、两下“推到…→周一”，讲完撤回，停在 f26；story 约 6 秒，从 f19 到 f20，替你按真实数据里的“拍一张”，再到 f21 看回执让位。任意键或轻点跳到终态，页底“↺ 重演”重讲；嵌入、合页与带 `frame=` 的链接不讲。它是手机页面：轻点按钮作答，轻点托盘长出详情，长按看概要，左滑知道了（见 [trays-motion.md](forms/polish/trays-motion.md)）。
 - 本页作答只存在浏览器内存里：按下即“已保存”，推进到下一轮整理后显示“已收到”，随时可撤回；不写回演示数据，也不调用模型。
 - 原版与 A/B/C/D 都保留未分配份额：原版与 A 用面积、B 用带宽、C 用液滴面积与 64 格预算带、D 用先后与字号表达份额，精确份数在详情里。
 - `prefers-reduced-motion` 时切帧与作答直接到终态。
