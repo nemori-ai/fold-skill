@@ -5,6 +5,7 @@
 // D 手机首页（home）没有悬停，另走一套触屏流程（runHome，iPhone 尺寸、CDP 触屏事件）：长按代替悬停、轻点从卡长出详情、
 // 下拉收回、左滑知道了、作答与撤回、手指保护、换轮时回执跟着条目走，以及键盘与连播的同一组打断规则。
 // E 折叠屏（duo）走 runDuo：同一组触屏标准，加铰链、左页详情、色带格联动与讲一遍。
+// 回应托盘（trays）也是触屏，走 runTrays：同一组触屏规则，加上托盘高度 = 几下、两下的托盘一下矮一排、直接打开讲一遍。
 // 只用 Node 22 内置的 WebSocket 驱动本机 Chrome（无头），不装依赖。原型需先在本地提供服务。
 //
 //   node scripts/check-ix.mjs --base http://127.0.0.1:4173                 # 全部页面，默认数据
@@ -223,6 +224,10 @@ const PAGES = {
   // 左页详情（右半仍可作答）、色带格联动与讲一遍。held 是作答的一帧，next 是它的下一轮，follow 是问题原样重登记的一帧。
   duo: { hook: 'foldDuo', duo: true,
     frames: { composite: { held: 'f22', next: 'f23', follow: 'f26', item: 'smilla-vet' }, story: { held: 'f04', next: 'f05', follow: 'f05', item: 'launch' } } },
+  // 回应托盘：手机触屏，流程见 runTrays。held 是一轮里有一下与两下托盘的一帧（story 两周都没有两下的托盘）；
+  // tell 是直接打开时讲一遍的起点与终态。
+  trays: { hook: 'foldTrays', touch: true, runner: runTrays, page: 'forms/trays.html',
+    held: { composite: 'f26', story: 'f20' }, tell: { composite: { from: 'f25', end: 'f26' }, story: { from: 'f19', end: 'f21' } } },
 };
 
 function args(argv) {
@@ -778,13 +783,226 @@ async function runDuo(cdp, base, data, name) {
   return { results, errors };
 }
 
+// 回应托盘（trays）：与 D 同一组触屏规则（长按代替悬停、轻点长出详情、下拉收回、Tab / Enter / Esc、连播中长按停住、
+// 手指保护、撤回、回执跟着条目走、左滑知道了），加上它自己的：托盘高 = 头部 + 剩下几下 × 一排、数字 = 各托盘几下之和、
+// 两下的托盘一下矮一排（× 退回）、直接打开先讲一遍（轻点跳过到终态）、减弱动态时不讲。story 没有两下的托盘，那几项只核对“没有”。
+async function runTrays(cdp, base, data, name) {
+  const P = PAGES[name], held = P.held[data === 'story' ? 'story' : 'composite'], tell = P.tell[data === 'story' ? 'story' : 'composite'];
+  const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+  const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+  const S = (m, p) => cdp.send(m, p, sessionId);
+  const errors = [];
+  cdp.listeners.add(m => {
+    if (m.sessionId !== sessionId) return;
+    if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.exception?.description || m.params.exceptionDetails.text);
+    if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') errors.push(m.params.args.map(a => a.value ?? a.description).join(' '));
+  });
+  await S('Runtime.enable'); await S('Page.enable');
+  await S('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 3, mobile: true });
+  await S('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const ev = async expr => {
+    const { result, exceptionDetails } = await S('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true });
+    if (exceptionDetails) throw new Error(exceptionDetails.exception?.description || exceptionDetails.text);
+    return result.value;
+  };
+  const open = async (query, settle = 1500) => {
+    const u = new URL(`${P.page}${query ? `?${query}` : ''}`, `${base.replace(/\/$/, '')}/`);
+    if (data) u.searchParams.set('data', data);
+    await S('Page.navigate', { url: u.href });
+    for (let t = 0; t < 75; t += 1) { if (await ev('document.readyState') === 'complete' && await ev('Boolean(window.foldTrays)')) break; await wait(200); }
+    await wait(settle);
+  };
+  const touch = (type, x, y) => S('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
+  const tap = async (x, y) => { await touch('touchStart', x, y); await wait(40); await touch('touchEnd'); };
+  const hold = async (x, y, ms) => { await touch('touchStart', x, y); await wait(ms); await touch('touchEnd'); };
+  const drag = async (x, y, dx, dy, ms = 240, steps = 12) => {
+    await touch('touchStart', x, y);
+    for (let i = 1; i <= steps; i += 1) { await wait(ms / steps); await touch('touchMove', x + (dx * i) / steps, y + (dy * i) / steps); }
+    await touch('touchEnd');
+  };
+  const KEYS = { Escape: 27, Enter: 13, Tab: 9, ArrowRight: 39 };
+  const key = async k => {
+    await S('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: k, code: k, windowsVirtualKeyCode: KEYS[k] });
+    if (k === 'Enter') await S('Input.dispatchKeyEvent', { type: 'char', text: '\r' });
+    await S('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code: k, windowsVirtualKeyCode: KEYS[k] });
+  };
+  const H = P.hook;
+  const state = async () => ({ ...(await ev(`${H}.ixState()`)), index: await ev(`${H}.model.snapshot().index`), frame: await ev(`${H}.model.snapshot().frame.id`),
+    taps: await ev(`${H}.taps()`), waiting: await ev(`${H}.waiting()`), dim: await ev(`document.querySelector('.tr-scroll').classList.contains('is-dim')`) });
+  // Centre of an element (its first 150 × 40 px), scrolled to the middle of the column first.
+  const at = async selector => ev(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); if (!el) return null; el.scrollIntoView({ block: 'center' });
+    const r = el.getBoundingClientRect(); return { x: Math.round(r.left + Math.min(r.width / 2, 150)), y: Math.round(r.top + Math.min(r.height / 2, 20)), id: el.closest('[data-id]')?.dataset.id || null }; })()`);
+  const blank = async () => ev(`(() => { document.querySelector('.tr-scroll').scrollTop = 0; const r = document.querySelector('.tr-kick').getBoundingClientRect(); return { x: Math.round(r.left + 20), y: Math.round(r.top + r.height / 2) }; })()`);
+  const tray = id => `[data-key="i:${id}"]`;
+  const running = `document.getAnimations().filter(a => a.playState === 'running' && a.animationName !== 'tr-new').length`;
+  const results = [];
+  const check = (label, ok, info) => results.push({ ok: Boolean(ok), label, info: JSON.stringify(info) });
+  const closed = s => !s.open && !s.detail;
+
+  // 1–2: a link with ?frame= lands on that frame and stays still; every tray's height says how many taps are left.
+  await open(`frame=${held}`);
+  const landing = await ev(`({ id: ${H}.model.snapshot().frame.id, telling: ${H}.telling(), running: ${running} })`);
+  check('带 ?frame= 进来：落在那一帧，不讲一遍、不动', landing.id === held && !landing.telling && landing.running === 0, landing);
+  const law = await ev(`(() => { const t = ${H}.trays().filter(x => !x.answered), bases = t.map(x => x.height - x.rows * 46);
+    return { rows: t.map(x => x.rows), heights: t.map(x => x.height), spread: Math.max(...bases) - Math.min(...bases), taps: ${H}.taps(), sum: t.reduce((n, x) => n + x.rows, 0),
+      hero: Number(document.querySelector('.tr-n').textContent) }; })()`);
+  check(`高度就是几下：托盘高 = 头部 + 剩下几下 × 46 px，大数字 ${law.taps} = 各托盘几下之和`, law.spread <= 2 && law.taps === law.sum && law.hero === law.taps, law);
+  // 3–7: long press is the hover; a tap elsewhere folds it; moving cancels it; a tap on the summary opens the tray; Esc.
+  const first = await at('.tr-tray:not(.is-receipt) .tr-meta');
+  await hold(first.x, first.y, 600); await wait(250);
+  let s = await state();
+  check(`长按 0.45 秒：${first.id} 出概要卡，其余降到七成`, s.hover === first.id && s.peek && s.dim && closed(s), s);
+  let b = await blank();
+  await tap(b.x, b.y); await wait(400);
+  s = await state();
+  check('点空白：概要卡收起，不展开', !s.peek && !s.dim && closed(s), s);
+  const moved = await at('.tr-tray:not(.is-receipt) .tr-meta');
+  await touch('touchStart', moved.x, moved.y); await wait(120);
+  for (let i = 1; i <= 4; i += 1) { await touch('touchMove', moved.x, moved.y - i * 5); await wait(30); }
+  await wait(500); await touch('touchEnd'); await wait(300);
+  s = await state();
+  check('按住时移动超过 10 px：取消长按', !s.peek && !s.hover, s);
+  const again = await at('.tr-tray:not(.is-receipt) .tr-meta');
+  await hold(again.x, again.y, 600); await wait(250);
+  const peek = await ev(`(() => { const r = document.querySelector('.tr-peek').getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + 16) }; })()`);
+  await tap(peek.x, peek.y); await wait(800);
+  s = await state();
+  check('长按后点概要卡：从这个托盘长出详情', s.open === again.id && s.detail && s.clip === 'none' && !s.peek, s);
+  await key('Escape'); await wait(700);
+  s = await state();
+  check('Esc 收回：详情收起、亮度恢复、焦点回到托盘', closed(s) && !s.dim && s.focus === 'proxy', s);
+  // 8–11: a tap on a tray (not a button) grows the detail; a short pull springs back, a long one closes it; ‹ closes it.
+  await blank();
+  const lead = await at('.tr-tray:not(.is-receipt) .tr-title');
+  await tap(lead.x, lead.y); await wait(700);
+  s = await state();
+  check(`轻点托盘：0.48 秒后详情到整屏（${lead.id}）`, s.open === lead.id && s.detail && s.clip === 'none' && s.focus === 'detail', s);
+  await drag(195, 260, 0, 70, 200); await wait(450);
+  s = await state();
+  check('详情到顶时短下拉 70 px：弹回整屏', s.open === lead.id && s.detail && s.clip === 'none', s);
+  await drag(195, 240, 0, 420, 300); await wait(700);
+  s = await state();
+  check('下拉超过四分之一屏：跟手收回', closed(s) && !s.dim, s);
+  await tap(lead.x, lead.y); await wait(700);
+  const back = await ev(`(() => { const r = document.querySelector('.tr-detail [data-t="back"]').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+  await tap(back.x, back.y); await wait(700);
+  s = await state();
+  check('点 ‹ 返回：收回', closed(s), s);
+  // 12–15: tap a one-tap button: the tray folds into a one-line receipt in place, the number drops by one; the finger
+  // guard; focus on 撤回; undo.
+  await blank();
+  const s0 = await state();
+  const one = await ev(`${H}.top()`);
+  const btn = await at(`${tray(one)} :is([data-rs-act], [data-rs-pick])`);
+  await tap(btn.x, btn.y); await wait(250);
+  check('焦点落在“撤回”', await ev(`document.activeElement?.matches('[data-rs-undo]') ?? false`), await ev('document.activeElement?.outerHTML.slice(0, 80)'));
+  await tap(btn.x, btn.y); await wait(1000);
+  s = await state();
+  const folded = await ev(`${H}.facts(${JSON.stringify(one)})`);
+  check('轻点按钮作答：托盘原地收成一行回执，数字减一', folded.mark === 'receipt' && folded.height <= 48 && s.taps === s0.taps - 1 && s.waiting === s0.waiting - 1, { folded, taps: [s0.taps, s.taps] });
+  check('0.25 秒后再点同一处：手指保护，不落到补上来的托盘', s.taps === s0.taps - 1 && closed(s), s);
+  const undo = await at(`${tray(one)} [data-rs-undo]`);
+  await tap(undo.x, undo.y); await wait(800);
+  s = await state();
+  const undone = await ev(`${H}.facts(${JSON.stringify(one)})`);
+  check('撤回：托盘回到原样，数字加回', s.taps === s0.taps && undone.mark !== 'receipt' && !undone.answered, { undone, taps: s.taps });
+  // 16–18: a two-step tray loses one row a tap: 推到… merges into the title and the dates rise (−1); × takes it back;
+  // the second tap folds it into a receipt (−2 in all).
+  const two = await ev(`${H}.two()`);
+  if (two) {
+    const h0 = (await ev(`${H}.facts(${JSON.stringify(two)})`)).height;
+    const step = await at(`${tray(two)} [data-t-step]`);
+    await tap(step.x, step.y); await wait(700);
+    s = await state();
+    const stepped = await ev(`${H}.facts(${JSON.stringify(two)})`);
+    check(`两下的第一下：托盘矮一排（${h0} → ${stepped.height}），数字减一`, stepped.mark === 'stepped' && Math.abs(h0 - stepped.height - 46) <= 2 && s.taps === s0.taps - 1, { stepped, h0, taps: s.taps });
+    const x = await at(`${tray(two)} [data-t-unstep]`);
+    await tap(x.x, x.y); await wait(600);
+    s = await state();
+    const unstepped = await ev(`${H}.facts(${JSON.stringify(two)})`);
+    check('点小签上的 ×：退回两排，数字加回', unstepped.mark === 'tray' && Math.abs(unstepped.height - h0) <= 1 && s.taps === s0.taps, { unstepped, taps: s.taps });
+    const step2 = await at(`${tray(two)} [data-t-step]`);
+    await tap(step2.x, step2.y); await wait(1300);
+    const day = await at(`${tray(two)} [data-t-pick]`);
+    await tap(day.x, day.y); await wait(1000);
+    s = await state();
+    const done = await ev(`${H}.facts(${JSON.stringify(two)})`);
+    check('第二下挑一天：收成回执，两下一共减二', done.mark === 'receipt' && s.taps === s0.taps - 2, { done, taps: [s0.taps, s.taps] });
+    await ev(`${H}.undo(${JSON.stringify(two)}), 1`); await wait(600);
+  } else {
+    const flat = await ev(`${H}.trays().every(x => x.rows <= 1)`);
+    check('这一帧没有两下的托盘：每个托盘一排，几下等于几个', flat && s0.taps === s0.waiting, { taps: s0.taps, waiting: s0.waiting });
+  }
+  // 19–20: while playing, a long press holds the round; → folds the summary at once and goes to the next round.
+  await ev(`${H}.play(), 1`); await wait(150);
+  const i0 = (await state()).index;
+  const heldRow = await at('.tr-tray:not(.is-receipt) .tr-meta');
+  await hold(heldRow.x, heldRow.y, 600);
+  await wait(6000);
+  s = await state();
+  check('连播中长按：停住，不进下一轮', s.peek && s.paused && s.index === i0, { i0, ...s });
+  await key('ArrowRight'); await wait(400);
+  s = await state();
+  check('→ 换轮：概要立即收起，到下一轮', !s.peek && !s.hover && s.index === i0 + 1, { i0, ...s });
+  // 21–23: keyboard: Tab onto a tray shows its summary; Enter opens; Esc folds and gives focus back.
+  await open(`frame=${held}`, 900);
+  await ev(`document.querySelector('.tr-hero').focus(), 1`);
+  await key('Tab'); await wait(400);
+  s = await state();
+  check('Tab 到托盘：概要卡出现', s.hover && s.hover !== 'hero' && s.peek && s.focus === 'proxy', s);
+  await key('Enter'); await wait(800);
+  s = await state();
+  check('回车展开，焦点进详情', s.open && s.detail && s.focus === 'detail', s);
+  await key('Escape'); await wait(700);
+  s = await state();
+  check('Esc 收回，焦点回到托盘', closed(s) && s.focus === 'proxy', s);
+  // 24–26: the receipt follows the item into the next 整理 (into 已收到与关上 once read; “答过上一版” when the question
+  // was rewritten), the number does not bounce back; a short left swipe there springs back, past 80 px it says 知道了.
+  await blank();
+  const id = await ev(`${H}.top()`);
+  await ev(`${H}.answer(${JSON.stringify(id)}), 1`); await wait(1200);
+  const before = await ev(`${H}.facts(${JSON.stringify(id)})`), w0 = await ev(`${H}.waiting()`);
+  await ev(`${H}.go(${H}.model.snapshot().index + 1), 1`); await wait(1800);
+  const after = await ev(`${H}.facts(${JSON.stringify(id)})`), w1 = await ev(`${H}.waiting()`);
+  const follows = !after.present || (after.ask ? after.mark === 'prior' : after.mark === 'ledger' && after.answered);
+  check('换轮后回执跟着条目走：读到后落到“已收到与关上”', follows && before.mark === 'receipt', { id, before, after, w0, w1 });
+  const line = await at(`.tr-ledger ${tray(id)}`);
+  if (line) {
+    await drag(line.x + 100, line.y, -50, 0, 200); await wait(400);
+    const short = await ev(`(() => { const el = document.querySelector('.tr-ledger ${tray(id)}'); return { present: Boolean(el), t: el && getComputedStyle(el).transform }; })()`);
+    check('左滑 50 px：回弹，不算知道了', short.present && short.t === 'none', short);
+    await drag(line.x + 100, line.y, -120, 0, 240); await wait(700);
+    const gone = await ev(`!${H}.ledger().some(l => l.id === ${JSON.stringify(id)})`);
+    s = await state();
+    check('左滑过 80 px：这一行知道了，不展开', gone && closed(s), { gone, open: s.open });
+  } else check('回执所在的一行在“已收到与关上”里', false, { id, after });
+  // 27–28: opened directly (top window, no ?frame=, no referrer) it tells the three beats once; a tap skips to the end.
+  await open('', 400);
+  const told = await ev(`({ telling: ${H}.telling(), id: ${H}.model.snapshot().frame.id })`);
+  await wait(1500);
+  b = await blank();
+  await tap(b.x, b.y); await wait(500);
+  const skipped = await ev(`({ telling: ${H}.telling(), id: ${H}.model.snapshot().frame.id, running: ${running}, open: ${H}.ixState().open })`);
+  check(`直接打开：讲一遍（从 ${tell.from} 起）`, told.telling && told.id === tell.from, told);
+  check(`讲一遍中轻点：跳到终态 ${tell.end}，不留动画、不展开`, !skipped.telling && skipped.id === tell.end && skipped.running === 0 && !skipped.open, skipped);
+  // 29: with reduced motion it does not tell.
+  await S('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  await open('', 600);
+  const calm = await ev(`({ telling: ${H}.telling(), running: ${running} })`);
+  check('减弱动态：直接打开也不讲、不动', !calm.telling && calm.running === 0, calm);
+  await S('Emulation.setEmulatedMedia', { features: [] });
+  await cdp.send('Target.closeTarget', { targetId });
+  return { results, errors };
+}
+
 const options = args(process.argv.slice(2));
 const cdp = await launch();
 let failed = 0;
 try {
   for (const name of options.only) {
     if (!PAGES[name]) throw new Error(`未知页面 ${name}；可选：${Object.keys(PAGES).join(', ')}`);
-    const { results, errors } = await (PAGES[name].touch ? runHome : PAGES[name].duo ? runDuo : run)(cdp, options.base, options.data, name);
+    const { results, errors } = await (PAGES[name].runner || (PAGES[name].touch ? runHome : PAGES[name].duo ? runDuo : run))(cdp, options.base, options.data, name);
     const bad = results.filter(r => !r.ok).length + errors.length;
     failed += bad;
     console.log(`${bad ? '✗' : '✓'} ${name}${options.data ? ` · ${options.data}` : ''}：${results.filter(r => r.ok).length} / ${results.length} 项通过`);

@@ -152,6 +152,7 @@ node scripts/shoot-forms.mjs --out $out/u --only tug --frame 26       # 拔河�
 node scripts/shoot-forms.mjs --out $out/kh --only khipu --data story --frame f26   # 结绳的默认样张是手写情境；带帧打开不讲，取 f26 的根层
 node scripts/shoot-forms.mjs --out $out/m --only dial --frame 26 --eval "document.querySelector('[data-card]').click()"
 node scripts/shoot-forms.mjs --out $out/p --only pulse --gpu --frame 20 --eval "(async () => { document.querySelector('[data-card]').click(); await new Promise(r => setTimeout(r, 400)); foldPulse.seek(20, 3.55); })()"
+node scripts/shoot-forms.mjs --out $out/t4 --only trays --frame 26 --eval "document.querySelector('[data-card]').click()"   # 回应托盘带帧打开不讲一遍
 for f in $out/*.png $out/*/*.png; do cwebp -quiet -q 82 -m 6 -sharp_yuv -resize 640 0 "$f" -o "site/previews/$(basename "$f" .png).webp"; done
 ```
 
