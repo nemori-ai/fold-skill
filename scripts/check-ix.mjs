@@ -4,6 +4,7 @@
 // 共 16 项，每个接入 ix.mjs 的页面都跑同一套；各页只在 PAGES 里写自己的地址、挑哪一件、怎样算“切到这一件”。
 // D 手机首页（home）没有悬停，另走一套触屏流程（runHome，iPhone 尺寸、CDP 触屏事件）：长按代替悬停、轻点从卡长出详情、
 // 下拉收回、左滑知道了、作答与撤回、手指保护、换轮时回执跟着条目走，以及键盘与连播的同一组打断规则。
+// E 折叠屏（duo）走 runDuo：同一组触屏标准，加铰链、左页详情、色带格联动与讲一遍。
 // 只用 Node 22 内置的 WebSocket 驱动本机 Chrome（无头），不装依赖。原型需先在本地提供服务。
 //
 //   node scripts/check-ix.mjs --base http://127.0.0.1:4173                 # 全部页面，默认数据
@@ -218,6 +219,10 @@ const PAGES = {
     cut: `document.querySelector('.st-title').textContent.startsWith('这一件') && document.querySelector('.st-side-kicker').textContent.includes('这一件')`,
     playReady: `(foldKhipu.play(), new Promise(r => { const go = () => (foldSketch.index >= 12 && foldKhipu.settled() ? r(1) : setTimeout(go, 50)); go(); }))`,
   },
+  // E 折叠屏：触屏流程见 runDuo（桌面尺寸、CDP 触屏事件），在 D 那一套之外加铰链（把手、[ ]、F、?hinge=、三个姿态）、
+  // 左页详情（右半仍可作答）、色带格联动与讲一遍。held 是作答的一帧，next 是它的下一轮，follow 是问题原样重登记的一帧。
+  duo: { hook: 'foldDuo', duo: true,
+    frames: { composite: { held: 'f22', next: 'f23', follow: 'f26', item: 'smilla-vet' }, story: { held: 'f04', next: 'f05', follow: 'f05', item: 'launch' } } },
 };
 
 function args(argv) {
@@ -549,13 +554,236 @@ async function runHome(cdp, base, data, name) {
   return { results, errors };
 }
 
+// E 折叠屏：桌面视口（整台按 pt 缩进来）加触屏事件。长按、轻点、色带格、左页详情、作答撤回、键盘、连播打断与 D 同一套标准；
+// 另加铰链：姿态按钮、F、[ ]、拖把手松手落位、?hinge= 定格、减少动态直接到终态，以及不带帧号直接打开时讲一遍、按键跳过。
+async function runDuo(cdp, base, data, name) {
+  const P = PAGES[name], F = P.frames[data || 'composite'] || P.frames.composite;
+  const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+  const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+  const S = (m, p) => cdp.send(m, p, sessionId);
+  const errors = [];
+  cdp.listeners.add(m => {
+    if (m.sessionId !== sessionId) return;
+    if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.exception?.description || m.params.exceptionDetails.text);
+    if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') errors.push(m.params.args.map(a => a.value ?? a.description).join(' '));
+  });
+  await S('Runtime.enable'); await S('Page.enable');
+  await S('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  await S('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const ev = async expr => {
+    const { result, exceptionDetails } = await S('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true });
+    if (exceptionDetails) throw new Error(exceptionDetails.exception?.description || exceptionDetails.text);
+    return result.value;
+  };
+  const open = async (query, settle = 1500) => {
+    const u = new URL(`index.html?variant=duo${query ? `&${query}` : ''}`, `${base.replace(/\/$/, '')}/`);
+    if (data) u.searchParams.set('data', data);
+    await S('Page.navigate', { url: u.href });
+    for (let t = 0; t < 75; t += 1) { if (await ev('document.readyState') === 'complete') break; await wait(200); }
+    await wait(settle);
+  };
+  const touch = (type, x, y) => S('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
+  const tap = async (x, y) => { await touch('touchStart', x, y); await wait(40); await touch('touchEnd'); };
+  const hold = async (x, y, ms) => { await touch('touchStart', x, y); await wait(ms); await touch('touchEnd'); };
+  const drag = async (x, y, dx, dy, ms = 300, steps = 15) => {
+    await touch('touchStart', x, y);
+    for (let i = 1; i <= steps; i += 1) { await wait(ms / steps); await touch('touchMove', x + (dx * i) / steps, y + (dy * i) / steps); }
+    await touch('touchEnd');
+  };
+  const KEYS = { Escape: [27, 'Escape'], Enter: [13, 'Enter'], Tab: [9, 'Tab'], ArrowRight: [39, 'ArrowRight'], '[': [219, 'BracketLeft'], ']': [221, 'BracketRight'], f: [70, 'KeyF'], x: [88, 'KeyX'] };
+  const key = async k => {
+    const [code, name] = KEYS[k];
+    await S('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: k, code: name, windowsVirtualKeyCode: code });
+    if (k === 'Enter') await S('Input.dispatchKeyEvent', { type: 'char', text: '\r' });
+    await S('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code: name, windowsVirtualKeyCode: code });
+  };
+  const H = P.hook, item = JSON.stringify(F.item);
+  const state = async () => ({ ...(await ev(`${H}.ixState()`)), ...(await ev(`${H}.state()`)), index: await ev(`${H}.model.snapshot().index`),
+    frame: await ev(`${H}.model.snapshot().frame.id`), waiting: await ev(`${H}.waiting()`), you: await ev(`${H}.you()`),
+    dim: await ev(`document.querySelector('.u-device').classList.contains('is-dim')`) });
+  const at = async (id, part) => ev(`${H}.at(${JSON.stringify(id)}, ${JSON.stringify(part)})`);
+  const blank = async () => ev(`(() => { const r = document.querySelector('[data-key="h:R"] .d-date').getBoundingClientRect(); return { x: Math.round(r.left + 20), y: Math.round(r.top + r.height / 2) }; })()`);
+  const results = [];
+  const check = (label, ok, info) => results.push({ ok: Boolean(ok), label, info: JSON.stringify(info) });
+  const closed = s => !s.open && !s.detail;
+
+  // 1: a link with ?frame= lands on that frame as the end state: the spread, nothing playing but the new-question outline.
+  await open(`frame=${F.held}`);
+  const landing = await ev(`({ id: ${H}.model.snapshot().frame.id, ...${H}.state(),
+    running: document.getAnimations().filter(a => a.playState === 'running' && a.animationName !== 'd-new').length })`);
+  check('带 ?frame= 进来：书本终态，不演开场', landing.id === F.held && landing.phase === 'book' && !landing.tell && landing.running === 0, landing);
+  // 2–5: long press is the hover; a tap on blank folds it; moving cancels it; a run of the band outlines its stripe.
+  const top = await ev(`${H}.top()`);
+  let p = await at(top, 'L');
+  await hold(p.x, p.y, 600); await wait(250);
+  let s = await state();
+  check(`长按左半 0.45 秒：${top} 出概要卡，其余降到七成`, s.hover === top && s.peek && s.dim && closed(s), s);
+  let b = await blank();
+  await tap(b.x, b.y); await wait(400);
+  s = await state();
+  check('点空白：概要卡收起，不展开', !s.peek && !s.dim && closed(s), s);
+  await touch('touchStart', p.x, p.y); await wait(120);
+  for (let i = 1; i <= 4; i += 1) { await touch('touchMove', p.x, p.y - i * 5); await wait(30); }
+  await wait(500); await touch('touchEnd'); await wait(300);
+  s = await state();
+  check('按住时移动超过 10 px：取消长按', !s.peek && !s.hover, s);
+  const cell = await ev(`${H}.bandPoint(${JSON.stringify(top)})`);
+  await hold(cell.x, cell.y, 600); await wait(250);
+  s = await state();
+  const outlined = await ev(`[...document.querySelectorAll('.is-linked')].map(el => el.dataset.key)`);
+  check('长按色带格：那一件的两半描框、出概要卡', s.linked === top && s.peek && outlined.includes(`L:${top}`) && outlined.includes(`R:${top}`), { ...s, outlined });
+  b = await blank(); await tap(b.x, b.y); await wait(400);
+  // 6–10: a tap on a left half grows the detail over the left page; the right half stays answerable; Esc / blank close it.
+  p = await at(top, 'L');
+  await tap(p.x, p.y); await wait(800);
+  s = await state();
+  const geo = await ev(`(() => { const d = document.querySelector('.u-ldetail').getBoundingClientRect(), g = document.querySelector('.u-grip').getBoundingClientRect();
+    const btn = ${H}.at(${JSON.stringify(top)}, 'button'); const hit = btn && document.elementFromPoint(btn.x, btn.y);
+    return { right: Math.round(d.right), crease: Math.round(g.left + g.width / 2), answerable: Boolean(hit?.closest('[data-rs-act]')) }; })()`);
+  check(`轻点左半：详情长满左页，焦点进详情（${top}）`, s.open === top && s.detail && s.clip === 'none' && s.focus === 'detail' && geo.right <= geo.crease, { ...s, ...geo });
+  check('详情开着：右半的按钮仍露在外面、可以点', geo.answerable, geo);
+  await key('Escape'); await wait(700);
+  s = await state();
+  check('Esc 收回：详情收起，焦点回到左半', closed(s) && s.focus === 'proxy', s);
+  await tap(p.x, p.y); await wait(800);
+  const btn = await at(top, 'button');
+  await tap(btn.x, btn.y); await wait(900);
+  s = await state();
+  let f = await ev(`${H}.facts(${JSON.stringify(top)})`);
+  check('详情开着时在右半作答：右半收成回执，详情不收', f.mark === 'receipt' && s.open === top && s.detail, { f, open: s.open });
+  const u = await at(top, 'undo');
+  await tap(u.x, u.y); await wait(700);
+  b = await blank(); await tap(b.x, b.y); await wait(700);
+  s = await state();
+  check('撤回后点空白：详情收回', closed(s) && !(await ev(`${H}.facts(${JSON.stringify(top)})`)).answered, s);
+  // 11–14: answer on the right half: it folds into a receipt in place, the stripe keeps its height, the shares drop;
+  // focus on 撤回; a second tap where the button was does nothing; undo brings it back.
+  const y0 = (await state()).you, h0 = (await ev(`${H}.facts(${JSON.stringify(top)})`)).heights;
+  const share = await ev(`${H}.model.snapshot().state.root.items.find(x => x.id === ${JSON.stringify(top)}).share`);
+  const b2 = await at(top, 'button');
+  await tap(b2.x, b2.y); await wait(250);
+  check('作答后焦点落在“撤回”', await ev(`document.activeElement?.matches('[data-rs-undo]') ?? false`), await ev('document.activeElement?.outerHTML.slice(0, 80)'));
+  await tap(b2.x, b2.y); await wait(900);
+  s = await state();
+  f = await ev(`${H}.facts(${JSON.stringify(top)})`);
+  check('轻点按钮作答：右半就地收成回执，条高不变，份数少了这一件', f.mark === 'receipt' && f.heights.R === h0.R && f.heights.L === h0.L && s.you === y0 - share, { f, h0, y0, you: s.you, share });
+  check('0.25 秒后再点同一处：不展开、不再作答', closed(s) && s.you === y0 - share, s);
+  const u2 = await at(top, 'undo');
+  await tap(u2.x, u2.y); await wait(800);
+  s = await state();
+  f = await ev(`${H}.facts(${JSON.stringify(top)})`);
+  check('撤回：右半回到原样，份数回来', !f.answered && f.mark !== 'receipt' && s.you === y0, { f, you: s.you });
+  // 15–17: keyboard: Tab onto a left half shows its summary? (halves open on Enter) — Tab to a compact stripe or row shows the summary.
+  await ev(`(document.querySelector('.u-spread > .u-mini.is-right') || document.querySelector('.u-zone .d-line')).previousElementSibling?.focus?.(), 1`);
+  await ev(`(() => { const el = document.querySelector('.u-spread > .u-mini.is-left') || document.querySelector('.u-zone .d-line'); el.scrollIntoView({ block: 'center' }); const prev = [...document.querySelectorAll('.u-spread [tabindex="0"], .u-spread button')].filter(x => x.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING).at(-1); prev?.focus(); return 1; })()`);
+  await key('Tab'); await wait(400);
+  s = await state();
+  check('Tab 到单行条或行：概要卡出现', s.hover && s.peek && s.focus === 'proxy', s);
+  await key('Enter'); await wait(800);
+  s = await state();
+  check('回车展开，焦点进详情', s.open && s.detail && s.focus === 'detail', s);
+  await key('Escape'); await wait(700);
+  s = await state();
+  check('Esc 收回，焦点回到原处', closed(s) && s.focus === 'proxy', s);
+  // 18–22: the hinge. Posture buttons; F folds and unfolds; [ ] in steps of 15° (half-folded below 170°, unsettles below 110°);
+  // the handle follows the finger and a release snaps to the nearest posture.
+  const pick = async name2 => { const r = await ev(`(() => { const r = document.querySelector('[data-posture="${name2}"]').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`); await tap(r.x, r.y); await wait(900); return state(); };
+  const c = await pick('closed'), bk = await pick('book'), tb = await pick('table'), bk2 = await pick('book');
+  check('姿态按钮：合上是外屏“件”，书本“份”，桌面“份”', c.phase === 'closed' && /件/.test(c.hero) && bk.phase === 'book' && /份/.test(bk.hero) && tb.posture === 'table' && /份/.test(tb.hero) && bk2.posture === 'book' && bk2.phase === 'book',
+    { closed: [c.phase, c.hero], book: [bk.phase, bk.hero], table: [tb.posture, tb.hero], back: bk2.phase });
+  await ev('document.activeElement?.blur(), 1');
+  await key('f'); await wait(900);
+  const f1 = await state();
+  await key('f'); await wait(1100);
+  const f2 = await state();
+  check('F：一键合上，再按展开', f1.phase === 'closed' && f1.angle === 0 && f2.phase === 'book' && f2.angle === 180, { f1: [f1.phase, f1.angle], f2: [f2.phase, f2.angle] });
+  await key('['); await wait(300);
+  const k1 = await state();
+  for (let i = 0; i < 4; i += 1) { await key('['); await wait(120); }
+  await wait(500);
+  const k2 = await state();
+  await key(']'); await key(']'); await key(']'); await key(']'); await key(']'); await wait(700);
+  const k3 = await state();
+  check('[ ]：每次 15°；165° 半折（两半离开折痕），105° 退出跨页，回到 180° 重新整理', k1.angle === 165 && k1.half && k1.phase === 'book' && k2.angle === 105 && k2.phase === 'reveal' && k3.angle === 180 && k3.phase === 'book' && !k3.half,
+    { k1: [k1.angle, k1.phase, k1.half], k2: [k2.angle, k2.phase], k3: [k3.angle, k3.phase, k3.half] });
+  await ev(`${H}.posture('closed'), 1`); await wait(900);
+  const grip = async () => ev(`(() => { const r = document.querySelector('.u-grip').getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }; })()`);
+  const kscale = await ev(`(() => { const d = document.querySelector('.u-device'); return d.getBoundingClientRect().width / d.offsetWidth; })()`);
+  let g = await grip();
+  await touch('touchStart', g.x, g.y);
+  for (let i = 1; i <= 10; i += 1) { await wait(30); await touch('touchMove', g.x - (i / 10) * 0.3 * 475.5 * kscale, g.y); }
+  await wait(60);
+  const mid = await state();
+  await touch('touchEnd'); await wait(800);
+  const back = await state();
+  g = await grip();
+  await drag(g.x, g.y, -0.62 * 475.5 * kscale, 0, 320); await wait(900);
+  const opened = await state();
+  check('拖把手：跟手（54°，左半开到一半），松手不到 90° 落回合上；过 90° 落到书本', mid.angle === 54 && mid.phase === 'reveal' && mid.windows > 0 && back.phase === 'closed' && opened.phase === 'book' && opened.angle === 180,
+    { mid: [mid.angle, mid.phase, mid.windows], back: back.phase, opened: [opened.phase, opened.angle] });
+  // 23–24: while playing, a long press holds the round; → folds the summary at once and goes to the next round.
+  await open(`frame=${F.held}`);
+  await ev(`${H}.model.togglePlay(), 1`); await wait(150);
+  const i0 = (await state()).index;
+  p = await at(await ev(`${H}.top()`), 'L');
+  await hold(p.x, p.y, 600);
+  await wait(4000);
+  s = await state();
+  check('连播中长按：停住，不进下一轮', s.peek && s.paused && s.index === i0, { i0, ...s });
+  await key('ArrowRight'); await wait(400);
+  s = await state();
+  check('→ 换轮：概要立即收起，到下一轮', !s.peek && !s.hover && s.index === i0 + 1, { i0, ...s });
+  // 25–26: the receipt follows the item into the next 整理, over the fold: a row of 在办 once the question closed, still a
+  // receipt when the same question was registered again, “你答过上一版” on the right half when it was rewritten.
+  const follows = async frame => {
+    await open(`frame=${frame}`);
+    const id = await ev(`${H}.top()`);
+    await ev(`${H}.answer(${JSON.stringify(id)}), 1`); await wait(1000);
+    const before = await ev(`${H}.facts(${JSON.stringify(id)})`), w = await ev(`${H}.waiting()`);
+    await ev(`${H}.go(${H}.model.snapshot().index + 1), 1`); await wait(1800);
+    const after = await ev(`${H}.facts(${JSON.stringify(id)})`), w1 = await ev(`${H}.waiting()`);
+    const ok = !after.present || (after.ask === before.ask ? after.answered && ['receipt', 'done-row'].includes(after.mark)
+      : after.ask ? after.mark === 'prior' : after.mark === 'row' && after.place === 'row');
+    return { ok, id, before, after, w, w1 };
+  };
+  const r1 = await follows(F.held);
+  check('换轮后回执跟着条目走、过折痕（作答那一帧 → 下一轮）', r1.ok, r1);
+  const r2 = await follows(F.follow);
+  check('再换一轮：回执仍跟着条目走', r2.ok, r2);
+  // 27: ?hinge= holds the reveal at that point: the right page is the outer screen, the left halves partly open.
+  await open(`frame=${F.held}&hinge=0.4`);
+  s = await state();
+  const outerOn = await ev(`!document.querySelector('.u-outer').classList.contains('is-off')`);
+  check('?hinge=0.4：定格在揭开四成（60°），右页仍是外屏', s.phase === 'reveal' && s.angle === 60 && s.windows > 0 && outerOn && /件/.test(s.hero), { ...s, outerOn });
+  // 28: reduced motion: fold and unfold go straight to their end states, nothing animates.
+  await S('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  await open(`frame=${F.held}`);
+  await ev(`${H}.posture('closed'), 1`); await wait(60);
+  const rc = await state(), ra = await ev(`document.getAnimations().length`);
+  await ev(`${H}.posture('book'), 1`); await wait(60);
+  const rb = await state(), rb2 = await ev(`document.getAnimations().length`);
+  check('减少动态：合上与展开直接到终态，不动画', rc.phase === 'closed' && rb.phase === 'book' && ra === 0 && rb2 === 0, { rc: rc.phase, rb: rb.phase, ra, rb2 });
+  await S('Emulation.setEmulatedMedia', { features: [] });
+  // 29: opened by itself (no frame, no referrer): the tell plays once; any key jumps to its end (closed, next round, answered).
+  await open('', 1400);
+  const telling = await state();
+  await key('x'); await wait(700);
+  const told = await state();
+  const sample = await ev(`${H}.facts(${item})`);
+  check('直接打开：讲一遍（合上 → 展开 → 答一件 → 下一轮落地 → 合上），任意键跳到结尾', telling.tell && !told.tell && told.told && told.phase === 'closed' && told.frame === F.next && sample.mark === 'row',
+    { telling: [telling.tell, telling.phase, telling.frame], told: [told.tell, told.phase, told.frame], sample });
+  await cdp.send('Target.closeTarget', { targetId });
+  return { results, errors };
+}
+
 const options = args(process.argv.slice(2));
 const cdp = await launch();
 let failed = 0;
 try {
   for (const name of options.only) {
     if (!PAGES[name]) throw new Error(`未知页面 ${name}；可选：${Object.keys(PAGES).join(', ')}`);
-    const { results, errors } = await (PAGES[name].touch ? runHome : run)(cdp, options.base, options.data, name);
+    const { results, errors } = await (PAGES[name].touch ? runHome : PAGES[name].duo ? runDuo : run)(cdp, options.base, options.data, name);
     const bad = results.filter(r => !r.ok).length + errors.length;
     failed += bad;
     console.log(`${bad ? '✗' : '✓'} ${name}${options.data ? ` · ${options.data}` : ''}：${results.filter(r => r.ok).length} / ${results.length} 项通过`);

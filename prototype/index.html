@@ -10,7 +10,7 @@
   <script>
   {
     const opening = new URLSearchParams(location.search);
-    if (['a', 'b', 'c', 'd'].includes(opening.get('variant')?.toLowerCase())) {
+    if (['a', 'b', 'c', 'd', 'duo'].includes(opening.get('variant')?.toLowerCase())) {
       document.documentElement.classList.add('opening-exploration');
     }
     // ?embed=1: shown inside all.html, which lists every version itself; hide only the version switchers.
@@ -25,7 +25,7 @@
 <div class="app-shell">
   <header class="masthead">
     <a class="brand" href="./" aria-label="Fold 事项回放首页"><svg width="27" height="29" viewBox="0 0 27 29" aria-hidden="true"><path d="M2 2h23L14 13v14H2Z" fill="currentColor"/><path d="m14 2 11 0-11 11Z" fill="currentColor" opacity=".35"/></svg><span>Fold</span><span class="masthead-caption">事项回放</span></a>
-    <nav class="prototype-versions" aria-label="原型版本"><span aria-current="page">原版</span><a data-prototype-variant="a" href="./?variant=a&frame=0">A 空间排布</a><a data-prototype-variant="b" href="./?variant=b&frame=0">B 时间展开</a><a data-prototype-variant="c" href="./?variant=c&frame=0">C 流动形态</a><a data-prototype-variant="d" href="./?variant=d&frame=26">D 手机首页</a></nav>
+    <nav class="prototype-versions" aria-label="原型版本"><span aria-current="page">原版</span><a data-prototype-variant="a" href="./?variant=a&frame=0">A 空间排布</a><a data-prototype-variant="b" href="./?variant=b&frame=0">B 时间展开</a><a data-prototype-variant="c" href="./?variant=c&frame=0">C 流动形态</a><a data-prototype-variant="d" href="./?variant=d&frame=26">D 手机首页</a><a data-prototype-variant="duo" href="./?variant=duo">E 折叠屏</a></nav>
     <div class="story-heading"><h1 id="story-title">事项回放</h1><p class="story-meta" id="story-meta"></p></div>
     <div class="header-actions"><button id="story-button" aria-expanded="false" aria-controls="story-drawer">演示说明</button><button id="full-state-button" title="查看此刻完整 state JSON">完整 state <span aria-hidden="true">↗</span></button></div>
   </header>
@@ -71,7 +71,7 @@
 <noscript>这个交互原型需要启用 JavaScript。</noscript>
 <script type="module">
   const variant = new URLSearchParams(location.search).get('variant')?.toLowerCase();
-  await import(['a', 'b', 'c', 'd'].includes(variant) ? './explore.mjs?v=feedback-loop-1' : './app.mjs?v=feedback-loop-1');
+  await import(['a', 'b', 'c', 'd', 'duo'].includes(variant) ? './explore.mjs?v=feedback-loop-1' : './app.mjs?v=feedback-loop-1');
 </script>
 </body>
 </html>

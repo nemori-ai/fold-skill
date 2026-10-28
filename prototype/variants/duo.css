@@ -1,0 +1,209 @@
+@import url("../forms/motion/ix.css");
+@import url("./d.css");
+/* E · 折叠屏。卡、标签、按钮、回执、行、详情、操作单、概要卡沿用 d.css（宿主同时挂 .variant-d）；这里只加折叠屏的版式。
+   克制：不画机身、铰链高光和折痕阴影；折痕处只有纸色留白，唯一的分界线是份额带上那一笔。尺寸以 pt 写，整台按比例缩进视口。 */
+.variant-duo [hidden] { display: none !important; }
+.variant-duo { --u-shade: #dcd9d1; --u-left: #fbfaf6; }
+.u-stage { display: flex; align-items: flex-start; gap: 40px; padding: 28px 24px 48px; }
+.u-siderail { width: 290px; }
+.u-area { position: relative; flex: 1; min-width: 0; }
+.u-device { position: absolute; left: 0; top: 0; transform-origin: 0 0; transform: translateX(var(--dx, 0px)) scale(var(--k, 1)); font-size: 14px; }
+
+/* the screens: paper, the corners a screen has; nothing else of the device */
+.u-screen { position: absolute; top: 0; background: var(--paper); overflow: hidden; border-radius: 22px; box-shadow: 0 0 0 1px #0000000b, 0 26px 50px -34px #0005; }
+.u-inner { left: 0; z-index: 1; }
+.u-inner:not(.is-on) { visibility: hidden; }
+.u-outer { z-index: 2; }
+.u-outer.is-off { visibility: hidden; }
+.u-table { left: 0; z-index: 1; }
+/* unfolding: the part of the inner screen that has lit (paper), and before the takeover the part that has not (shade) */
+.u-lit, .u-unlit { position: absolute; top: 0; height: 669px; border-radius: 22px 0 0 22px; pointer-events: none; opacity: 0; }
+.u-lit { background: var(--paper); box-shadow: 0 0 0 1px #0000000b; z-index: 0; }
+.u-unlit { background: var(--u-shade); z-index: 0; }
+.u-wins { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.u-win { position: absolute; overflow: hidden; }
+.u-win-content { position: absolute; top: 0; margin: 0 !important; box-sizing: border-box; }
+.u-turn-ghost { z-index: 15; pointer-events: none; }
+
+/* system strip on the right edge of either screen (HIG: island, clock, status stand vertically there) */
+.u-sysrail { position: absolute; top: 0; right: 0; bottom: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 14px; z-index: 5; pointer-events: none; }
+.u-island { width: 26px; height: 26px; border-radius: 50%; background: #111; margin-bottom: 4px; }
+.u-clock { font-size: 13px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink); }
+.u-wifi { font-size: 15px; line-height: 1; color: var(--ink-2); margin-top: -2px; }
+.u-pill { margin-top: 10px; width: 40px; padding: 8px 0; border-radius: 20px; background: var(--card); box-shadow: 0 0 0 1px var(--line), 0 4px 10px -8px #0004; font-size: 12px; line-height: 1.25; color: var(--ink-3); text-align: center; }
+.u-cam { position: absolute; top: 10px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: #1a1a1a; opacity: .85; z-index: 6; }
+
+/* closed: D on the outer screen */
+.u-ocol { position: absolute; left: 0; bottom: 0; display: flex; flex-direction: column; }
+.u-ocol .d-scroll { padding-top: 0; }
+.u-outer .d-card [data-part], .u-outer .d-since { will-change: auto; }
+
+/* the hinge handle: a short bar on the crease, there to be dragged */
+.u-grip { position: absolute; top: 50%; z-index: 9; width: 36px; height: 88px; margin: -44px 0 0 -18px; border: 0; padding: 0; background: none; cursor: ew-resize; touch-action: none; }
+.u-grip > i { position: absolute; left: 50%; top: 26px; bottom: 26px; width: 4px; margin-left: -2px; border-radius: 2px; background: #c6c1b6; transition: background-color .15s, width .15s, margin .15s; }
+.u-grip:hover > i, .u-grip:focus-visible > i, .u-grip.is-dragging > i { background: var(--ink-2); width: 6px; margin-left: -3px; }
+.u-grip:focus-visible { outline: none; }
+.u-grip-read { position: absolute; left: 50%; bottom: -4px; transform: translateX(-50%); font-size: 11px; font-variant-numeric: tabular-nums; color: var(--ink-3); opacity: 0; transition: opacity .15s; white-space: nowrap; }
+.u-grip:hover .u-grip-read, .u-grip.is-dragging .u-grip-read, .u-grip:focus-visible .u-grip-read { opacity: 1; }
+.u-device.is-table .u-grip { display: none; }
+
+/* book: two pages; one stripe per waiting item crosses the crease, its halves one row, one height */
+.u-iscroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; overscroll-behavior: contain; overflow-anchor: none; }
+.u-iscroll::-webkit-scrollbar { display: none; }
+.u-spread { position: relative; display: grid; grid-template-columns: var(--pw) var(--pw); grid-auto-rows: min-content; align-content: start; row-gap: 8px; padding: 14px 0 28px; }
+.u-spread > .u-cl { grid-column: 1; margin: 0 calc(var(--gap) / 2) 0 var(--gut); min-width: 0; transition: margin .2s var(--ease); }
+.u-spread > .u-cr { grid-column: 2; margin: 0 calc(var(--rail) + 4px) 0 calc(var(--gap) / 2); min-width: 0; transition: margin .2s var(--ease); }
+/* half-folded: the crease region widens (ReservedRegion .division); the halves step away, nothing re-flows across */
+.u-spread.is-half { --gap: 48px; }
+.u-spread > [data-key], .u-zone > [data-key], .u-top > [data-key], .u-bot > [data-key] { position: relative; }
+/* a ghost (a leaf on its way out, or the old face of one that changes) is placed against the whole spread, not a column */
+.u-spread > .d-ghost { grid-column: auto !important; grid-row: auto !important; }
+.u-head { padding: 0 4px 2px; }
+.u-head .d-date { font-size: 13px; }
+.u-hero { margin: 2px 0 2px; font-size: 27px; line-height: 1.2; font-weight: 800; letter-spacing: -.01em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.u-hero small { font-size: 27px; font-weight: 800; margin-left: 6px; letter-spacing: -.01em; }
+.u-hero-2 { margin: 0 0 2px; font-size: 19px; line-height: 1.3; font-weight: 750; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.u-hero-2 small { font-size: 12.5px; font-weight: 600; color: var(--ink-3); margin-left: 8px; }
+.u-sub { margin: 2px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--ink-2); }
+.u-sub b { color: var(--ink); font-weight: 650; }
+.u-quiet { color: var(--ink-3); }
+.u-quiet b { color: var(--ink-2); font-weight: 600; }
+.u-quiet small { margin-left: 6px; }
+/* the Agent's ledger heads its page: D's 累计 bar (grain included) moved up */
+.u-ledger { display: flex; gap: 10px; align-items: stretch; padding: 19px 4px 2px; box-sizing: border-box; }
+.u-tex { flex-shrink: 0; width: 40px; margin: 3px 0 4px; border-radius: 6px; align-self: stretch; }
+.u-ledger-text { flex: 1; min-width: 0; }
+
+/* the 64-cell band, one page wide, its boundary on the crease (the one line the crease gets) */
+.u-bandrow, .u-tband { position: relative; height: 14px; }
+.u-spread > .u-bandrow { grid-column: 1 / 3; }
+.u-band { position: absolute; top: 0; left: 0; height: 14px; display: block; }
+.u-band > i { position: absolute; left: 0; top: 5px; display: block; width: var(--cell, 7px); height: 4px; border-radius: 1px; transform-origin: 0 0; background: #c3beb3; transition: opacity .15s; }
+.u-band > i.is-you { background: var(--ink); }
+.u-band > i.is-agent { background: #c3beb3; }
+.u-band > i.is-blank { background: none; box-shadow: inset 0 0 0 1px #cfcabf; }
+.u-band > i.is-hollow { background: none; box-shadow: inset 0 0 0 1.2px var(--ink); }
+.u-band > i.is-lit { background: var(--red); box-shadow: none; }
+.u-tick { position: absolute; top: 0; width: 1px; height: 14px; background: var(--ink); }
+.u-bandrow .u-tick { left: calc(var(--pw) - .5px); }
+
+/* the two halves of one card */
+.u-half { position: relative; box-sizing: border-box; border-radius: 20px; padding: 13px 15px 10px; display: flex; flex-direction: column; min-width: 0; cursor: pointer; text-align: left; }
+.u-half.is-left { background: var(--u-left); box-shadow: 0 0 0 1px var(--line); }
+.u-half.is-right { background: var(--card); box-shadow: 0 1px 0 #00000008, 0 8px 20px -14px #0004; }
+.u-half.is-right.is-answered { background: var(--u-left); box-shadow: 0 0 0 1px var(--line); justify-content: flex-end; cursor: default; }
+.u-half:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--ink); }
+.u-half h3 { margin: 6px 0 0; font-size: 17.5px; line-height: 1.38; font-weight: 750; letter-spacing: -.005em; text-wrap: pretty; }
+.u-half.is-lead h3 { font-size: 19.5px; line-height: 1.34; }
+.u-half > h3:first-child { margin-top: 0; }
+.u-half .d-why:empty { display: none; }
+.u-half .d-why:empty + h3 { margin-top: 0; }
+.u-lhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.u-lhead .d-kicker { margin: 1px 0 0; flex: 1; font-size: 13px; color: var(--ink); font-weight: 650; min-width: 0; }
+.u-lhead .d-kicker > span { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.u-lhead .d-why { flex-shrink: 0; flex-wrap: nowrap; min-height: 0; }
+.u-lhead .d-tag.is-share { margin-left: 0; }
+.u-sum { margin: 8px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--ink); }
+.u-reason { margin: 5px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.u-facts { margin: auto 0 0; padding-top: 8px; font-size: 12px; color: var(--ink-2); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; align-items: flex-end; }
+.u-facts b { color: var(--ink); font-weight: 650; }
+.u-in { flex: 1 1 9em; min-width: 9em; }
+.u-tr { display: inline-flex; gap: 6px; align-items: flex-end; }
+.u-trend { display: inline-flex; align-items: flex-end; gap: 1px; flex-shrink: 0; }
+.u-trend i { width: 4px; background: #d3cec3; border-radius: 1px 1px 0 0; }
+.u-trend i.is-now { background: var(--ink); }
+.u-trend i.is-zero { background: #e4e0d6; }
+.u-trendlabel { font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+.u-inputs { margin: 5px 0 0; font-size: 11.5px; line-height: 1.45; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.u-inputs b { color: var(--ink-2); font-weight: 600; }
+.u-half .d-answer { margin-top: auto; padding-top: 10px; }
+.u-half .d-receipt { margin-top: 0; }
+.u-half.is-mid { padding: 11px 14px 10px; }
+.u-half.is-mid h3 { font-size: 15.5px; line-height: 1.4; margin-top: 5px; }
+.u-half.is-mid .d-trace { margin-top: 4px; font-size: 11.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.u-half.is-mid .d-btn { min-height: 38px; font-size: 14px; border-radius: 11px; }
+.u-half.is-mid .d-answer { padding-top: 8px; }
+.u-half.is-left.is-mid .u-sum { margin-top: 5px; font-size: 12.5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* compact stripes: the asks past the first three, unfolded from "还有 N 件"; the left half is one line too */
+.u-mini { position: relative; box-sizing: border-box; min-height: 50px; border-radius: 16px; padding: 6px 10px 6px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left; }
+.u-mini.is-left { background: var(--u-left); box-shadow: 0 0 0 1px var(--line); }
+.u-mini.is-right { background: var(--card); box-shadow: 0 0 0 1px var(--line); }
+.u-mini.is-right.is-done { background: var(--u-left); }
+.u-mini:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--ink); }
+.u-mini .d-kicker { margin: 0; flex: 1; font-size: 12.5px; color: var(--ink); font-weight: 600; min-width: 0; }
+.u-mini .u-share { font-size: 11px; color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.u-mini .u-in { flex: none; min-width: 0; font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+.u-mini-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
+.u-mini h3 { margin: 0; font-size: 14px; line-height: 1.38; font-weight: 650; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.u-mini .d-tag { flex-shrink: 0; }
+
+/* the Agent's page below the stripes; your page says there is nothing else */
+.u-zone { display: flex; flex-direction: column; padding-top: 6px; }
+.u-zone .d-zone-head { padding: 0 4px; }
+.u-zone .d-fold-row { width: 100%; margin-top: 8px; }
+.u-note { align-self: start; padding: 12px 4px 0; margin-top: 0; margin-bottom: 0; font-size: 12.5px; color: var(--ink-3); line-height: 1.5; }
+
+/* gestures: a press darkens a little at 0.15 s; while one is summarised the rest dim to 70 %; a band run outlines its stripe */
+:is(.u-half, .u-mini, .u-bandrow)::before { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; background: var(--ink); opacity: 0; transition: opacity .15s; pointer-events: none; }
+:is(.u-half, .u-mini, .u-bandrow).is-pressing::before { opacity: .05; }
+:is(.u-half, .u-mini, .u-bandrow, .u-ledger) { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+:is(.u-spread, .u-zone, .u-top, .u-bot, .d-cards, .d-rows, .d-known) > [data-key] { transition: opacity .1s; }
+.u-device.is-dim :is(.u-spread, .u-zone, .u-top, .u-bot, .d-cards, .d-rows, .d-known) > [data-key]:not(.is-peeked):not(.is-linked):not(.u-bandrow):not(.u-zone) { opacity: .7; transition: opacity .15s; }
+.is-linked { outline: 2px solid var(--ink); outline-offset: 2px; }
+.u-half.is-open, .u-mini.is-open { box-shadow: 0 0 0 2px var(--ink); }
+.u-half.is-pulse::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1.5px var(--red); opacity: 0; animation: d-new 1.6s var(--ease) var(--glow-delay, .25s) 1 both; pointer-events: none; }
+.u-peek { z-index: 25; }
+/* the receipt on its way over the fold to its row of 在办 */
+.d-receipt.u-fly { box-sizing: border-box; padding: 7px 10px; margin: 0; border-radius: 14px; background: var(--u-left); box-shadow: 0 0 0 1px var(--line), 0 12px 26px -16px #0006; }
+.d-receipt.u-fly [data-rs-undo], .d-receipt.u-fly .d-undo { display: none; }
+
+/* the detail: grows over the left page (book), the outer screen (closed), the top half (tabletop) */
+.u-ldetail { position: absolute; z-index: 20; display: flex; flex-direction: column; background: var(--paper); border-radius: 20px; overflow: hidden; box-shadow: 0 0 0 1px var(--line); }
+.u-ldetail .d-detail-bar { padding-top: 8px; }
+.u-ldetail .d-detail-actions { padding-bottom: 16px; }
+.u-ldetail.is-leaving { pointer-events: none; }
+.u-detail-box { z-index: 19; }
+/* sheets open over the half you answer on: the right page, the outer screen, the bottom half */
+.u-sheethost { position: absolute; z-index: 30; overflow: hidden; border-radius: 22px; pointer-events: none; }
+.u-sheethost.is-on { pointer-events: auto; }
+
+/* tabletop: the spread turned a quarter; top half stands (look), bottom half lies flat (press); one column per stripe */
+.u-top, .u-bot { position: absolute; left: 0; display: grid; column-gap: 10px; row-gap: 8px; padding: 0 14px; box-sizing: border-box; }
+.u-top { top: 0; right: var(--rail); height: var(--half); padding-top: 14px; padding-bottom: 10px; grid-template-rows: auto auto minmax(0, 1fr) auto; }
+.u-bot { top: var(--half); right: 0; bottom: 0; padding-top: 12px; padding-bottom: 16px; grid-auto-rows: min-content; align-content: start; }
+.u-thead, .u-tband, .u-rowsline { grid-column: 1 / -1; }
+.u-thead { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 0 4px; }
+.u-thead .u-hero, .u-thead .u-hero small { font-size: 30px; }
+.u-thead .u-sub { margin-top: 0; }
+.u-thead-r { text-align: right; max-width: 60%; }
+.u-thead .u-hero-2 { margin-top: 0; font-size: 16px; }
+.u-thead-r .u-hero-2 small { margin-left: 6px; }
+.u-tband { margin: 4px 4px 2px; }
+.u-top > .u-half { min-height: 0; overflow: hidden; }
+.u-table .u-half { padding: 11px 12px 9px; }
+.u-table .u-lhead { flex-direction: column; gap: 6px; }
+.u-table .u-sum { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.u-table .u-reason { display: none; }
+.u-table .u-half.is-lead .u-reason { display: -webkit-box; -webkit-line-clamp: 4; }
+.u-table .d-actions { flex-direction: column; }
+.u-table .d-btn { flex: none; width: 100%; }
+.u-table .u-half h3 { font-size: 16.5px; }
+.u-table .u-half.is-lead h3 { font-size: 19px; }
+.u-table .u-mini { min-height: 52px; }
+.u-rowsline { margin: 2px 4px 0; font-size: 12px; color: var(--ink-3); line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.u-trail { position: absolute; right: 0; top: 0; height: var(--half); width: var(--rail); }
+
+/* a narrow window: the rail on top, the device under it */
+@media (max-width: 900px) {
+  .u-stage { flex-direction: column; gap: 16px; padding: 16px 16px 32px; }
+  .u-siderail { position: static; width: auto; max-height: none; }
+  .u-area { width: 100%; }
+}
+@media (max-width: 760px) {
+  .variant-duo .u-siderail .d-rail-block.u-postureblock { display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .u-half.is-pulse::after { animation: none; }
+  .u-spread > .u-cl, .u-spread > .u-cr { transition: none; }
+}
