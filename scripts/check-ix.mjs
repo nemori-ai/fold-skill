@@ -638,6 +638,7 @@ async function runDuo(cdp, base, data, name) {
   p = await at(top, 'L');
   await tap(p.x, p.y); await wait(800);
   s = await state();
+  for (let i = 0; i < 10 && s.clip === 'growing'; i += 1) { await wait(100); s = await state(); } // 动画 0.48 秒；机器忙时起播会晚，只看落定后的状态
   const geo = await ev(`(() => { const d = document.querySelector('.u-ldetail').getBoundingClientRect(), g = document.querySelector('.u-grip').getBoundingClientRect();
     const btn = ${H}.at(${JSON.stringify(top)}, 'button'); const hit = btn && document.elementFromPoint(btn.x, btn.y);
     return { right: Math.round(d.right), crease: Math.round(g.left + g.width / 2), answerable: Boolean(hit?.closest('[data-rs-act]')) }; })()`);

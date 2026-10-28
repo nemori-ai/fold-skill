@@ -306,7 +306,7 @@ Duo 专属：铰链进度驱动的揭开、排布触发的整理、跨页里一�
 
 ## 5 实现与出入
 
-**文件。** [variants/duo.mjs](../../variants/duo.mjs) 编排：三种姿态、铰链、各拍、手势、讲一遍与 `window.foldDuo`；[variants/duo-motion.mjs](../../variants/duo-motion.mjs) 只放几何、阈值与各拍的时间表（第 3 节的数在这里一一对应）；[variants/duo.css](../../variants/duo.css) 是版式，`@import` D 的 `d.css` 与 `ix.css`，卡、标签、按钮、回执、行、详情与操作单都是 D 的。D 的视图逻辑（作答记录怎么读、`compose()` 与 `urgencyKey`、卡与行的标记、页头与说明行、详情内容）抽成 [variants/d-view.mjs](../../variants/d-view.mjs)，D 与 E 共用，D 的画面逐像素不变；“一组怎么动”的部件直接用 `d-motion.mjs` 的 `morph / reveal / band / ghostOf / stepAt`。`shared.mjs`、`scenario.mjs`、`engine.mjs`、`respond.mjs` 都没改。壳层 `explore.mjs` 与 `index.html` 只多一项 `duo`（切换栏写 E）。
+**文件。** [variants/duo.mjs](../../variants/duo.mjs) 编排：三种姿态、铰链、各拍、手势、讲一遍与 `window.foldDuo`；[variants/duo-motion.mjs](../../variants/duo-motion.mjs) 只放几何、阈值与各拍的时间表（第 3 节的数在这里一一对应）；[variants/duo.css](../../variants/duo.css) 是版式；D 的 `d.css` 与 `ix.css` 由 `duo.mjs` 在挂载时以样式链接插入，两张样式表都到了才显示第一帧（不用 `@import`：合页导出把样式链接内联成 data URL，样式表里不许有 `url()`），卡、标签、按钮、回执、行、详情与操作单都是 D 的。D 的视图逻辑（作答记录怎么读、`compose()` 与 `urgencyKey`、卡与行的标记、页头与说明行、详情内容）抽成 [variants/d-view.mjs](../../variants/d-view.mjs)，D 与 E 共用，D 的画面逐像素不变；“一组怎么动”的部件直接用 `d-motion.mjs` 的 `morph / reveal / band / ghostOf / stepAt`。`shared.mjs`、`scenario.mjs`、`engine.mjs`、`respond.mjs` 都没改。壳层 `explore.mjs` 与 `index.html` 只多一项 `duo`（切换栏写 E）。
 
 **浏览器里的铰链。** 按 pt 画整台（外屏 466 × 678、内屏 951 × 669），等比缩进视口。把手在折痕上，拖一页宽是 180°，跟手；松手时不到 90° 落回合上，过 90° 落到书本（半圈 0.36 秒，缓出）。[ ] 每次 15°，F 一键折 / 展，侧栏三个按钮切合上、书本、桌面；`?hinge=0..1` 定格在揭开的那一刻，`?posture=closed|half|table` 直接进那个姿态。170° 以下算半折：两半之间的留白从 24 pt 加宽到 48 pt（0.2 秒），不重排。
 
@@ -327,7 +327,7 @@ Duo 专属：铰链进度驱动的揭开、排布触发的整理、跨页里一�
 | 桌面转屏 | 每条原地转成一列，0.36 秒 | 旧排布 0.16 秒淡出，新排布逐列淡入（错开 0.04 秒） | 转屏后一条横跨折痕的条变成上下两段，没有一条连续的路径可以“转” |
 | 轻点已答的右半 | 未写 | 什么也不做，只有“撤回”起作用 | 回执就在原来按钮的位置，0.25 秒后再点同一处不该打开详情；看详情点左半 |
 
-**性能上的两处改动**：每一拍只重画看得见的那一层（书本时不重画外屏，合上时不重画书本，等它下次出现时补上）；一拍里所有的位置先一起量、再一起写（列表的位置、回执的起点和终点、详情的起点），不在写过 DOM 之后再读布局。改之前落地的第一帧在 2 倍像素下要 167 毫秒，之后约 33 毫秒。
+**性能上的两处改动**：每一拍只重画看得见的那一层（书本时不重画外屏，合上时不重画书本，等它下次出现时补上）；一拍里所有的位置先一起量、再一起写（列表的位置、回执的起点和终点、详情的起点），不在写过 DOM 之后再读布局。改之前落地的第一帧在 2 倍像素下要 167 毫秒，之后约 33–50 毫秒（掉一帧）。
 
 **还差什么。**
 
