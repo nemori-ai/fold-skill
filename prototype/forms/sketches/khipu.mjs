@@ -1044,23 +1044,25 @@ const askRow = a => `<div class="ix-ask"><i></i><span>${esc(askShort(a))}</span>
 function peekCard(f, { seen }) {
   const unsettled = !seen.share;
   if (f.kind === 'top') {
-    return `<div class="ix-k">第 ${f.i} / ${LAST} 轮 · 合计绳</div><div class="ix-q">${esc(f.g)} ${unsettled ? f.before : f.sum} 份</div>
+    return `<div class="ix-k">${frames[f.i].id} · 合计绳</div><div class="ix-q">${esc(f.g)} ${unsettled ? f.before : f.sum} 份</div>
       <div class="ix-d">${unsettled ? '本轮还没落定' : f.before === f.sum ? '这一轮不变' : `这一轮 ${f.before} → ${f.sum}`}</div>
       <div class="ix-d k-pk-line">${esc(f.members.map(m => `${m.short} ${m.share}`).join(' + '))}</div>`;
   }
   if (f.kind === 'blank') {
-    return `<div class="ix-k">第 ${f.i} / ${LAST} 轮 · 留白</div><div class="ix-q">${esc(f.short)} ${unsettled ? f.before : f.n} / 64</div>
+    return `<div class="ix-k">${frames[f.i].id} · 留白</div><div class="ix-q">${esc(f.short)} ${unsettled ? f.before : f.n} / 64</div>
       <div class="ix-d">${unsettled ? '本轮还没落定' : f.before === f.n ? '这一轮不变' : `这一轮 ${f.before} → ${f.n}`}</div>
       ${f.owner ? `<div class="ix-d">折合根层 ${effText((f.owner.eff * f.n) / 64)} 份</div>` : ''}`;
   }
   const where = f.level === 0 ? `${f.group}组` : f.path.slice(0, -1).join(' › ');
   const share = unsettled ? f.before : f.share;
-  return `<div class="ix-k">第 ${f.i} / ${LAST} 轮 · ${esc(where)}</div><div class="ix-q">${esc(f.short)} ${share}${f.level ? ' / 64' : ' 份'}</div>
+  return `<div class="ix-k">${frames[f.i].id} · ${esc(where)}</div><div class="ix-q">${esc(f.short)} ${share}${f.level ? ' / 64' : ' 份'}</div>
     ${f.level ? `<div class="ix-d">折合根层 ${unsettled ? effText(f.effBefore) : effText(f.eff)} 份 = ${esc(f.chain)}</div>` : ''}
     <div class="ix-d">${unsettled ? '本轮还没落定' : `这一轮${esc(f.change)}`}</div>
     ${f.kids.length && !unsettled ? `<div class="ix-d">子层用了 ${f.used} / 64 · 留白 ${64 - f.used}</div>` : ''}
     ${unsettled ? '' : f.asks.map(askRow).join('')}`;
 }
+// A root equivalent's bars are scaled to its own two-week high: 0.03 to 0.21 would not show on a scale of 24.
+const effTop = series => Math.max(1e-6, ...series) * 1.08;
 function trendSVG(series, at, Hh = 30, top = null) {
   const n = LAST, Ww = 300, max = top ?? Math.max(24, ...series), bw = Ww / n;
   const bars = series.slice(1).map((s, k) => {
@@ -1073,14 +1075,14 @@ function detailCard(f, { seen, href }) {
   const unsettled = !seen.share;
   const close = '<button type="button" data-x="close" aria-label="收回（Esc）" title="收回（Esc）">×</button>';
   if (f.kind === 'top') {
-    return `<div class="ix-d-k"><span>第 ${f.i} / ${LAST} 轮 · 合计绳</span>${close}</div><div class="ix-d-t">${esc(f.g)} ${unsettled ? f.before : f.sum} 份</div>
+    return `<div class="ix-d-k"><span>${frames[f.i].id} · 合计绳</span>${close}</div><div class="ix-d-t">${esc(f.g)} ${unsettled ? f.before : f.sum} 份</div>
       <div class="ix-d-s">${unsettled ? '本轮还没落定' : f.before === f.sum ? '这一轮不变' : `这一轮 ${f.before} → ${f.sum}`}</div>
       <section><h5>绑着的垂绳<b>${f.members.length} 根</b></h5><ul class="ix-d-kids">${f.members.map(m => `<li><span>${esc(m.short)}</span><b>${m.share}</b></li>`).join('')}</ul></section>
       <section><h5>合计 · 逐轮<b>第 ${f.i} 轮 ${f.sum}</b></h5>${trendSVG(f.trend, f.i, 30, 64)}</section>
       <p class="ix-none">组按每件事两周的来源定：工作与社区并为工作，家庭与生活并为家里与生活。</p>`;
   }
   if (f.kind === 'blank') {
-    return `<div class="ix-d-k"><span>第 ${f.i} / ${LAST} 轮 · 留白</span>${close}</div><div class="ix-d-t">${esc(f.short)} ${unsettled ? f.before : f.n} / 64</div>
+    return `<div class="ix-d-k"><span>${frames[f.i].id} · 留白</span>${close}</div><div class="ix-d-t">${esc(f.short)} ${unsettled ? f.before : f.n} / 64</div>
       <div class="ix-d-s">${unsettled ? '本轮还没落定' : f.before === f.n ? '这一轮不变' : `这一轮 ${f.before} → ${f.n}`}${f.owner ? ` · 折合根层 ${effText((f.owner.eff * f.n) / 64)} 份` : ''}</div>
       <section><h5>留白 · 逐轮<b>第 ${f.i} 轮 ${f.n}</b></h5>${trendSVG(f.trend, f.i, 30, 64)}</section>`;
   }
@@ -1090,7 +1092,7 @@ function detailCard(f, { seen, href }) {
   const kids = f.kids.length ? `<section><h5>子层 · 它自己的 64 份<b>用了 ${f.used} · 留白 ${64 - f.used}</b></h5><ul class="ix-d-kids k-kids">${f.kids.map(c => `<li><span>${esc(c.short)}</span><b>${c.share}/64 · ≈${effText(c.eff)}</b></li>${c.kids.map(g => `<li class="k-gk"><span>${esc(g.short)}</span><b>${g.share}/64 · ≈${effText(g.eff)}</b></li>`).join('')}`).join('')}</ul>
       ${f.drillable ? `<button type="button" class="k-drill-btn" data-k="drill" data-id="${esc(f.id)}">长成子层画框 ↘</button>` : ''}</section>` : '';
   const responses = f.responses.length ? `<section><h5>这一轮你的回应</h5><ul class="ix-d-fb">${f.responses.map(x => `<li><time>${esc(dayTime(x.first.event.at).split(' ').pop())}</time>${esc(x.label)}</li>`).join('')}</ul></section>` : '';
-  return `<div class="ix-d-k"><span>第 ${f.i} / ${LAST} 轮 · ${esc(f.level ? f.path.slice(0, -1).join(' › ') : `${f.group}组`)}</span>${close}</div>
+  return `<div class="ix-d-k"><span>${frames[f.i].id} · ${esc(f.level ? f.path.slice(0, -1).join(' › ') : `${f.group}组`)}</span>${close}</div>
     <div class="ix-d-t">${esc(f.title)}</div>
     <div class="ix-d-s"><b>${esc(f.short)} ${share}</b>${f.level ? ' / 64（在上一层的 64 份里）' : ' / 64 份'}${unsettled ? ' · 本轮还没落定' : ` · ${esc(f.change)}`}</div>
     <div class="ix-d-s">${esc(knotWords(share))}</div>
@@ -1098,7 +1100,8 @@ function detailCard(f, { seen, href }) {
     ${kids}
     <section><h5>开着的问题<b>此刻 ${esc(frames[stage.index].id)}</b></h5>${unsettled ? '<p class="ix-none">本轮还没落定</p>' : asks}</section>
     ${unsettled ? '' : closed}${responses}
-    <section><h5>份额 · 逐轮<b>${f.level ? '在上一层的 64 份里' : '根层'}</b></h5>${trendSVG(f.trend, f.i, 28, f.level ? 64 : null)}</section>
+    <section><h5>份额 · 逐轮<b>${f.level ? '在上一层的 64 份里' : '根层'}</b></h5>${trendSVG(f.trend, f.i, f.level ? 18 : 28, f.level ? 64 : null)}</section>
+    ${f.level ? `<section><h5>折合根层 · 逐轮<b>两周最高 ≈${effText(Math.max(...f.effTrend))}</b></h5>${trendSVG(f.effTrend, f.i, 24, effTop(f.effTrend))}</section>` : ''}
     ${f.summary ? `<p class="ix-d-sum">${esc(f.summary)}</p>` : ''}`;
 }
 
@@ -1175,7 +1178,7 @@ function panelFor(f) {
     const n = nodeAt(i, f.key) || nodeAt(f.i, f.key);
     const closes = [];
     frames.forEach((_, k) => { for (const a of askLife[k].answered) if (a.item === f.id) closes.push({ k, a, how: '答' }); for (const a of askLife[k].lapsed) if (a.item === f.id) closes.push({ k, a, how: '失效' }); });
-    const effRow = f.level ? `<section><h4>折合根层 · 逐轮 <small>此刻 ≈${effText(f.eff)}</small></h4>${trendSVG(f.effTrend, f.i, 32)}<p class="st-muted">${esc(f.chain)}。上面一层一变，这一行跟着变，哪怕这根绳自己没被改写。</p></section>` : '';
+    const effRow = f.level ? `<section><h4>折合根层 · 逐轮 <small>此刻 ≈${effText(f.eff)}</small></h4>${trendSVG(f.effTrend, f.i, 32, effTop(f.effTrend))}<p class="st-muted">${esc(f.chain)}。上面一层一变，这一行跟着变，哪怕这根绳自己没被改写。两周最高 ≈${effText(Math.max(...f.effTrend))}。</p></section>` : '';
     const usedRow = f.kids.length || f.usedTrend.some(Boolean) ? `<section><h4>子层用了几份 · 逐轮 <small>此刻 ${f.used} / 64</small></h4>${trendSVG(f.usedTrend, f.i, 28, 64)}</section>` : '';
     return {
       kicker: kick, title: esc(n ? n.item.title : f.title),
