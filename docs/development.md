@@ -132,11 +132,11 @@ node scripts/check-ix.mjs --data story                            # 悬停与展
 
 每种形式写 `<out>/<form>.png`，另写 `report.json`（URL、页面报错、检查结果）；有报错时退出码为 1。`--eval "<js>"` 在截图前执行一段脚本，`--base` 改原型地址，`CHROME` 环境变量指定浏览器。默认关掉显卡，页面里的 WebGL 会退回 Canvas 2D；要截 WebGL 画面（整理脉冲的粒子与余辉）时加 `--gpu`。
 
-体验站的“原型体验”面板与首页共用 `site/.vitepress/theme/prototypes.mjs` 列出的全部原型，顺序、默认帧与弹框里加的 `embed=1`、`card=0` 都照合页 `all.html`。卡片预览图是 `site/previews/<id>.webp`（640×400，共约 560 KB），原型界面明显变化后按同样的参数重截：原版与 A/B/C/D 隐藏方案切换栏，形式页收起概念卡，复盘图与回应组件页用各自的默认帧（批次记谱直接打开会先演开场，截图前跳到终态；回应时序直接打开会先讲一遍，所以带上它弹框里停的默认帧 f26），概念动画在弹框里不带帧（播各自的循环），预览图停在第三拍：份额拨盘取落定的 f26，整理脉冲加 `--gpu` 取 f20 朱红线打下的那一刻，再用 Homebrew 的 `cwebp` 缩到 640 像素宽：
+体验站的“原型体验”面板与首页共用 `site/.vitepress/theme/prototypes.mjs` 列出的全部原型，顺序、默认帧与弹框里加的 `embed=1`、`card=0` 都照合页 `all.html`。卡片预览图是 `site/previews/<id>.webp`（640×400，共约 560 KB），原型界面明显变化后按同样的参数重截：原版与 A/B/C/D/E 隐藏方案切换栏，形式页收起概念卡，复盘图与回应组件页用各自的默认帧（批次记谱直接打开会先演开场，截图前跳到终态；回应时序直接打开会先讲一遍，所以带上它弹框里停的默认帧 f26），概念动画在弹框里不带帧（播各自的循环），预览图停在第三拍：份额拨盘取落定的 f26，整理脉冲加 `--gpu` 取 f20 朱红线打下的那一刻，再用 Homebrew 的 `cwebp` 缩到 640 像素宽：
 
 ```sh
 out=.local/previews
-node scripts/shoot-forms.mjs --out $out --only original,a,b,d --frame 26 --eval "document.documentElement.classList.add('is-embedded')"
+node scripts/shoot-forms.mjs --out $out --only original,a,b,d,duo --frame 26 --eval "document.documentElement.classList.add('is-embedded')"
 node scripts/shoot-forms.mjs --out $out/c --only c --frame 25 --eval "document.documentElement.classList.add('is-embedded')"
 node scripts/shoot-forms.mjs --out $out/w --only watch,multiples --frame 26 --eval "document.querySelector('[data-card]').click()"
 node scripts/shoot-forms.mjs --out $out/r --only radio,strips,frontpage,receipt,orb,departures,blame,chat --eval "document.querySelector('[data-card]').click()"
