@@ -170,6 +170,11 @@ export const sketches = [
     relation: '家里与工作在 64 份里此消彼长：谁领先、领先多少、哪一轮被哪件事拉过中线，以及你在来源处实际在哪一边动手。',
     usage: '直接打开先讲一遍约 23 秒：份额说家里重，手却在工作上；家里坠到 59 : 5；一天后弹回；悬停看概要，点击展开',
     color: '朱红 = 你的回应' },
+  // 第四轮候选 06（CONCEPTS.md「第四轮：关系的画法」）。默认样张是手写情境（sample）：composite 两周没有子层，只画根层与合计。
+  { id: 'khipu', no: 11, name: '结绳', frame: 'f26', sample: 'story',
+    relation: '层级份额与分组合计：一件事里还有自己的 64 份，子层里的一份要乘着上面每一层才折合成根层；合计绳是一组事的和。',
+    usage: '默认样张是手写情境（?data=story）：直接打开先讲一遍约 9 秒，停在发布的子层画框里，最深一件折合根层 0.21 份；点有子层的垂绳长成画框，悬停看概要，点击展开',
+    color: '只用墨黑 · 朱红 = 此刻开着的问题' },
 ];
 
 // Round three: concept animations for the site, each reading the same replay as every other form. Fields as in

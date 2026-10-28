@@ -207,6 +207,17 @@ const PAGES = {
     cut: `document.querySelector('.st-title').textContent.startsWith('这一件') && document.querySelector('.st-side-kicker').textContent.includes('这一件')`,
     playReady: `(foldTug.play(), new Promise(r => { const go = () => (foldSketch.index >= 5 && foldTug.settled() ? r(1) : setTimeout(go, 30)); go(); }))`,
   },
+  // 结绳：一根垂绳就是一件（合计绳与留白也各是一件）；挑此刻最大的根层垂绳，9 px 落在它十位一带图形的左边（命中区 10 px）。
+  // 带 ?frame= 打开不自己讲一遍；Tab 从工具栏最后一个控件（换数据集的链接）开始。连播是半速，一轮约 1.1 秒。
+  khipu: {
+    hook: 'foldKhipu', held: 'forms/sketches/khipu.html?frame=26', play: 'forms/sketches/khipu.html?frame=10',
+    prepare: null, index: 'foldSketch.index', step: 27,
+    pick: 'foldKhipu.pick()',
+    near: name => `foldKhipu.nearOf(${JSON.stringify(name)}, 9)`,
+    blank: { x: 700, y: 820 }, tabFrom: '[data-k="data"]',
+    cut: `document.querySelector('.st-title').textContent.startsWith('这一件') && document.querySelector('.st-side-kicker').textContent.includes('这一件')`,
+    playReady: `(foldKhipu.play(), new Promise(r => { const go = () => (foldSketch.index >= 12 && foldKhipu.settled() ? r(1) : setTimeout(go, 50)); go(); }))`,
+  },
 };
 
 function args(argv) {

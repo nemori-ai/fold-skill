@@ -61,6 +61,7 @@ make prototype
 | 驻龄 | 此刻的份额多少是沉淀的、多少是刚换手的；64 格两周不挪，一轮三个动作：清出、加圈、新框；直接打开讲一遍约 23 秒 | 不承载作答；悬停一块地盘看概要，点击展开详情，开着的问题旁“去回答 →”链到同一帧的 D | [sketches/age.html](forms/sketches/age.html) | [age-motion.md](forms/polish/age-motion.md) |
 | 等待链 | 谁在等你、你挡住了谁：每个开着的问题后面站着哪些人、各等了多久；直接打开讲一遍约 12 秒：答掉一件，放走一串人 | 不承载作答；朱红只给你这根脊与脊上的结；悬停一行或一个人看概要，点击展开，开着的问题旁“去回答 →”链到同一帧的 D | [sketches/chain.html](forms/sketches/chain.html) | [chain-motion.md](forms/polish/chain-motion.md) |
 | 拔河 | 家里与工作在 64 份里此消彼长，你实际在哪一边动手；直接打开讲一遍约 23 秒：份额说家里重、手却在工作上，家里坠到 59 : 5，一天后弹回 | 不承载作答；朱红短柱是你在来源处的回应（向上工作、向下家里）；悬停条上的一段、曲线上的一轮或一根柱看概要，点击展开详情，开着的问题链到同一帧的 D | [sketches/tug.html](forms/sketches/tug.html) | [tug-motion.md](forms/polish/tug-motion.md) |
+| 结绳 | 一件事里还有自己的 64 份，最深一件折合根层才几份；默认样张是手写情境，直接打开讲一遍约 9 秒，停在发布的子层画框里（composite 两周没有子层，只画根层与分组合计） | 不承载作答；朱红只标此刻开着的问题，详情卡与侧栏的“去回答 →”链到同一帧的 D；悬停垂绳看概要，点击展开，点有子层的垂绳长成画框 | [sketches/khipu.html?data=story](forms/sketches/khipu.html?data=story) | [khipu-motion.md](forms/polish/khipu-motion.md) |
 | 整理脉冲（动画） | 官网首屏：一轮整理演成 4.25 秒的一次脉冲 | 不承载作答；详情里链到 D 作答；朱红只标新登记的问题、你的回应与答掉的记号 | [motion/pulse.html](forms/motion/pulse.html) | [story.md](forms/motion/pulse/story.md) |
 | 份额拨盘（动画） | 第一次看 Fold 的人，20 秒：64 份是怎样的硬约束，满了谁让位 | 不承载作答；详情里链到 D 作答；游标只指要紧的问题 | [motion/dial.html](forms/motion/dial.html) | [story.md](forms/motion/dial/story.md) |
 

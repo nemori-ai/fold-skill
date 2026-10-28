@@ -149,6 +149,7 @@ node scripts/shoot-forms.mjs --out $out/k --only peak --frame 26      # 峰值�
 node scripts/shoot-forms.mjs --out $out/g --only age --frame 26       # 驻龄同样：取弹框里停的默认帧 f26
 node scripts/shoot-forms.mjs --out $out/ch --only chain --frame 28    # 等待链同上，取弹框里停的最后一帧
 node scripts/shoot-forms.mjs --out $out/u --only tug --frame 26       # 拔河同样，预览取故事的末帧 f26
+node scripts/shoot-forms.mjs --out $out/kh --only khipu --data story --frame f26   # 结绳的默认样张是手写情境；带帧打开不讲，取 f26 的根层
 node scripts/shoot-forms.mjs --out $out/m --only dial --frame 26 --eval "document.querySelector('[data-card]').click()"
 node scripts/shoot-forms.mjs --out $out/p --only pulse --gpu --frame 20 --eval "(async () => { document.querySelector('[data-card]').click(); await new Promise(r => setTimeout(r, 400)); foldPulse.seek(20, 3.55); })()"
 for f in $out/*.png $out/*/*.png; do cwebp -quiet -q 82 -m 6 -sharp_yuv -resize 640 0 "$f" -o "site/previews/$(basename "$f" .png).webp"; done
