@@ -1,5 +1,3 @@
-@import url("../forms/motion/ix.css");
-@import url("./d.css");
 /* E · 折叠屏。卡、标签、按钮、回执、行、详情、操作单、概要卡沿用 d.css（宿主同时挂 .variant-d）；这里只加折叠屏的版式。
    克制：不画机身、铰链高光和折痕阴影；折痕处只有纸色留白，唯一的分界线是份额带上那一笔。尺寸以 pt 写，整台按比例缩进视口。 */
 .variant-duo [hidden] { display: none !important; }

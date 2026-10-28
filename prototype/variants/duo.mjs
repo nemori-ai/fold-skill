@@ -106,7 +106,20 @@ export function mount(host, model) {
   const sheetHost = $('.u-sheethost'), track = $('.d-track');
   const tTop = $('.u-top'), tBot = $('.u-bot');
   // D's components (cards, tags, buttons, receipts, rows, detail, sheets) and the summary card come with d.css and ix.css,
-  // which duo.css @imports: the shell waits for duo.css (imports included) before it mounts, so the first measure is right.
+  // loaded as their own links (as D loads ix.css; the single-file export serves links, not @import): d.css just before
+  // duo.css, so the cascade is D's and then E's. The first paint waits for both, so its first measure is right.
+  const ownLinks = [];
+  const sheetsReady = [['ix-css', './forms/motion/ix.css'], ['duo-d', './variants/d.css']].map(([tag, href]) => {
+    let link = document.querySelector(`link[data-${tag}]`);
+    if (!link) {
+      link = document.createElement('link'); link.rel = 'stylesheet'; link.setAttribute(`data-${tag}`, ''); link.href = href;
+      const own = [...document.head.querySelectorAll('link[rel="stylesheet"]')].at(-1); // the shell has just added duo.css
+      if (tag === 'ix-css' || !own) document.head.prepend(link); else own.before(link);
+      if (tag === 'duo-d') ownLinks.push(link);
+    }
+    return link.sheet ? null : new Promise(done => { link.addEventListener('load', done, { once: true }); link.addEventListener('error', done, { once: true }); });
+  }).filter(Boolean);
+  host.style.visibility = 'hidden';
   function railHTML({ island = false, camera = null }) {
     return `<div class="u-sysrail" style="width:${G.rail}px" aria-hidden="true">${island ? '<i class="u-island"></i>' : ''}<span class="u-clock"></span><span class="u-wifi">◠</span><span class="u-pill">记<br>录</span></div>${camera ? `<i class="u-cam" style="left:${camera}px" aria-hidden="true"></i>` : ''}`;
   }
@@ -500,6 +513,7 @@ export function mount(host, model) {
           Object.assign(fly.style, { left: `${parseFloat(fly.style.left) - 10}px`, top: `${parseFloat(fly.style.top) - 7}px`, width: 'max-content', height: `${parseFloat(fly.style.height) + 14}px` });
           receipt.style.visibility = 'hidden';
           // it fills in place first (Agent has read it), then goes over the fold
+          const note = fly.querySelector('small'); if (note) note.textContent = `已收到 · Agent 在 ${clock(s.frame.at)} 的整理中读到`; // the cut: it has been read
           const check = fly.querySelector('.d-check');
           if (check) play(ctx, check, [{ backgroundColor: 'var(--card)', color: 'var(--ink)' }, { backgroundColor: 'var(--ink)', color: '#fff' }], B.receipt);
           play(ctx, fly, [{ transform: 'none', opacity: 1 }, { transform: `translate(${dx}px, ${dy}px)`, opacity: 1, offset: off ? 0.7 : 0.85 }, { transform: `translate(${dx}px, ${dy}px)`, opacity: 0 }], B.lead, { easing: EASE_IN_OUT });
@@ -812,6 +826,9 @@ export function mount(host, model) {
     area.style.height = `${Math.ceil(h * k) + 8}px`;
   }
   addEventListener('resize', fit);
+  // embedded (all.html, the site's viewer, a preview shot) hides the shell's switcher: refit when that class changes
+  const refit = new MutationObserver(() => fit());
+  refit.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
   // ---------- rail ----------
   function renderRail() {
@@ -1262,19 +1279,23 @@ export function mount(host, model) {
     render(name);
   });
 
-  // ---------- first paint: the posture the address asks for ----------
+  // ---------- first paint: the posture the address asks for, once D's stylesheets are in ----------
   const askedPosture = params.get('posture'), askedHinge = params.has('hinge') ? clamp(Number(params.get('hinge')) || 0, 0, 1) : null;
   if (telling) { posture = 'book'; phase = 'closed'; angle = 0; }
   else if (askedPosture === 'table') { posture = 'table'; phase = 'book'; angle = 180; }
   else if (askedPosture === 'closed' || askedHinge === 0) { phase = 'closed'; angle = 0; }
   else if (askedHinge != null && askedHinge < 1) { phase = 'reveal'; angle = angleOf(askedHinge); }
   else if (askedPosture === 'half') { phase = 'book'; angle = 150; }
-  render('none');
-  showLayers();
-  if (phase !== 'book') { if (phase === 'reveal') buildWindows(); applyReveal(revealOf(angle)); }
-  renderGrip();
-  requestAnimationFrame(fit);
-  if (telling) startTell();
+  Promise.all(sheetsReady).then(() => {
+    if (disposed) return;
+    host.style.visibility = '';
+    render('none');
+    showLayers();
+    if (phase !== 'book') { if (phase === 'reveal') buildWindows(); applyReveal(revealOf(angle)); }
+    renderGrip();
+    requestAnimationFrame(fit);
+    if (telling) startTell();
+  });
 
   // ---------- hooks for stills and checks (same names and meaning as foldHome) ----------
   const named = name => {
@@ -1347,7 +1368,7 @@ export function mount(host, model) {
     disposed = true;
     stopTell(); hingeTween?.cancel();
     unsubscribe(); unbindResponses();
-    removeEventListener('resize', fit); removeEventListener('pointermove', onMove); removeEventListener('pointerup', onUp); removeEventListener('pointercancel', onUp);
+    refit.disconnect(); for (const link of ownLinks) link.remove(); host.style.visibility = ''; removeEventListener('resize', fit); removeEventListener('pointermove', onMove); removeEventListener('pointerup', onUp); removeEventListener('pointercancel', onUp);
     document.removeEventListener('keydown', onKey, true);
     for (const c of [beat, morphCtx, detailCtx, peekOut]) settle(c);
     host.classList.remove('variant-d');
