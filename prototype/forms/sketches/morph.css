@@ -1,0 +1,108 @@
+/* 变形（完整版）. One SVG holds every circle, its thin ring and its label; the concept layer (a grey after-image of
+   the edge while the areas change) is that SVG's bottom group. Flat paper, ink and greys; black is home, white is
+   work; vermilion only marks a question that is open now. */
+.st-figure { overflow: hidden; }
+/* The interaction module's cards (motion/ix.css) in this page's paper theme. */
+.st-figure { --ix-ask: var(--vermilion); --ix-ask-urgent: var(--vermilion); --ix-font: 13px/1.5 var(--sans); --ix-q-font: 600 14px/1.35 var(--sans); --ix-t-font: 600 14.5px/1.35 var(--sans); --ix-z-peek: 6; --ix-z-detail: 7; --ix-z-leader: 5; }
+.st-figure .ix-peek { width: 258px; box-shadow: 0 6px 18px rgb(0 0 0 / .08); }
+.st-figure .ix-detail { box-shadow: 0 10px 28px rgb(0 0 0 / .1); }
+.m-pk-title { font: 12px/1.4 var(--sans) !important; color: var(--ink) !important; margin-bottom: 2px; }
+.m-pk-big { font: 600 12px var(--mono) !important; color: var(--ink) !important; margin-top: 3px; }
+.m-pk-side { display: inline-block; width: 9px; height: 9px; border-radius: 50%; border: 1.2px solid var(--ink); vertical-align: -1px; }
+.m-pk-side.is-home { background: var(--ink); }
+.m-dc-src li { display: flex; justify-content: space-between; gap: 8px; }
+.m-dc-src b { font: 600 11px var(--mono); }
+.m-dc-closed { margin: 0; padding: 0; list-style: none; font: 12px/1.45 var(--sans); }
+.m-dc-closed li + li { margin-top: 4px; }
+.m-dc-closed s { color: var(--ink-2); }
+.m-dc-closed small { display: block; font: 10px var(--mono); color: var(--ink-3); }
+
+.m-svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.m-cap { position: absolute; left: 0; top: 0; display: flex; gap: 10px; align-items: baseline; font-size: 12px; color: var(--ink-2); pointer-events: none; white-space: nowrap; }
+.m-cap b { font-size: 13px; font-weight: 600; color: var(--ink); }
+
+.m-node { transition: none; }
+.m-disc.is-home { fill: var(--ink); }
+.m-disc.is-work { fill: var(--paper); stroke: var(--ink); stroke-width: 1.2; }
+.m-disc.is-free { fill: none; stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 3; }
+.m-ring { fill: none; stroke: var(--ink-3); stroke-width: 1; }
+.m-ring.is-over { stroke: rgb(255 255 255 / .55); }
+.m-ring.is-over.is-work { stroke: var(--ink-3); }
+.m-trail { fill: none; stroke: rgb(120 128 118); }
+.m-label text { font-family: var(--sans); fill: var(--ink); }
+.m-name { font-size: 12px; font-weight: 600; }
+.m-num { font: 11px var(--mono); }
+.m-label.is-out .m-name { font-size: 11.5px; font-weight: 500; }
+.m-label.is-out .m-num { font-size: 10.5px; fill: var(--ink-2); }
+.m-label.is-in.is-home text { fill: var(--paper); }
+.m-label.is-free text { fill: var(--ink-2); font-weight: 400; }
+.m-ask { fill: var(--vermilion); }
+.m-key-ring { stroke: var(--ink-3); }
+
+/* The told marks (beat 3): an ink outline around the two things, a short note beside each. */
+.m-mark { fill: none; stroke: var(--ink); stroke-width: 1.6; }
+.m-call rect { fill: var(--paper); }
+.m-call line { stroke: var(--ink); stroke-width: 1; }
+.m-call text { font: 600 12px var(--mono); fill: var(--ink); }
+.m-call text.m-call-sub { font: 10.5px var(--mono); fill: var(--ink-2); font-weight: 400; }
+/* The keyboard's focus ring and the outline of an opened circle. */
+.m-focus { fill: none; stroke: var(--ink); stroke-width: 2; }
+
+/* Tools: the story button and the two states. */
+.m-tell { border: 1px solid var(--line); border-radius: 6px; background: transparent; padding: 4px 10px; font-size: 12px; color: var(--ink); white-space: nowrap; transition: background-color 140ms, border-color 140ms; }
+.m-tell:hover { border-color: var(--ink-3); background: var(--faint); }
+.m-tell[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* Key */
+.st-key .m-key-home { width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
+.st-key .m-key-work { width: 10px; height: 10px; border-radius: 50%; border: 1.2px solid var(--ink); background: var(--paper); }
+.st-key .m-key-free { width: 11px; height: 11px; border-radius: 50%; border: 1px dashed var(--ink-3); }
+.st-key .m-key-ask { width: 6px; height: 6px; background: var(--vermilion); vertical-align: 1px; }
+
+/* Side panel: this round, the hero pair on top. */
+.m-hero { margin: 2px 0 0; }
+.m-hero-k { font-size: 11px; color: var(--ink-2); }
+.m-hero-n { display: flex; align-items: baseline; gap: 6px; margin: 2px 0 0; }
+.m-hero-n b { font: 500 48px/1 var(--mono); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.m-hero-n small { font-size: 12px; color: var(--ink-2); }
+.m-hero-n i { font: 400 26px/1 var(--mono); color: var(--ink-3); font-style: normal; margin: 0 4px; }
+.m-hero2 { display: flex; align-items: baseline; gap: 8px; margin: 8px 0 2px; font-size: 11px; color: var(--ink-2); }
+.m-hero2 b { font: 600 16px var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; }
+.m-pending { color: var(--ink-3) !important; }
+.m-dots { font-family: var(--sans); font-weight: 300; letter-spacing: 0; }
+.m-chip { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; color: var(--ink); font-size: 12px; white-space: nowrap; }
+.m-chip::before { content: ""; flex: none; width: 9px; height: 9px; border-radius: 50%; border: 1.2px solid var(--ink); background: var(--paper); }
+.m-chip.is-home::before { background: var(--ink); }
+.m-chip:hover { text-decoration: underline; text-underline-offset: 2px; }
+.m-split { margin-top: 12px; }
+.m-bar { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 0 8px; align-items: center; margin: 5px 0; font-size: 11px; color: var(--ink-2); }
+.m-bar b { font: 600 11px var(--mono); color: var(--ink); }
+.m-bar > span:last-child { display: flex; height: 12px; }
+.m-bar i { display: block; height: 100%; }
+.m-bar i.is-home { background: var(--ink); }
+.m-bar i.is-work { background: var(--paper); box-shadow: inset 0 0 0 1.2px var(--ink); }
+.m-bar i.is-free { box-shadow: inset 0 0 0 1px var(--ink-3); background: repeating-linear-gradient(90deg, transparent 0 3px, var(--faint) 3px 6px); }
+.m-bar.is-pending > span:last-child { opacity: .25; }
+.m-split p { font-size: 11.5px; color: var(--ink-2); margin: 4px 0 0 !important; }
+.m-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.m-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 4px; align-items: baseline; padding: 2px 0; }
+.m-list li .m-chip { overflow: hidden; text-overflow: ellipsis; }
+.m-list li b { font: 600 11px var(--mono); }
+.m-list li small { grid-column: 1 / 3; font: 10px var(--mono); color: var(--ink-2); }
+.m-asks li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 6px; align-items: baseline; padding: 3px 0; border-top: 1px solid var(--faint); line-height: 1.45; }
+.m-asks li > i { width: 6px; height: 6px; background: var(--vermilion); align-self: center; }
+.m-asks li > span { font-size: 12px; }
+.m-asks li > small { grid-column: 2 / 4; font-size: 10.5px; color: var(--ink-2); }
+.m-asks li > a { grid-row: 1; grid-column: 3; font: 600 11px var(--mono); color: var(--ink); white-space: nowrap; text-underline-offset: 3px; }
+.m-fine { font-size: 11px; }
+.m-more { margin-top: 14px; }
+.m-more > summary { font-size: 11px; letter-spacing: .04em; color: var(--ink-2); }
+.m-acct { font: 11.5px/1.6 var(--mono); }
+.m-acct small { color: var(--ink-3); font-size: 10.5px; }
+.m-title-dot { display: inline-block; width: 11px; height: 11px; margin-right: 7px; border-radius: 50%; border: 1.2px solid var(--ink); background: var(--paper); vertical-align: 0; }
+.m-title-dot.is-home { background: var(--ink); }
+.m-closes li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 8px; align-items: baseline; padding: 3px 0; border-top: 1px solid var(--faint); font-size: 12px; }
+.m-closes li.is-later { opacity: .5; }
+.m-closes button { border: 0; background: none; padding: 0; }
+.m-closes time { font: 10.5px var(--mono); color: var(--ink-2); }
+.m-closes b { font: 600 11px var(--mono); }
