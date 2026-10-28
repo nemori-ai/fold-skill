@@ -157,6 +157,10 @@ export const sketches = [
     relation: '同一批事项留在原位，面积从“收到多少条输入”变成“占多少份”：收到最多的那件不一定给得最多，这段变形就是 Agent 的判断；黑是家里，白是工作。',
     usage: '直接打开先讲一遍约 7 秒：141 条只给 6 份，29 条给了 24 份；M 切换收到⇄给出，悬停看概要，点击展开',
     color: '黑 = 家里 · 白 = 工作' },
+  { id: 'peak', no: 12, name: '峰值保持', frame: 'f20',
+    relation: '上次接触锚点之后的起落：你不在的时候升起又落下、此刻已经看不出来的事；峰值一直停着，直到你按“已阅”。',
+    usage: '直接打开先讲一遍约 11 秒：你不在、此刻看不出来、已阅；悬停看概要，点击展开',
+    color: '朱红 = 已阅' },
 ];
 
 // Round three: concept animations for the site, each reading the same replay as every other form. Fields as in

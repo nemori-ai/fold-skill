@@ -57,6 +57,7 @@ make prototype
 | 让位图 | 一件事变大，份额从谁那里来；直接打开时讲一遍三拍：从哪来、问题关上、退回的份额到哪去 | 不承载作答；作答之后份额让给了谁；悬停色块看概要，点击展开详情，开着的问题链到同一帧的 D | [sketches/yield.html](forms/sketches/yield.html) | [review-b.md](forms/polish/review-b.md)、[yield-motion.md](forms/polish/yield-motion.md) |
 | 批次记谱 | 每一轮整理读了多少、丢了多少、动了几件 | 不承载作答；每轮登记、失效与答掉的问题；侧栏问题旁的“去回答 →”链到同一帧的 D | [sketches/notation.html](forms/sketches/notation.html) | [notation-motion.md](forms/polish/notation-motion.md) |
 | 变形 | 收到多少不等于给多少：同一批事项留在原位，面积从收到的条数变成份额；直接打开讲一遍约 7 秒：收到最多的 master CI 141 条只给 6 份，主水管 29 条给了 24 份 | 不承载作答；朱红只标此刻开着的问题；悬停圆看概要，点击展开详情，开着的问题旁“去回答 →”链到同一帧的 D | [sketches/morph.html](forms/sketches/morph.html) | [morph-motion.md](forms/polish/morph-motion.md) |
+| 峰值保持 | 离开期间升起又落下、回来时已经看不出来的事；峰值一直停着，直到你按“已阅”；直接打开讲一遍约 11 秒：你不在、此刻看不出来、已阅 | 不承载作答；“已阅”只清本页的峰值，可撤回；悬停一根看概要，点击展开，此刻开着的问题旁的“去回答 →”链到同一帧的 D | [sketches/peak.html](forms/sketches/peak.html) | [peak-motion.md](forms/polish/peak-motion.md) |
 | 整理脉冲（动画） | 官网首屏：一轮整理演成 4.25 秒的一次脉冲 | 不承载作答；详情里链到 D 作答；朱红只标新登记的问题、你的回应与答掉的记号 | [motion/pulse.html](forms/motion/pulse.html) | [story.md](forms/motion/pulse/story.md) |
 | 份额拨盘（动画） | 第一次看 Fold 的人，20 秒：64 份是怎样的硬约束，满了谁让位 | 不承载作答；详情里链到 D 作答；游标只指要紧的问题 | [motion/dial.html](forms/motion/dial.html) | [story.md](forms/motion/dial/story.md) |
 

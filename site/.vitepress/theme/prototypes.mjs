@@ -29,6 +29,7 @@ const entries = [
     ['yield', '一件事变大，份额从谁那里来'],
     ['notation', '每一轮整理读了多少、丢了多少、动了几件'],
     ['morph', '收到多少不等于给多少：Agent 放大了谁、压小了谁'],
+    ['peak', '离开期间升起又落下、回来时已经看不出来的事'],
   ].map(([id, line]) => ({ id, name: sketch(id).name, line, page: `/prototype/forms/sketches/${id}.html` })),
   // Round-three concept animations open without a frame, so the viewer plays their loop.
   { id: 'pulse', name: motion('pulse').name, line: '一轮整理演成一次脉冲：上百条进来，要你开口的只有一两件', page: '/prototype/forms/motion/pulse.html', embed: { card: 0 } },
