@@ -1,0 +1,100 @@
+/* 08 驻龄（完整版）. The grid is one canvas (age.mjs); caption, legend and the rank list are DOM laid over the figure.
+   Ink only: the ring count is the only variable. No vermilion here either: an open question is marked in ink. */
+.st-figure { overflow: hidden; }
+.st-figure { --ix-ask: var(--ink); --ix-ask-urgent: var(--ink); --ix-font: 13px/1.5 var(--sans); --ix-q-font: 600 14px/1.35 var(--sans); --ix-t-font: 600 14.5px/1.35 var(--sans); --ix-z-peek: 6; --ix-z-detail: 7; --ix-z-leader: 5; }
+.st-figure .ix-peek { width: 252px; box-shadow: 0 6px 18px rgb(0 0 0 / .08); }
+.st-figure .ix-detail { box-shadow: 0 10px 28px rgb(0 0 0 / .1); }
+.st-figure .ix-ask i, .st-figure .ix-d-ask i { background: transparent; border: 1.4px solid var(--ink); }
+.ag-pk-title { font: 12px/1.4 var(--sans) !important; color: var(--ink) !important; margin-bottom: 2px; }
+.ag-dc-ages { display: flex; flex-wrap: wrap; gap: 6px 10px; margin: 2px 0 0; }
+.ag-dc-ages span { display: inline-grid; grid-template-columns: auto auto; grid-template-rows: auto auto; column-gap: 4px; align-items: center; }
+.ag-dc-ages svg { grid-row: 1 / 3; }
+.ag-dc-ages b { font: 600 11px var(--mono); }
+.ag-dc-ages small { font: 9.5px var(--mono); color: var(--ink-2); }
+.ag-dc-peers { display: flex; flex-wrap: wrap; gap: 2px 10px; margin: 0 0 3px; font: 11.5px var(--mono); }
+.ag-dc-peers span { white-space: nowrap; }
+
+.ag-grid { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.ag-cap { position: absolute; top: 4px; margin: 0; font-size: 12px; line-height: 1.45; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+.ag-cap b { color: var(--ink); font: 600 12px var(--mono); }
+.ag-cap-id { margin-right: 8px; font: 10.5px var(--mono); color: var(--ink-3); }
+.ag-legend { position: absolute; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 11px; color: var(--ink-2); }
+.ag-legend > span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.ag-legend b { font: 600 11.5px var(--mono); color: var(--ink); min-width: 1.4em; font-variant-numeric: tabular-nums; }
+.ag-lg-k { font: 10px var(--mono) !important; letter-spacing: .08em; color: var(--ink-3); }
+.ag-glyph { flex: none; display: inline-block; }
+
+/* The rank list: one row per thing, its shares' ages oldest → newest as ticks (height = rounds stayed, up to 12). */
+.ag-list { position: absolute; display: flex; flex-direction: column; font-size: 12px; }
+.ag-list-head { flex: none; height: 24px; display: flex; align-items: baseline; gap: 8px; font: 600 10.5px var(--mono); letter-spacing: .06em; color: var(--ink-2); }
+.ag-list-head small { font-weight: 400; color: var(--ink-3); letter-spacing: 0; }
+.ag-row { flex: none; display: grid; grid-template-columns: 18px 88px 40px auto; grid-template-areas: "rank name share strip"; align-items: center; column-gap: 6px; border-top: 1px solid var(--faint); cursor: pointer; transition: opacity 120ms linear; }
+.ag-list.is-tall .ag-row { grid-template-columns: 18px auto minmax(0, 1fr) auto; grid-template-areas: "rank name why share" ". strip strip strip"; align-content: center; row-gap: 3px; }
+.ag-row > b { grid-area: rank; font: 600 11px var(--mono); color: var(--ink-2); }
+.ag-name { grid-area: name; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ag-share { grid-area: share; font: 11px var(--mono); color: var(--ink-2); text-align: right; white-space: nowrap; }
+.ag-row > svg, .ag-row > i { grid-area: strip; display: block; }
+.ag-why { grid-area: why; display: none; font-size: 10.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ag-list.is-tall .ag-why { display: block; }
+.ag-row-free .ag-name { color: var(--ink-2); }
+.ag-list.is-focus .ag-row { opacity: .7; }
+.ag-list.is-focus .ag-row.is-lit { opacity: 1; }
+.ag-row.is-lit .ag-name, .ag-row.is-lit > b { font-weight: 700; color: var(--ink); }
+.ag-row.is-key { outline: 2px solid var(--ink); outline-offset: -1px; }
+
+/* Side panel: this round, the hero number on top. */
+.ag-hero { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 2px 0 0; }
+.ag-hero b { font: 500 56px/1 var(--mono); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.ag-n { min-width: 1.2em; text-align: right; }
+.ag-d { min-width: 1.2em; text-align: left; }
+.ag-sl { font: 300 40px/1 var(--mono); color: var(--ink-3); }
+.ag-hero-k { display: flex; justify-content: center; gap: 42px; margin: 2px 0 0 !important; font-size: 11px; color: var(--ink-2); }
+.ag-eq { text-align: center; margin: 6px 0 2px !important; font-size: 12px; color: var(--ink-2); }
+.ag-eq b { font: 600 13px var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; }
+.ag-eq i { font-style: normal; margin: 0 2px; color: var(--ink-3); transition: color 150ms; }
+.ag-ov[data-phase="post"] .ag-eq i { color: var(--ink); }
+.ag-bed { text-align: center; font-size: 12px; margin: 2px 0 6px !important; }
+.ag-bed b { font: 600 13px var(--mono); }
+.ag-bed small { display: block; font-size: 10.5px; color: var(--ink-3); }
+.ag-ov[data-phase="pre"] .ag-post, .ag-ov[data-phase="post"] .ag-pre { display: none !important; }
+.ag-ov[data-phase="pre"] .ag-d, .ag-ov[data-phase="pre"] .ag-bed b { color: var(--ink-3); }
+.ag-wait { font-size: 11.5px; text-align: center; }
+.ag-chg li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 0 8px; align-items: baseline; padding: 2px 0; border-top: 1px solid var(--faint); }
+.ag-chg li span { font: 10.5px var(--mono); color: var(--ink-2); white-space: nowrap; }
+.ag-chg li b { font: 600 11px var(--mono); }
+.ag-chg li small { grid-column: 1 / 4; font-size: 10.5px; color: var(--ink-3); }
+.ag-chip { max-width: 100%; cursor: pointer; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ag-chip:hover { text-decoration: underline; text-underline-offset: 2px; }
+.ag-asks ul { margin: 0; padding: 0; list-style: none; }
+.ag-asks h4 > span { display: inline; }
+.ag-asks li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 6px; align-items: baseline; padding: 3px 0; border-top: 1px solid var(--faint); line-height: 1.45; }
+.ag-asks li > b { font: 500 10px var(--mono); padding: 0 4px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink-2); white-space: nowrap; }
+.ag-asks li.is-open > b { border-color: var(--ink); color: var(--ink); }
+.ag-asks li > span, .ag-asks li > s { font-size: 12px; }
+.ag-asks li > small { grid-column: 2 / 4; font-size: 10.5px; color: var(--ink-2); }
+.ag-asks li > a { grid-row: 1; grid-column: 3; font: 600 11px var(--mono); color: var(--ink); white-space: nowrap; text-underline-offset: 3px; }
+.ag-asks li.is-answered > s { color: var(--ink-2); }
+.ag-asks li.is-lapsed > span { color: var(--ink-3); }
+.ag-asks .ag-pre li > span { color: var(--ink-2); }
+.ag-acct { font: 11.5px/1.6 var(--mono); }
+.ag-acct small { color: var(--ink-3); font-size: 10.5px; }
+.ag-hist li, .ag-closes li { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 0 8px; align-items: baseline; padding: 3px 0; border-top: 1px solid var(--faint); font-size: 11.5px; }
+.ag-hist li.is-later, .ag-closes li.is-later { opacity: .5; }
+.ag-hist li.is-now time { font-weight: 600; color: var(--ink); }
+.ag-hist button, .ag-closes button { border: 0; background: none; padding: 0; }
+.ag-hist time, .ag-closes time { font: 10.5px var(--mono); color: var(--ink-2); }
+.ag-hist b, .ag-closes b { font: 600 11px var(--mono); }
+.ag-hist span { color: var(--ink-2); }
+.ag-closes li { grid-template-columns: auto minmax(0, 1fr) auto; }
+.ag-bars rect.ag-new { fill: var(--paper); stroke: var(--ink); stroke-width: .8; vector-effect: non-scaling-stroke; }
+.ag-bars rect.ag-new.is-later { stroke: var(--ix-bar-later); }
+.ag-fine { font-size: 11px; }
+.ag-more { margin-top: 14px; }
+.ag-more > summary { font-size: 11px; letter-spacing: .04em; color: var(--ink-2); }
+
+.ag-tell { border: 1px solid var(--line); border-radius: 6px; background: transparent; padding: 4px 10px; font-size: 12px; color: var(--ink); white-space: nowrap; transition: background-color 140ms, border-color 140ms; }
+.ag-tell:hover { border-color: var(--ink-3); background: var(--faint); }
+.ag-tell[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+.st-key .ag-key-ground { width: 18px; height: 10px; background: var(--faint); box-shadow: inset 0 0 0 1px var(--line); }
+.st-key .ag-key-ghost { width: 11px; height: 11px; border: 1px solid var(--ink-3); opacity: .6; }

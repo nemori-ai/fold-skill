@@ -173,6 +173,17 @@ const PAGES = {
     cut: `document.querySelector('.st-title').textContent.startsWith('这一件') && document.querySelector('.st-side-kicker').textContent.includes('这一件')`,
     playReady: `(foldPeak.play(), new Promise(r => { const go = () => (foldSketch.index >= 12 && foldPeak.settled() ? r(1) : setTimeout(go, 50)); go(); }))`,
   },
+  // 驻龄：一件就是方阵里它的那几格（地盘）。挑贴着方阵左边的最大一件，9 px 落在方阵左边外、与它的格平齐（命中到方阵外
+  // 12 px）；空白点在页头的关系句上（方阵四周没有不属于任何一格的空处）。连播由本页计时（半速，一轮 1.6 秒）。
+  age: {
+    hook: 'foldAge', held: 'forms/sketches/age.html?frame=26', play: 'forms/sketches/age.html?frame=3',
+    prepare: null, index: 'foldSketch.index', step: 27, tabFrom: '[data-a="tell"]',
+    pick: 'foldAge.pick()',
+    near: name => `foldAge.nearOf(${JSON.stringify(name)}, 9)`,
+    blank: { x: 700, y: 92 },
+    cut: `document.querySelector('.st-title').textContent.startsWith('这一件') && document.querySelector('.st-side-kicker').textContent.includes('这一件')`,
+    playReady: `(foldAge.play(), new Promise(r => { const go = () => (foldSketch.index >= 5 && foldAge.settled() ? r(1) : setTimeout(go, 50)); go(); }))`,
+  },
 };
 
 function args(argv) {

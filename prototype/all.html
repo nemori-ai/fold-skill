@@ -142,6 +142,7 @@
     notation: ['每一轮整理读了多少、丢了多少、动了几件', '不承载作答；每轮登记、失效与答掉的问题；悬停看概要，点击展开，问题旁的“去回答 →”链到同一帧的 D', 'notation-motion'],
     morph: ['收到多少不等于给多少：Agent 放大了谁、压小了谁', '不承载作答；朱红只标此刻开着的问题；悬停圆看概要，点击展开详情，开着的问题旁“去回答 →”链到同一帧的 D', 'morph-motion'],
     peak: ['离开期间升起又落下、回来时已经看不出来的事', '不承载作答；“已阅”只清本页的峰值，可撤回；悬停一根看概要，点击展开，此刻开着的问题旁的“去回答 →”链到同一帧的 D', 'peak-motion'],
+    age: ['此刻的份额多少是沉淀的、多少是刚换手的', '不承载作答；悬停一块地盘看概要，点击展开，开着的问题旁“去回答 →”链到同一帧的 D', 'age-motion'],
   };
   const desk = (id, name, href, frame) => ({ id, name, href, embed: { embed: 1 }, frame, see: README[id][0], answers: README[id][1], notes: README[id][2] });
   const groups = [
@@ -158,7 +159,7 @@
     ] },
     { title: '第二轮：复盘图', note: '五张图各自回答一种别处看不见的关系；未选帧时停在各自的默认帧。', sections: ['lineage', 'timing', 'provenance', 'yield', 'notation'].map(id => (
       { id, name: sketch(id).name, href: `forms/sketches/${id}.html`, frame: null, see: sketch(id).relation, answers: README[id][1], notes: README[id][2] })) },
-    { title: '第四轮：关系的画法', note: '只画 Agent 判断里的一种关系，读同一份回放；未选帧时停在各自的默认帧，合页里不讲开场。', sections: ['morph', 'peak'].map(id => (
+    { title: '第四轮：关系的画法', note: '只画 Agent 判断里的一种关系，读同一份回放；未选帧时停在各自的默认帧，合页里不讲开场。', sections: ['morph', 'peak', 'age'].map(id => (
       { id, name: sketch(id).name, href: `forms/sketches/${id}.html`, frame: null, see: sketch(id).relation, answers: README[id][1], notes: README[id][2] })) },
     { title: '第三轮：概念动画', note: '官网用的概念动画，读同一份回放。整理脉冲未选帧时从 f00 自动连播，顶栏选帧时演一遍那一轮再停住；份额拨盘单独打开时循环 20 秒的三拍，合页里只走单帧，跟着顶栏的帧走，不自己循环。两页都可以悬停看概要、点击展开详情。', sections: [
       { id: 'pulse', name: motion('pulse').name, href: `forms/${motion('pulse').page}`, embed: { card: 0 }, frame: null, see: motion('pulse').tagline, answers: '不承载作答；朱红只标新登记的问题、你的回应与答掉的记号；悬停枝条看概要，点击展开详情，问题旁的“去回答 →”链到同一帧的 D' },
