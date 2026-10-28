@@ -1,0 +1,143 @@
+/* 01 拔河（第四轮，完整版）。纸白、墨黑与灰；朱红只给你本人在来源处的回应（曲线下的短柱、面板与卡里的小记号）。
+   条与曲线是一张 SVG（tug.mjs 逐帧改几何），换了边的格子画在叠在条上的 canvas 里，落定后为零。 */
+.st-figure.t-fig { overflow: hidden; }
+/* The interaction module's cards (motion/ix.css) in paper and ink. Open questions are ink, not red: vermilion is yours. */
+.t-fig { --ix-ask: var(--ink); --ix-ask-urgent: var(--ink); --ix-font: 13px/1.5 var(--sans); --ix-q-font: 600 14px/1.35 var(--sans); --ix-t-font: 600 14.5px/1.35 var(--sans); --ix-z-peek: 6; --ix-z-detail: 7; --ix-z-leader: 5; }
+.t-fig .ix-peek { width: 252px; box-shadow: 0 6px 18px rgb(0 0 0 / .08); }
+.t-fig .ix-detail { box-shadow: 0 10px 28px rgb(0 0 0 / .1); }
+.t-fig .ix-ask i, .t-fig .ix-d-ask i { background: transparent; border: 1.4px solid var(--ink); }
+.t-fig .ix-d-ask.is-closed p { color: var(--ink-2); font-weight: 500; }
+.t-fig .ix-d-ask.is-closed i { border-color: var(--ink-3); }
+.t-pk-title { font: 12px/1.4 var(--sans) !important; color: var(--ink) !important; margin: 0 0 2px; }
+.t-pk-you { display: flex; align-items: center; gap: 5px; color: var(--ink) !important; margin-top: 3px; }
+.t-pk-you i, .t-said-l li > i { flex: none; display: inline-block; width: 5px; height: 10px; background: var(--vermilion); }
+.t-fb small { color: var(--ix-fg-3); font: var(--ix-meta-font); }
+
+/* The hero: this moment's 家里 : 工作, cut at each settle; grey while the story only passes through a round. */
+.t-hero { position: absolute; left: 0; top: 0; width: 240px; z-index: 2; pointer-events: none; }
+.t-score { display: flex; align-items: baseline; gap: 2px; font: 600 54px/1 var(--mono); letter-spacing: -.03em; font-variant-numeric: tabular-nums; color: var(--ink); transition: color 160ms linear; }
+.t-score i { font-style: normal; font-weight: 400; color: var(--ink-3); padding: 0 2px; }
+.t-score.is-passing { color: var(--ink-3); }
+.t-hero-k { margin-top: 3px; font-size: 12px; line-height: 1.45; color: var(--ink-2); white-space: nowrap; }
+
+.t-svg { position: absolute; left: 0; top: 0; display: block; overflow: visible; }
+.t-svg [hidden] { display: none; }
+.t-svg text { fill: var(--ink); font-family: var(--sans); font-size: 10.5px; }
+.t-cells { position: absolute; pointer-events: none; z-index: 1; }
+
+/* Chapters, grid, the even line. */
+.t-ch-l { stroke: var(--ink-3); stroke-width: 1; }
+.t-svg .t-ch { fill: var(--ink-3); }
+.t-gl { stroke: var(--line); stroke-dasharray: 2 4; }
+.t-svg .t-gt { font: 9.5px var(--mono); fill: var(--ink-3); }
+.t-mid { stroke: var(--ink); stroke-width: 1; }
+.t-svg .t-mid-t { font: 10.5px var(--mono); }
+.t-band { fill: var(--faint); }
+
+/* The curve: ink below the even line is 家里 ahead, the pale face above it 工作 ahead (paper on paper would not read). */
+.t-fill-dn { fill: var(--ink); }
+.t-fill-up { fill: var(--faint); }
+.t-line { fill: none; stroke: var(--ink); stroke-width: 1.2; stroke-linejoin: round; }
+.t-notch rect { stroke: var(--ink-3); stroke-width: .6; }
+.t-svg .t-notch-t { font: 9.5px var(--mono); fill: var(--ink-2); }
+
+/* Notes on the curve: they appear at the settle of their round (0.15 s), never move after. */
+.t-ann { transition: opacity 150ms linear; }
+.t-ann:not(.is-on) { opacity: 0 !important; visibility: hidden; }
+.t-ann text { paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
+.t-ann-l { stroke: var(--ink-3); stroke-width: .8; }
+.t-ann-pt { fill: var(--paper); stroke: var(--ink); stroke-width: 1.4; }
+.t-ann-pt.is-big { stroke-width: 1.8; }
+.t-svg .t-ann-h { font-weight: 600; }
+.t-svg .t-ann-m { font-size: 9.5px; fill: var(--ink-2); }
+.t-svg .t-ann-x { font-size: 11.5px; font-weight: 600; }
+.t-svg .t-ann-c { font-size: 11px; fill: var(--ink-2); }
+.t-svg .t-ann-you { font-size: 11px; fill: var(--vermilion); }
+.t-ann-you-l { stroke: var(--vermilion); stroke-width: .8; }
+
+/* Your responses: one vermilion column a side a round, cut by item. Counts wait until the column has grown. */
+.t-base { stroke: var(--line); }
+.t-svg .t-you-t { font-size: 11px; fill: var(--vermilion); }
+.t-svg .t-lane-t { font: 10px var(--mono); fill: var(--ink-3); }
+.t-part { fill: var(--vermilion); shape-rendering: crispEdges; }
+.t-svg .t-count { font: 10px var(--mono); fill: var(--vermilion); }
+.t-svg .t-note { font-size: 11px; fill: var(--vermilion); }
+.t-col.is-growing .t-count, .t-col.is-growing .t-note { visibility: hidden; }
+
+/* Day axis and this moment. */
+.t-tick { stroke: var(--ink-3); }
+.t-svg .t-day { font: 11px var(--mono); }
+.t-svg .t-day.is-month { font-size: 10.5px; fill: var(--ink-3); }
+.t-svg .t-wd { font-size: 10px; fill: var(--ink-3); }
+.t-now { stroke: var(--ink); stroke-dasharray: 1 3; }
+.t-svg .t-now-t { font: 10.5px var(--mono); }
+.t-pt { fill: var(--paper); stroke: var(--ink); stroke-width: 1.6; }
+
+/* The bar: 工作 paper from the top, 家里 ink from the bottom, 留白 hatched between. */
+.t-btick { stroke: var(--ink-3); stroke-width: .6; }
+.t-svg .t-bside { font: 10.5px var(--mono); }
+.t-seg { stroke-width: .6; }
+.t-seg.t-w { fill: var(--paper); stroke: var(--ink); }
+.t-seg.t-h { fill: var(--ink); stroke: var(--paper); }
+.t-seg.t-free { stroke: none; }
+.t-frame { fill: none; stroke: var(--ink); stroke-width: 1.2; pointer-events: none; }
+.t-svg .t-lab { fill: var(--ink-2); }
+.t-svg .t-lab.is-free { fill: var(--ink-3); }
+.t-svg .t-lab.is-lit { fill: var(--ink); }
+
+/* Focus: hovered, the rest go to 70 %; opened, to 18 % (tug.mjs sets --t-op). */
+.is-focus .t-dim { opacity: var(--t-op, .7); }
+.is-focus .t-dim.is-lit { opacity: 1; }
+.t-seg.is-lit { stroke: var(--ink); stroke-width: 1.6; }
+.t-seg.t-h.is-lit { stroke: var(--paper); stroke-width: 1.2; }
+.t-part.is-lit { stroke: var(--ink); stroke-width: 1; }
+.t-svg .is-key { stroke: var(--ink); stroke-width: 2; }
+.t-svg .t-lab.is-key { stroke: none; text-decoration: underline; }
+
+/* Key. */
+.st-key .t-key-home { background: var(--ink); }
+.st-key .t-key-work { background: var(--paper); box-shadow: inset 0 0 0 1px var(--ink); }
+.st-key .t-key-free { background: repeating-linear-gradient(45deg, var(--ink-3) 0 1px, transparent 1px 4px); box-shadow: inset 0 0 0 1px var(--ink-3); }
+.st-key .t-key-you { background: var(--vermilion); width: 6px; }
+.st-key .t-key-cell { width: 10px; height: 6px; background: rgb(120 128 118 / .62); vertical-align: 1px; }
+
+/* Side panel: this round. */
+.t-ov-score { display: flex; align-items: baseline; gap: 8px; margin: 2px 0 2px !important; font-size: 12px; color: var(--ink-2); }
+.t-ov-score b { font: 600 26px/1 var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; margin-left: 2px; }
+.t-ov-score i { font-style: normal; color: var(--ink-3); }
+.t-ov-score small { margin-left: auto; font: 11px var(--mono); color: var(--ink-2); }
+.t-ov-move { font-size: 11.5px; color: var(--ink-2); }
+.t-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.t-cols h4 { margin-top: 8px; }
+.t-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 4px; align-items: baseline; padding: 1px 0; }
+.t-list li b { font: 600 11px var(--mono); }
+.t-list li small { grid-column: 1 / 3; font: 10px var(--mono); color: var(--ink-3); line-height: 1.2; }
+.t-list li small:empty { display: none; }
+.t-list li.is-gone span { font-size: 12px; color: var(--ink-3); text-decoration: line-through; }
+.t-list li.is-gone b { color: var(--ink-3); }
+.t-pin { min-width: 0; border: 0; background: none; padding: 0; text-align: left; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t-pin:hover { text-decoration: underline; text-underline-offset: 2px; }
+.t-said-l li { display: flex; align-items: baseline; gap: 6px; padding: 2px 0; font-size: 12px; line-height: 1.45; }
+.t-said-l li > i { transform: translateY(1px); }
+.t-said-l li small { margin-left: auto; white-space: nowrap; font-size: 10.5px; color: var(--ink-2); }
+.st-side .t-asks-h { display: block; padding: 4px 0 1px; font: 10px var(--mono); letter-spacing: .06em; color: var(--ink-3); border: 0; }
+.t-asks li:not(.t-asks-h) { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 6px; align-items: baseline; padding: 3px 0; border-top: 1px solid var(--faint); line-height: 1.45; }
+.t-asks li > b { font: 500 10px var(--mono); padding: 0 4px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink-2); white-space: nowrap; }
+.t-asks li.is-open > b, .t-ov .t-asks li > b:first-child { border-color: var(--ink); color: var(--ink); }
+.t-asks li > span { font-size: 12px; }
+.t-asks li > small { grid-column: 2 / 4; font-size: 10.5px; color: var(--ink-2); }
+.t-asks li > a { grid-row: 1; grid-column: 3; font: 600 11px var(--mono); color: var(--ink); white-space: nowrap; text-underline-offset: 3px; }
+.t-two p { font-size: 11.5px; }
+.t-series { display: flex; flex-wrap: wrap; gap: 0 5px; font: 10.5px var(--mono); color: var(--ink-2); }
+.t-series .is-now { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.t-series .is-later { color: var(--ink-3); }
+.t-trail li { display: grid; grid-template-columns: 40px 1fr; gap: 0 6px; padding: 2px 0; line-height: 1.45; font-size: 12px; }
+.t-trail li > button, .t-trail li > time { border: 0; background: none; padding: 0; text-align: left; font: 10.5px var(--mono); color: var(--ink-2); }
+.t-trail li > button { text-decoration: underline; text-underline-offset: 2px; }
+.t-trail li > button:hover { color: var(--ink); }
+.t-more { margin-top: 14px; }
+.t-more > summary { font-size: 11px; letter-spacing: .04em; color: var(--ink-2); }
+
+.t-tell { border: 1px solid var(--line); border-radius: 6px; background: transparent; padding: 4px 10px; font-size: 12px; color: var(--ink); white-space: nowrap; transition: background-color 140ms, border-color 140ms; }
+.t-tell:hover { border-color: var(--ink-3); background: var(--faint); }
+.t-tell[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }

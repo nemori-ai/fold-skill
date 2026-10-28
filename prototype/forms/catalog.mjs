@@ -166,6 +166,10 @@ export const sketches = [
     relation: '谁在等谁、你挡住了谁：每个开着的问题后面站着哪些人、各等了多久，答了之后哪一环才能动；谁在等由规则从依据里现算。',
     usage: '直接打开先讲一遍约 12 秒：谁在等、你开口、一串人松开；悬停一行或一个人看概要，点击展开',
     color: '朱红 = 你（脊与结）' },
+  { id: 'tug', no: 6, name: '拔河', frame: 'f26',
+    relation: '家里与工作在 64 份里此消彼长：谁领先、领先多少、哪一轮被哪件事拉过中线，以及你在来源处实际在哪一边动手。',
+    usage: '直接打开先讲一遍约 23 秒：份额说家里重，手却在工作上；家里坠到 59 : 5；一天后弹回；悬停看概要，点击展开',
+    color: '朱红 = 你的回应' },
 ];
 
 // Round three: concept animations for the site, each reading the same replay as every other form. Fields as in
