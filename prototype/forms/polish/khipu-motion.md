@@ -194,10 +194,10 @@
 
 ## 6 验证
 
-2026-10-28，本机自起静态服务（node，深监听队列，端口 4617；不用 4173），Chrome 无头。最后一次在 rebase 到 `origin/main`（b480277，含 #34 变形、#35 峰值保持）之后跑。
+2026-10-28，本机自起静态服务（node，深监听队列，端口 4617；不用 4173），Chrome 无头。最后一次在 rebase 到 `origin/main`（f710b1a，含 #34 变形、#35 峰值保持、#36 驻龄、#37 拔河、#38 等待链）之后跑。
 
 - `make check`：33 个文件齐全，31 份维护中文档链接与格式有效。
-- `node scripts/check-ix.mjs`，两套数据、全部页面：见下方结果行。中途在机器满载（另有几个代理同时跑 Chrome、体验站在构建）时，结绳 composite 有两次单项超时（点击后 1.1 秒卡还没展开到底、悬停后 0.45 秒概要卡还没出），原版树图 story 有一次 Esc 超时，单独重跑都过。实测结绳悬停到概要卡出现 98–133 ms，只有页面加载时有一个 235–311 ms 的长任务（模块初始化）。
+- `node scripts/check-ix.mjs`，两套数据、全部 18 页（pulse 到 tug 加结绳）：story 与 composite 都全过，每页 16 / 16，D 手机首页 23 / 23，退出码 0。中途几次在机器满载（另有几个代理同时跑 Chrome、体验站在构建）时，结绳 composite 有两次单项超时（点击后 1.1 秒卡还没展开到底、悬停后 0.45 秒概要卡还没出），原版树图 story 有一次 Esc 超时，单独重跑都过。实测结绳悬停到概要卡出现 98–133 ms，只有页面加载时有一个 235–311 ms 的长任务（模块初始化）。
 - `node scripts/shoot-forms.mjs --only khipu,all --gpu --check all-sync`，两套数据：结绳与合页都没有页面报错，all-sync 没有失败项（合页里每一节都跟上了顶栏选的帧）。
 - `npm run site:build`：通过；`dist/` 里有 `prototype/forms/sketches/khipu.*` 与 `prototype-notes/forms/polish/khipu-motion.html`。`scripts/export-all.mjs` 导出的单文件合页也带上了这一页。
 - 帧率（`--gpu`，`?perf`，`foldKhipu.perf()`）：静止 60 fps、每帧脚本 0.06 ms（不重绘）；点击展开 60 fps、脚本 0.41 ms（composite）/ 0.7 ms（story）；→ 换轮 60 fps、0.28 / 0.66 ms；长出画框 60 fps、脚本平均 2.7 ms、p95 6.7 ms；讲一遍 9.8 秒 587 帧 60 fps、帧间隔 p95 16.8 ms、脚本 p95 2.3 ms。
