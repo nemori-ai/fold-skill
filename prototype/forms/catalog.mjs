@@ -162,6 +162,10 @@ export const sketches = [
     usage: '直接打开先讲一遍约 11 秒：你不在、此刻看不出来、已阅；悬停看概要，点击展开',
     color: '朱红 = 已阅' },
   { id: 'age', no: 8, name: '驻龄', frame: 'f26', relation: '此刻的 64 份里，每一份已经在当前这件事上连续待了几轮：多少是沉淀的，多少是刚换手的。格子两周不挪，只在份额易手时换主人，圈数就是驻龄。', usage: '直接打开先讲一遍约 23 秒：一轮三个动作，清出、加圈、新框；悬停看概要，点击展开', color: '墨黑 · 圈数 = 驻龄' },
+  { id: 'chain', no: 10, name: '等待链', frame: 'f34', last: true,
+    relation: '谁在等谁、你挡住了谁：每个开着的问题后面站着哪些人、各等了多久，答了之后哪一环才能动；谁在等由规则从依据里现算。',
+    usage: '直接打开先讲一遍约 12 秒：谁在等、你开口、一串人松开；悬停一行或一个人看概要，点击展开',
+    color: '朱红 = 你（脊与结）' },
 ];
 
 // Round three: concept animations for the site, each reading the same replay as every other form. Fields as in

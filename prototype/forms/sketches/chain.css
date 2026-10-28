@@ -1,0 +1,122 @@
+/* 10 等待链（完整版）。朱红只给“你”：竖脊、脊上的结与脊顶的“你”。墨黑是等你的人、他们的连线与右边的下一环；
+   灰是刻度、选项站、不经过你的那几件与概念层的地毯（canvas，画在 SVG 下面）。 */
+.ch-canvas { position: absolute; inset: 0; }
+.ch-concept { position: absolute; left: 0; top: 0; pointer-events: none; }
+.ch-svg { position: relative; display: block; overflow: visible; user-select: none; }
+.ch-svg text { fill: var(--ink); font-family: var(--sans); }
+
+/* The log axis: how long someone has waited, measured leftwards from the spine. */
+.ch-tick { stroke: var(--faint); }
+.ch-svg .ch-ticklabel { fill: var(--ink-3); font: 9.5px var(--mono); text-anchor: middle; }
+.ch-svg .ch-axis-l { fill: var(--ink-2); font: 10px var(--mono); text-anchor: end; }
+.ch-svg .ch-you { fill: var(--vermilion); font: 700 13px var(--sans); text-anchor: middle; }
+.ch-svg .ch-then { fill: var(--ink-2); font: 10px var(--mono); }
+.ch-spine { stroke: var(--vermilion); stroke-width: 2.5; stroke-linecap: round; }
+
+/* Rows: opacity and position are set per frame; nothing is transitioned in CSS. */
+.ch-row { cursor: pointer; outline: none; }
+.ch-hit { fill: transparent; }
+.ch-knot { fill: var(--paper); stroke: var(--vermilion); stroke-width: 2.2; }
+.ch-knot.is-answered { fill: var(--vermilion); }
+.ch-gknot { fill: var(--paper); stroke: var(--ink-3); stroke-width: 1.3; }
+.ch-w { cursor: pointer; }
+.ch-wline { fill: none; stroke: var(--ink); stroke-width: 1.2; }
+.ch-whit { fill: transparent; }
+.ch-wdot { fill: var(--ink); }
+.ch-svg .ch-wname { font-size: 11px; font-weight: 550; paint-order: stroke; stroke: var(--paper); stroke-width: 3px; }
+.ch-svg .ch-wh { fill: var(--ink-2); font: 400 9.5px var(--mono); }
+.ch-w.is-leaving .ch-wline, .ch-w.is-leaving .ch-wdot { stroke: var(--ink-3); fill: var(--ink-3); }
+.ch-w.is-leaving .ch-wline { fill: none; }
+.ch-w.is-hot .ch-wdot { r: 5; }
+.ch-w.is-hot .ch-wline { stroke-width: 1.8; }
+.ch-link { fill: none; stroke: var(--ink); stroke-width: 1; stroke-dasharray: 2 3; pointer-events: none; }
+
+/* The right side: the question, then the next link (options, the approved action) and the deadline. */
+.ch-svg .ch-q { font-size: 13px; font-weight: 600; }
+.ch-svg .ch-share { fill: var(--ink-2); font: 400 11px var(--mono); }
+.ch-ostation { fill: var(--paper); stroke: var(--ink-3); stroke-width: 1.3; }
+.ch-svg .ch-opt { fill: var(--ink-2); font-size: 11.5px; }
+.ch-svg .ch-subj { fill: var(--ink-2); font-size: 11px; }
+.ch-svg .ch-due { font: 500 11px var(--mono); text-anchor: end; }
+.ch-svg .ch-due.is-late { font-weight: 700; }
+.ch-svg .ch-said { fill: var(--ink-2); font-size: 11.5px; }
+.ch-svg .ch-alone { fill: var(--ink-3); font-size: 10.5px; text-anchor: end; }
+
+/* Not through you. */
+.ch-greyhead line { stroke: var(--line); }
+.ch-greyhead text { fill: var(--ink-2); font: 600 10.5px var(--sans); letter-spacing: .12em; }
+.ch-greyhead .ch-greysub { fill: var(--ink-3); font: 400 10px var(--sans); letter-spacing: 0; }
+.ch-svg .ch-gtitle { fill: var(--ink-2); font-size: 11.5px; }
+.ch-svg .ch-gtag { fill: var(--ink); font-weight: 600; }
+.ch-svg .ch-gshare { fill: var(--ink-3); font: 10.5px var(--mono); text-anchor: end; }
+.ch-vline { fill: none; stroke: var(--ink-3); stroke-width: 1; }
+.ch-vdot { fill: var(--ink-3); }
+.ch-svg .ch-vname { fill: var(--ink-3); font-size: 10.5px; text-anchor: end; }
+.ch-svg .ch-more { fill: var(--ink-3); font-size: 10.5px; }
+
+/* Side column: the hero number, who let go this round, everyone waiting, this frame. */
+.ch-now { padding-bottom: 8px; }
+.ch-hero { display: flex; align-items: baseline; gap: 8px; margin: 2px 0 0; }
+.ch-hero b { font: 600 64px/1 var(--mono); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.ch-hero span { font-size: 15px; font-weight: 600; }
+.ch-hero.is-small { margin-top: 10px; }
+.ch-hero.is-small b { font-size: 40px; }
+.ch-hero.is-small span { font-size: 12.5px; font-weight: 400; color: var(--ink-2); }
+.ch-hero-sub { margin: 6px 0 4px; font: 11px var(--mono); color: var(--ink-2); }
+.ch-hero-line { margin: 2px 0; font-size: 12px; line-height: 1.5; color: var(--ink-2); cursor: pointer; }
+.ch-hero-line b { color: var(--ink); }
+.lv-side section + section, .ch-rule { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.lv-side h3 { margin: 0 0 6px; font-size: 12px; }
+.lv-side h3 small { margin-left: 4px; font: 400 10.5px var(--mono); color: var(--ink-2); }
+.ch-freed ul, .ch-people ul, .ch-ws { margin: 0; padding: 0; list-style: none; }
+.ch-freed li { padding: 4px 0; border-bottom: 1px dashed var(--line); font-size: 12px; line-height: 1.45; }
+.ch-freed li[data-id^="i:"] { cursor: pointer; }
+.ch-freed li b.is-you { color: var(--ink); }
+.ch-freed small, .ch-ws small { display: block; font-size: 10.5px; color: var(--ink-2); }
+.ch-people li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px dashed var(--line); font-size: 12px; cursor: pointer; }
+.ch-people li:hover .ch-p-who { text-decoration: underline; text-underline-offset: 3px; }
+.ch-p-who { font-weight: 550; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ch-p-who small { margin-left: 6px; font-weight: 400; font-size: 10.5px; color: var(--ink-2); }
+.ch-p-n { font: 11px var(--mono); color: var(--ink-2); white-space: nowrap; }
+.ch-frame-title { margin: 0 0 4px; font-weight: 600; font-size: 12.5px; }
+.ch-narr { margin: 0 0 4px; font-size: 12px; line-height: 1.6; color: var(--ink-2); }
+.ch-frame-n { margin: 0; font: 10.5px var(--mono); color: var(--ink-2); }
+.ch-rule summary { font-size: 12px; font-weight: 600; cursor: pointer; }
+.ch-rule p { margin: 6px 0 0; font-size: 11.5px; line-height: 1.6; color: var(--ink-2); }
+.ch-rule a { color: var(--ink); text-underline-offset: 3px; }
+.ch-muted { margin: 2px 0; font-size: 11px; color: var(--ink-2); }
+
+/* 这一件. */
+.ch-one h2 { margin: 0; font-size: 15px; }
+.ch-one h2 small { margin-left: 6px; font: 11px var(--mono); color: var(--ink-2); }
+.ch-one-item { margin: 4px 0 0; font-size: 11.5px; color: var(--ink-2); }
+.ch-one-q { margin: 2px 0 0; font-size: 15px; font-weight: 600; line-height: 1.35; }
+.ch-one-prompt { margin: 3px 0 0; font-size: 12px; line-height: 1.5; color: var(--ink-2); }
+.ch-one .ch-ws { margin-top: 6px; }
+.ch-one .ch-ws li { padding: 4px 0; border-bottom: 1px dashed var(--line); font-size: 12px; line-height: 1.45; }
+.ch-one .ch-ws li .ch-go { margin-left: 0; }
+.ch-one section { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+.ch-moves { margin: 0; padding: 0; list-style: none; font-size: 12px; line-height: 1.45; }
+.ch-moves li { padding: 3px 0; border-bottom: 1px dashed var(--line); }
+.ch-moves li.is-answer { font-weight: 600; }
+.ch-moves time { display: block; font: 400 10px var(--mono); color: var(--ink-2); }
+.ch-said-line { margin: 2px 0; font-size: 12px; }
+.ch-links, .ch-d-go { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 12px 0 0; }
+.ch-go { font: 600 12px var(--mono); color: var(--ink); text-underline-offset: 3px; }
+.ch-dossier { border: 0; padding: 0; background: none; font: 11.5px var(--mono); color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.ch-dossier:hover, .ch-dossier:focus-visible { color: var(--ink); }
+.ch-tell { font-size: 12px !important; white-space: nowrap; }
+.is-telling .ch-tell { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.ch-key-rule { color: var(--ink-2); }
+
+/* The cards (motion/ix.css) on this paper page. */
+.lv-page .ix-peek { width: 290px; }
+.lv-page .ix-detail { z-index: 26; box-shadow: 0 10px 30px rgb(0 0 0 / .08); }
+.lv-page .ix-peek { z-index: 27; }
+.lv-page .ix-leaders { z-index: 26; }
+.ix-detail .lv-chips { margin: 2px 0 0; }
+.ix-detail .ch-d-go { margin-top: 10px; }
+.ix-detail .ix-d-ask a { font: 600 11.5px var(--mono); color: var(--ink); }
+.tm-d-prompt { margin: 0 0 4px; font-size: 12.5px; line-height: 1.5; }
+/* An open question in the cards is the knot on your spine: a hollow vermilion ring, not the shared filled mark. */
+.lv[data-form="chain"] .ix-d-ask i { box-sizing: border-box; background: none; border: 1.6px solid var(--vermilion); border-radius: 50%; }

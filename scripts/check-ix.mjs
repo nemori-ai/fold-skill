@@ -184,6 +184,18 @@ const PAGES = {
     cut: `document.querySelector('.st-title').textContent.startsWith('这一件') && document.querySelector('.st-side-kicker').textContent.includes('这一件')`,
     playReady: `(foldAge.play(), new Promise(r => { const go = () => (foldSketch.index >= 5 && foldAge.settled() ? r(1) : setTimeout(go, 50)); go(); }))`,
   },
+  // 等待链：一行（开着的问题）就是一件，等它的人各是一件；挑等的人最多的一行，指着它在脊上的结。
+  // 带 ?frame= 打开不自己讲一遍；连播走页面自己的时钟（12 小时约 1 秒）。
+  chain: {
+    hook: 'foldChain', held: 'forms/sketches/chain.html?frame=26', play: 'forms/sketches/chain.html?frame=3&mode=play',
+    prepare: null, index: 'foldChain.player.index', step: 27, tabFrom: '[data-lv-help]',
+    pick: 'foldChain.pick()',
+    // 9 px above the knot, on the spine: still inside the row's band, clear of every name and line.
+    near: name => `(() => { const g = foldChain.geom(${JSON.stringify(name)}); return { x: g.kx, y: g.ky - g.kr - 9 }; })()`,
+    blank: { x: 900, y: 42 },
+    cut: `document.querySelector('.lv-date').textContent.startsWith('这一件') && document.querySelector('.lv-side h2').textContent.startsWith('这一件')`,
+    playReady: `new Promise(r => { const go = () => (foldChain.player.index >= 5 ? r(1) : setTimeout(go, 50)); go(); })`,
+  },
 };
 
 function args(argv) {
