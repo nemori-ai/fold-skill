@@ -29,6 +29,8 @@ export const FORMS = {
   peak: 'forms/sketches/peak.html',
   age: 'forms/sketches/age.html',  // 不带 --frame 时顶层打开会先讲一遍（截图落在讲到一半），带 --frame 时静止在那一帧
   chain: 'forms/sketches/chain.html',
+  // 拔河不带 --frame 时页面在顶层会自己讲一遍，截到的是讲到约 2.5 秒的样子；静止的一帧要带 --frame。
+  tug: 'forms/sketches/tug.html',
   // 第一轮撤下后恢复的八个形式：只做了能在两个数据集下运行的最小适配，未打磨。
   radio: 'forms/radio.html', strips: 'forms/strips.html', frontpage: 'forms/frontpage.html', receipt: 'forms/receipt.html',
   orb: 'forms/orb.html', departures: 'forms/departures.html', blame: 'forms/blame.html', chat: 'forms/chat.html',

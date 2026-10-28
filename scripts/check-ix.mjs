@@ -196,6 +196,17 @@ const PAGES = {
     cut: `document.querySelector('.lv-date').textContent.startsWith('这一件') && document.querySelector('.lv-side h2').textContent.startsWith('这一件')`,
     playReady: `new Promise(r => { const go = () => (foldChain.player.index >= 5 ? r(1) : setTimeout(go, 50)); go(); })`,
   },
+  // 01 拔河：一件是评估条上的一段（另有曲线上的一轮、一根朱红柱）；挑此刻最大的一段，9 px 外是条左边的刻度旁。
+  // 空白点在章节标签与条顶之间那一溜（图里，什么都不画）。带 ?frame= 打开不自己讲一遍；连播半速，一轮 0.75 秒。
+  tug: {
+    hook: 'foldTug', held: 'forms/sketches/tug.html?frame=26', play: 'forms/sketches/tug.html?frame=3',
+    prepare: null, index: 'foldSketch.index', step: 27, tabFrom: '[data-t="tell"]',
+    pick: 'foldTug.pick()',
+    near: name => `foldTug.nearOf(${JSON.stringify(name)}, 9)`,
+    blank: { x: 700, y: 200 },
+    cut: `document.querySelector('.st-title').textContent.startsWith('这一件') && document.querySelector('.st-side-kicker').textContent.includes('这一件')`,
+    playReady: `(foldTug.play(), new Promise(r => { const go = () => (foldSketch.index >= 5 && foldTug.settled() ? r(1) : setTimeout(go, 30)); go(); }))`,
+  },
 };
 
 function args(argv) {
