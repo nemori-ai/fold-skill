@@ -153,6 +153,10 @@ export const sketches = [
     relation: '每一轮整理由什么组成：收到几条、各怎么判，对哪几件事做了什么；两周里整理的疏密，和你插话的时刻。',
     usage: '直接打开先演 12 秒：读得越多丢得越多，动的却不跟着多；悬停看概要，点击展开',
     color: '朱红 = 来自你本人' },
+  { id: 'morph', no: 9, name: '变形', frame: 'f34', last: true,
+    relation: '同一批事项留在原位，面积从“收到多少条输入”变成“占多少份”：收到最多的那件不一定给得最多，这段变形就是 Agent 的判断；黑是家里，白是工作。',
+    usage: '直接打开先讲一遍约 7 秒：141 条只给 6 份，29 条给了 24 份；M 切换收到⇄给出，悬停看概要，点击展开',
+    color: '黑 = 家里 · 白 = 工作' },
 ];
 
 // Round three: concept animations for the site, each reading the same replay as every other form. Fields as in

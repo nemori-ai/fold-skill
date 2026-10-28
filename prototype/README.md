@@ -56,6 +56,7 @@ make prototype
 | 来源矩阵 | 某件事背后是谁在推动 | 不承载作答 | [sketches/provenance.html](forms/sketches/provenance.html) | [review-b.md](forms/polish/review-b.md) |
 | 让位图 | 一件事变大，份额从谁那里来；直接打开时讲一遍三拍：从哪来、问题关上、退回的份额到哪去 | 不承载作答；作答之后份额让给了谁；悬停色块看概要，点击展开详情，开着的问题链到同一帧的 D | [sketches/yield.html](forms/sketches/yield.html) | [review-b.md](forms/polish/review-b.md)、[yield-motion.md](forms/polish/yield-motion.md) |
 | 批次记谱 | 每一轮整理读了多少、丢了多少、动了几件 | 不承载作答；每轮登记、失效与答掉的问题；侧栏问题旁的“去回答 →”链到同一帧的 D | [sketches/notation.html](forms/sketches/notation.html) | [notation-motion.md](forms/polish/notation-motion.md) |
+| 变形 | 收到多少不等于给多少：同一批事项留在原位，面积从收到的条数变成份额；直接打开讲一遍约 7 秒：收到最多的 master CI 141 条只给 6 份，主水管 29 条给了 24 份 | 不承载作答；朱红只标此刻开着的问题；悬停圆看概要，点击展开详情，开着的问题旁“去回答 →”链到同一帧的 D | [sketches/morph.html](forms/sketches/morph.html) | [morph-motion.md](forms/polish/morph-motion.md) |
 | 整理脉冲（动画） | 官网首屏：一轮整理演成 4.25 秒的一次脉冲 | 不承载作答；详情里链到 D 作答；朱红只标新登记的问题、你的回应与答掉的记号 | [motion/pulse.html](forms/motion/pulse.html) | [story.md](forms/motion/pulse/story.md) |
 | 份额拨盘（动画） | 第一次看 Fold 的人，20 秒：64 份是怎样的硬约束，满了谁让位 | 不承载作答；详情里链到 D 作答；游标只指要紧的问题 | [motion/dial.html](forms/motion/dial.html) | [story.md](forms/motion/dial/story.md) |
 
@@ -76,6 +77,7 @@ make prototype
 - 批次记谱直接打开（不带 `frame=`）时停在最后一帧，先演 12 秒的开场：读、丢、动三拍同时作用在全部行上，任意键或点一下跳到终态，R 或顶栏“重演”从头演到此刻；嵌入与带 `frame=` 的链接不演。换帧时新的一行演 0.9 秒的缩短版。悬停一行看这一轮的账，悬停记号看这一件，点击展开到侧栏，与两个动画共用 `forms/motion/ix.mjs`（见 [notation-motion.md](forms/polish/notation-motion.md)）。
 - 回应时序直接打开（不带 `frame=`）时先讲一遍约 24 秒：开得最久的“母亲九月住哪？”从登记、等 19 轮到别人先开口，落在最后一帧；任意键或点一下跳到终态，顶栏“▶ 讲一遍”重讲；嵌入与带 `frame=` 的链接不讲。之后 ▶ 连播、←/→ 逐帧都按同一节拍走：此刻线缓出，批次刻度上硬切。悬停一条时序线看概要，点击弹出 8 px、引线出到详情卡，右栏切到“这一件”，同样共用 `forms/motion/ix.mjs`（见 [timing-motion.md](forms/polish/timing-motion.md)）。
 - C 流动形态直接打开（不带 `frame=`、不是从别处链进来）时先讲一遍约 20 秒：猫看病那件（story 是费用）沉下去、在水下等 9 轮（story 13 轮）、到点带着新消息浮起，落在浮起那一帧；任意键或点一下跳到终态，顶栏“▶ 讲一遍”重讲；嵌入、合页与带 `frame=` 的链接不讲。换轮按涌入（一粒一条输入）、长缩（份额加留白始终是 64）、沉浮、数字落定四段走。悬停一滴看概要、其余压暗，点击沿它自己的方向弹出 8 px、引线出到详情卡，右栏切到“这一件”，共用 `forms/motion/ix.mjs`；作答时右栏控件原地收成回执，液滴等下一轮整理读到才沉（见 [c-motion.md](forms/polish/c-motion.md)）。
+- 变形直接打开（不带 `frame=`、不是从别处链进来）时先讲一遍约 7 秒，停在 f26（story 是 f15）：圆按收到的条数长出来，再原地变成份额，最后圈出收到最多与份额最多的两件；任意键或点一下跳到终态，顶栏“▶ 讲一遍”重讲；嵌入、合页与带 `frame=` 的链接不讲，默认停在最后一帧。顶栏“收到/给出”或 M 在两态之间原地变形 1 秒，所有圆同一条缓动、同起同落，数字落地才换。悬停一个圆看概要，点击沿它自己的方向弹出 8 px、引线出到详情卡，右栏切到“这一件”，共用 `forms/motion/ix.mjs`（见 [morph-motion.md](forms/polish/morph-motion.md)）。
 - 本页作答只存在浏览器内存里：按下即“已保存”，推进到下一轮整理后显示“已收到”，随时可撤回；不写回演示数据，也不调用模型。
 - 原版与 A/B/C/D 都保留未分配份额：原版与 A 用面积、B 用带宽、C 用液滴面积与 64 格预算带、D 用先后与字号表达份额，精确份数在详情里。
 - `prefers-reduced-motion` 时切帧与作答直接到终态。

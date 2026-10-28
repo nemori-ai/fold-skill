@@ -24,6 +24,8 @@ export const FORMS = {
   watch: 'forms/watch.html', multiples: 'forms/multiples.html', gallery: 'forms/index.html', respond: 'forms/respond.html',
   timing: 'forms/sketches/timing.html', lineage: 'forms/sketches/lineage.html', yield: 'forms/sketches/yield.html',
   provenance: 'forms/sketches/provenance.html', notation: 'forms/sketches/notation.html',
+  // 第四轮：关系的画法。
+  morph: 'forms/sketches/morph.html',
   // 第一轮撤下后恢复的八个形式：只做了能在两个数据集下运行的最小适配，未打磨。
   radio: 'forms/radio.html', strips: 'forms/strips.html', frontpage: 'forms/frontpage.html', receipt: 'forms/receipt.html',
   orb: 'forms/orb.html', departures: 'forms/departures.html', blame: 'forms/blame.html', chat: 'forms/chat.html',

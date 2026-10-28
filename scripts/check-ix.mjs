@@ -151,6 +151,17 @@ const PAGES = {
     cut: `document.querySelector('.a-frame-title').textContent.startsWith('这一件') && Boolean(document.querySelector('.a-breadcrumb .a-this'))`,
     playReady: `new Promise(r => { foldA.play(); setTimeout(r, 1700); })`,
   },
+  // 变形：一个圆就是一件；挑画面上最大、外侧有空地的那个圆，9 px 落在它画出的边缘外（圆命中到边缘外 10 px）。
+  // 带 ?frame= 打开不自己讲一遍；连播由本页计时（换轮 0.7 秒再停 0.9 秒），悬停一件就停住。
+  morph: {
+    hook: 'foldMorph', held: 'forms/sketches/morph.html?frame=26', play: 'forms/sketches/morph.html?frame=3',
+    prepare: null, index: 'foldSketch.index', step: 27, tabFrom: '[data-m="out"]',
+    pick: 'foldMorph.pick()',
+    near: name => `foldMorph.nearOf(${JSON.stringify(name)}, 9)`,
+    blank: { x: 700, y: 92 },
+    cut: `document.querySelector('.st-title').textContent.startsWith('这一件') && document.querySelector('.st-side-kicker').textContent.includes('这一件')`,
+    playReady: `(foldMorph.play(), new Promise(r => { const go = () => (foldSketch.index >= 5 && foldMorph.settled() ? r(1) : setTimeout(go, 50)); go(); }))`,
+  },
 };
 
 function args(argv) {
