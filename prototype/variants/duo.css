@@ -1,5 +1,6 @@
 /* E · 折叠屏。卡、标签、按钮、回执、行、详情、操作单、概要卡沿用 d.css（宿主同时挂 .variant-d）；这里只加折叠屏的版式。
-   克制：不画机身、铰链高光和折痕阴影；折痕处只有纸色留白，唯一的分界线是份额带上那一笔。尺寸以 pt 写，整台按比例缩进视口。 */
+   开合是 iPhone Duo 的翻页：承载外屏的板绕折痕朝你翻开（CSS 3D），只画板的一圈细边，不画铰链高光与戏剧化的阴影；
+   平放时折痕处只有纸色留白，唯一的分界线是份额带上那一笔。尺寸以 pt 写，整台按比例缩进视口。 */
 .variant-duo [hidden] { display: none !important; }
 .variant-duo { --u-shade: #dcd9d1; --u-left: #fbfaf6; }
 .u-stage { display: flex; align-items: flex-start; gap: 40px; padding: 28px 24px 48px; }
@@ -14,14 +15,44 @@
 .u-outer { z-index: 2; }
 .u-outer.is-off { visibility: hidden; }
 .u-table { left: 0; z-index: 1; }
-/* unfolding: the part of the inner screen that has lit (paper), and before the takeover the part that has not (shade) */
-.u-lit, .u-unlit { position: absolute; top: 0; height: 669px; border-radius: 22px 0 0 22px; pointer-events: none; opacity: 0; }
-.u-lit { background: var(--paper); box-shadow: 0 0 0 1px #0000000b; z-index: 0; }
-.u-unlit { background: var(--u-shade); z-index: 0; }
-.u-wins { position: absolute; left: 0; top: 0; right: 0; height: 669px; z-index: 3; pointer-events: none; overflow: hidden; border-radius: 22px 0 0 22px; }
-.u-win { position: absolute; overflow: hidden; }
-.u-win-content { position: absolute; top: 0; margin: 0 !important; box-sizing: border-box; }
+/* unfolding: the inner screen's right page under the panel, lit (paper) once it takes over, unlit (shade) before */
+.u-lit, .u-unlit { position: absolute; top: 0; border-radius: 0 22px 22px 0; pointer-events: none; opacity: 0; z-index: 0; }
+.u-lit.is-on, .u-unlit.is-on { opacity: 1; }
+.u-lit { background: var(--paper); box-shadow: 0 0 0 1px #0000000b, 0 26px 50px -34px #0005; }
+.u-unlit { background: var(--u-shade); }
+.u-lit.is-whole { left: 0 !important; width: 100% !important; border-radius: 22px 0 0 22px; box-shadow: 0 0 0 1px #0000000b; }
+/* the book while the panel is still turning: only its right page is drawn (the left page is the panel's back) */
+.u-inner.is-lifted { clip-path: inset(0 0 0 50%); }
 .u-turn-ghost { z-index: 15; pointer-events: none; }
+
+/* the fold: the panel that carries the outer screen turns about the crease (rotateY), toward you and to the left.
+   Its face is the outer screen, its back the inner screen's left page; each face hides when it turns away. Per frame only
+   transforms and opacities change: the blurred copies sit under masks that slide while the copies slide back. */
+.u-fold3d { position: absolute; left: 0; top: 0; z-index: 4; pointer-events: none; }
+.u-fold3d:not(.is-up) { visibility: hidden; }
+.u-panel { position: absolute; top: 0; height: 100%; transform-origin: 0 50%; transform-style: preserve-3d; will-change: transform; }
+.u-face { position: absolute; top: 0; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; will-change: transform, opacity; }
+/* the outer screen: its corners, its hairline and the soft shadow it has when closed */
+.u-face.is-front { border-radius: 22px; box-shadow: 0 0 0 1px #00000014, 0 26px 50px -34px #0005; }
+/* the left page: lies flat at 180°, its outer corners round; a hairline so the turning page reads as a board */
+.u-face.is-back { left: 0; transform: rotateY(180deg); border-radius: 22px 0 0 22px; background: var(--paper); box-shadow: 0 0 0 1px #00000014; }
+.u-face > .u-clone, .u-layer > .u-clone, .u-blur > .u-clone { margin: 0; }
+.u-face.is-front > .u-clone { top: 0; z-index: 0; box-shadow: none; border-radius: 0; }
+.u-layer { position: absolute; inset: 0; overflow: hidden; contain: strict; }
+.u-fold3d.is-live .u-face.is-back > .u-layer { pointer-events: auto; }
+.u-mask { position: absolute; left: 0; top: 0; z-index: 1; will-change: transform; }
+.u-mask.is-f { -webkit-mask-image: linear-gradient(to right, transparent calc(50% - 60px), #000 calc(50% + 60px)); mask-image: linear-gradient(to right, transparent calc(50% - 60px), #000 calc(50% + 60px)); }
+.u-mask.is-b { -webkit-mask-image: linear-gradient(to right, #000 calc(50% - 44px), transparent calc(50% + 44px)); mask-image: linear-gradient(to right, #000 calc(50% - 44px), transparent calc(50% + 44px)); }
+.u-shift { position: absolute; left: 0; top: 0; will-change: transform; }
+.u-blur { position: absolute; left: 0; top: 0; overflow: hidden; background: var(--paper); }
+.u-face.is-front .u-blur { border-radius: 22px; }
+.u-frost { position: absolute; inset: 0; z-index: 2; background: var(--paper); opacity: 0; will-change: opacity; }
+/* dark at the free edge (left), light by the crease; it slides off the page as the page opens */
+.u-veil { position: absolute; left: 0; top: 0; bottom: 0; z-index: 2; will-change: transform, opacity;
+  background: linear-gradient(to right, rgb(24 22 19) 0%, rgb(24 22 19 / .94) 36%, rgb(24 22 19 / .5) 47%, rgb(24 22 19 / .16) 54%, rgb(24 22 19 / 0) 60%); }
+.u-clone, .u-clone * { transition: none !important; animation: none !important; }
+/* the band grows from the crease (cell 64 of its own coordinates) to both sides with the hinge */
+.u-bandrow .u-band { transform-origin: calc(var(--cell, 7px) * 64) 0; }
 
 /* system strip on the right edge of either screen (HIG: island, clock, status stand vertically there) */
 .u-sysrail { position: absolute; top: 0; right: 0; bottom: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 14px; z-index: 5; pointer-events: none; }

@@ -1,4 +1,5 @@
-// E · 折叠屏的几何与节拍。编排（什么时候动哪一组）在 duo.mjs；这里只放尺寸、铰链阈值、各拍的时间表与几个小部件。
+// E · 折叠屏的几何与节拍。编排（什么时候动哪一组）在 duo.mjs；这里只放尺寸、铰链阈值、开合（FOLD：前板怎样随铰链翻、
+// 糊、暗）、各拍的时间表与几个小部件。
 // 时刻以秒计，与 forms/polish/duo-motion.md 第 3 节（故事）一一对应；“一组怎么动”的部件（同一个盒子换脸、揭开、
 // 份额细带缩放）直接用 D 的 d-motion.mjs，不另写一份。
 import { EASE, play } from './d-motion.mjs';
@@ -22,31 +23,72 @@ G.cell = (G.PW - 2 * G.gut) / 64; // one share of the 64-cell band: the band is 
  * half-folded and the halves step away from the crease (ReservedRegion .division). Constants until measured on a device.
  */
 export const HINGE = { takeover: 20, stable: 120, back: 110, half: 170, flat: 180 };
-/** Reveal progress h (0 at takeover, 1 at stable) from an angle, and back. */
-export const revealOf = angle => Math.max(0, Math.min(1, (angle - HINGE.takeover) / (HINGE.stable - HINGE.takeover)));
-export const angleOf = h => HINGE.takeover + Math.max(0, Math.min(1, h)) * (HINGE.stable - HINGE.takeover);
-/** The handle's x on the inner screen: on the outer screen's left edge when closed, on the inner screen's left edge when flat. */
-export const handleX = angle => G.OX * (1 - Math.max(0, Math.min(180, angle)) / 180);
-export const angleAtX = x => Math.max(0, Math.min(180, (1 - x / G.OX) * 180));
+/** ?hinge= is the hinge as a fraction of the whole turn: 0 closed, 0.5 the panel edge-on, 1 flat. */
+export const angleAt = h => Math.max(0, Math.min(1, h)) * HINGE.flat;
+
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const smooth = x => { const t = clamp01(x); return t * t * (3 - 2 * t); };
+/**
+ * The unfold, after the iPhone Duo's own (duo-motion.md 1.2, 3.3). It follows the hinge, frame by frame; there is no timer.
+ * The panel that carries the outer screen turns about the crease, toward you and to the left: rotateY(-θ) for a hinge of
+ * θ°, so half way its free edge comes at you and looks taller, then it lies down as the left page. The right page under
+ * it does not move a pixel: it is the same page, the same size, in the same place (content pinned in space).
+ *   camera  perspective P (pt); its x goes from the outer screen's centre (closed) to the crease (flat), so the picture
+ *           re-centres on the spread as it opens; its y a little above the middle (eye: a phone held below the eyes),
+ *           which also keeps the page that comes at you more within the window above.
+ *   front   the outer screen on the panel's face, seen until it stands edge-on (90°; then the panel shows its back).
+ *           Clear and opaque until the inner screen takes over (20°); then frosted glass: a blurred copy masked in from the
+ *           free edge toward the crease (all but the strip by the crease by 54°), a paper frost, the face fading evenly to
+ *           nothing by 88° (so the board never vanishes mid-turn) — a window onto the same page below.
+ *   back    the inner screen's left page. Blur grows with the distance from the crease as u³ (u = distance over a page
+ *           width; empirical.health: sharp by the hinge, ~48 px @3x at the free edge, an eighth of that half way) and
+ *           shrinks with the angle: 16 pt at the free edge while the page stands edge-on (90°), none by 175°. It is drawn
+ *           with three copies at fixed radii, each masked in where the wanted blur passes half way to its radius, so only
+ *           transforms and opacities change per frame. A veil, dark at the free edge and light by the crease, sweeps off
+ *           the page between 88° and 168°: the page clears from the crease outward, and darkens back from the free edge
+ *           toward the crease when it folds.
+ *   band    the 64-cell band (its boundary on the crease) grows from the crease to both sides between 120° (the spread is
+ *           reported) and 170° (no longer half-folded).
+ */
+export const FOLD = {
+  P: 2000, eye: 0.22,
+  front: { clear: HINGE.takeover, gone: 88, blur: 10, frost: 0.5, reach: 0.9 },
+  back: { radii: [2.5, 7, 14], Bmax: 16, from: 90, clear: 175, soft: 44 },
+  veil: { from: 88, gone: 168, dark: 0.9, edge: [0.92, -0.36] },
+  band: [HINGE.stable, HINGE.half],
+};
+/** Everything the fold draws at a hinge of `theta` degrees (pure: the stills and the checks read the same numbers). */
+export function foldAt(theta) {
+  const a = Math.max(0, Math.min(HINGE.flat, theta)), F = FOLD;
+  const camX = G.crease + (G.PW / 2) * (1 - smooth(a / HINGE.flat));
+  const p = clamp01((a - F.front.clear) / (F.front.gone - F.front.clear));
+  // cut: x on the face (from its crease side) where the blurred copy begins
+  const front = { alpha: 1 - p, frost: F.front.frost * smooth(p * 2), cut: G.S * (1 - F.front.reach * smooth(p * 2)) };
+  const s = clamp01((a - F.back.from) / (F.back.clear - F.back.from));
+  const Bmax = F.back.Bmax * (1 - s) ** 1.5;
+  const radii = F.back.radii, mids = radii.map((r, i) => (r + (i ? radii[i - 1] : 0)) / 2);
+  // u where each copy takes over (Infinity: not at all); cut: the same on the back face's x (0 the free edge, PW the crease)
+  const layers = mids.map(m => { const u = Bmax > 0.01 ? Math.cbrt(m / Bmax) : Infinity; return { u, cut: (1 - u) * G.PW, on: u < 1 + F.back.soft / G.PW }; });
+  const v = clamp01((a - F.veil.from) / (F.veil.gone - F.veil.from));
+  const veil = { edge: G.PW * (F.veil.edge[0] + (F.veil.edge[1] - F.veil.edge[0]) * smooth(v)), alpha: v < 1 ? F.veil.dark * (1 - 0.45 * v) : 0 };
+  const band = smooth((a - F.band[0]) / (F.band[1] - F.band[0]));
+  return { a, camX, front, Bmax, layers, veil, band };
+}
+/** The hand's pace (minimum jerk: how a hand moves from rest to rest). */
+export const minJerk = t => { const x = clamp01(t); return x * x * x * (10 - 15 * x + 6 * x * x); };
 
 /**
- * Reveal (follows the hinge, no timer). Each card's left half is a window whose right edge stays by the crease and whose
- * left edge travels from the crease to the page margin; the content is pinned at its final place. The window's content
- * goes from dark to clear by h = 0.6 (opacity only: blurred text reads as dirt); the card's Agent parts slide 18 pt toward
- * the crease and fade by the same h. Nothing crosses the fold.
+ * Settle: once, when the spread is reported (0.40 s), on the right page only (the left page is the panel's back, pinned
+ * where it lands; the band grows with the hinge, FOLD.band): the right halves compact, the 累计 bar sinks away, the folded
+ * asks fan out, the note rises, 件 turns to 份. Fold back: the settle backwards, faster (0.28 s). [start, duration]
  */
-export const REVEAL = { leave: 0.6, drift: 18, alpha0: 0.25 };
-export const edgeAt = h => (G.PW - G.gut - G.gap / 2 + G.gut) - Math.max(0, Math.min(1, h)) * (G.PW - G.gap / 2 - G.gut);
-export const revealAlpha = h => Math.min(1, REVEAL.alpha0 + (h / REVEAL.leave) * (1 - REVEAL.alpha0));
-export const leaveOf = h => Math.min(1, h / REVEAL.leave);
-
-/** Settle: once, when the spread is reported (0.40 s). Fold back: the settle backwards, faster (0.28 s). [start, duration] */
-export const SETTLE = { compact: [0, 0.28], ledger: [0, 0.20], minis: [0.08, 0.28], rows: [0.12, 0.24], hero: 0.22, band: [0.20, 0.20], total: 0.40 };
-export const UNSETTLE = { band: [0, 0.10], hero: 0.06, minis: [0, 0.20], rows: [0, 0.16], expand: [0.06, 0.22], ledger: [0, 0.14], total: 0.28 };
+export const SETTLE = { compact: [0, 0.28], ledger: [0, 0.20], minis: [0.08, 0.28], rows: [0.12, 0.24], hero: 0.22, total: 0.40 };
+export const UNSETTLE = { hero: 0.06, minis: [0, 0.20], expand: [0.06, 0.22], total: 0.28 };
 /** A release (or F, a posture button) moves the hinge on to the nearest posture: 0.36 s for half a turn, ease-out. */
 export const SNAP = { half: 0.36, min: 0.14 };
-/** The tell: the hinge at the pace of a hand (the keynote's 2.2 s for the whole turn, a little quicker here). */
-export const HAND = { open: 1.5, close: 1.1 };
+/** The tell (and unfold() / fold()): the hinge at the pace of a hand (the keynote's 2.2 s for the whole turn, a little
+ * quicker here), minimum jerk: it starts and lands softly, fastest when the panel stands edge-on. */
+export const HAND = { open: 1.5, close: 1.1, ease: minJerk };
 
 /**
  * On the spread, the beats are morph tables for d-motion's morph(): move, box, parts, out, in, fresh, flip, settle.
