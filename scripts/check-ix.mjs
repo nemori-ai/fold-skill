@@ -162,6 +162,17 @@ const PAGES = {
     cut: `document.querySelector('.st-title').textContent.startsWith('这一件') && document.querySelector('.st-side-kicker').textContent.includes('这一件')`,
     playReady: `(foldMorph.play(), new Promise(r => { const go = () => (foldSketch.index >= 5 && foldMorph.settled() ? r(1) : setTimeout(go, 50)); go(); }))`,
   },
+  // 峰值保持：一根表就是一件；挑看不出来的起落里的第一件（没有就挑峰值最高的一根），9 px 落在表的右边（命中区放宽到
+  // 表外约 10 px）；空白点在表头上方。带 ?frame= 打开不讲一遍；连播由本页计时（1.6 秒一轮）。
+  peak: {
+    hook: 'foldPeak', held: 'forms/sketches/peak.html?frame=26', play: 'forms/sketches/peak.html?frame=10',
+    prepare: null, index: 'foldSketch.index', step: 27, tabFrom: '[data-p="tell"]',
+    pick: 'foldPeak.pick()',
+    near: name => `foldPeak.nearOf(${JSON.stringify(name)}, 9)`,
+    blank: { x: 900, y: 140 },
+    cut: `document.querySelector('.st-title').textContent.startsWith('这一件') && document.querySelector('.st-side-kicker').textContent.includes('这一件')`,
+    playReady: `(foldPeak.play(), new Promise(r => { const go = () => (foldSketch.index >= 12 && foldPeak.settled() ? r(1) : setTimeout(go, 50)); go(); }))`,
+  },
 };
 
 function args(argv) {

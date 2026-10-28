@@ -1,0 +1,117 @@
+/* 07 峰值保持（完整版）. Paper, ink and greys; vermilion only for 已阅, the one move that is yours.
+   The meters are one SVG built per size (peak.mjs); a frame only sets attributes. The grey ghost is the concept layer:
+   the stretch that just fell, gone once the round settles. */
+.st-figure.pk-fig { overflow: hidden; --ix-ask: var(--ink); --ix-ask-urgent: var(--ink); --ix-font: 13px/1.5 var(--sans); --ix-q-font: 600 14px/1.35 var(--sans); --ix-t-font: 600 14.5px/1.35 var(--sans); --ix-z-peek: 6; --ix-z-detail: 7; --ix-z-leader: 5; }
+.pk-fig .ix-peek { width: 248px; box-shadow: 0 6px 18px rgb(0 0 0 / .08); }
+.pk-fig .ix-detail { box-shadow: 0 10px 28px rgb(0 0 0 / .1); }
+.pk-fig .ix-ask i, .pk-fig .ix-d-ask i { background: transparent; border: 1.4px solid var(--ink); }
+.pk-pk-tri { font: 600 12px var(--mono) !important; color: var(--ink) !important; }
+
+/* The meters */
+.pk-svg { position: absolute; left: 0; top: 0; display: block; overflow: visible; }
+.pk-grid { stroke: var(--faint); stroke-width: 1; }
+.pk-base { stroke: var(--line); stroke-width: 1; }
+.pk-tick { font: 10px var(--mono); fill: var(--ink-3); }
+.pk-unit { font: 10.5px var(--sans); fill: var(--ink-2); }
+.pk-split { stroke: var(--line); stroke-dasharray: 2 3; }
+.pk-cap { font: 10.5px var(--sans); fill: var(--ink-3); letter-spacing: .04em; }
+.pk-fold { font: 11px var(--sans); fill: var(--ink-3); }
+.pk-m { cursor: pointer; transition: opacity 100ms linear; }
+.pk-fig.is-focus .pk-m:not(.is-lit) { opacity: var(--pk-op, .7); }
+.pk-body { fill: var(--paper); stroke: var(--line); stroke-width: 1; }
+.pk-bar { fill: var(--ink); }
+.pk-ghost { fill: rgb(120 128 118); }
+.pk-peak { stroke: var(--ink); stroke-width: 2.4; }
+.pk-dash { stroke: var(--ink-2); stroke-width: 1.2; stroke-dasharray: 3 2; }
+.pk-circ circle { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
+.pk-circ text { font: 600 9.5px var(--mono); fill: var(--ink); }
+.pk-hbox { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
+.pk-hnum { font: 600 12px var(--mono); fill: var(--ink); }
+.pk-m.is-black .pk-hbox { fill: var(--ink); }
+.pk-m.is-black .pk-hnum { fill: var(--paper); }
+.pk-name { font: 600 12px var(--sans); fill: var(--ink); }
+.pk-tri { font: 10.5px var(--mono); fill: var(--ink-2); }
+.pk-gone { font: 10px var(--sans); fill: var(--ink-3); }
+.pk-ring { fill: none; stroke: var(--ink); stroke-width: 2; visibility: hidden; rx: 4px; }
+.pk-m.is-key .pk-ring { visibility: visible; }
+
+/* The left column: the hero number, the anchor, 已阅 at the bottom left. */
+.pk-left { position: absolute; left: 0; top: 0; bottom: 0; z-index: 2; display: flex; flex-direction: column; padding-top: 2px; }
+.pk-k { font-size: 11.5px; color: var(--ink-2); min-height: 17px; }
+.pk-hero { display: flex; align-items: baseline; gap: 6px; height: 80px; }
+.pk-hero b { font: 600 76px/1 var(--sans); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.pk-hero span { font: 500 22px var(--sans); }
+.pk-hero.is-empty b { color: var(--ink-3); }
+.pk-hero.is-wait b { font-size: 56px; color: var(--ink-2); }
+.pk-hero.is-wait span { font: 500 15px var(--mono); color: var(--ink-2); }
+.pk-lede { margin: 4px 0 4px; font-size: 12.5px; line-height: 1.6; color: var(--ink-2); }
+.pk-list { margin: 2px 0 0; padding: 0; list-style: none; }
+.pk-list li { display: grid; grid-template-columns: auto 1fr auto; gap: 0 8px; align-items: baseline; padding: 3px 5px; margin: 0 -5px; border-radius: 3px; cursor: pointer; }
+.pk-list li b { font: 600 13px var(--sans); white-space: nowrap; }
+.pk-list li span { font: 12px var(--mono); color: var(--ink); white-space: nowrap; }
+.pk-list li i { font-style: normal; font-size: 13px; }
+.pk-list li:hover, .pk-list li.is-lit { background: var(--faint); }
+.pk-most { margin: 6px 0 0; font-size: 12px; line-height: 1.6; color: var(--ink-2); }
+.pk-demo { margin: 8px 0 0; padding-left: 8px; border-left: 1px solid var(--ink); font-size: 11.5px; line-height: 1.55; color: var(--ink-2); }
+.pk-anchor { margin-top: 16px; padding-top: 10px; border-top: 1px solid var(--line); }
+.pk-anchor h4 { margin: 0 0 3px; font-size: 11px; letter-spacing: .06em; color: var(--ink-2); font-weight: 600; }
+.pk-anchor h4 small { margin-left: 4px; font-weight: 400; color: var(--ink-3); letter-spacing: 0; }
+.pk-when { margin: 0; font-size: 12.5px; }
+.pk-when b { font: 600 12.5px var(--mono); }
+.pk-why { margin: 3px 0 7px; font-size: 11.5px; line-height: 1.55; color: var(--ink-2); }
+.pk-pick { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-2); }
+.pk-pick select { flex: 1; min-width: 0; padding: 2px 4px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); color: var(--ink); font: 11px var(--mono); }
+.pk-act-part { margin-top: auto; padding-bottom: 4px; }
+.pk-read { display: inline-block; padding: 7px 14px; border: 1.5px solid var(--vermilion); border-radius: 4px; background: transparent; color: var(--vermilion); font: 600 12.5px var(--sans); cursor: pointer; transition: background-color 120ms, color 120ms; }
+.pk-read:hover:not([disabled]), .pk-read.is-press { background: var(--vermilion); color: var(--paper); }
+.pk-read[disabled] { opacity: .45; cursor: default; }
+.pk-read.is-done { border-color: var(--ink-3); color: var(--ink); }
+.pk-read.is-done:hover { background: var(--faint); color: var(--ink); }
+.pk-note { margin: 8px 0 0; font-size: 11px; line-height: 1.6; color: var(--ink-3); }
+
+/* Side panel */
+.pk-side-when { margin: 0 !important; }
+.pk-side-when b { font: 600 12.5px var(--mono); }
+.pk-chips { display: flex; flex-direction: column; gap: 2px; }
+.pk-chip { display: grid; grid-template-columns: auto 1fr auto; gap: 0 8px; align-items: baseline; padding: 3px 0; border: 0; background: none; text-align: left; }
+.pk-chip b { font: 600 12.5px var(--sans); }
+.pk-chip span { font: 11.5px var(--mono); }
+.pk-chip i { font-style: normal; }
+.pk-chip:hover b { text-decoration: underline; text-underline-offset: 2px; }
+.pk-closed li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 8px; padding: 3px 0; border-top: 1px solid var(--faint); font-size: 12px; line-height: 1.45; }
+.pk-closed time { font: 10.5px var(--mono); color: var(--ink-2); }
+.pk-closed small { grid-column: 2; font-size: 10.5px; color: var(--ink-2); }
+.pk-asks ul { margin: 0; padding: 0; list-style: none; }
+.pk-asks li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 6px; align-items: baseline; padding: 3px 0; border-top: 1px solid var(--faint); line-height: 1.45; }
+.pk-asks li > span { font-size: 12px; }
+.pk-asks li > small { grid-column: 1; font-size: 10.5px; color: var(--ink-2); }
+.pk-asks li > a { grid-row: 1; grid-column: 2; font: 600 11px var(--mono); color: var(--ink); white-space: nowrap; text-underline-offset: 3px; }
+.pk-steps li { display: grid; grid-template-columns: auto 24px minmax(0, 1fr); gap: 0 8px; align-items: baseline; padding: 3px 0; border-top: 1px solid var(--faint); font-size: 11.5px; line-height: 1.4; }
+.pk-steps li.is-peak b { color: var(--paper); background: var(--ink); border-radius: 2px; text-align: center; }
+.pk-steps li.is-anchor time { color: var(--ink-3); }
+.pk-steps button { border: 0; background: none; padding: 0; text-align: left; }
+.pk-steps time { font: 10.5px var(--mono); color: var(--ink-2); white-space: nowrap; }
+.pk-steps b { font: 600 11px var(--mono); }
+.pk-steps span { color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pk-trend .pk-win { fill: none; stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 2; vector-effect: non-scaling-stroke; }
+.pk-trend rect.is-away { fill: var(--ink-2); }
+.pk-fine { font-size: 11px; }
+.pk-more { margin-top: 14px; }
+.pk-more > summary { font-size: 11px; letter-spacing: .04em; color: var(--ink-2); }
+
+/* Detail card */
+.pk-rounds { display: block; width: 100%; height: 52px; }
+.pk-rounds rect { fill: oklch(0.28 0.025 155 / .3); }
+.pk-rounds rect.is-anchor { fill: none; stroke: var(--ink-2); stroke-dasharray: 2 1.5; }
+.pk-rounds rect.is-peak { fill: var(--ink); }
+.pk-rounds rect.is-now { fill: var(--ink-2); }
+.pk-rounds text { font: 8.5px var(--mono); fill: var(--ink-3); }
+.pk-d-p { margin: 0; font-size: 12px; line-height: 1.5; }
+.pk-d-said { display: block; font: 10.5px var(--sans); color: var(--ink-2); }
+.pk-d-flag { margin-top: 4px !important; color: var(--ink) !important; }
+
+/* Bar and key */
+.pk-tell { border: 1px solid var(--line); border-radius: 6px; background: transparent; padding: 4px 10px; font-size: 12px; color: var(--ink); white-space: nowrap; transition: background-color 140ms, border-color 140ms; }
+.pk-tell:hover { border-color: var(--ink-3); background: var(--faint); }
+.pk-tell[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.st-key .pk-key-ghost { width: 10px; height: 12px; background: rgb(120 128 118 / .35); vertical-align: -2px; }
