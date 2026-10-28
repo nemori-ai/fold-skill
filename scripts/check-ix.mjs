@@ -726,8 +726,8 @@ async function runDuo(cdp, base, data, name) {
   g = await grip();
   await drag(g.x, g.y, -0.62 * 475.5 * kscale, 0, 320); await wait(900);
   const opened = await state();
-  check('拖把手：跟手（54°，左半开到一半），松手不到 90° 落回合上；过 90° 落到书本', mid.angle === 54 && mid.phase === 'reveal' && mid.windows > 0 && back.phase === 'closed' && opened.phase === 'book' && opened.angle === 180,
-    { mid: [mid.angle, mid.phase, mid.windows], back: back.phase, opened: [opened.phase, opened.angle] });
+  check('拖把手：跟手（54°，前板跟着转到 54°），松手不到 90° 落回合上；过 90° 落到书本', mid.angle === 54 && mid.phase === 'reveal' && mid.panel === 54 && back.phase === 'closed' && back.panel === 0 && opened.phase === 'book' && opened.angle === 180 && opened.panel === 0,
+    { mid: [mid.angle, mid.phase, mid.panel], back: [back.phase, back.panel], opened: [opened.phase, opened.angle, opened.panel] });
   // 23–24: while playing, a long press holds the round; → folds the summary at once and goes to the next round.
   await open(`frame=${F.held}`);
   await ev(`${H}.model.togglePlay(), 1`); await wait(150);
@@ -757,12 +757,30 @@ async function runDuo(cdp, base, data, name) {
   check('换轮后回执跟着条目走、过折痕（作答那一帧 → 下一轮）', r1.ok, r1);
   const r2 = await follows(F.follow);
   check('再换一轮：回执仍跟着条目走', r2.ok, r2);
-  // 27: ?hinge= holds the reveal at that point: the right page is the outer screen, the left halves partly open.
+  // 27–28: ?hinge= holds the fold at 180° × hinge. The panel turns about the crease by exactly the hinge's angle (read back
+  // from its computed transform) and the right page is still the outer screen; the left page clears with the angle: at
+  // 108° more of it is blurred (more blurred copies show, the sharp part by the crease is narrower) and the veil is darker
+  // than at 144°, and lying flat (180°) the panel is down.
+  const panelDom = `(() => { const f = document.querySelector('.u-fold3d'), m = new DOMMatrixReadOnly(getComputedStyle(document.querySelector('.u-panel')).transform);
+    const veil = document.querySelector('.u-veil'), layers = [...document.querySelectorAll('.u-face.is-back .u-mask')];
+    return { up: f.classList.contains('is-up') && getComputedStyle(f).visibility === 'visible', turn: Math.round(Math.atan2(m.m13, m.m11) * 1800 / Math.PI) / 10,
+      veil: veil ? +getComputedStyle(veil).opacity : null, blurred: layers.filter(l => +getComputedStyle(l).opacity > 0).length,
+      edge: layers.length ? Math.round(new DOMMatrixReadOnly(getComputedStyle(layers[0]).transform).m41) : null }; })()`;
   await open(`frame=${F.held}&hinge=0.4`);
   s = await state();
-  const outerOn = await ev(`!document.querySelector('.u-outer').classList.contains('is-off')`);
-  check('?hinge=0.4：定格在揭开四成（60°），右页仍是外屏', s.phase === 'reveal' && s.angle === 60 && s.windows > 0 && outerOn && /件/.test(s.hero), { ...s, outerOn });
-  // 28: reduced motion: fold and unfold go straight to their end states, nothing animates.
+  const outerOn = await ev(`!document.querySelector('.u-outer').classList.contains('is-off')`), d4 = await ev(panelDom);
+  check('?hinge=0.4：定格在 72°，前板绕折痕转的角度与铰链一致，右页仍是外屏', s.phase === 'reveal' && s.angle === 72 && s.panel === 72 && d4.up && Math.abs(d4.turn - 72) < 0.6 && outerOn && /件/.test(s.hero), { ...s, outerOn, d4 });
+  await open(`frame=${F.held}&hinge=0.6`);
+  const s6 = await state(), d6 = await ev(panelDom);
+  await open(`frame=${F.held}&hinge=0.8`);
+  const s8 = await state(), d8 = await ev(panelDom);
+  await open(`frame=${F.held}&hinge=1`);
+  const d10 = await ev(panelDom), s10 = await state();
+  check('左页随角度变清变亮：108° 比 144° 更糊（模糊副本更多、清楚的一段更窄）、更暗，180° 平放时前板收起',
+    d6.up && d8.up && Math.abs(d6.turn - 108) < 0.6 && Math.abs(d8.turn - 144) < 0.6 && d6.blurred > d8.blurred && d6.edge > d8.edge && d6.veil > d8.veil
+      && s6.fold.blur > s8.fold.blur && s6.fold.veil > s8.fold.veil && !d10.up && s10.panel === 0 && s10.phase === 'book',
+    { d6, d8, d10, f6: s6.fold, f8: s8.fold });
+  // 29: reduced motion: fold and unfold go straight to their end states, nothing animates.
   await S('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
   await open(`frame=${F.held}`);
   await ev(`${H}.posture('closed'), 1`); await wait(60);
@@ -771,7 +789,7 @@ async function runDuo(cdp, base, data, name) {
   const rb = await state(), rb2 = await ev(`document.getAnimations().length`);
   check('减少动态：合上与展开直接到终态，不动画', rc.phase === 'closed' && rb.phase === 'book' && ra === 0 && rb2 === 0, { rc: rc.phase, rb: rb.phase, ra, rb2 });
   await S('Emulation.setEmulatedMedia', { features: [] });
-  // 29: opened by itself (no frame, no referrer): the tell plays once; any key jumps to its end (closed, next round, answered).
+  // 30: opened by itself (no frame, no referrer): the tell plays once; any key jumps to its end (closed, next round, answered).
   await open('', 1400);
   const telling = await state();
   await key('x'); await wait(700);
