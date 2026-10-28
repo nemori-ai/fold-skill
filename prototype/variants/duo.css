@@ -20,7 +20,7 @@
 .u-lit, .u-unlit { position: absolute; top: 0; height: 669px; border-radius: 22px 0 0 22px; pointer-events: none; opacity: 0; }
 .u-lit { background: var(--paper); box-shadow: 0 0 0 1px #0000000b; z-index: 0; }
 .u-unlit { background: var(--u-shade); z-index: 0; }
-.u-wins { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.u-wins { position: absolute; left: 0; top: 0; right: 0; height: 669px; z-index: 3; pointer-events: none; overflow: hidden; border-radius: 22px 0 0 22px; }
 .u-win { position: absolute; overflow: hidden; }
 .u-win-content { position: absolute; top: 0; margin: 0 !important; box-sizing: border-box; }
 .u-turn-ghost { z-index: 15; pointer-events: none; }

@@ -133,6 +133,7 @@
     b: ['期限落在此刻之后的哪里，谁先到', 'schedule、choose，任何事项都可稍后提醒', 'temporal'],
     c: ['可以推后的事沉下去，到点浮起', 'defer；其余用回应组件', 'temporal'],
     d: ['离开半天回来，先答最急的 3 件', 'approve、choose 一键；confirm、reply、schedule、defer', 'home'],
+    duo: ['展开折叠屏：每件等你的事沿折痕分成两半，左半 Agent 为它做了什么，右半要你答什么', '与 D 同一套（approve、choose 一键；confirm、reply、schedule、defer）；右半原地收成回执，下一轮整理回执过折痕到 Agent 在办', 'duo-motion'],
     watch: ['抬腕两秒：要不要现在掏手机', 'confirm 与两项的 choose；其余转到手机', 'home'],
     multiples: ['复盘两周注意力怎样移动', '不承载作答；黑点 = 一个开着的问题；悬停一帧或一格看概要，点击展开，开到最后的问题旁的“去回答 →”链到同一帧的 D', 'multiples-motion'],
     lineage: ['追一件事的来龙去脉：改名、撤下、并入', '不承载作答；标出问题的开与闭', 'review-a'],
@@ -149,12 +150,13 @@
   };
   const desk = (id, name, href, frame) => ({ id, name, href, embed: { embed: 1 }, frame, see: README[id][0], answers: README[id][1], notes: README[id][2] });
   const groups = [
-    { title: '原版与四个方案', note: '原版树图与 A/B/C/D 共用一套回放与底栏；这里隐藏了它们之间的方案切换栏，其余与单独打开一致。', sections: [
+    { title: '原版与五个方案', note: '原版树图与 A/B/C/D/E 共用一套回放与底栏；这里隐藏了它们之间的方案切换栏，其余与单独打开一致。', sections: [
       desk('original', '原版树图', 'index.html', at(26)),
       desk('a', 'A 空间排布', 'index.html?variant=a', at(26)),
       desk('b', 'B 时间展开', 'index.html?variant=b', at(26)),
       desk('c', 'C 流动形态', 'index.html?variant=c', at(25)),
       { ...desk('d', 'D 手机首页', 'index.html?variant=d', at(26)), size: 'is-phone' },
+      desk('duo', 'E 折叠屏', 'index.html?variant=duo', at(26, 4)),
     ] },
     { title: '第一轮留下的形式', note: '概念卡收起（card=0），页头的帧导航与“状态”仍可用。', sections: [
       { id: 'watch', name: card('watch').name, href: 'forms/watch.html', embed: { card: 0 }, frame: at(26), see: card('watch').tagline, answers: README.watch[1], notes: README.watch[2], size: 'is-watch' },

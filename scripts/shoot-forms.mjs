@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const FORMS = {
-  original: 'index.html', a: 'index.html?variant=a', b: 'index.html?variant=b', c: 'index.html?variant=c', d: 'index.html?variant=d',
+  original: 'index.html', a: 'index.html?variant=a', b: 'index.html?variant=b', c: 'index.html?variant=c', d: 'index.html?variant=d', duo: 'index.html?variant=duo',
   watch: 'forms/watch.html', multiples: 'forms/multiples.html', gallery: 'forms/index.html', respond: 'forms/respond.html',
   timing: 'forms/sketches/timing.html', lineage: 'forms/sketches/lineage.html', yield: 'forms/sketches/yield.html',
   provenance: 'forms/sketches/provenance.html', notation: 'forms/sketches/notation.html',

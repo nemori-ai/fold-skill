@@ -304,6 +304,9 @@ export function mount(host, model) {
    */
   function choreograph(ctx, before, after, { replaced, removed }, { t, tOf = () => t, fromOf = () => null, enter, exit, used = new Set() }) {
     const k = scale();
+    // every list's rect, read once before the first write: a read after each morph would lay the page out again each time
+    const rects = new Map();
+    for (const { node } of after.values()) if (node.parentElement && !rects.has(node.parentElement)) rects.set(node.parentElement, node.parentElement.getBoundingClientRect());
     for (const [key, { m: now, node: el }] of after) {
       const src = fromOf(key);
       const prev = before.get(src || key);
@@ -312,15 +315,14 @@ export function mount(host, model) {
       const old = src ? (removed.get(src) || null) : (replaced.get(key) || null);
       const moved = Math.abs(prev.m.left - now.left) > 0.5 || Math.abs(prev.m.top - now.top) > 0.5 || Math.abs(prev.m.height - now.height) > 1;
       if (!old && !moved) continue;
-      morph(ctx, { el, was: prev.m, now, old, k, t: tOf(key, el, Boolean(src)), hostRect: el.parentElement.getBoundingClientRect() });
+      morph(ctx, { el, was: prev.m, now, old, k, t: tOf(key, el, Boolean(src)), hostRect: rects.get(el.parentElement) });
     }
+    const parent = [...after.values()][0]?.node.parentElement;
     for (const [key, { m }] of before) {
       if (after.has(key) || used.has(key)) continue;
       const node = removed.get(key);
-      if (!node || !exit) continue;
-      const parent = [...after.values()][0]?.node.parentElement;
-      if (!parent) continue;
-      const ghost = ghostOf(node, m, k, parent, 0);
+      if (!node || !exit || !parent) continue;
+      const ghost = ghostOf(node, m, k, parent, 0, rects.get(parent));
       ctx.clean(() => ghost.remove());
       exit(ghost, key);
     }
@@ -338,8 +340,12 @@ export function mount(host, model) {
     settle(beat);
     const layer = visibleLayer(), animate = name !== 'none' && !reduced();
     const ctx = animate ? newCtx() : null;
-    renderOuter(v, sh, head, layer === 'outer' ? ctx : null, name, opts);
-    renderBook(v, sh, head, layer === 'book' ? ctx : null, name, opts);
+    // Only the layer on screen is redrawn on a beat (the reveal also needs the spread it cuts its windows from); the other
+    // is brought up to date when it next shows (syncLayers), so a landing does the work of one screen, not two.
+    const all = name === 'none';
+    if (all || layer === 'outer') { renderOuter(v, sh, head, layer === 'outer' ? ctx : null, name, opts); stale.outer = false; } else stale.outer = true;
+    if (all || layer === 'book' || phase === 'reveal') { renderBook(v, sh, head, layer === 'book' ? ctx : null, name, opts); stale.book = false; } else stale.book = true;
+    for (const c of host.querySelectorAll('.u-clock')) c.textContent = clock(head.at);
     if (posture === 'table') renderTable(v, sh, layer === 'table' ? ctx : null, name, opts);
     if (phase === 'reveal') buildWindows();
     renderRail();
@@ -353,10 +359,12 @@ export function mount(host, model) {
       if (pulsed.has(tag) || reduced()) continue;
       pulsed.add(tag);
       el.style.setProperty('--glow-delay', `${delay}s`);
-      el.classList.remove('is-pulse'); void el.offsetWidth; el.classList.add('is-pulse');
+      if (el.classList.contains('is-pulse')) { el.classList.remove('is-pulse'); void el.offsetWidth; } // restart only when it is already on
+      el.classList.add('is-pulse');
     }
   };
 
+  let outerBandW = 0;
   function renderOuter(v, sh, head, ctx, name, opts) {
     const built = buildView(v);
     const before = ctx ? snapshotOf($('.d-cards'), $('.d-rows'), $('.d-known')) : null;
@@ -372,7 +380,8 @@ export function mount(host, model) {
     for (const c of host.querySelectorAll('.u-clock')) c.textContent = clock(head.at);
     $('.u-outer .d-fold-text').innerHTML = head.fold;
     const bandEl = $('.u-outer .d-band'), B = name === 'answer' ? BEATS.answer : name === 'undo' ? BEATS.undo : name === 'turn' ? BEATS.turn : BEATS.local;
-    band(ctx || { add: () => {}, clean: () => {} }, bandEl, head.segs, bandEl.offsetWidth || 300, ctx && name === 'turn' ? B.band : null);
+    outerBandW ||= bandEl.offsetWidth; // read once: the bar does not change width
+    band(ctx || { add: () => {}, clean: () => {} }, bandEl, head.segs, outerBandW || 300, ctx && name === 'turn' ? B.band : null);
     if (!ctx) return;
     const now = headline.querySelector('.d-count')?.textContent ?? null;
     if (was != null && now != null && was !== now) rollCount(ctx, headline, was, B.hero);
@@ -457,6 +466,7 @@ export function mount(host, model) {
    */
   function land(ctx, before, after, { replaced, removed }) {
     const B = BOOK.land, k = scale(), used = new Set();
+    const view = iscroll.getBoundingClientRect(), spreadRect = spread.getBoundingClientRect(); // read before the beat writes anything
     const fromOf = pairing(before);
     const lead = new Set();
     for (const key of after.keys()) { const src = fromOf(key); if (src?.startsWith('L:') && key.startsWith('i:')) lead.add(idOf(key)); }
@@ -476,13 +486,15 @@ export function mount(host, model) {
         const row = after.get(`i:${id}`);
         if (key.startsWith('R:') && receipt && row) {
           const target = row.node.querySelector('[data-part="receipt"]');
-          const from = receipt.getBoundingClientRect(), to = (target || row.node).getBoundingClientRect();
+          // where it is and where it goes, from the measures taken with everything else (no layout read after a write)
+          const at = (m, name) => { const p = m.parts?.get(name); return p ? { left: m.left + p.x * k, top: m.top + p.y * k, width: p.w * k, height: p.h * k } : { left: m.left, top: m.top, width: m.width, height: m.height }; };
+          const from = at(before.get(key).m, 'receipt'), to = at(row.m, 'receipt');
           // the row is off the page (below the fold of the list): the receipt leaves by the left page's bottom edge instead
-          const view = iscroll.getBoundingClientRect(), off = to.top > view.bottom - 24;
+          const off = to.top > view.bottom - 24;
           const dx = (to.left - from.left) / k, dy = ((off ? view.bottom - from.height * 0.6 : to.top) - from.top) / k;
           // Only the receipt travels: lift it out of the half's ghost so the box can fade on its own.
           const fly = receipt.cloneNode(true);
-          ghostOf(fly, from, k, ghost.parentElement, 4);
+          ghostOf(fly, from, k, ghost.parentElement, 4, spreadRect);
           fly.classList.remove('is-face'); fly.classList.add('u-fly'); fly.style.visibility = 'visible';
           // a paper chip round it, so it reads as one thing crossing the fold
           Object.assign(fly.style, { left: `${parseFloat(fly.style.left) - 10}px`, top: `${parseFloat(fly.style.top) - 7}px`, width: 'max-content', height: `${parseFloat(fly.style.height) + 14}px` });
@@ -530,15 +542,19 @@ export function mount(host, model) {
   let winList = [];
   /** Windows over the left page: one per card on the outer screen, its content the book's left half, pinned where it will be. */
   function buildWindows() {
+    syncLayers();
     wins.replaceChildren();
     winList = [];
     const zoneCards = [...outer.querySelectorAll('.d-cards > .d-card')];
-    const H = G.L;
+    // only what the outer screen shows of a card opens a window: its list ends at the 累计 bar
+    const v = devRect(oscroll);
     for (const card of zoneCards) {
       const id = card.dataset.id, L = spread.querySelector(`[data-key="L:${CSS.escape(id)}"]`);
       if (!L) continue;
-      const c = devRect(card), l = devRect(L);
-      if (c.y > H || c.y + c.h < 0) continue;
+      const full = devRect(card), l = devRect(L);
+      const top = Math.max(full.y, v.y), bottom = Math.min(full.y + full.h, v.y + v.h);
+      if (bottom - top < 4) continue;
+      const c = { x: full.x, y: top, w: full.w, h: bottom - top, cut: top - full.y };
       const win = document.createElement('div');
       win.className = 'u-win';
       const content = L.cloneNode(true);
@@ -571,6 +587,7 @@ export function mount(host, model) {
       const left = Math.max(w.L.x, edge), width = Math.max(0, w.L.x + w.L.w - left);
       Object.assign(w.win.style, { left: `${left}px`, top: `${w.card.y}px`, width: `${width}px`, height: `${w.head ? w.L.h : w.card.h}px`, visibility: on ? 'visible' : 'hidden' });
       w.content.style.left = `${w.L.x - left}px`;
+      w.content.style.top = `${-(w.card.cut || 0)}px`;
       w.content.style.opacity = String(alpha);
     }
     for (const p of agentParts()) {
@@ -582,7 +599,14 @@ export function mount(host, model) {
     Object.assign(lit.style, { left: `${boundary}px`, width: `${G.W - boundary}px`, opacity: angle >= HINGE.takeover ? '1' : '0' });
     Object.assign(unlit.style, { left: `${boundary}px`, width: `${Math.max(0, G.OX - boundary)}px`, opacity: angle > 0 && angle < HINGE.takeover ? '1' : '0' });
   }
+  const stale = { outer: false, book: false };
+  function syncLayers() {
+    if (!latest) return;
+    if (stale.outer) { stale.outer = false; renderOuter(latest.v, latest.sh, latest.head, null, 'none', {}); }
+    if (stale.book) { stale.book = false; renderBook(latest.v, latest.sh, latest.head, null, 'none', {}); }
+  }
   function showLayers() {
+    syncLayers();
     const book = posture !== 'table' && phase === 'book', outerOn = posture !== 'table' && phase !== 'book';
     inner.classList.toggle('is-on', book);
     outer.classList.toggle('is-off', !outerOn);
@@ -629,7 +653,7 @@ export function mount(host, model) {
     for (const p of agentParts()) { p.style.filter = ''; p.style.translate = ''; }
     iscroll.scrollTop = 0;
     showLayers();
-    renderBook(latest.v, latest.sh, latest.head, null, 'none', {});
+    stale.book = false; renderBook(latest.v, latest.sh, latest.head, null, 'none', {});
     renderRail();
     if (!animate) return;
     const ctx = newCtx();
@@ -743,7 +767,7 @@ export function mount(host, model) {
       angle = name === 'closed' ? 0 : 180;
       winList = []; wins.replaceChildren();
       if (phase === 'closed') applyReveal(0);
-      renderBook(latest.v, latest.sh, latest.head, null, 'none', {});
+      stale.book = false; renderBook(latest.v, latest.sh, latest.head, null, 'none', {});
       showLayers();
       if (animate) turnIn(fromTable, true);
       renderRail(); renderGrip();
@@ -780,7 +804,9 @@ export function mount(host, model) {
     const w = posture === 'table' ? G.PH : G.W, h = posture === 'table' ? G.W : G.L;
     device.style.width = `${w}px`; device.style.height = `${h}px`;
     const room = area.getBoundingClientRect();
-    const k = Math.max(0.3, Math.min(1.1, room.width / w, (innerHeight - room.top - window.scrollY - 104) / h)); // the shell's switcher sits at the bottom
+    // the shell's switcher sits at the bottom of the window (hidden when embedded in all.html or the site's viewer)
+    const bar = document.querySelector('.lab-switcher'), reserve = bar && getComputedStyle(bar).display !== 'none' ? 104 : 24;
+    const k = Math.max(0.3, Math.min(1.1, room.width / w, (innerHeight - room.top - window.scrollY - reserve) / h));
     device.style.setProperty('--k', k.toFixed(4));
     device.style.setProperty('--dx', `${Math.max(0, (room.width - w * k) / 2).toFixed(1)}px`);
     area.style.height = `${Math.ceil(h * k) + 8}px`;
@@ -893,18 +919,20 @@ export function mount(host, model) {
     };
     if (detail.id === id) { const top = panel.querySelector('.d-detail-body').scrollTop; fill(); panel.querySelector('.d-detail-body').scrollTop = top; return; }
     const switching = Boolean(detail.id) && !panel.hidden;
+    // where the detail grows from, read before the panel is filled (a read after it would lay the page out again)
+    const from = detail.origin?.isConnected ? detail.origin : elOf(id), originRect = !switching && from ? devRect(from) : null;
     detail.id = id;
     fill();
     markOpen(id);
     if (switching) { if (!reduced()) panel.animate([{ opacity: 0.3 }, { opacity: 1 }], { duration: 180, easing: EASE }); return; }
-    openPanel();
+    openPanel(originRect);
   }
   function markOpen(id) {
     for (const el of host.querySelectorAll('.is-open')) el.classList.remove('is-open');
     if (id) for (const el of host.querySelectorAll(`[data-id="${CSS.escape(id)}"]`)) if (el.matches(ITEMS)) el.classList.add('is-open');
     device.classList.toggle('is-detail', Boolean(id));
   }
-  function openPanel() {
+  function openPanel(originRect = null) {
     settle(detailCtx);
     hidePeek(true);
     const r = panelRect();
@@ -917,7 +945,7 @@ export function mount(host, model) {
     const ctx = newCtx();
     detailCtx = ctx;
     panel.classList.add('is-growing');
-    const o = devRect(origin);
+    const o = originRect || devRect(origin);
     const box = makeBox(device, { bg: 'var(--paper)', r: 20 }, Math.max(o.w, r.w));
     box.el.classList.add('u-detail-box');
     box.animate(ctx, o, o, DETAIL.pop);
