@@ -1,0 +1,81 @@
+/* 11 结绳（第四轮候选 06）. The whole khipu is drawn on one canvas (khipu.mjs); the DOM here is the side panel, the
+   cards of the interaction module, the ← 根层 button over the opened frame and composite's note. Ink only; vermilion
+   has one meaning on this page: a question that is open now (the small square on the cord, and in the cards). */
+.st-figure { overflow: hidden; }
+.k-canvas { position: absolute; left: 0; top: 0; display: block; }
+.st-figure { --ix-ask: var(--vermilion); --ix-ask-urgent: var(--vermilion); --ix-font: 13px/1.5 var(--sans); --ix-q-font: 600 14px/1.35 var(--sans); --ix-t-font: 600 14.5px/1.35 var(--sans); --ix-z-peek: 6; --ix-z-detail: 7; --ix-z-leader: 5; }
+.st-figure .ix-peek { width: 262px; box-shadow: 0 6px 18px rgb(0 0 0 / .08); }
+.st-figure .ix-detail { box-shadow: 0 10px 28px rgb(0 0 0 / .1); }
+.k-pk-line { margin-top: 3px; padding-top: 3px; border-top: 1px solid var(--ix-rule); white-space: normal; }
+.k-kids li b { white-space: nowrap; }
+.k-kids li.k-gk { padding-left: 12px; }
+.k-kids li.k-gk span { color: var(--ink-2); }
+.k-chain { margin: 0; font: 11px/1.5 var(--mono); color: var(--ink); }
+.k-drill-btn { margin-top: 7px; border: 1px solid var(--ink); border-radius: 4px; background: var(--paper); padding: 3px 9px; font: 500 11.5px var(--sans); color: var(--ink); cursor: pointer; }
+.k-drill-btn:hover, .k-drill-btn:focus-visible { background: var(--ink); color: var(--paper); }
+
+/* Over the canvas: the way back from an opened layer, and composite's note that it has no layers. */
+.k-ui { position: absolute; z-index: 4; }
+.k-ui[hidden] { display: none; }
+.k-back button { border: 1px solid var(--ink-3); border-radius: 4px; background: var(--paper); padding: 2px 8px; font: 500 11.5px var(--sans); color: var(--ink); cursor: pointer; }
+.k-back button:hover, .k-back button:focus-visible { border-color: var(--ink); }
+.k-note { max-width: 420px; padding: 8px 12px 9px; border-left: 1.5px solid var(--ink); font-size: 12px; line-height: 1.55; color: var(--ink-2); }
+.k-note b { display: block; margin-bottom: 2px; font-size: 12.5px; color: var(--ink); }
+.k-note p { margin: 0; }
+.k-note a { color: var(--ink); text-underline-offset: 3px; }
+
+/* The bar's tools: tell the story again, switch dataset. */
+.k-tell { border: 1px solid var(--line); border-radius: 6px; background: transparent; padding: 4px 10px; font-size: 12px; color: var(--ink); white-space: nowrap; cursor: pointer; transition: background-color 140ms, border-color 140ms; }
+.k-tell:hover { border-color: var(--ink-3); background: var(--faint); }
+.k-tell[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.k-data { margin-left: 8px; font-size: 12px; color: var(--ink-2); white-space: nowrap; text-underline-offset: 3px; }
+.k-data:hover, .k-data:focus-visible { color: var(--ink); }
+
+/* The key. */
+.st-key svg { vertical-align: -4px; margin-right: 5px; }
+.st-key .k-key-ask { display: inline-block; width: 7px; height: 7px; background: var(--vermilion); margin-right: 5px; vertical-align: 0; }
+.st-key .k-key-grey { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: rgb(120 128 118 / .85); margin-right: 5px; vertical-align: 0; box-shadow: -6px 0 0 -1.5px rgb(120 128 118 / .3); margin-left: 6px; }
+
+/* Side panel: this round. The hero number keeps its old value until the bead has reached the deepest cord. */
+.k-ov[data-phase="pre"] .k-post, .k-ov[data-phase="post"] .k-pre, .k-ov[data-hero="pre"] .k-hero-post, .k-ov[data-hero="post"] .k-hero-pre { display: none !important; }
+.k-hero { margin: 2px 0 10px; text-align: center; }
+.k-hero > small { font-size: 11px; color: var(--ink-2); }
+.k-hero-n { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 2px 0; }
+.k-hero-n b { font: 500 56px/1 var(--mono); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.k-hero-n span { font-size: 12px; color: var(--ink-2); }
+.k-hero-chain { margin: 0 !important; font: 11px/1.5 var(--mono); color: var(--ink); }
+.k-hero-moved { margin: 4px 0 0 !important; font-size: 12px; color: var(--ink); }
+.k-hero-note { margin: 4px 0 0 !important; font-size: 11.5px; color: var(--ink-2); }
+.k-none { margin: 2px 0 10px; padding: 8px 10px; border-left: 1.5px solid var(--ink); font-size: 12px; color: var(--ink-2); }
+.k-none b { display: block; color: var(--ink); font-size: 13px; }
+.k-none p { margin: 2px 0 0; }
+.k-none a { color: var(--ink); text-underline-offset: 3px; }
+.k-sum { margin: 0 0 6px !important; font: 11.5px/1.6 var(--mono); text-align: center; }
+.k-sum b { font-weight: 600; }
+.k-inside { margin: 0 0 8px !important; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; font-size: 11.5px; color: var(--ink-2); }
+.k-inside b { color: var(--ink); }
+.k-inside button { margin-left: 6px; border: 0; background: none; padding: 0; font: 600 11px var(--sans); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.k-layers ul, .k-asks ul, .k-list, .k-closes { margin: 0; padding: 0; list-style: none; }
+.k-layers li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 8px; align-items: baseline; padding: 3px 0; border-top: 1px solid var(--faint); }
+.k-layers li button { border: 1px solid var(--line); border-radius: 4px; background: var(--paper); padding: 1px 7px; font: 500 11.5px var(--sans); color: var(--ink); cursor: pointer; }
+.k-layers li button b { font: 600 11px var(--mono); }
+.k-layers li button:hover, .k-layers li.is-on button { border-color: var(--ink); }
+.k-layers li span { font: 10.5px var(--mono); color: var(--ink-2); }
+.k-layers li small { grid-column: 2; font-size: 10.5px; color: var(--ink-3); }
+.k-asks li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 6px; align-items: baseline; padding: 3px 0; border-top: 1px solid var(--faint); line-height: 1.45; }
+.k-asks li > b { font: 500 10px var(--mono); padding: 0 4px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink-2); white-space: nowrap; }
+.k-asks li.is-open > b { border-color: var(--vermilion); color: var(--vermilion); }
+.k-asks li > span, .k-asks li > s { font-size: 12px; }
+.k-asks li > small { grid-column: 2 / 4; font-size: 10.5px; color: var(--ink-2); }
+.k-asks li > a { grid-row: 1; grid-column: 3; font: 600 11px var(--mono); color: var(--ink); white-space: nowrap; text-underline-offset: 3px; }
+.k-asks li.is-answered > s { color: var(--ink-2); }
+.k-asks li.is-lapsed > span { color: var(--ink-3); }
+.k-asks .k-pre li > span { color: var(--ink-2); }
+.k-list li { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; font-size: 12px; }
+.k-list li b { font: 600 11px var(--mono); }
+.k-closes li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 8px; align-items: baseline; padding: 3px 0; border-top: 1px solid var(--faint); font-size: 12px; }
+.k-closes li.is-later { opacity: .5; }
+.k-closes button { border: 0; background: none; padding: 0; cursor: pointer; }
+.k-closes time { font: 10.5px var(--mono); color: var(--ink-2); }
+.k-more { margin-top: 14px; }
+.k-more > summary { font-size: 11px; letter-spacing: .04em; color: var(--ink-2); }
