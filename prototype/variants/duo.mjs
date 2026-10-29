@@ -4,7 +4,7 @@ import { peekHTML } from '../forms/motion/ix.mjs';
 import { itemFacts } from '../forms/motion/dial-model.mjs';
 import { currentDataset } from '../data/select.mjs';
 import { EASE, EASE_IN, EASE_IN_OUT, BEATS, play, stepAt, makeBox, measureEl, ghostOf, morph, reveal, band, popKeys, lookOf } from './d-motion.mjs';
-import { RS, clock, stamp, dayLong, weekday, createHomeView } from './d-view.mjs';
+import { RS, clock, stamp, dayLong, weekday, actionWords, createHomeView } from './d-view.mjs';
 import { G, HINGE, angleAt, FOLD, foldAt, SETTLE, UNSETTLE, SNAP, HAND, BOOK, DETAIL, UNDETAIL, TURN, BODY, BODY_PAD, FEED,
   bodyHTML, panelBodyHTML, pageCutHTML, bandSegments, tween, fade, radius, cornerVars } from './duo-motion.mjs';
 import { inputsOf, intoRoot } from './inflow.mjs';
@@ -85,19 +85,22 @@ export function mount(host, model) {
       <div class="u-body" data-body="open" aria-hidden="true">${bodyHTML()}</div>
       <div class="u-unlit" aria-hidden="true" style="left:${G.crease}px;width:${G.PW}px;height:${G.PH}px"></div><div class="u-lit" aria-hidden="true" style="left:${G.crease}px;width:${G.PW}px;height:${G.PH}px"></div>
       <section class="u-screen u-inner" aria-label="内屏" style="width:${G.W}px;height:${G.PH}px">
-        <div class="u-iscroll"><div class="u-spread" style="--pw:${G.PW}px;--gut:${G.gut}px;--gap:${G.gap}px;--rail:${G.rail}px"></div></div>
+        <div class="u-book" style="--pw:${G.PW}px;--gut:${G.gut}px;--gap:${G.gap}px;--rail:${G.rail}px">
+          <div class="u-pin"></div>
+          <div class="u-iscroll"><div class="u-spread"></div></div>
+        </div>
         ${railHTML({ camera: Math.round(0.70 * G.W) })}
       </section>
       <section class="u-screen u-outer" aria-label="外屏" style="left:${G.OX}px;width:${G.S}px;height:${G.L}px">
-        <div class="u-ocol" style="right:${G.rail}px;top:${G.top}px"><div class="d-scroll u-oscroll">
-          <header class="d-head"><div class="d-head-main"><div class="d-date"></div></div><h1 class="d-headline" aria-live="polite"></h1><p class="d-since"></p></header>
-          <section class="d-cards" aria-label="等你回应"></section><section class="d-rows" aria-label="进行中与结果"></section><section class="d-known" aria-label="次要事项"></section>
-        </div><button class="d-fold u-ofold" data-u="fold" aria-label="累计输入与本轮变化"><span class="d-fold-tex" aria-hidden="true"></span><span class="d-fold-text"></span><span class="d-fold-more" aria-hidden="true">›</span><span class="d-band" aria-hidden="true"></span></button></div>
+        <div class="u-ocol" style="right:${G.rail}px;top:${G.top}px">
+          <header class="d-head u-ohead"><div class="d-head-main"><div class="d-date"></div></div><h1 class="d-headline" aria-live="polite"></h1><p class="d-since"></p></header>
+          <div class="d-scroll u-oscroll"><section class="d-cards" aria-label="等你回应"></section><section class="d-rows" aria-label="进行中与结果"></section><section class="d-known" aria-label="次要事项"></section></div>
+          <button class="d-fold u-ofold" data-u="fold" aria-label="本轮的输入：每一条的原文与去向"><span class="d-fold-tex" aria-hidden="true"></span><span class="d-fold-text"></span><span class="d-fold-more" aria-hidden="true">›</span><span class="d-band" aria-hidden="true"></span></button></div>
         ${railHTML({ island: true })}
       </section>
       ${pageCutHTML()}
       <section class="u-screen u-table" aria-label="桌面姿态" hidden style="width:${G.PH}px;height:${G.W}px;--half:${G.PW}px;--rail:${G.rail}px">
-        <div class="u-top"></div><div class="u-bot"></div><div class="u-trail">${railHTML({})}</div>
+        <div class="u-top"><div class="u-tpin"></div><div class="u-tscroll"></div></div><div class="u-tlinks" aria-hidden="true"></div><div class="u-bot"></div><div class="u-trail">${railHTML({})}</div>
       </section>
       <div class="u-fold3d" aria-hidden="true" style="width:${G.W}px;height:${G.L}px;perspective:${FOLD.P}px"><div class="u-panel" style="left:${G.crease}px;width:${G.PW}px">
         <div class="u-face is-front" style="left:${-BODY.spine}px;top:${BODY.y0}px;width:${BODY.spine + BODY.L}px;height:${BODY.H}px">${panelBody.front}
@@ -116,13 +119,16 @@ export function mount(host, model) {
   </div>`;
   const $ = q => host.querySelector(q);
   const area = $('.u-area'), device = $('.u-device'), inner = $('.u-inner'), outer = $('.u-outer'), table = $('.u-table');
-  const spread = $('.u-spread'), iscroll = $('.u-iscroll'), oscroll = $('.u-oscroll'), grip = $('.u-grip');
+  // the book: its pinned head (both pages' heads, the band and its account) over the stripes, which scroll below it
+  const book = $('.u-book'), bpin = $('.u-pin'), spread = $('.u-spread'), iscroll = $('.u-iscroll'), oscroll = $('.u-oscroll'), grip = $('.u-grip');
   const fold3d = $('.u-fold3d'), panelEl = $('.u-panel'), glassF = $('.u-glass.is-front'), glassB = $('.u-glass.is-back');
   const bodyEl = $('.u-body'), clipEl = $('.u-clip'), pageCut = $('.u-pagecut'), sideSheen = $('.u-side > .u-sheen'), sideShade = $('.u-side > .u-shade');
   const glints = [...host.querySelectorAll('.u-face .u-glint')];
   const lit = $('.u-lit'), unlit = $('.u-unlit'), peekEl = $('.u-peek'), panel = $('.u-ldetail'), sheet = $('.d-sheet'), backdrop = $('.d-sheet-backdrop');
   const sheetHost = $('.u-sheethost'), track = $('.d-track');
-  const tTop = $('.u-top'), tBot = $('.u-bot');
+  // the tabletop: the standing half's pinned head and its groups (they scroll), the flat half's cards (they scroll), the
+  // lines between them (drawn over the crease while both halves are at their tops)
+  const tPin = $('.u-tpin'), tScroll = $('.u-tscroll'), tBot = $('.u-bot'), tLinks = $('.u-tlinks');
   // D's components (cards, tags, buttons, receipts, rows, detail, sheets) and the summary card come with d.css and ix.css,
   // loaded as their own links (as D loads ix.css; the single-file export serves links, not @import): d.css just before
   // duo.css, so the cascade is D's and then E's. The first paint waits for both, so its first measure is right.
@@ -139,7 +145,7 @@ export function mount(host, model) {
   }).filter(Boolean);
   host.style.visibility = 'hidden';
   function railHTML({ island = false, camera = null }) {
-    return `<div class="u-sysrail" style="width:${G.rail}px" aria-hidden="true"><i class="u-island${island ? '' : ' is-spot'}"></i><span class="u-clock"></span><span class="u-wifi">◠</span><span class="u-pill">记<br>录</span></div>${camera ? `<i class="u-cam" style="left:${camera}px" aria-hidden="true"></i>` : ''}`;
+    return `<div class="u-sysrail" style="width:${G.rail}px"><i class="u-island${island ? '' : ' is-spot'}" aria-hidden="true"></i><span class="u-clock" aria-hidden="true"></span><span class="u-wifi" aria-hidden="true">◠</span><button type="button" class="u-pill" data-u="log" aria-label="我的回应记录">记<br>录</button></div>${camera ? `<i class="u-cam" style="left:${camera}px" aria-hidden="true"></i>` : ''}`;
   }
   const say = text => { $('.d-sr').textContent = text; };
 
@@ -220,8 +226,6 @@ export function mount(host, model) {
     return `<i class="u-link" data-part="link" aria-hidden="true" style="width:${W}px;height:${h}px"><svg width="${W}" height="${h}" viewBox="0 0 ${W} ${h}"><desc>${ys.length}:${f1(ym)}</desc>${stubs}<path class="is-run" d="M${F} ${f1(ym)}H${W}"/>${ys.map(y => `<circle cx="2" cy="${f1(y)}" r="1.6"/>`).join('')}</svg></i>`;
   }
   const miniLinkHTML = () => { const W = FEED.funnel + FEED.run; return `<i class="u-link is-mini" data-part="link" aria-hidden="true" style="width:${W}px"><svg width="${W}" height="4" viewBox="0 -2 ${W} 4"><desc>mini</desc><path class="is-run" d="M2 0H${W}"/><circle cx="2" cy="0" r="1.6"/></svg></i>`; };
-  /** The tabletop's line: down from under the group's lines, over the crease (it runs across there), into the card's top. */
-  const downLinkHTML = () => '<i class="u-link is-down" data-part="link" aria-hidden="true"></i>';
   /** Where the line meets the card: a socket on the card's left edge (its top on the tabletop). */
   const socketHTML = ym => (ym == null ? '' : `<i class="u-socket" aria-hidden="true"${typeof ym === 'string' ? ` data-at="${ym}"` : ` style="top:${f1(ym)}px"`}></i>`);
   const linkOf = (item, mode) => { const g = groupOf(item, mode); return g.ym == null || answeredRecord(item) ? null : g.ym; };
@@ -238,8 +242,9 @@ export function mount(host, model) {
         ${head}<p class="u-fsum" data-part="sum">${n ? `${n} 条输入` : '本轮没有新输入'} · 已折进你的回答，等 Agent 读到</p></article>`;
     }
     const lines = g.shown.map(lineHTML).join('') + (g.rest.length ? `<p class="u-fl is-rest"><span class="u-fl-t">还有 ${g.restN} 条 · ${esc(bySource(g.rest.flatMap(r => r.ks.map(k => ({ k })))).map(([src, c]) => `${src} ${c}`).join(' · '))}</span></p>` : '');
-    const link = !n ? '' : prefix === 'tL' ? downLinkHTML() : linkHTML(g.ys, g.ym, g.rest.length > 0);
-    return `<article class="u-half is-left is-feed is-${mode} u-cl" data-key="${prefix}:${id}" data-id="${id}" data-n="${n}" tabindex="0" aria-label="${esc(`${item.title}：本轮进了 ${n} 条输入`)}">
+    // on the tabletop the line runs over the crease between two scrolled halves: it is drawn there (tableLinks), not in the group
+    const link = !n || prefix === 'tL' ? '' : linkHTML(g.ys, g.ym, g.rest.length > 0);
+    return `<article class="u-half is-left is-feed is-${mode} u-cl" data-key="${prefix}:${id}" data-id="${id}" data-n="${n}"${n && prefix === 'tL' ? ' data-link=""' : ''} tabindex="0" aria-label="${esc(`${item.title}：本轮进了 ${n} 条输入`)}">
       <div class="u-frow">${head}<div class="d-why" data-part="tags">${chg}${tags}</div></div>
       <div class="u-fsub" data-part="sub"><span>${n ? `本轮进了 <b>${n} 条</b>` : '本轮没有新输入'}</span><span class="u-tr"><span class="u-trendlabel">两周份额</span>${trendHTML(item, 14)}</span></div>
       ${n ? `<div class="u-flines" data-part="lines">${lines}</div>` : ''}${link}
@@ -388,16 +393,17 @@ export function mount(host, model) {
   }
   function tableEntries(v, sh) {
     const sp = sinceParts(v), at = new Date(s.cursor), c = census(v);
-    const cols = v.zone.map((_, k) => (k ? '1fr' : '1.25fr')).join(' ') || '1fr';
-    const top = [{ key: 'th', html: `<div class="u-thead" data-key="th"><div><div class="d-date" data-part="date">${dayLong.format(at)} ${weekday.format(at)} · ${clock(at)}</div><h1 class="u-hero" data-part="count">${heroHTML(v, sh)}</h1><p class="u-sub" data-part="sub"><b>${sh.waiting} 件</b>${sp.right ? ` · ${sp.right}` : ''}</p></div>
+    // the same tracks on both halves, never widened by what is in them (minmax(0, …)): a column above is the column below
+    const cols = v.zone.map((_, k) => (k ? 'minmax(0, 1fr)' : 'minmax(0, 1.25fr)')).join(' ') || 'minmax(0, 1fr)';
+    const pinned = [{ key: 'th', html: `<div class="u-thead" data-key="th"><div><div class="d-date" data-part="date">${dayLong.format(at)} ${weekday.format(at)} · ${clock(at)}</div><h1 class="u-hero" data-part="count">${heroHTML(v, sh)}</h1><p class="u-sub" data-part="sub"><b>${sh.waiting} 件</b>${sp.right ? ` · ${sp.right}` : ''}</p></div>
       <div class="u-thead-r"><p class="u-hero-2">本轮 ${c.n} 条输入<small>累计 ${c.total} 条</small></p><p class="u-sub">${c.n ? `<b>${c.mine}</b> 条成了这 ${c.cards} 件 · <b>${c.agentN}</b> 条进了 Agent 那边 · <b>${c.loose.length}</b> 条折掉` : '这一轮没有新输入'}</p><p class="u-sub u-quiet">${sh.agentShare} 份在 Agent 那边（${sh.agent.length} 件）· 空余 ${sh.blank}</p></div></div>` },
       { key: 'tband', html: '<div class="u-tband" data-key="tband" aria-hidden="true"><span class="u-band"></span><span class="u-tick"></span></div>' }];
     // what the Agent has in hand, one line above the groups (what was folded is counted in the head; its lines are the book's)
-    if (v.rows.length || v.tail.length) top.push({ key: 'tline', html: `<p class="u-rowsline" data-key="tline">Agent 在办：${v.rows.map(r => esc(r.title)).join('、')}${v.tail.length ? `；另有 ${v.tail.length} 项次要事项` : ''}</p>` });
-    v.zone.forEach(({ item }, j) => top.push({ key: `tL:${item.id}`, html: leftHalfHTML(item, j ? 'mid' : 'lead', 'tL') }));
+    if (v.rows.length || v.tail.length) pinned.push({ key: 'tline', html: `<p class="u-rowsline" data-key="tline">Agent 在办：${v.rows.map(r => esc(r.title)).join('、')}${v.tail.length ? `；另有 ${v.tail.length} 项次要事项` : ''}</p>` });
+    const top = v.zone.map(({ item }, j) => ({ key: `tL:${item.id}`, html: leftHalfHTML(item, j ? 'mid' : 'lead', 'tL') }));
     const bot = v.zone.map(({ item }, j) => ({ key: `tR:${item.id}`, html: rightHalfHTML(item, j ? 'mid' : 'lead', 'tR') }));
     for (const entry of v.more) bot.push({ key: `tm:${entry.item.id}`, html: miniRightHTML(entry, 'tm') });
-    return { cols, top, bot };
+    return { cols, pinned, top, bot };
   }
 
   // ---------- keyed patch (as D's): only the leaves whose markup changed are replaced ----------
@@ -434,6 +440,101 @@ export function mount(host, model) {
   // Leaves only: a container that is itself listed (the 在办 zone on the spread) is not moved as a whole, its rows are —
   // moving both would add the two moves up.
   const snapshotOf = (...roots) => { const k = scale(), map = new Map(); for (const root of roots) for (const el of root.querySelectorAll(':scope > [data-key]')) { if (roots.includes(el)) continue; map.set(el.dataset.key, { m: measure(el, k), node: el }); } return map; };
+
+  // ---------- scrolling (duo-motion.md 4.5): every screen pins its head; under it, its list scrolls on its own ----------
+  /** Set a list's scroll; the pinned head over it shows its faint edge only while something has slid under it (CSS). */
+  function setScroll(el, y) {
+    const max = Math.max(0, el.scrollHeight - el.clientHeight), v = clamp(Math.round(y), 0, max);
+    if (el.scrollTop !== v) el.scrollTop = v;
+    edgeOf(el);
+    return v;
+  }
+  const edgeOf = el => { const on = el.scrollTop > 0; if (el === iscroll) book.classList.toggle('is-scrolled', on); else if (el === oscroll) outer.classList.toggle('is-scrolled', on); };
+  /** The leaves of a layer's list, top to bottom, that can hold a place: the book's stripes and its 在办 rows; the outer screen's
+   * cards and rows; the tabletop's cards. */
+  const leavesOf = layer => {
+    if (layer === 'outer') return [...oscroll.querySelectorAll('.d-cards > [data-key], .d-rows > [data-key], .d-known > [data-key]')];
+    if (layer === 'table') return [...tBot.querySelectorAll(':scope > [data-key]')];
+    return [...spread.querySelectorAll(':scope > [data-key]:not(.u-zone), :scope > .u-zone > [data-key]')];
+  };
+  const scrollerOf = layer => (layer === 'outer' ? oscroll : layer === 'table' ? tBot : iscroll);
+  /**
+   * Keep what you are reading where it is across a redraw (D's pickAnchor / keepAnchor): the item you acted on if it is in
+   * view, else the first leaf in view. A list at its top stays at its top, so a new round lands on its top as before.
+   */
+  function pickAnchor(layer, target) {
+    const el0 = scrollerOf(layer);
+    if (el0.scrollTop <= 0) return null;
+    const top = el0.getBoundingClientRect().top, list = leavesOf(layer);
+    const want = target && { outer: [`i:${target}`], book: [`R:${target}`, `mr:${target}`], table: [`tR:${target}`, `tm:${target}`] }[layer];
+    const el = (want && list.find(x => want.includes(x.dataset.key))) || list.find(x => x.getBoundingClientRect().bottom > top + 1);
+    return el ? { layer, key: el.dataset.key, top: el.getBoundingClientRect().top } : null;
+  }
+  function keepAnchor(a) {
+    if (!a) return;
+    const el = leavesOf(a.layer).find(x => x.dataset.key === a.key);
+    if (!el) return;
+    const d = el.getBoundingClientRect().top - a.top;
+    if (Math.abs(d) >= 0.5) { const s0 = scrollerOf(a.layer); s0.scrollTop += d / scale(); edgeOf(s0); }
+  }
+  /**
+   * The scroll carried over the hinge (duo-motion.md 3.3). The outer screen is the book's right page: the first card in view
+   * keeps its height (y) on the other screen. The book's pinned head is taller than the outer screen's (the band and its
+   * account, D pt): opening, a list at its top stays at its top and its cards move down by D as the band grows; scrolled
+   * past D, the card keeps its y exactly; in between, part of D. Folding back, the card keeps its y (at the book's top, the
+   * outer screen's top). Back again with nothing scrolled or changed in between: exactly where it was (`carried`).
+   */
+  let carried = null;
+  const bookTwin = key => {
+    const z = spread.querySelector(':scope > .u-zone'), q = CSS.escape(key), id = CSS.escape(idOf(key));
+    if (key === 'more') return spread.querySelector(':scope > [data-key^="mr:"]');
+    if (key.startsWith('i:')) return spread.querySelector(`:scope > [data-key="R:${id}"], :scope > [data-key="mr:${id}"]`) || z?.querySelector(`:scope > [data-key="${q}"]`);
+    return z?.querySelector(`:scope > [data-key="${q}"]`) || null;
+  };
+  const outerTwin = key => {
+    const pre = key.slice(0, key.indexOf(':') + 1), id = CSS.escape(idOf(key));
+    if (['R:', 'L:', 'mr:', 'ml:'].includes(pre)) return oscroll.querySelector(`.d-cards > [data-key="i:${id}"]`) || (pre.startsWith('m') ? oscroll.querySelector('.d-cards > [data-key="more"]') : null);
+    return oscroll.querySelector(`:scope > section > [data-key="${CSS.escape(key)}"]`);
+  };
+  /** The rest offset D: how much lower the book's first stripe sits than the outer screen's first card, both at their tops. */
+  const restGap = () => (iscroll.getBoundingClientRect().top - oscroll.getBoundingClientRect().top) / scale()
+    + parseFloat(getComputedStyle(spread).paddingTop) - parseFloat(getComputedStyle(oscroll).paddingTop);
+  /** From → to: the first leaf in view on `from` with a twin on the other screen, and that twin. */
+  function anchorPair(from, twinOf, view) {
+    const k = scale();
+    for (const el of from) {
+      const r = el.getBoundingClientRect();
+      if (r.bottom < view.top + 24 * k) continue; // less than 24 pt of it shows: the next one is what you read
+      const twin = twinOf(el.dataset.key);
+      if (twin) return { a: r.top, b: twin.getBoundingClientRect().top };
+    }
+    return null;
+  }
+  function carryToBook() {
+    syncLayers();
+    const so = oscroll.scrollTop;
+    if (carried?.to === 'outer' && Math.abs(carried.at - so) < 1) return carried.back;
+    let si = 0;
+    if (so > 0) {
+      const p = anchorPair(leavesOf('outer'), bookTwin, oscroll.getBoundingClientRect()), D = restGap();
+      si = p ? iscroll.scrollTop + (p.b - p.a) / scale() - Math.max(0, D - so) : so;
+    }
+    si = clamp(Math.round(si), 0, Math.max(0, iscroll.scrollHeight - iscroll.clientHeight));
+    carried = { to: 'book', at: si, back: so };
+    return si;
+  }
+  function carryToOuter() {
+    const si = iscroll.scrollTop;
+    if (carried?.to === 'book' && Math.abs(carried.at - si) < 1) return carried.back;
+    let so = 0;
+    if (si > 0) {
+      const p = anchorPair(leavesOf('book'), outerTwin, iscroll.getBoundingClientRect());
+      so = p ? oscroll.scrollTop + (p.b - p.a) / scale() : si;
+    }
+    so = clamp(Math.round(so), 0, Math.max(0, oscroll.scrollHeight - oscroll.clientHeight));
+    carried = { to: 'outer', at: so, back: si };
+    return so;
+  }
 
   // ---------- beats: the same context, settle, arm and pin as D (stills hold every animation at one moment) ----------
   let pinned = null, beat = null, morphCtx = null;
@@ -474,11 +575,15 @@ export function mount(host, model) {
    * one box, its words travelling or crossfading); `fromOf` names where a new leaf comes from when it was another leaf
    * (a stripe's left half becoming a row of 在办); new leaves arrive, left ones leave on a ghost.
    */
-  function choreograph(ctx, before, after, { replaced, removed }, { t, tOf = () => t, fromOf = () => null, enter, exit, used = new Set() }) {
+  function choreograph(ctx, before, after, { replaced, removed }, { t, tOf = () => t, fromOf = () => null, enter, exit, used = new Set(), exitTo = null }) {
     const k = scale();
+    // where a leaf that left rides out (its list: the pinned head and the scrolled stripes are two lists); by default the
+    // list of the first leaf, as before there were two
+    const exitParent = exitTo || (() => [...after.values()][0]?.node.parentElement);
     // every list's rect, read once before the first write: a read after each morph would lay the page out again each time
     const rects = new Map();
     for (const { node } of after.values()) if (node.parentElement && !rects.has(node.parentElement)) rects.set(node.parentElement, node.parentElement.getBoundingClientRect());
+    for (const key of before.keys()) { if (after.has(key)) continue; const p = exitParent(key); if (p && !rects.has(p)) rects.set(p, p.getBoundingClientRect()); }
     for (const [key, { m: now, node: el }] of after) {
       const src = fromOf(key);
       const prev = before.get(src || key);
@@ -493,10 +598,9 @@ export function mount(host, model) {
       t1.onGhost?.(ghost, el);
       t1.onEl?.(el);
     }
-    const parent = [...after.values()][0]?.node.parentElement;
     for (const [key, { m }] of before) {
       if (after.has(key) || used.has(key)) continue;
-      const node = removed.get(key);
+      const node = removed.get(key), parent = exitParent(key);
       if (!node || !exit || !parent) continue;
       const ghost = ghostOf(node, m, k, parent, 0, rects.get(parent));
       ctx.clean(() => ghost.remove());
@@ -519,15 +623,21 @@ export function mount(host, model) {
     // Only the layer on screen is redrawn on a beat (the reveal also needs the spread it cuts its windows from); the other
     // is brought up to date when it next shows (syncLayers), so a landing does the work of one screen, not two.
     const all = name === 'none';
-    if (all || layer === 'outer') { renderOuter(v, sh, head, layer === 'outer' ? ctx : null, name, opts); stale.outer = false; } else stale.outer = true;
-    if (all || layer === 'book' || phase === 'reveal') { renderBook(v, sh, head, layer === 'book' ? ctx : null, name, opts); stale.book = false; } else stale.book = true;
+    // What you are reading stays where it is across the redraw, as on D: the item you acted on, else the first one in view;
+    // a list at its top stays at its top. The heads are pinned, so a new round's numbers show without scrolling up.
+    const anchor = all ? null : pickAnchor(layer, opts.target);
+    const at = which => (anchor && anchor.layer === which ? { ...opts, anchor } : opts);
+    // the scroll carried over the hinge holds only while nothing changed on either screen
+    if (!all) carried = null;
+    if (all || layer === 'outer') { renderOuter(v, sh, head, layer === 'outer' ? ctx : null, name, at('outer')); stale.outer = false; } else stale.outer = true;
+    if (all || layer === 'book' || phase === 'reveal') { renderBook(v, sh, head, layer === 'book' ? ctx : null, name, at('book')); stale.book = false; } else stale.book = true;
     for (const c of host.querySelectorAll('.u-clock')) c.textContent = clock(head.at);
-    if (posture === 'table') renderTable(v, sh, layer === 'table' ? ctx : null, name, opts);
+    if (posture === 'table') renderTable(v, sh, layer === 'table' ? ctx : null, name, at('table'));
     // the panel is a picture of the two screens: whatever changed under it, it is taken again (now if it is up, else idle)
     fold.ok = false;
     if (panelUp()) buildPanel(); else prebuild();
     renderRail();
-    markNew(layer === 'outer' ? outer : layer === 'table' ? table : spread, name === 'turn' ? BOOK.land.glow : 0.25);
+    markNew(layer === 'outer' ? outer : layer === 'table' ? table : book, name === 'turn' ? BOOK.land.glow : 0.25);
     if (ctx) { beat = ctx; arm(ctx, () => { beat = null; }); }
     renderDetail();
   }
@@ -550,6 +660,7 @@ export function mount(host, model) {
     patch($('.d-cards'), built.cards, removed, replaced);
     patch($('.d-rows'), built.rows, removed, replaced);
     patch($('.d-known'), built.tail, removed, replaced);
+    keepAnchor(opts.anchor);
     // anything new on the outer screen: the panel's picture of it is out of date
     const sig = [...built.cards, ...built.rows, ...built.tail].map(e => e.html).join('') + head.headline + head.since + head.fold + JSON.stringify(head.segs);
     if (sig !== sigs.outer) { sigs.outer = sig; fold.ok = false; }
@@ -591,17 +702,23 @@ export function mount(host, model) {
     stepAt(ctx, now, at, true); stepAt(ctx, old, at, false);
   }
 
+  /** The book's pinned head: both pages' heads, the band and its account (the rest of bookEntries scrolls below it). */
+  const PIN_KEYS = new Set(['h:L', 'h:R', 'band', 'acct']);
+  /** Which list a leaf of the book rides out on when it leaves: the pinned head's or the stripes' (the 在办 rows' too). */
+  const bookList = key => (PIN_KEYS.has(key) ? bpin : spread);
   function renderBook(v, sh, head, ctx, name, opts) {
     const zone = () => spread.querySelector(':scope > .u-zone');
-    const before = ctx ? snapshotOf(spread, ...(zone() ? [zone()] : [])) : null;
+    const before = ctx ? snapshotOf(bpin, spread, ...(zone() ? [zone()] : [])) : null;
     const removed = new Map(), replaced = new Map();
     const entries = bookEntries(v, sh, head), zEntries = zoneEntries(v);
-    patch(spread, entries, removed, replaced);
+    patch(bpin, entries.filter(e => PIN_KEYS.has(e.key)), removed, replaced);
+    patch(spread, entries.filter(e => !PIN_KEYS.has(e.key)), removed, replaced);
     patch(zone(), zEntries, removed, replaced);
     // An answered stripe keeps its height until the next round: the left half's context holds it, nothing below moves.
     for (const [id, h] of held) { const r = spread.querySelector(`[data-key="R:${CSS.escape(id)}"]`); if (r) r.style.minHeight = `${h}px`; }
-    spread.classList.toggle('is-half', phase === 'book' && angle < HINGE.half && !moving());
-    const bandEl = spread.querySelector('.u-band'), segs = bandSegments({ open: sh.open, pending: sh.pending, agent: sh.agent, blank: sh.blank });
+    book.classList.toggle('is-half', phase === 'book' && angle < HINGE.half && !moving());
+    keepAnchor(opts.anchor);
+    const bandEl = bpin.querySelector('.u-band'), segs = bandSegments({ open: sh.open, pending: sh.pending, agent: sh.agent, blank: sh.blank });
     const B = name === 'answer' ? BOOK.answer : name === 'undo' ? BOOK.undo : name === 'turn' ? BOOK.land : null;
     paintBand(ctx, bandEl, segs, ctx && B ? B.band : null, ctx && B ? B.band[0] : 0);
     // anything new on the spread (or a stripe held at its height): the panel's picture of the left page is out of date
@@ -610,15 +727,16 @@ export function mount(host, model) {
     // the lines into the cards and the band's account, as grown as the hinge has them (they grow with the band)
     live.links = [...spread.querySelectorAll(':scope > .u-cl > .u-link')];
     live.sockets = [...spread.querySelectorAll(':scope > .u-cr > .u-socket')];
-    live.acct = spread.querySelector(':scope > .u-acct');
+    live.acct = bpin.querySelector(':scope > .u-acct');
     applyGrowth();
     if (!ctx) return;
-    const after = snapshotOf(spread, zone());
+    const after = snapshotOf(bpin, spread, zone());
     const self = opts.target, L = BOOK.local;
     if (name === 'answer' || name === 'undo') {
       // the answered half folds in place, and its group of inputs folds into one line beside it (feedBeat); a compact
       // stripe promoted to a full one grows out of itself
       choreograph(ctx, before, after, { replaced, removed }, {
+        exitTo: bookList,
         fromOf: pairing(before),
         tOf: key => (key === `R:${self}` || key === `mr:${self}` ? { ...B.self, z: 2 } : key === `L:${self}` || key === `ml:${self}` ? feedBeat(ctx, name) : { ...B.self, flip: B.hero }),
         enter: el => reveal(ctx, el, [B.self.in[0], B.self.in[1]]),
@@ -627,7 +745,7 @@ export function mount(host, model) {
       return;
     }
     if (name === 'turn') { land(ctx, before, after, { replaced, removed }); return; }
-    choreograph(ctx, before, after, { replaced, removed }, { t: L, fromOf: pairing(before), enter: el => reveal(ctx, el, L.enter), exit: g => play(ctx, g, [{ opacity: 1 }, { opacity: 0 }], L.exit) });
+    choreograph(ctx, before, after, { replaced, removed }, { t: L, exitTo: bookList, fromOf: pairing(before), enter: el => reveal(ctx, el, L.enter), exit: g => play(ctx, g, [{ opacity: 1 }, { opacity: 0 }], L.exit) });
   }
   /**
    * You answer a card: its group of inputs folds into one line beside your receipt, and the line into the card is drawn
@@ -675,6 +793,7 @@ export function mount(host, model) {
     for (const key of after.keys()) { const src = fromOf(key); if (src?.startsWith('L:') && key.startsWith('i:')) lead.add(idOf(key)); }
     choreograph(ctx, before, after, { replaced, removed }, {
       used,
+      exitTo: bookList,
       fromOf,
       tOf: (key, el, crossed) => {
         if (key === 'h:L' || key === 'h:R') return { move: B.move, box: B.move, parts: B.move, out: B.receipt, in: [B.hero, 0.2], fresh: [B.hero, 0.2], flip: B.hero, settle: B.hero };
@@ -717,29 +836,78 @@ export function mount(host, model) {
     });
   }
 
+  /** Which list a leaf of the tabletop rides out on: the standing half's head, its groups, or the flat half's cards. */
+  const tableList = key => (key.startsWith('tL:') ? tScroll : key.startsWith('tR:') || key.startsWith('tm:') ? tBot : tPin);
   function renderTable(v, sh, ctx, name, opts) {
     const t = tableEntries(v, sh);
-    tTop.style.gridTemplateColumns = t.cols; tBot.style.gridTemplateColumns = t.cols;
-    const before = ctx ? snapshotOf(tTop, tBot) : null;
+    tScroll.style.gridTemplateColumns = t.cols; tBot.style.gridTemplateColumns = t.cols;
+    const before = ctx ? snapshotOf(tPin, tScroll, tBot) : null;
     const removed = new Map(), replaced = new Map();
-    patch(tTop, t.top, removed, replaced);
+    patch(tPin, t.pinned, removed, replaced);
+    patch(tScroll, t.top, removed, replaced);
     patch(tBot, t.bot, removed, replaced);
-    const bandEl = tTop.querySelector('.u-band');
+    keepAnchor(opts.anchor);
+    const bandEl = tPin.querySelector('.u-band');
     if (bandEl) {
       const cell = (G.PH - 28 - G.rail) / 64, x0 = ((sh.agentShare + sh.blank) / 64) * 64 * cell;
       bandEl.style.left = '0px';
       band({ add: () => {}, clean: () => {} }, bandEl, bandSegments({ open: sh.open, pending: sh.pending, agent: sh.agent, blank: sh.blank }).map(x => ({ ...x, from: x.from - 64 + (x0 / cell) })), 64 * cell, null);
       const kinds = new Map(bandSegments({ open: sh.open, pending: sh.pending, agent: sh.agent, blank: sh.blank }).map(x => [x.id, x.kind]));
       for (const node of bandEl.children) node.className = kinds.get(node.dataset.seg) || '';
-      tTop.querySelector('.u-tick').style.left = `${x0}px`;
+      tPin.querySelector('.u-tick').style.left = `${x0}px`;
     }
     for (const [id, h] of held) { const r = tBot.querySelector(`[data-key="tR:${CSS.escape(id)}"]`); if (r) r.style.minHeight = `${h}px`; }
-    if (!ctx) return;
-    const after = snapshotOf(tTop, tBot);
     const B = name === 'answer' ? BOOK.answer : name === 'undo' ? BOOK.undo : null;
+    const after = ctx ? snapshotOf(tPin, tScroll, tBot) : null;
+    tableLinks(ctx, B ? B.self : BOOK.local);
+    if (!ctx) return;
     const T = B ? B.self : BOOK.local;
-    choreograph(ctx, before, after, { replaced, removed }, { t: { ...T, flip: B?.hero ?? 0 }, enter: el => reveal(ctx, el, BOOK.local.enter), exit: g => play(ctx, g, [{ opacity: 1 }, { opacity: 0 }], BOOK.local.exit) });
+    choreograph(ctx, before, after, { replaced, removed }, { t: { ...T, flip: B?.hero ?? 0 }, exitTo: tableList, enter: el => reveal(ctx, el, BOOK.local.enter), exit: g => play(ctx, g, [{ opacity: 1 }, { opacity: 0 }], BOOK.local.exit) });
   }
+  /**
+   * The tabletop's lines (duo-motion.md 4.1): each group that took inputs drops one straight line over the crease into the
+   * top of its card. The groups and the cards are two lists that scroll on their own, so the line lies over the crease,
+   * apart from both, measured as they stand at their tops; it shows only while both are there (column for column they
+   * never move sideways, so it is always the right column; scrolled away, the line and the card's socket fade).
+   */
+  function tableLinks(ctx, T) {
+    if (table.hidden) return; // drawn when the tabletop shows (showLayers): hidden, nothing has a place to measure
+    const k = scale(), d = device.getBoundingClientRect(), view = tScroll.getBoundingClientRect();
+    const was = new Map([...tLinks.children].filter(x => !x.classList.contains('is-leaving')).map(x => [x.dataset.id, x]));
+    // every place is read before the first line is written
+    const want = [];
+    for (const g of tScroll.querySelectorAll(':scope > [data-link]')) {
+      const id = g.dataset.id, card = tBot.querySelector(`:scope > [data-key="tR:${CSS.escape(id)}"]`);
+      if (!card) continue;
+      const r = g.getBoundingClientRect(), c = card.getBoundingClientRect();
+      // as at the tops of both lists: the foot of the group (or of the standing half, when the group runs on below it) to the card's top
+      const foot = Math.min(r.bottom + tScroll.scrollTop * k, view.bottom), top = c.top + tBot.scrollTop * k;
+      want.push({ id, x: (r.left + r.width / 2 - d.left) / k, y0: (foot - d.top) / k - 5, y1: (top - d.top) / k + 3 });
+    }
+    for (const { id, x, y0, y1 } of want) {
+      let line = was.get(id);
+      was.delete(id);
+      if (!line) {
+        line = document.createElement('i'); line.className = 'u-dline'; line.dataset.id = id; tLinks.append(line);
+        if (ctx) play(ctx, line, [{ opacity: 0 }, { opacity: 1 }], T.in || BOOK.local.enter);
+      }
+      Object.assign(line.style, { left: `${f1(x)}px`, top: `${f1(y0)}px`, height: `${f1(Math.max(0, y1 - y0))}px` });
+    }
+    for (const line of was.values()) {
+      if (!ctx) { line.remove(); continue; }
+      line.classList.add('is-leaving');
+      play(ctx, line, [{ opacity: 1 }, { opacity: 0 }], T.out || BOOK.local.exit);
+      ctx.clean(() => line.remove());
+    }
+    apartTable();
+  }
+  /** Either half of the tabletop scrolled off its top: the lines over the crease and the cards' sockets fade; the standing
+   * half's groups slid under its head, or the cards under the crease: that edge shows (CSS). */
+  const apartTable = () => {
+    table.classList.toggle('is-apart', tScroll.scrollTop > 0.5 || tBot.scrollTop > 0.5);
+    table.classList.toggle('is-tscrolled', tScroll.scrollTop > 0);
+    table.classList.toggle('is-bscrolled', tBot.scrollTop > 0);
+  };
 
   // ---------- the hinge: the fold (follows it), settle (once, timed), fold back (once, timed, then follows it) ----------
   /**
@@ -748,7 +916,8 @@ export function mount(host, model) {
    * that slides in from the free edge, and a paper frost. Its back is the spread's left page: a copy, three blurred copies
    * under sliding masks, and the veil. Under it only the right page is live, and it does not move.
    */
-  const fold = { ok: false, scroll: 0, half: false, front: null, frost: null, back: [], veil: null, bands: [], spreads: [], idle: 0, links: [], accts: [] };
+  // scroll: how far the book's stripes are scrolled in the picture; dirty: the outer screen scrolled since it was taken
+  const fold = { ok: false, scroll: 0, dirty: false, half: false, front: null, frost: null, back: [], veil: null, bands: [], spreads: [], books: [], oscrolls: [], outers: [], os: 0, idle: 0, links: [], accts: [] };
   /** The spread's own lines into the cards and its band account (renderBook keeps them). */
   const live = { links: [], sockets: [], acct: null };
   const growthNow = () => foldAt(panelUp() ? angle : phase === 'book' || posture === 'table' ? HINGE.flat : 0).band;
@@ -782,16 +951,22 @@ export function mount(host, model) {
     }
     return root;
   }
-  /** The spread as it stands, for the back: its right column emptied to boxes of the same height, so every row keeps its height. */
-  function spreadCopy(heights, keepIds) {
-    const c = spread.cloneNode(true);
-    [...c.children].forEach((el, j) => {
+  /** Heights of the right column's leaves in the pinned head and in the stripes (the copy empties them to boxes this tall). */
+  const columnHeights = () => [bpin, spread].map(list => [...list.children].map(el => (el.matches('.u-cr') ? el.offsetHeight : 0)));
+  /**
+   * The book as it stands, for the back: its right column emptied to boxes of the same height, so every row keeps its height;
+   * its head where it is pinned, its stripes moved by the scroll inside the scroll region's clip.
+   */
+  function bookCopy(heights, keepIds) {
+    const c = book.cloneNode(true);
+    [c.querySelector('.u-pin'), c.querySelector('.u-spread')].forEach((list, i) => [...list.children].forEach((el, j) => {
       if (el.matches('.d-ghost, .d-box')) { el.remove(); return; }
-      if (el.matches('.u-cr')) { el.replaceChildren(); Object.assign(el.style, { height: `${heights[j]}px`, minHeight: '0', visibility: 'hidden' }); }
-    });
+      if (el.matches('.u-cr')) { el.replaceChildren(); Object.assign(el.style, { height: `${heights[i][j]}px`, minHeight: '0', visibility: 'hidden' }); }
+    }));
     scrub(c, keepIds);
     c.classList.add('u-clone');
-    Object.assign(c.style, { position: 'absolute', left: '0', top: '0', width: `${G.W}px`, transform: `translateY(${-fold.scroll}px)` });
+    Object.assign(c.style, { width: `${G.W}px`, height: `${G.PH}px` });
+    c.querySelector('.u-spread').style.transform = `translateY(${-fold.scroll}px)`;
     return c;
   }
   /** A blurred copy under a mask twice its width: the mask slides along x and the copy slides back, both by transform. */
@@ -809,14 +984,15 @@ export function mount(host, model) {
     layer.shift.style.transform = `translateX(${(layer.width - x).toFixed(1)}px)`;
   };
   /**
-   * Take the picture. Opening from closed, the spread is read from its top (the settle shows it there); folding back from
-   * the book, as you leave it. Every layout read comes before the copies are written.
+   * Take the picture. Opening from closed, the book is where the outer screen carries it (carryToBook: at its top when the
+   * outer screen is at its top, so the left page reads from the top as before); folding back from the book, as you leave it.
+   * Every layout read comes before the copies are written.
    */
   function buildPanel({ keepScroll = phase === 'book' } = {}) {
     syncLayers();
-    if (!keepScroll && iscroll.scrollTop) iscroll.scrollTop = 0;
-    fold.scroll = iscroll.scrollTop;
-    const heights = [...spread.children].map(el => (el.matches('.u-cr') ? el.offsetHeight : 0)), os = oscroll.scrollTop;
+    if (!keepScroll) setScroll(iscroll, carryToBook());
+    fold.scroll = iscroll.scrollTop; fold.dirty = false;
+    const heights = columnHeights(), os = fold.os = oscroll.scrollTop;
     // the face: the outer screen as it is, and a blurred copy of it masked in from the free edge; the frost over both
     const o = scrub(outer.cloneNode(true), false);
     o.classList.remove('is-off'); o.classList.add('u-clone'); o.style.left = '0px';
@@ -825,8 +1001,8 @@ export function mount(host, model) {
     glassF.replaceChildren(o, fold.front.el, fold.frost);
     // the back: the left page, sharp (its items answer a tap when the panel rests half-folded), three blurred copies, the veil
     const sharp = document.createElement('div');
-    sharp.className = 'u-layer'; sharp.append(spreadCopy(heights, true));
-    const proto = spreadCopy(heights, false);
+    sharp.className = 'u-layer'; sharp.append(bookCopy(heights, true));
+    const proto = bookCopy(heights, false);
     // the lines into the cards and the band's account lie by the crease, where the page is never blurred: only the sharp
     // copy carries them (the account keeps its row, so every row below stays where it is)
     for (const x of proto.querySelectorAll('.u-link')) x.remove();
@@ -835,13 +1011,34 @@ export function mount(host, model) {
     fold.veil = document.createElement('i'); fold.veil.className = 'u-veil'; fold.veil.style.width = `${2 * G.PW}px`;
     glassB.replaceChildren(sharp, ...fold.back.map(l => l.el), fold.veil);
     fold.spreads = [...glassB.querySelectorAll('.u-spread')];
+    fold.books = [...glassB.querySelectorAll('.u-book')];
     fold.bands = [...glassB.querySelectorAll('.u-band')];
     fold.links = [...sharp.querySelectorAll('.u-link')];
     fold.accts = [...sharp.querySelectorAll('.u-acct')];
-    fold.half = spread.classList.contains('is-half');
-    for (const sc of glassF.querySelectorAll('.u-oscroll')) if (os) sc.scrollTop = os;
+    fold.half = book.classList.contains('is-half');
+    fold.oscrolls = [...glassF.querySelectorAll('.u-oscroll')];
+    fold.outers = [...glassF.querySelectorAll('.u-outer')];
+    for (const sc of fold.oscrolls) if (os) sc.scrollTop = os;
     fold.ok = true;
     applyFold();
+  }
+  /**
+   * The picture follows a scroll without being taken again: the book's stripes move under its pinned head, the outer screen's
+   * list under its own; opening, the book first follows the outer screen (it is the right page then).
+   */
+  function panelScroll() {
+    fold.dirty = false;
+    if (!fold.ok) return;
+    if (phase !== 'book') setScroll(iscroll, carryToBook());
+    // read both offsets first, then write: a scroll of the book only moves the stripes' copies (a transform, no layout)
+    const top = iscroll.scrollTop, os = oscroll.scrollTop;
+    fold.scroll = top;
+    for (const c of fold.spreads) c.style.transform = `translateY(${-top}px)`;
+    for (const c of fold.books) c.classList.toggle('is-scrolled', top > 0);
+    if (os === fold.os) return;
+    fold.os = os;
+    for (const sc of fold.oscrolls) sc.scrollTop = os;
+    for (const o of fold.outers) o.classList.toggle('is-scrolled', os > 0);
   }
   /** Take the picture ahead of time, once nothing is moving, so the first frame of a turn has nothing to build. */
   function prebuild() {
@@ -861,6 +1058,8 @@ export function mount(host, model) {
   function applyFold() {
     const up = panelUp();
     if (up && !fold.ok) { buildPanel(); return; }
+    // the outer screen was scrolled after the picture was taken: it follows (the book with it) as the panel lifts
+    if (up && fold.dirty) panelScroll();
     const table_ = posture === 'table';
     fold3d.classList.toggle('is-up', up);
     inner.classList.toggle('is-lifted', up && phase === 'book');
@@ -881,7 +1080,7 @@ export function mount(host, model) {
     const f = foldAt(up ? angle : phase === 'book' || table_ ? HINGE.flat : 0);
     lastFold = up ? f : null;
     const grow = f.band < 1 ? `scaleX(${f.band.toFixed(4)})` : '';
-    const band = spread.querySelector(':scope > .u-bandrow .u-band');
+    const band = bpin.querySelector(':scope > .u-bandrow .u-band');
     if (band && band.style.transform !== grow) band.style.transform = grow;
     applyGrowth(f.band);
     if (!up) return;
@@ -911,8 +1110,8 @@ export function mount(host, model) {
     fold.veil.style.transform = `translateX(${(f.veil.edge - G.PW).toFixed(1)}px)`;
     fold.veil.style.opacity = f.veil.alpha.toFixed(3);
     for (const b of fold.bands) b.style.transform = grow;
-    const half = spread.classList.contains('is-half');
-    if (half !== fold.half) { fold.half = half; for (const c of fold.spreads) c.classList.toggle('is-half', half); }
+    const half = book.classList.contains('is-half');
+    if (half !== fold.half) { fold.half = half; for (const c of fold.books) c.classList.toggle('is-half', half); }
   }
   const stale = { outer: false, book: false };
   function syncLayers() {
@@ -922,22 +1121,40 @@ export function mount(host, model) {
   }
   function showLayers() {
     syncLayers();
-    const book = posture !== 'table' && phase === 'book';
-    inner.classList.toggle('is-on', book);
+    const open_ = posture !== 'table' && phase === 'book';
+    inner.classList.toggle('is-on', open_);
+    const turned = table.hidden === (posture === 'table');
     table.hidden = posture !== 'table';
     grip.hidden = posture === 'table';
     device.classList.toggle('is-table', posture === 'table');
     // half-folded only at rest: a hand passing 150° on its way open does not re-lay the spread
-    spread.classList.toggle('is-half', book && angle < HINGE.half && !moving());
+    book.classList.toggle('is-half', open_ && angle < HINGE.half && !moving());
     applyFold();
     fit();
+    // the tabletop starts at the tops of both halves (a turn of the screen is a new layout); its lines are drawn now that it shows
+    if (posture === 'table' && turned) { tScroll.scrollTop = 0; tBot.scrollTop = 0; tableLinks(null, BOOK.local); }
+  }
+  /**
+   * The hinge starts to fold or open (anywhere but the book's own half-folded range): what lay over a screen goes at once,
+   * as ix's interruption rule has it — the detail, a summary card, a sheet — then the fold goes on as usual.
+   */
+  function interrupt() {
+    hidePeek(true); closeSheet({ refocus: false });
+    if (!detail.id && !s.selectedId) return;
+    settle(detailCtx);
+    detail.id = null; detail.origin = null; detail.loose = null; detail.mode = 'item';
+    markOpen(null);
+    panel.hidden = true; panel.classList.remove('is-leaving', 'is-growing');
+    if (s.selectedId) model.select(null);
   }
   function setAngle(a) {
     if (posture === 'table') return;
+    const prev = angle;
     angle = clamp(a, 0, HINGE.flat);
+    if (angle !== prev && (phase !== 'book' || angle < HINGE.back)) interrupt();
     // folding back past 110°: the settle runs backwards, then the fold follows the hinge (in one call when it jumps)
     if (phase === 'book' && angle < HINGE.back) unsettle();
-    if (phase === 'book') spread.classList.toggle('is-half', angle < HINGE.half && !moving());
+    if (phase === 'book') book.classList.toggle('is-half', angle < HINGE.half && !moving());
     else if (angle >= HINGE.stable) settleSpread();
     else {
       const next = angle >= HINGE.takeover ? 'reveal' : 'closed';
@@ -950,15 +1167,16 @@ export function mount(host, model) {
   function settleSpread() {
     settle(morphCtx);
     const animate = !reduced() && phase === 'reveal';
+    // the book where the panel's picture of its left page has it: where the outer screen carried it (its top when the outer
+    // screen was at its top). A hinge that jumped straight here (no picture), or an outer screen scrolled since: carried now.
+    const top = fold.ok && !fold.dirty ? fold.scroll : carryToBook();
     const k = scale(), cards = new Map();
     for (const card of outer.querySelectorAll('.d-cards > [data-key]')) cards.set(card.dataset.key, { m: measure(card, k), node: card });
     const headline = outer.querySelector('.d-headline'), date = outer.querySelector('.d-date'), bar = outer.querySelector('.d-fold');
     const hm = animate ? { r: headline.getBoundingClientRect(), node: headline.cloneNode(true) } : null;
     const dm = animate ? date.getBoundingClientRect() : null, fm = animate ? { r: bar.getBoundingClientRect(), node: bar.cloneNode(true) } : null;
     phase = 'book';
-    // the spread where the panel's picture of its left page has it (its top, opening from closed)
-    const top = fold.ok ? fold.scroll : 0;
-    if (iscroll.scrollTop !== top) iscroll.scrollTop = top;
+    setScroll(iscroll, top);
     showLayers();
     stale.book = false; renderBook(latest.v, latest.sh, latest.head, null, 'none', {});
     applyFold();
@@ -980,7 +1198,7 @@ export function mount(host, model) {
       else play(ctx, el, [{ opacity: 0 }, { opacity: 1 }], S.minis);
     }
     fade(ctx, spread.querySelector('.u-note'), true, S.rows, 14);
-    const headR = spread.querySelector('[data-key="h:R"]');
+    const headR = bpin.querySelector('[data-key="h:R"]');
     if (headR) {
       const hero = headR.querySelector('.u-hero'), sub = headR.querySelector('.u-sub'), d = headR.querySelector('.d-date');
       const to = hero.getBoundingClientRect(), dx = (hm.r.left - to.left) / k, dy = (hm.r.top - to.top) / k;
@@ -1007,9 +1225,11 @@ export function mount(host, model) {
     const animate = !reduced();
     const k = scale(), halves = new Map();
     for (const el of spread.querySelectorAll(':scope > [data-key]')) halves.set(el.dataset.key, { m: measure(el, k), node: el });
-    // the outer screen brought up to date first, then the picture of the left page as you leave it
+    // the outer screen brought up to date first and scrolled to where the book carries it (the card you were reading keeps
+    // its height; at the book's top, the outer screen's top), then the picture of the left page as you leave it
     syncLayers();
-    if (angle > 0 && !fold.ok) buildPanel({ keepScroll: true });
+    setScroll(oscroll, carryToOuter());
+    if (angle > 0 && !fold.ok) buildPanel({ keepScroll: true }); else panelScroll();
     phase = 'reveal';
     showLayers();
     renderRail();
@@ -1084,7 +1304,7 @@ export function mount(host, model) {
       ctx.clean(() => old.remove());
       play(ctx, old, [{ opacity: 1 }, { opacity: 0 }], TURN.out);
     }
-    const items = back ? [...spread.querySelectorAll(':scope > .u-half, :scope > .u-mini')] : [...tTop.children, ...tBot.children];
+    const items = back ? [...spread.querySelectorAll(':scope > .u-half, :scope > .u-mini')] : [...tPin.children, ...tScroll.children, tLinks, ...tBot.children];
     items.forEach((el, j) => play(ctx, el, [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], [TURN.in[0] + Math.min(8, j % 4) * TURN.stagger, TURN.in[1]]));
     settle(beat); beat = ctx; arm(ctx, () => { beat = null; });
   }
@@ -1170,7 +1390,7 @@ export function mount(host, model) {
     a.finished.then(() => { if (!peekState) peekEl.hidden = true; }).catch(() => {});
   }
   /** Long press on a run of the band: the stripe (or row) it belongs to is outlined, wherever it is on the spread. */
-  const bandOf = () => (posture === 'table' ? tTop : spread).querySelector('.u-band');
+  const bandOf = () => (posture === 'table' ? tPin : bpin).querySelector('.u-band');
   /** Which item's run of the band lies under client x (null over the spare cells). */
   function bandHit(x) {
     const bandEl = bandOf();
@@ -1227,6 +1447,13 @@ export function mount(host, model) {
    * longer on the page (gone:<id>), or one grey line of what was folded (fold:<disposition>:<source>). */
   function feedGroup(key) {
     const c = census(compose());
+    if (key === 'round') {
+      // the whole round, from the outer screen's 累计 bar: every input in time order, each with where it went
+      const v = compose(), asks = new Set(v.asks.map(x => x.id));
+      const dest = g => { if (!g.target) return DISP_WORD[g.disp] || g.disp; const it = getItem(s.state, g.target) || s.records[s.index].snapshot.items[g.target]; return `${asks.has(g.target) ? '→ ' : '→ Agent 那边 · '}${it?.title || g.target}`; };
+      return { title: `本轮 ${c.n} 条输入`, where: '本轮', sub: c.n ? `${c.mine} 条成了这 ${c.cards} 件 · ${c.agentN} 条进了 Agent 那边 · ${c.loose.length} 条折掉。翻开看它们各在哪一件旁边` : '这一轮没有新输入',
+        gs: [...feed().plan.list].sort((a, b) => a.at - b.at), tone: '#9a958b', dest };
+    }
     if (key.startsWith('fold:')) {
       const line = foldLines(c).find(x => x.key === key);
       return line && { title: `${DISP_WORD[line.disp] || line.disp} · ${line.src}`, where: '折掉的', sub: `${line.gs.length} 条，这一轮没有进任何一件`, gs: line.gs, tone: '#9a958b' };
@@ -1238,17 +1465,18 @@ export function mount(host, model) {
       sub: `本轮进了它 ${feedOf(id).length} 条`, gs: feedOf(id), tone: item ? colorFor(item, s.state) : '#9a958b' };
   }
   /** One input in full: who, where, when, its subject and its text (the data keeps up to 500 characters of it). */
-  function rawHTML(g, tone) {
+  function rawHTML(g, tone, dest = null) {
     const e = s.frame.events[g.k], who = whoOf(e), own = who === '你';
     const initial = (own ? '你' : who).replace(/^[^\p{Script=Han}A-Za-z]+/u, '').slice(0, 1) || '·';
     const text = String(e.text || '').trim();
-    return `<article class="d-source u-raw${g.disp !== 'used' ? ' is-fold' : ''}"><span class="d-avatar" style="--tone:${own ? '#55565c' : tone}">${esc(initial)}</span><div><small>${esc(own ? `你（${e.from}）` : who)} · ${esc(e.channel || '')} · ${stamp(g.at)}${g.disp !== 'used' ? ` · ${DISP_WORD[g.disp] || g.disp}` : ''}</small>${e.subject ? `<b class="u-raw-s">${esc(e.subject)}</b>` : ''}${text ? `<p lang="${/[一-鿿]/.test(text) ? 'zh' : 'en'}">${esc(text)}</p>` : ''}</div></article>`;
+    const where = dest ? ` · ${dest(g)}` : g.disp !== 'used' ? ` · ${DISP_WORD[g.disp] || g.disp}` : '';
+    return `<article class="d-source u-raw${g.disp !== 'used' ? ' is-fold' : ''}"><span class="d-avatar" style="--tone:${own ? '#55565c' : tone}">${esc(initial)}</span><div><small>${esc(own ? `你（${e.from}）` : who)} · ${esc(e.channel || '')} · ${stamp(g.at)}${esc(where)}</small>${e.subject ? `<b class="u-raw-s">${esc(e.subject)}</b>` : ''}${text ? `<p lang="${/[一-鿿]/.test(text) ? 'zh' : 'en'}">${esc(text)}</p>` : ''}</div></article>`;
   }
   function feedParts(key) {
     const grp = feedGroup(key);
     const bar = `<button data-d="back" aria-label="返回">‹</button><span>${esc(grp.where)}</span><span class="d-detail-share">${grp.gs.length} 条</span>`;
     const body = `<p class="d-meta"><span class="d-exp">本轮原文</span> · <span>${windowWords()}</span></p><h2>${esc(grp.title)}</h2><p class="d-detail-title">${esc(grp.sub)}</p>
-      ${grp.gs.length ? `<section class="u-raws">${grp.gs.map(g => rawHTML(g, grp.tone)).join('')}</section>` : '<p class="d-small">这一轮没有输入进了它。</p>'}
+      ${grp.gs.length ? `<section class="u-raws">${grp.gs.map(g => rawHTML(g, grp.tone, grp.dest)).join('')}</section>` : '<p class="d-small">这一轮没有输入进了它。</p>'}
       ${grp.item ? '<button type="button" class="d-link u-why" data-d="why">它为什么在这里、怎么变到现在 ›</button>' : ''}`;
     return { bar, body, actions: '' };
   }
@@ -1323,11 +1551,32 @@ export function mount(host, model) {
     const done = () => { panel.hidden = true; panel.classList.remove('is-leaving', 'is-growing'); };
     const focusBack = () => { if (origin?.isConnected && panel.contains(document.activeElement)) origin.focus({ preventScroll: true }); else if (origin?.isConnected && !host.contains(document.activeElement)) origin.focus({ preventScroll: true }); };
     focusBack();
+    if (detail.pulled) {
+      // pulled down past the line: it goes on down from where the finger left it and fades (no box back to the row)
+      detail.pulled = false;
+      const from = { transform: panel.style.transform || 'none', opacity: Number(panel.style.opacity || 1) }, y = parseFloat(from.transform.replace(/^translateY\(/, '')) || 0;
+      panel.style.transform = ''; panel.style.opacity = '';
+      if (reduced()) { done(); return; }
+      const ctx = newCtx();
+      detailCtx = ctx;
+      panel.classList.add('is-leaving');
+      play(ctx, panel, [from, { transform: `translateY(${y + 32}px)`, opacity: 0 }], [0, 0.16], { easing: EASE_IN });
+      arm(ctx, () => { if (detailCtx === ctx) detailCtx = null; done(); });
+      return;
+    }
     if (reduced() || !origin) { done(); return; }
     const ctx = newCtx();
     detailCtx = ctx;
     panel.classList.add('is-leaving');
     const r = panelRect(), o = devRect(origin);
+    // the list was scrolled while the detail was open and its row is under the pinned head or past the foot: nothing to
+    // shrink back into, the detail just fades (a box going in under the head would cross it)
+    const list = origin.closest('.u-iscroll, .u-oscroll, .u-tscroll, .u-bot'), view = list && devRect(list);
+    if (view && (o.y + o.h < view.y + 12 || o.y > view.y + view.h - 12)) {
+      play(ctx, panel, [{ opacity: 1 }, { opacity: 0 }], [0, UNDETAIL.total * 0.6], { easing: 'linear' });
+      arm(ctx, () => { if (detailCtx === ctx) detailCtx = null; done(); });
+      return;
+    }
     const box = makeBox(clipEl, { bg: 'var(--paper)', r: 20 }, Math.max(o.w, r.w));
     box.el.classList.add('u-detail-box');
     box.animate(ctx, r, o, UNDETAIL.frame);
@@ -1337,6 +1586,44 @@ export function mount(host, model) {
     arm(ctx, () => { if (detailCtx === ctx) detailCtx = null; done(); });
   }
   const closeDetail = () => { if (s.selectedId) model.select(null); else if (detail.id) closePanel(); };
+  /**
+   * Pull the detail down while its body is at its top (D's gesture, plainer): it follows the finger down and fades; let go
+   * past a quarter of its height, or quickly, and it closes; short of that it goes back up in 0.20 s. Touch only.
+   */
+  let pull = null;
+  panel.addEventListener('touchstart', e => {
+    const body = panel.querySelector('.d-detail-body');
+    if (e.touches.length !== 1 || panel.hidden || panel.classList.contains('is-leaving') || e.target.closest('textarea, input, .d-keypad')) { pull = null; return; }
+    pull = { x: e.touches[0].clientX, y: e.touches[0].clientY, top: body.scrollTop <= 0 || !body.contains(e.target), on: false, dy: 0, samples: [] };
+  }, { passive: true });
+  panel.addEventListener('touchmove', e => {
+    if (!pull) return;
+    const dx = e.touches[0].clientX - pull.x, dy = e.touches[0].clientY - pull.y;
+    if (!pull.on) {
+      // down from the top is ours from the first pixel (so the list does not start its own bounce); anything else scrolls
+      if (!pull.top || dy < 0 || Math.abs(dx) > Math.abs(dy)) { if (Math.abs(dx) > 8 || dy < -2) pull = null; return; }
+      if (e.cancelable) e.preventDefault();
+      if (dy < 8 || reduced()) return;
+      pull.on = true; settle(detailCtx);
+    }
+    if (e.cancelable) e.preventDefault();
+    pull.dy = dy; pull.samples.push([performance.now(), dy]); if (pull.samples.length > 6) pull.samples.shift();
+    const d = (dy - 8) / scale();
+    panel.style.transform = `translateY(${(d * 0.6).toFixed(1)}px)`;
+    panel.style.opacity = (1 - 0.6 * clamp(d / panel.offsetHeight, 0, 1)).toFixed(3);
+  }, { passive: false });
+  const endPull = () => {
+    const p = pull;
+    pull = null;
+    if (!p?.on) return;
+    const [t0, y0] = p.samples[0] || [0, 0], [t1, y1] = p.samples.at(-1) || [1, 0], v = (y1 - y0) / Math.max(1, t1 - t0);
+    if (p.dy / scale() > panel.offsetHeight / 4 || v > 0.5) { detail.pulled = true; closeDetail(); return; }
+    const from = { transform: panel.style.transform, opacity: Number(panel.style.opacity || 1) };
+    panel.style.transform = ''; panel.style.opacity = '';
+    panel.animate([from, { transform: 'none', opacity: 1 }], { duration: 200, easing: EASE });
+  };
+  panel.addEventListener('touchend', endPull);
+  panel.addEventListener('touchcancel', endPull);
 
   // ---------- sheets (D's): the snooze options, the compact chip's controls, a reply, an amount, a time ----------
   let sheetReturn = null;
@@ -1358,6 +1645,17 @@ export function mount(host, model) {
     sheet.hidden = true; backdrop.hidden = true; sheetHost.classList.remove('is-on');
     if (refocus && sheetReturn?.isConnected) sheetReturn.focus({ preventScroll: true });
     sheetReturn = null;
+  }
+  /**
+   * 记录 on the system strip: D's 我的回应记录, newest first — what you answered on this page (撤回 still works from here)
+   * and what the story says you did at the source (↩). A 稍后 shows here too, which is how a deferred thing is found in E.
+   */
+  function logSheet() {
+    const verb = f => (f.meaning === 'ack' ? '已阅' : f.meaning === 'decide' ? `选了「${f.label}」` : f.meaning === 'input' ? `提交「${f.value ?? f.label}」` : f.meaning === 'act' ? `报告「${f.label}」` : `${clock(f.until)} 再提醒`);
+    const entries = responses.list(s.cursor).map(f => ({ at: f.at, title: f.title, text: verb(f), id: f.item, key: f.key, status: responseStatus(f, s.frames, s.cursor), local: true }));
+    s.frames.slice(0, s.index + 1).forEach((frame, i) => frame.events.forEach(e => (e.feedback || []).forEach(link => entries.push({ at: Date.parse(e.at), title: getItem(s.state, link.target)?.title || getItem(s.records[i].state, link.target)?.title || link.target, text: actionWords(e, link, view.askAt(i, link.target)), id: link.target, story: true }))));
+    entries.sort((a, b) => b.at - a.at);
+    openSheet(`<h3>我的回应记录</h3><p class="d-small">按时间倒序。本页点按的只留在演示里；故事里你在原处或回复 Agent 的，标 ↩。</p><ul class="d-fold-list d-log">${entries.slice(0, 80).map(e => `<li><small>${stamp(e.at)}${e.story ? ' · ↩ 故事' : ` · 本页 · ${e.status.status === 'acknowledged' ? '已收到' : '已保存'}`}</small><p><b>${esc(e.title)}</b>${esc(e.text)}</p>${e.local ? `<button type="button" class="d-link" data-undo-key="${esc(e.key)}">撤回</button>` : ''}${getItem(s.state, e.id) ? `<button type="button" class="d-link is-quiet" data-open="${esc(e.id)}">看这件事</button>` : ''}</li>`).join('') || '<li><p>还没有回应过任何事。</p></li>'}</ul>`, '我的回应记录');
   }
   const askAction = key => { const [id, aid] = key.split(':'); const item = getItem(s.state, id), ask = currentAsk(s, id); return { item, ask, action: normalizeAsk(ask)?.actions.find(a => a.id === aid) }; };
   const sheets = {
@@ -1410,8 +1708,21 @@ export function mount(host, model) {
   });
 
   // ---------- pointer: tap, long press, the hinge handle ----------
-  let press = null, pressHeld = false, swallowUntil = 0, drag = null;
+  let press = null, pressHeld = false, swallowUntil = 0, drag = null, pan = null, creaseAt = -1e9;
   const cancelPress = () => { if (!press) return; clearTimeout(press.hint); clearTimeout(press.fire); press.el.classList.remove('is-pressing'); press = null; };
+  /**
+   * The folding region (HIG): a strip either side of the crease, as wide as the paper between the two halves (24 pt; 48 pt
+   * half-folded); on the tabletop it runs across. Nothing there answers a tap or a press, not even as a tap on blank: a
+   * thumb resting on the fold is not a request. The hinge handle in the browser, the detail, a sheet and a summary card that
+   * reach into it are theirs, not the fold's.
+   */
+  function inCrease(event) {
+    const t = event.target;
+    if (!device.contains(t) || visibleLayer() === 'outer' || t.closest('.u-grip, .u-ldetail, .u-sheethost, .d-peek')) return false;
+    const d = device.getBoundingClientRect(), k = scale();
+    if (posture === 'table') return Math.abs((event.clientY - d.top) / k - G.PW) < G.gap / 2;
+    return Math.abs((event.clientX - d.left) / k - G.crease) < (book.classList.contains('is-half') ? 48 : G.gap) / 2;
+  }
   function onDown(event) {
     endTellOnInput();
     if (event.button > 0) return;
@@ -1423,6 +1734,15 @@ export function mount(host, model) {
       event.preventDefault();
       return;
     }
+    // Half-folded, the left page is the resting panel, not a list: a finger dragged on it scrolls the book (both pages).
+    if (event.pointerType !== 'mouse' && event.target.closest('.u-fold3d.is-live')) pan = { y: event.clientY, s: iscroll.scrollTop, id: event.pointerId, on: false };
+    // a touch on the folding region does nothing, and neither does the click that follows it, wherever the browser moves
+    // that click to (a touch is adjusted toward the nearest thing that takes taps: here the group beside the crease)
+    creaseAt = inCrease(event) ? performance.now() : -1e9;
+    if (creaseAt > 0) return;
+    // a row of 在办 (D's): swiped left past 80 pt it says “知道了”
+    const row = event.target.closest('[data-swipe]');
+    if (row && device.contains(row) && !event.target.closest('button')) swipe = { el: row, x: event.clientX, y: event.clientY, id: row.dataset.swipe, dx: 0, pid: event.pointerId };
     if (event.target.closest(`${RS_CONTROLS}, .u-ldetail, .d-sheet, .d-peek, button, a, textarea, input`) && !event.target.closest('.u-bandrow')) return;
     const el = event.target.closest(PRESSABLE);
     if (!el || !device.contains(el)) return;
@@ -1446,9 +1766,52 @@ export function mount(host, model) {
       if (drag.moved) setAngle(drag.a - (dx / G.PW) * 180);
       return;
     }
+    if (pan && event.pointerId === pan.id) {
+      const dy = event.clientY - pan.y;
+      if (!pan.on && Math.abs(dy) > PRESS.slop) { pan.on = true; cancelPress(); }
+      if (pan.on) { iscroll.scrollTop = pan.s - dy / scale(); return; }
+    }
+    if (swipe && event.pointerId === swipe.pid) {
+      const dx = Math.min(0, event.clientX - swipe.x) / scale();
+      if (!swipe.active && Math.abs(event.clientY - swipe.y) > 8) swipe = null;
+      else {
+        if (!swipe.active && dx < -8) { swipe.active = true; cancelPress(); swipe.el.setPointerCapture?.(event.pointerId); swipe.hint = swipeHint(swipe.el); }
+        if (swipe.active) {
+          swipe.dx = dx;
+          swipe.el.style.transform = `translateX(${dx}px)`;
+          // the words it will say stay where the row's right edge was, uncovered as it moves; past 80 pt they turn ink
+          swipe.hint.style.transform = `translateX(${-dx}px)`;
+          swipe.hint.style.opacity = clamp(-dx / 80, 0, 1).toFixed(2);
+          swipe.hint.classList.toggle('is-armed', dx < -80);
+          return;
+        }
+      }
+    }
     if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > PRESS.slop) cancelPress();
   }
+  let swipe = null;
+  function swipeHint(row) {
+    const h = document.createElement('span');
+    h.className = 'd-swipe-hint'; h.setAttribute('aria-hidden', 'true'); h.textContent = '✓ 知道了'; h.style.opacity = '0';
+    row.append(h);
+    return h;
+  }
+  /** Let go of a swiped row: past 80 pt it is known (D's 知道了); short of that it goes back in 0.20 s from where it was left. */
+  function endSwipe() {
+    const sw = swipe;
+    swipe = null;
+    if (!sw?.active) return;
+    swallowUntil = performance.now() + 150;
+    sw.el.style.transform = '';
+    if (sw.dx < -80) { sw.hint.remove(); give(getItem(s.state, sw.id), ACK); return; }
+    if (reduced()) { sw.hint.remove(); return; }
+    sw.el.animate([{ transform: `translateX(${sw.dx}px)` }, { transform: 'none' }], { duration: 200, easing: EASE });
+    const a = sw.hint.animate([{ transform: `translateX(${-sw.dx}px)`, opacity: Number(sw.hint.style.opacity) }, { transform: 'none', opacity: 0 }], { duration: 200, easing: EASE, fill: 'forwards' });
+    a.onfinish = a.oncancel = () => sw.hint.remove();
+  }
   function onUp(event) {
+    if (pan && event.pointerId === pan.id) { if (pan.on) swallowUntil = performance.now() + 150; pan = null; }
+    if (swipe && event.pointerId === swipe.pid) endSwipe();
     if (drag && event.pointerId === drag.id) {
       grip.classList.remove('is-dragging');
       const moved = drag.moved;
@@ -1464,6 +1827,7 @@ export function mount(host, model) {
   function onClick(event) {
     if (performance.now() < swallowUntil) { event.preventDefault(); event.stopPropagation(); return; }
     const t = event.target;
+    if (inCrease(event) || performance.now() - creaseAt < 800) { creaseAt = -1e9; event.preventDefault(); return; }
     if (t.closest(RS_CONTROLS)) return;
     const u = t.closest('[data-u]')?.dataset.u;
     if (u) { railAction(u); return; }
@@ -1471,6 +1835,13 @@ export function mount(host, model) {
     if (p) { endTellOnInput(); setPosture(p); return; }
     if (t === backdrop) { closeSheet(); return; }
     if (!device.contains(t)) return;
+    // inside 我的回应记录: 撤回 reads the log again; 看这件事 puts the sheet away and opens that thing's story
+    if (t.closest('.d-log')) {
+      const undo = t.closest('[data-undo-key]')?.dataset.undoKey, see = t.closest('[data-open]')?.dataset.open;
+      if (undo) { responses.removeKey(undo); render('local'); logSheet(); }
+      else if (see) { closeSheet({ refocus: false }); openDetail(see, elOf(see)); }
+      return;
+    }
     if (peekState) {
       if (t.closest('.u-peek')) { const id = peekState.id, origin = peekState.el; hidePeek(true); openDetail(id, origin.matches('.u-bandrow') ? elOf(id) : origin); return; }
       hidePeek(); event.preventDefault(); return;
@@ -1513,6 +1884,9 @@ export function mount(host, model) {
     else if (u === 'play') model.togglePlay();
     else if (u === 'reset') { for (const r of responses.list(Infinity)) responses.removeKey(r.key); held.clear(); render('local'); }
     else if (u === 'replay') startTell(true);
+    else if (u === 'log') logSheet();
+    // the outer screen's 累计 bar: this round's inputs, each with where it went (what the book lays open, one screen at a time)
+    else if (u === 'fold') { if (detail.id === 'round' && !panel.hidden) closeDetail(); else openDetail('round', outer.querySelector('.u-ofold'), 'feed'); }
   }
   track.addEventListener('pointerdown', event => {
     const pick = e => { const r = track.getBoundingClientRect(); model.goFrame(Math.round(clamp((e.clientX - r.left) / r.width, 0, 1) * (s.frames.length - 1))); };
@@ -1523,12 +1897,44 @@ export function mount(host, model) {
   addEventListener('pointerup', onUp);
   addEventListener('pointercancel', onUp);
   host.addEventListener('click', onClick);
+  /**
+   * A wheel over a screen scrolls that screen's list, wherever on the screen it is: over a list (or the detail's body, or
+   * a sheet) natively, and that list keeps the rest (overscroll-behavior: contain); over a pinned head, the rail, the fold
+   * or the resting panel, the list under it. Nothing in the device hands a wheel on to the page.
+   */
+  device.addEventListener('wheel', event => {
+    if (event.ctrlKey || event.target.closest('.u-iscroll, .u-oscroll, .u-tscroll, .u-bot, .d-detail-body, .d-sheet')) return;
+    event.preventDefault();
+    const d = device.getBoundingClientRect(), layer = visibleLayer();
+    const list = event.target.closest('.u-ldetail')?.querySelector('.d-detail-body')
+      || (layer === 'table' ? ((event.clientY - d.top) / scale() < G.PW ? tScroll : tBot) : scrollerOf(layer));
+    const dy = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaMode === 2 ? event.deltaY * list.clientHeight : event.deltaY;
+    list.scrollTop += dy;
+  }, { passive: false });
+  // A list that scrolls drops a press in progress and a pressed summary (it was placed by the row that just moved).
+  const scrolled = () => { cancelPress(); if (peekState?.via === 'press') hidePeek(true); };
   iscroll.addEventListener('scroll', () => {
-    cancelPress(); if (peekState?.via === 'press') hidePeek(true);
-    // the panel's picture of the left page scrolls with the spread (both pages scroll as one)
-    if (fold.ok && phase === 'book' && fold.scroll !== iscroll.scrollTop) { fold.scroll = iscroll.scrollTop; for (const c of fold.spreads) c.style.transform = `translateY(${-fold.scroll}px)`; }
+    scrolled(); edgeOf(iscroll);
+    // the panel's picture of the left page scrolls with the spread (both pages scroll as one), under its pinned head
+    if (fold.ok && phase === 'book' && fold.scroll !== iscroll.scrollTop) panelScroll();
   }, { passive: true });
-  oscroll.addEventListener('scroll', () => cancelPress(), { passive: true });
+  oscroll.addEventListener('scroll', () => {
+    scrolled(); edgeOf(oscroll);
+    // the panel's picture of the outer screen is out of step: opening, the left page follows it at once (the outer screen
+    // is the right page then); closed, the picture catches up as it lifts
+    if (!fold.ok || oscroll.scrollTop === fold.os) return;
+    fold.dirty = true;
+    if (panelUp() && phase !== 'book') panelScroll(); else catchUp();
+  }, { passive: true });
+  // closed, the book (hidden) and the picture catch up once the outer screen has stopped, while nothing else is going on,
+  // so the first frame of the next turn has no layout to read
+  let catchTimer = 0;
+  function catchUp() {
+    clearTimeout(catchTimer);
+    const idle = window.requestIdleCallback || (fn => setTimeout(fn, 0));
+    catchTimer = setTimeout(() => idle(() => { if (!disposed && fold.ok && fold.dirty && !panelUp() && !press && !drag && !peekState) panelScroll(); }, { timeout: 600 }), 250);
+  }
+  for (const el of [tScroll, tBot]) el.addEventListener('scroll', () => { scrolled(); apartTable(); }, { passive: true });
   // keyboard focus on a row shows its summary, as a long press does
   host.addEventListener('focusin', event => {
     const el = event.target;
@@ -1572,6 +1978,8 @@ export function mount(host, model) {
     phase = 'closed'; angle = 0;
     model.goFrame(frameIndex(plan.start));
     render('none'); showLayers();
+    // the tell reads both screens from their tops (a replay after you scrolled starts there too)
+    carried = null; setScroll(oscroll, 0); setScroll(iscroll, 0);
     buildPanel(); // the picture of both screens, taken while nothing moves (the turn starts in 0.9 s)
     let t = 0;
     const at = (dt, fn) => { t += dt; tell.timers.push(setTimeout(() => { if (tell.running) fn(); }, t * 1000)); };
@@ -1676,7 +2084,7 @@ export function mount(host, model) {
       el?.scrollIntoView({ block: 'nearest' });
       return centre(el);
     },
-    bandPoint: name => { const id = named(name) || name, bandEl = spread.querySelector('.u-band'); const node = bandEl && [...bandEl.children].find(n => n.dataset.seg === id); if (!node) return null; const r = node.getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + 2) }; },
+    bandPoint: name => { const id = named(name) || name, bandEl = bpin.querySelector('.u-band'); const node = bandEl && [...bandEl.children].find(n => n.dataset.seg === id); if (!node) return null; const r = node.getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + 2) }; },
     answer: (name, actionId) => {
       const id = named(name), ask = id && currentAsk(s, id);
       if (!ask) return null;
@@ -1707,6 +2115,8 @@ export function mount(host, model) {
     /** The left page's account of the round: inputs in all, into the cards on the right page (and how many cards), into the
      * Agent's side, folded; the cumulative count; and the items that left the page this round. */
     census: () => { const c = census(compose()); return { n: c.n, mine: c.mine, cards: c.cards, agent: c.agentN, folded: c.loose.length, total: c.total, gone: c.gone.length, counts: c.counts }; },
+    /** Scroll a list as a finger would — book (both pages), outer, top / bottom (the tabletop's halves) — to y pt; returns where it is. */
+    scroll: (layer, y) => { const el = { book: iscroll, outer: oscroll, top: tScroll, bottom: tBot }[layer]; if (!el) return null; if (y != null) setScroll(el, y); return el.scrollTop; },
     posture: (name, opts) => setPosture(name, opts),
     hinge: (value, opts = {}) => { hingeTween?.cancel(); if (opts.animate) tweenTo(value); else setAngle(value); },
     unfold: seconds => tweenTo(180, seconds ?? HAND.open, HAND.ease),
@@ -1714,13 +2124,15 @@ export function mount(host, model) {
     /** panel: the panel's turn in degrees (0 when it is down: closed at 0° or lying flat as the left page); fold: what the
      * fold draws at this angle (the face's opacity, the blur at the free edge in pt, how many blurred copies show, the veil,
      * the band's growth), the same numbers foldAt() gives. */
-    state: () => ({ posture, phase, angle: Math.round(angle), half: spread.classList.contains('is-half'), panel: panelUp() ? Math.round(angle) : 0,
+    state: () => ({ posture, phase, angle: Math.round(angle), half: book.classList.contains('is-half'), panel: panelUp() ? Math.round(angle) : 0,
       fold: lastFold ? { front: +lastFold.front.alpha.toFixed(3), blur: +lastFold.Bmax.toFixed(2), layers: lastFold.layers.filter(l => l.on).length, veil: +lastFold.veil.alpha.toFixed(3), edge: Math.round(lastFold.veil.edge), band: +lastFold.band.toFixed(3) } : null,
       /** the body: which shell lies still (closed / right while the panel turns / open / table) and the light on the
        * panel's free edge (its sheen and shade, the faces' glint), null while the panel is down */
       body: { shell: bodyEl.dataset.body, light: lastFold ? { sheen: +lastFold.body.sheen.toFixed(3), shade: +lastFold.body.shade.toFixed(3), glint: [+lastFold.body.glint.front.toFixed(3), +lastFold.body.glint.back.toFixed(3)] } : null },
-      hero: (visibleLayer() === 'outer' ? outer.querySelector('.d-headline') : visibleLayer() === 'table' ? table.querySelector('.u-hero') : spread.querySelector('.u-hero'))?.textContent.replace(/\s+/g, ' ').trim(),
+      hero: (visibleLayer() === 'outer' ? outer.querySelector('.d-headline') : visibleLayer() === 'table' ? table.querySelector('.u-hero') : bpin.querySelector('.u-hero'))?.textContent.replace(/\s+/g, ' ').trim(),
       settling: Boolean(morphCtx && !morphCtx.done), tell: tell.running, told: tell.done,
+      /** how far each list is scrolled (pt): the book (both pages), the outer screen, the tabletop's two halves */
+      scroll: { book: iscroll.scrollTop, outer: oscroll.scrollTop, top: tScroll.scrollTop, bottom: tBot.scrollTop },
       /** the lines from the left page's groups into the cards: how many, and how far grown out of the crease (0–1) */
       links: { n: live.links.length, grown: +growthNow().toFixed(3) },
       /** what the left page's detail shows: 'feed' (a group's originals) or 'item' (D's detail); null when it is closed */

@@ -122,16 +122,32 @@
 .u-island.is-spot { background: none; }
 .u-clock { font-size: 13px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink); }
 .u-wifi { font-size: 15px; line-height: 1; color: var(--ink-2); margin-top: -2px; }
-.u-pill { margin-top: 10px; width: 40px; padding: 8px 0; border-radius: 20px; background: var(--card); box-shadow: 0 0 0 1px var(--line), 0 4px 10px -8px #0004; font-size: 12px; line-height: 1.25; color: var(--ink-3); text-align: center; }
+.u-pill { margin-top: 10px; width: 40px; padding: 8px 0; border: 0; border-radius: 20px; background: var(--card); box-shadow: 0 0 0 1px var(--line), 0 4px 10px -8px #0004; font: inherit; font-size: 12px; line-height: 1.25; color: var(--ink-3); text-align: center; cursor: pointer; pointer-events: auto; }
+/* 记录 opens 我的回应记录 (D's header tool, on the strip that stays put on every screen) */
+.u-pill:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .u-cam { position: absolute; top: 10px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: #1a1a1a; opacity: .85; z-index: 6; }
 
-/* closed: D on the outer screen */
+/* every screen pins its head; under it, its list scrolls on its own (duo-motion.md 4.5). Where they meet, a paper fade and a
+   hairline at 6 % ink, only while something has slid under the head; no shadow. A drag that starts on a pinned head (or the
+   bar at the foot, or the resting panel) is not handed to the page: the lists are the only things that scroll */
+.u-pin::after, .u-ohead::after, .u-tpin::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 14px; z-index: 2; pointer-events: none;
+  background: linear-gradient(#f6f4ef, #f6f4ef00); box-shadow: inset 0 .6px 0 #17171a0f; opacity: 0; transition: opacity .18s; }
+/* the tabletop's lying half has no head: its cards slide under the crease, and the same edge shows there */
+.u-table::after { content: ""; position: absolute; left: 0; right: var(--rail); top: var(--half); height: 14px; z-index: 3; pointer-events: none;
+  background: linear-gradient(#f6f4ef, #f6f4ef00); box-shadow: inset 0 .6px 0 #17171a0f; opacity: 0; transition: opacity .18s; }
+.u-book.is-scrolled > .u-pin::after, .u-outer.is-scrolled .u-ohead::after, .u-table.is-tscrolled .u-tpin::after, .u-table.is-bscrolled::after { opacity: 1; }
+.u-pin, .u-ohead, .u-ofold, .u-tpin, .u-fold3d, .u-pill { touch-action: none; }
+
+/* closed: D on the outer screen, its head pinned over its list (in D the head scrolls with the cards: there it is one screen
+   and nothing else; here the outer screen is the book's right page, whose head is pinned) */
 .u-ocol { position: absolute; left: 0; bottom: 0; display: flex; flex-direction: column; }
+.u-ocol > .d-head { position: relative; z-index: 2; flex: none; margin: 0 12px; }
 .u-ocol .d-scroll { padding-top: 0; }
 .u-outer .d-card [data-part], .u-outer .d-since { will-change: auto; }
 
-/* the hinge handle: a short bar on the crease, there to be dragged */
-.u-grip { position: absolute; top: 50%; z-index: 9; width: 36px; height: 88px; margin: -44px 0 0 -18px; border: 0; padding: 0; background: none; cursor: ew-resize; touch-action: none; }
+/* the hinge handle: a short bar on the crease, there to be dragged; no wider than the folding region, so it never covers
+   the edge of a half beside it */
+.u-grip { position: absolute; top: 50%; z-index: 9; width: 24px; height: 88px; margin: -44px 0 0 -12px; border: 0; padding: 0; background: none; cursor: ew-resize; touch-action: none; }
 .u-grip > i { position: absolute; left: 50%; top: 26px; bottom: 26px; width: 4px; margin-left: -2px; border-radius: 2px; background: #c6c1b6; transition: background-color .15s, width .15s, margin .15s; }
 .u-grip:hover > i, .u-grip:focus-visible > i, .u-grip.is-dragging > i { background: var(--ink-2); width: 6px; margin-left: -3px; }
 .u-grip:focus-visible { outline: none; }
@@ -139,17 +155,22 @@
 .u-grip:hover .u-grip-read, .u-grip.is-dragging .u-grip-read, .u-grip:focus-visible .u-grip-read { opacity: 1; }
 .u-device.is-table .u-grip { display: none; }
 
-/* book: two pages; one stripe per waiting item crosses the crease, its halves one row, one height */
-.u-iscroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; overscroll-behavior: contain; overflow-anchor: none; }
+/* book: two pages; one stripe per waiting item crosses the crease, its halves one row, one height. The pinned head (both
+   pages' heads, the band, its account) stands over the stripes; the stripes scroll under it, both pages as one */
+.u-book { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.u-pin { position: relative; z-index: 2; flex: none; display: grid; grid-template-columns: var(--pw) var(--pw); grid-auto-rows: min-content; row-gap: 8px; padding-top: 14px; }
+.u-iscroll { position: relative; flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; overscroll-behavior: contain; overflow-anchor: none; }
 .u-iscroll::-webkit-scrollbar { display: none; }
-.u-spread { position: relative; display: grid; grid-template-columns: var(--pw) var(--pw); grid-auto-rows: min-content; align-content: start; row-gap: 8px; padding: 14px 0 28px; }
-.u-spread > .u-cl { grid-column: 1; margin: 0 calc(var(--gap) / 2) 0 var(--gut); min-width: 0; transition: margin .2s var(--ease); }
-.u-spread > .u-cr { grid-column: 2; margin: 0 calc(var(--rail) + 4px) 0 calc(var(--gap) / 2); min-width: 0; transition: margin .2s var(--ease); }
+/* the copy on the panel: its stripes are moved by a transform inside the scroll region's clip (a copy keeps no scroll) */
+.u-clone .u-iscroll { overflow: hidden; }
+.u-spread { position: relative; display: grid; grid-template-columns: var(--pw) var(--pw); grid-auto-rows: min-content; align-content: start; row-gap: 8px; padding: 8px 0 28px; }
+:is(.u-pin, .u-spread) > .u-cl { grid-column: 1; margin: 0 calc(var(--gap) / 2) 0 var(--gut); min-width: 0; transition: margin .2s var(--ease); }
+:is(.u-pin, .u-spread) > .u-cr { grid-column: 2; margin: 0 calc(var(--rail) + 4px) 0 calc(var(--gap) / 2); min-width: 0; transition: margin .2s var(--ease); }
 /* half-folded: the crease region widens (ReservedRegion .division); the halves step away, nothing re-flows across */
-.u-spread.is-half { --gap: 48px; }
-.u-spread > [data-key], .u-zone > [data-key], .u-top > [data-key], .u-bot > [data-key] { position: relative; }
-/* a ghost (a leaf on its way out, or the old face of one that changes) is placed against the whole spread, not a column */
-.u-spread > .d-ghost { grid-column: auto !important; grid-row: auto !important; }
+.u-book.is-half { --gap: 48px; }
+:is(.u-pin, .u-spread) > [data-key], .u-zone > [data-key], .u-tpin > [data-key], .u-tscroll > [data-key], .u-bot > [data-key] { position: relative; }
+/* a ghost (a leaf on its way out, or the old face of one that changes) is placed against its whole list, not a column */
+:is(.u-pin, .u-spread, .u-tscroll, .u-bot) > .d-ghost { grid-column: auto !important; grid-row: auto !important; }
 .u-head { padding: 0 4px 2px; }
 .u-head .d-date { font-size: 13px; }
 .u-hero { margin: 2px 0 2px; font-size: 27px; line-height: 1.2; font-weight: 800; letter-spacing: -.01em; color: var(--ink); font-variant-numeric: tabular-nums; }
@@ -170,14 +191,14 @@
 .u-ticks .is-agent { fill: #b3aea2; }
 .u-ticks .is-fold { fill: #d8d4ca; }
 /* the band's account under it, either side of the crease: what is left of it adds up with what is right of it to the budget */
-.u-spread > .u-acct { grid-column: 1 / 3; display: grid; grid-template-columns: var(--pw) var(--pw); margin-top: -5px; font-size: 11.5px; line-height: 16px; color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; will-change: opacity; }
+.u-pin > .u-acct { grid-column: 1 / 3; display: grid; grid-template-columns: var(--pw) var(--pw); margin-top: -5px; font-size: 11.5px; line-height: 16px; color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; will-change: opacity; }
 .u-acct > .is-l { text-align: right; padding-right: calc(var(--gap) / 2 + 5px); overflow: hidden; text-overflow: ellipsis; }
 .u-acct > .is-r { padding-left: calc(var(--gap) / 2 + 5px); padding-right: calc(var(--rail) + 4px); overflow: hidden; text-overflow: ellipsis; }
 .u-acct b { color: var(--ink-2); font-weight: 650; }
 
 /* the 64-cell band, one page wide, its boundary on the crease (the one line the crease gets) */
 .u-bandrow, .u-tband { position: relative; height: 14px; }
-.u-spread > .u-bandrow { grid-column: 1 / 3; }
+.u-pin > .u-bandrow { grid-column: 1 / 3; }
 .u-band { position: absolute; top: 0; left: 0; height: 14px; display: block; }
 .u-band > i { position: absolute; left: 0; top: 5px; display: block; width: var(--cell, 7px); height: 4px; border-radius: 1px; transform-origin: 0 0; background: #c3beb3; transition: opacity .15s; }
 .u-band > i.is-you { background: var(--ink); }
@@ -284,8 +305,8 @@
 :is(.u-half, .u-mini, .u-bandrow)::before { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; background: var(--ink); opacity: 0; transition: opacity .15s; pointer-events: none; }
 :is(.u-half, .u-mini, .u-bandrow).is-pressing::before { opacity: .05; }
 :is(.u-half, .u-mini, .u-bandrow, .u-ledger) { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
-:is(.u-spread, .u-zone, .u-top, .u-bot, .d-cards, .d-rows, .d-known) > [data-key] { transition: opacity .1s; }
-.u-device.is-dim :is(.u-spread, .u-zone, .u-top, .u-bot, .d-cards, .d-rows, .d-known) > [data-key]:not(.is-peeked):not(.is-linked):not(.u-bandrow):not(.u-zone) { opacity: .7; transition: opacity .15s; }
+:is(.u-pin, .u-spread, .u-zone, .u-tpin, .u-tscroll, .u-bot, .d-cards, .d-rows, .d-known) > [data-key] { transition: opacity .1s; }
+.u-device.is-dim :is(.u-pin, .u-spread, .u-zone, .u-tpin, .u-tscroll, .u-bot, .d-cards, .d-rows, .d-known) > [data-key]:not(.is-peeked):not(.is-linked):not(.u-bandrow):not(.u-tband):not(.u-zone) { opacity: .7; transition: opacity .15s; }
 .is-linked { outline: 2px solid var(--ink); outline-offset: 2px; }
 .u-half.is-open, .u-mini.is-open { box-shadow: 0 0 0 2px var(--ink); }
 .u-half.is-pulse::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1.5px var(--red); opacity: 0; animation: d-new 1.6s var(--ease) var(--glow-delay, .25s) 1 both; pointer-events: none; }
@@ -310,15 +331,19 @@
 .u-sheethost { position: absolute; z-index: 30; overflow: hidden; border-radius: 22px; pointer-events: none; }
 .u-sheethost.is-on { pointer-events: auto; }
 
-/* tabletop: the spread turned a quarter; top half stands (look), bottom half lies flat (press); one column per stripe */
-.u-top, .u-bot { position: absolute; left: 0; display: grid; column-gap: 10px; row-gap: 8px; padding: 0 14px; box-sizing: border-box; }
-.u-top { top: 0; right: var(--rail); height: var(--half); padding-top: 14px; padding-bottom: 10px; grid-template-rows: auto auto auto minmax(0, 1fr); }
+/* tabletop: the spread turned a quarter; top half stands (look), bottom half lies flat (press); one column per stripe.
+   The standing half pins its head (the numbers, the band, what the Agent has in hand); under it the groups scroll. The flat
+   half has no head of its own (its numbers are the standing half's): the whole of it is its list of cards. The two lists
+   scroll on their own, never sideways: column for column a group stays over its card */
+.u-top { position: absolute; left: 0; top: 0; right: var(--rail); height: var(--half); display: flex; flex-direction: column; }
+.u-tpin { position: relative; z-index: 2; flex: none; display: flex; flex-direction: column; gap: 8px; padding: 14px 14px 0; }
+.u-tscroll, .u-bot { display: grid; column-gap: 10px; row-gap: 8px; padding: 0 14px; box-sizing: border-box;
+  overflow-y: auto; overflow-x: hidden; scrollbar-width: none; overscroll-behavior: contain; overflow-anchor: none; }
+.u-tscroll::-webkit-scrollbar, .u-bot::-webkit-scrollbar { display: none; }
 /* 上看下按: the standing half shows what came in, the groups at its foot by the crease, each over its card on the flat half */
-.u-top > .u-rowsline { grid-row: 3; }
-.u-top > .u-half { grid-row: 4; }
+.u-tscroll { position: relative; flex: 1 1 0; min-height: 0; grid-template-rows: 1fr; padding-top: 8px; padding-bottom: 10px; }
 /* the flat half keeps the standing half's columns (it stops where the rail does), so each group stands over its card */
-.u-bot { top: var(--half); right: var(--rail); bottom: 0; padding-top: 12px; padding-bottom: 16px; grid-auto-rows: min-content; align-content: start; }
-.u-thead, .u-tband, .u-rowsline { grid-column: 1 / -1; }
+.u-bot { position: absolute; left: 0; top: var(--half); right: var(--rail); bottom: 0; padding-top: 12px; padding-bottom: 16px; grid-auto-rows: min-content; align-content: start; }
 .u-thead { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 0 4px; }
 .u-thead .u-hero, .u-thead .u-hero small { font-size: 30px; }
 .u-thead .u-sub { margin-top: 0; }
@@ -326,8 +351,7 @@
 .u-thead .u-hero-2 { margin-top: 0; font-size: 16px; }
 .u-thead-r .u-hero-2 small { margin-left: 6px; }
 .u-tband { margin: 4px 4px 2px; }
-.u-top > .u-half { min-height: 0; }
-.u-top > .u-half .u-flines { flex: 1 1 0; min-height: 0; overflow: hidden; padding-right: 0; }
+.u-tscroll > .u-half .u-flines { padding-right: 0; }
 .u-table .u-half { padding: 11px 12px 9px; }
 .u-table .u-half.is-feed { padding: 12px 12px 10px; }
 /* a column is narrow: the item's name on its own line (two at most), the tags under it; the lines drop who sent them */
@@ -339,8 +363,12 @@
 .u-table .u-fsub .u-tr { display: none; }
 .u-table .u-fl-who { display: none; }
 .u-table .u-flines { margin-top: 4px; }
-/* the tabletop's line: from under the group's lines straight down over the crease into the top of its card */
-.u-link.is-down { top: auto; bottom: -25px; left: 50%; width: 1.6px; height: 30px; margin-left: -.8px; background: var(--ink); transform-origin: 0 15px; }
+/* the tabletop's lines: from the foot of each group straight down over the crease into the top of its card. They lie over
+   the crease, apart from both lists, and show only while both are at their tops; scrolled away, they and the sockets fade */
+.u-tlinks { position: absolute; inset: 0; pointer-events: none; transition: opacity .15s; }
+.u-dline { position: absolute; display: block; width: 1.6px; margin-left: -.8px; background: var(--ink); }
+.u-bot .u-socket { transition: opacity .15s; }
+.u-table.is-apart .u-tlinks, .u-table.is-apart .u-bot .u-socket { opacity: 0; }
 .u-table .d-actions { flex-direction: column; }
 .u-table .d-btn { flex: none; width: 100%; }
 .u-table .u-half h3 { font-size: 16.5px; }
