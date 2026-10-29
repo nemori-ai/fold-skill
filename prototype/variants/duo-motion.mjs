@@ -86,10 +86,10 @@ export function foldAt(theta) {
  *           border is 18 above both, 23 below the inner screen and 14 below the outer one.
  *   spine   the closed body reaches this far past the crease on the hinge side (83.5 mm wide closed)
  *   R / Rh  the body's corners at the free edges (12.3 mm) / the closed body's on the hinge side
- *   screen  the inner screen's corners. About 54 on the renders; 36 here, because the system rail (it never moves, 3.6)
- *           has its clock 9 pt from the right edge and 14 from the top, and a 54 corner cuts off its last digit
- *   cover / screenHinge  the outer screen's corners at the free side (54 as measured: its rail starts with the island,
- *           which clears it) / at the hinge side, tighter (HIG)
+ *   corners every screen's corners, concentric with the body's (BODY.corners below): a screen corner is the body's
+ *           corner less the border on each side, [x, y] (an ellipse where the side and the top border differ). On the
+ *           Newsroom render lying flat the body's corner is 230 px, the border 62 px and the screen's corner 167 px,
+ *           75 − 20 = 55 pt (duo-motion.md 3.7). The system rail moves in from the corner instead (3.6)
  *   ink     the black border of a panel before its pixels
  *   keys    on the half that stays in your hand: two on its top edge, one on its free edge and a flush one under it
  *           (x or y ranges in device pt); rise is how far they stand out (0.5 mm)
@@ -97,7 +97,7 @@ export function foldAt(theta) {
  *   facets  how many flat strips round each free corner of the panel's edge
  */
 export const BODY = {
-  T: 31, side: 20, top: 18, bottom: 23, spine: 8, R: 74, Rh: 24, screen: 36, cover: 54, screenHinge: 10, ink: 3.3,
+  T: 31, side: 20, top: 18, bottom: 23, spine: 8, R: 74, Rh: 24, ink: 3.3,
   keys: { top: [[701, 766], [781, 846]], side: [179, 297], flush: [458, 536], rise: 3 },
   marks: { x: [69, 380, 565, 874], y: [71, 596], w: 7.5 },
   facets: 6,
@@ -107,6 +107,32 @@ BODY.H = G.PH + BODY.top + BODY.bottom; // 710
 BODY.L = G.PW + BODY.side;           // one half, crease to free edge (495.5)
 BODY.x0 = -BODY.side;                // the open body's left edge
 BODY.x1 = G.W + BODY.side;           // its right edge, the free edge of the half you hold (971)
+/** A screen corner concentric with a body corner of radius R, the borders bx (left or right) and by (top or bottom). */
+const cc = (R, bx, by) => [Math.max(0, R - bx), Math.max(0, R - by)];
+{
+  const B = BODY, R = B.R, closedX = G.crease - B.spine, low = B.y0 + B.H; // the closed body's hinge-side edge; the body's lower edge
+  const tx = G.PH - low, free = B.x1 - G.W; // the tabletop body's left edge (the book's lower edge turned), the free border
+  B.corners = {
+    // the inner screen in the open body: 20 at the sides, 18 above, 23 below → 54 / 56 above, 54 / 51 below
+    inner: { tl: cc(R, B.side, B.top), tr: cc(R, B.side, B.top), br: cc(R, B.side, low - G.PH), bl: cc(R, B.side, low - G.PH) },
+    // the outer screen in the closed body: the free side as the inner screen's, the hinge side against its tighter corner
+    outer: { tl: cc(B.Rh, G.OX - closedX, B.top), tr: cc(R, free, B.top), br: cc(R, free, low - G.L), bl: cc(B.Rh, G.OX - closedX, low - G.L) },
+    // the tabletop: the open body turned a quarter clockwise (its lower border on the left, its top border on the right)
+    table: { tl: cc(R, -tx, -B.x0), tr: cc(R, tx + B.H - G.PH, -B.x0), br: cc(R, tx + B.H - G.PH, free), bl: cc(R, -tx, free) },
+  };
+}
+/** Corners as CSS (`x x x x / y y y y`): `list` is [tl, tr, br, bl], each a corner [x, y], a number or 0. */
+export function radius(list, grow = 0) {
+  const xy = list.map(c => (Array.isArray(c) ? c : [c, c]).map(v => (v ? v + grow : 0)));
+  const f = v => `${Math.round(v * 100) / 100}px`;
+  return `${xy.map(c => f(c[0])).join(' ')} / ${xy.map(c => f(c[1])).join(' ')}`;
+}
+/** Named corner sets for the page (CSS variables on the device): the screens, the pages, the halves of the tabletop. */
+export function cornerVars() {
+  const { inner: i, outer: o, table: t } = BODY.corners;
+  return { '--r-in': radius([i.tl, i.tr, i.br, i.bl]), '--r-out': radius([o.tl, o.tr, o.br, o.bl]), '--r-table': radius([t.tl, t.tr, t.br, t.bl]),
+    '--r-lpage': radius([i.tl, 0, 0, i.bl]), '--r-rpage': radius([0, i.tr, i.br, 0]) };
+}
 /** How far the drawn body reaches past the device box (fit() keeps it in view): the keys, the left half, the shadow. */
 export const BODY_PAD = { book: { l: 24, r: 26, t: 24, b: 22 }, table: { l: 27, r: 26, t: 23, b: 27 } };
 
@@ -128,7 +154,7 @@ export function bodyAt(a) {
 }
 // ---------- the body's markup (pure: the page and the panel draw the same boxes) ----------
 const pt = v => `${Math.round(v * 100) / 100}px`;
-const corners = r => r.map(pt).join(' ');
+const corners = r => (r.some(Array.isArray) ? radius(r) : r.map(pt).join(' '));
 /** A light, a dark, a light: the polished rim seen face-on, outside in (Newsroom render, px → pt), then the bezel's lip. */
 const RIM = [[0.6, '#4a4842'], [1.5, '#a7a59f'], [2.7, '#f6f4ef'], [3.6, '#a19f99'], [4.6, '#3f3e3b'], [5.4, '#76777a'], [6.6, '#3c3d40']];
 const rimShadow = RIM.map(([w, c]) => `inset 0 0 0 ${w}px ${c}`).join(', ');
@@ -142,7 +168,7 @@ export function faceHTML({ w, h, r, s, sr, open = null, bezel, marks = { x: [], 
   const ext = 16, rx = open === 'left' ? -ext : 0, rw = w + (open ? ext : 0), k = BODY.ink, m = BODY.marks.w;
   // the black border stops at the crease too (the screen runs on into the other half)
   const il = open === 'left' ? 0 : k, ir = open === 'right' ? 0 : k;
-  const ink = `<i class="u-ink" style="left:${pt(s.x - il)};top:${pt(s.y - k)};width:${pt(s.w + il + ir)};height:${pt(s.h + 2 * k)};border-radius:${corners(sr.map(v => (v ? v + k : 0)))}"></i>`;
+  const ink = `<i class="u-ink" style="left:${pt(s.x - il)};top:${pt(s.y - k)};width:${pt(s.w + il + ir)};height:${pt(s.h + 2 * k)};border-radius:${radius(sr, k)}"></i>`;
   const tick = (x, y, mw, mh) => `<i class="u-mark" style="left:${pt(x)};top:${pt(y)};width:${pt(mw)};height:${pt(mh)}"></i>`;
   const ticks = [...marks.x.flatMap(x => [tick(x - m / 2, 0, m, 5.4), tick(x - m / 2, h - 5.4, m, 5.4)]),
     ...marks.y.flatMap(y => sides.map(side => tick(side === 'left' ? 0 : w - 5.4, y - m / 2, 5.4, m)))].join('');
@@ -167,21 +193,21 @@ function hingeHTML(cx, h) {
  * (on the half in your hand). Which one shows is the [data-body] of the host.
  */
 export function bodyHTML() {
-  const B = BODY, y0 = B.y0, H = B.H, R = B.R, c = G.crease, S = B.screen;
+  const B = BODY, y0 = B.y0, H = B.H, R = B.R, c = G.crease, { inner: I, outer: O, table: Tc } = B.corners;
   // which shell is a data attribute, not a class: the page clears state classes such as is-open across the whole host
   const box = (name, x, y, w, h, inner, extra = '') => `<div class="u-shell" data-shell="${name}" style="left:${pt(x)};top:${pt(y)};width:${pt(w)};height:${pt(h)}">${inner}${extra}</div>`;
   const marksX = (x, from, to) => B.marks.x.filter(v => v > from && v < to).map(v => v - x);
   const yMarks = B.marks.y.map(v => v - y0);
-  const open = box('open', B.x0, y0, B.x1 - B.x0, H, faceHTML({ w: B.x1 - B.x0, h: H, r: [R, R, R, R], s: { x: -B.x0, y: B.top, w: G.W, h: G.PH }, sr: [S, S, S, S], bezel: INNER, marks: { x: marksX(B.x0, B.x0, B.x1), y: yMarks } }),
+  const open = box('open', B.x0, y0, B.x1 - B.x0, H, faceHTML({ w: B.x1 - B.x0, h: H, r: [R, R, R, R], s: { x: -B.x0, y: B.top, w: G.W, h: G.PH }, sr: [I.tl, I.tr, I.br, I.bl], bezel: INNER, marks: { x: marksX(B.x0, B.x0, B.x1), y: yMarks } }),
     hingeHTML(c - B.x0, H));
-  const right = box('right', c, y0, B.x1 - c, H, faceHTML({ w: B.x1 - c, h: H, r: [0, R, R, 0], s: { x: 0, y: B.top, w: G.PW, h: G.PH }, sr: [0, S, S, 0], open: 'left', bezel: INNER, marks: { x: marksX(c, c, B.x1), y: yMarks }, sides: ['right'] }));
-  const cx = c - B.spine, Rh = B.Rh, Sh = B.screenHinge, C = B.cover;
-  const closed = box('closed', cx, y0, B.x1 - cx, H, faceHTML({ w: B.x1 - cx, h: H, r: [Rh, R, R, Rh], s: { x: G.OX - cx, y: B.top, w: G.S, h: G.L }, sr: [Sh, C, C, Sh], bezel: OUTER, marks: { x: marksX(cx, cx, B.x1), y: yMarks }, sides: ['right'] }));
+  const right = box('right', c, y0, B.x1 - c, H, faceHTML({ w: B.x1 - c, h: H, r: [0, R, R, 0], s: { x: 0, y: B.top, w: G.PW, h: G.PH }, sr: [0, I.tr, I.br, 0], open: 'left', bezel: INNER, marks: { x: marksX(c, c, B.x1), y: yMarks }, sides: ['right'] }));
+  const cx = c - B.spine, Rh = B.Rh;
+  const closed = box('closed', cx, y0, B.x1 - cx, H, faceHTML({ w: B.x1 - cx, h: H, r: [Rh, R, R, Rh], s: { x: G.OX - cx, y: B.top, w: G.S, h: G.L }, sr: [O.tl, O.tr, O.br, O.bl], bezel: OUTER, marks: { x: marksX(cx, cx, B.x1), y: yMarks }, sides: ['right'] }));
   // the tabletop: the book turned a quarter clockwise, (x, y) → (PH − y, x)
   const tx = G.PH - (y0 + H), tw = H, th = B.x1 - B.x0;
   // on the tabletop the crease runs across, at y = c − x0 in the body's box: the rims curl in at its left and right ends
   const y = c - B.x0, ends = notchHTML(-1.5, y - 3.5, -90) + notchHTML(tw - 8.5, y - 3.5, 90);
-  const table = box('table', tx, B.x0, tw, th, faceHTML({ w: tw, h: th, r: [R, R, R, R], s: { x: -tx, y: -B.x0, w: G.PH, h: G.W }, sr: [S, S, S, S], bezel: INNER, marks: { x: yMarks.map(v => tw - v), y: marksX(B.x0, B.x0, B.x1) } }), ends);
+  const table = box('table', tx, B.x0, tw, th, faceHTML({ w: tw, h: th, r: [R, R, R, R], s: { x: -tx, y: -B.x0, w: G.PH, h: G.W }, sr: [Tc.tl, Tc.tr, Tc.br, Tc.bl], bezel: INNER, marks: { x: yMarks.map(v => tw - v), y: marksX(B.x0, B.x0, B.x1) } }), ends);
   return `<div class="u-keys" data-shell="book">${keysHTML(false)}</div><div class="u-keys" data-shell="table">${keysHTML(true)}</div>${open}${right}${closed}${table}`;
 }
 /** The keys on the half in your hand: two on its top edge, one on its free edge, a flush one under it. */
@@ -195,23 +221,23 @@ function keysHTML(turned) {
 }
 /**
  * The outer screen standing in as the right page while the panel turns is 9 pt taller than the inner screen's page. This
- * covers what it has past the page's outline (its last 9 pt and the bottom corners, the page's corners being 36): clipped to
+ * covers what it has past the page's outline (its last 9 pt and the bottom corners, which are rounder): clipped to
  * the outer screen's own shape, a box the size of the page throws a ring of the bezel's black and charcoal outward, the same
  * pixels the body has there. It is a static layer that only fades on and off: no clip changes, nothing is painted again.
  */
 export function pageCutHTML() {
   // 1 pt past the outer screen's left, right and lower edges, so its antialiased edge does not show through the cover's
   const top = G.PH - 60, e = 1, ring = `0 0 0 ${pt(BODY.ink)} #000, 0 0 0 ${pt(BODY.ink + 12)} ${INNER}`;
-  return `<i class="u-pagecut" aria-hidden="true" style="left:${pt(G.OX - e)};top:${pt(top)};width:${pt(G.S + 2 * e)};height:${pt(G.L - top + e)};border-radius:0 0 ${pt(BODY.cover + e)} ${pt(BODY.screenHinge + e)}">`
-    + `<i style="left:${pt(G.crease - G.OX + e)};top:${pt(-top)};width:${pt(G.PW)};height:${pt(G.PH)};border-radius:0 ${pt(BODY.screen)} ${pt(BODY.screen)} 0;box-shadow:${ring}"></i></i>`;
+  return `<i class="u-pagecut" aria-hidden="true" style="left:${pt(G.OX - e)};top:${pt(top)};width:${pt(G.S + 2 * e)};height:${pt(G.L - top + e)};border-radius:${radius([0, 0, BODY.corners.outer.br, BODY.corners.outer.bl], e)}">`
+    + `<i style="left:${pt(G.crease - G.OX + e)};top:${pt(-top)};width:${pt(G.PW)};height:${pt(G.PH)};border-radius:${radius([0, BODY.corners.inner.tr, BODY.corners.inner.br, 0])};box-shadow:${ring}"></i></i>`;
 }
 /** The panel's two faces (in its own coordinates: x from the crease, y as the device's) and the strip of its free edge. */
 export function panelBodyHTML() {
-  const B = BODY, R = B.R, S = B.screen, C = B.cover, Rh = B.Rh, Sh = B.screenHinge, sp = B.spine;
-  const front = faceHTML({ w: sp + B.L, h: B.H, r: [Rh, R, R, Rh], s: { x: sp + G.OX - G.crease, y: B.top, w: G.S, h: G.L }, sr: [Sh, C, C, Sh], bezel: OUTER,
+  const B = BODY, R = B.R, Rh = B.Rh, sp = B.spine, { inner: I, outer: O } = B.corners;
+  const front = faceHTML({ w: sp + B.L, h: B.H, r: [Rh, R, R, Rh], s: { x: sp + G.OX - G.crease, y: B.top, w: G.S, h: G.L }, sr: [O.tl, O.tr, O.br, O.bl], bezel: OUTER,
     marks: { x: B.marks.x.filter(v => v > G.crease).map(v => v - G.crease + sp), y: B.marks.y.map(v => v - B.y0) }, sides: ['right'] });
   // the back face is turned over (rotateY 180°): its own left is the free edge, its own right the crease
-  const back = faceHTML({ w: B.L, h: B.H, r: [R, 0, 0, R], s: { x: B.side, y: B.top, w: G.PW, h: G.PH }, sr: [S, 0, 0, S], open: 'right', bezel: INNER,
+  const back = faceHTML({ w: B.L, h: B.H, r: [R, 0, 0, R], s: { x: B.side, y: B.top, w: G.PW, h: G.PH }, sr: [I.tl, 0, 0, I.bl], open: 'right', bezel: INNER,
     marks: { x: B.marks.x.filter(v => v < G.crease).map(v => v - B.x0), y: B.marks.y.map(v => v - B.y0) }, sides: ['left'] });
   return { front, back, edge: edgeHTML() };
 }
@@ -267,6 +293,22 @@ export const BOOK = {
     band: [0.30, 0.40], glow: 0.80, total: 1.0 },
   local: { move: [0, 0.32], box: [0, 0.32], parts: [0, 0.32], out: [0, 0.14], in: [0.08, 0.20], fresh: [0.10, 0.22], flip: 0, settle: 0.32, enter: [0, 0.36], exit: [0, 0.24] },
 };
+
+/**
+ * The left page is the fold laid open (duo-motion.md 2.1, 3.1): the round's inputs, those taken into a card on the right
+ * page grouped by that card (C's rule, inflow.mjs). A group is the card's row on the left page and as tall as the card; a
+ * line from it crosses the crease into the card's left edge. Its metrics are fixed (pt), so where each input line and the
+ * line into the card lie is known from the markup: top padding, head, sub line, the gap before the lines, the line pitch;
+ * how many lines a lead or a mid group shows (the rest fold into “还有 N 条”; on the tabletop each group has the standing
+ * half's height to itself, and its line drops straight down over the crease, so it shows more); the funnel (from the lines'
+ * ends to the group's edge) and the run past the edge (across the 24 pt fold, 48 half-folded, and on under the card).
+ *   fold    you answer its card: the lines fold into one line beside your receipt (the box shrinks to it), the line into
+ *           the card is drawn back to the crease and fades; unfold: you take the answer back, backwards.
+ * The line grows from the crease with the band while the hinge goes from 120° to 170° (FOLD.band) and draws back with it.
+ */
+export const FEED = { pad: 12, head: 20, sub: 18, gapTop: 6, pitch: 19, cap: { lead: 6, mid: 4, table: 7 }, funnel: 30, run: 56,
+  fold: { move: [0.04, 0.24], box: [0.04, 0.24], parts: [0.04, 0.24], out: [0, 0.12], in: [0.12, 0.16], fresh: [0.14, 0.16], flip: 0.20, settle: 0.28, line: [0, 0.18] },
+  unfold: { move: [0, 0.20], box: [0, 0.20], parts: [0, 0.20], out: [0, 0.10], in: [0.08, 0.16], fresh: [0.10, 0.16], flip: 0.10, settle: 0.20, line: [0.10, 0.18] } };
 /** The left page's detail grows out of the half you tapped (0.48 s) and shrinks back into it (0.36 s). */
 export const DETAIL = { dim: 0.15, pop: [0, 0.12], frame: [0.12, 0.24], content: [0.30, 0.18], total: 0.48 };
 export const UNDETAIL = { content: [0, 0.10], frame: [0.06, 0.24], total: 0.36 };

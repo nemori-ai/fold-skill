@@ -20,7 +20,7 @@ const entries = [
   desk('b', 'B 时间展开', '期限落在此刻之后的哪里，谁先到', 26),
   desk('c', 'C 流动形态', '可以推后的事沉下去，到点浮起', 25),
   desk('d', 'D 手机首页', '离开半天回来，先答最急的 3 件', 26),
-  desk('duo', 'E 折叠屏', '展开折叠屏：每件事沿折痕分成 Agent 的一半与你的一半', 26),
+  desk('duo', 'E 折叠屏', '翻开折叠屏：左页摊开这一轮的输入，每组一条线穿过折痕连进右页那张卡', 26),
   { id: 'watch', name: form('watch').name, line: '抬腕两秒：要不要现在掏手机', page: '/prototype/forms/watch.html', embed: { card: 0 }, frame: 26 },
   { id: 'multiples', name: form('multiples').name, line: '复盘两周注意力怎样移动', page: '/prototype/forms/multiples.html', embed: { card: 0 }, frame: 26 },
   ...[

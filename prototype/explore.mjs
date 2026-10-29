@@ -6,7 +6,7 @@ import { followFrames } from './embed.mjs';
 const reviewVersion = new URL(import.meta.url).searchParams.get('v') || 'feedback-loop-1';
 
 // Three disposable visual encodings, on the same route and the same state.
-const variants={a:{name:'空间排布',question:'查看当前事项、份额与余量'},b:{name:'时间展开',question:'查看事项份额随时间的变化'},c:{name:'流动形态',question:'用液体体量查看份额变化'},d:{name:'手机首页',question:'在手机上一眼看到需要你的事并直接回应'},duo:{name:'折叠屏',mark:'E',question:'展开后每件事沿折痕分成 Agent 的一半与你的一半'}};
+const variants={a:{name:'空间排布',question:'查看当前事项、份额与余量'},b:{name:'时间展开',question:'查看事项份额随时间的变化'},c:{name:'流动形态',question:'用液体体量查看份额变化'},d:{name:'手机首页',question:'在手机上一眼看到需要你的事并直接回应'},duo:{name:'折叠屏',mark:'E',question:'翻开后左页摊开这一轮的输入，每组一条线连进右页那张卡'}};
 let key=new URLSearchParams(location.search).get('variant')?.toLowerCase();
 if(!variants[key])key='a';
 document.querySelector('link[href="styles.css"]')?.remove();
