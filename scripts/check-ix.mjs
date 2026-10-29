@@ -780,7 +780,42 @@ async function runDuo(cdp, base, data, name) {
     d6.up && d8.up && Math.abs(d6.turn - 108) < 0.6 && Math.abs(d8.turn - 144) < 0.6 && d6.blurred > d8.blurred && d6.edge > d8.edge && d6.veil > d8.veil
       && s6.fold.blur > s8.fold.blur && s6.fold.veil > s8.fold.veil && !d10.up && s10.panel === 0 && s10.phase === 'book',
     { d6, d8, d10, f6: s6.fold, f8: s8.fold });
-  // 29: reduced motion: fold and unfold go straight to their end states, nothing animates.
+  // 29–30: the body (duo-motion.md 3.7). At rest each posture has its body round its screen: closed, the front cover round
+  // the outer screen, the keys of the half behind it standing out above and to the right; flat, the open body round the
+  // inner screen with the hinge's covers at the crease; tabletop, the body turned with the screen. While it turns, the half
+  // in your hand does not move a pixel, and the panel's free edge turns with it: nearly end-on at 90° it is widest (the
+  // slab's thickness, toward you), narrower at 54° and 144° and further right / left; its light changes with the angle.
+  const bodyDom = `(() => { const q = s => document.querySelector(s);
+    const r = el => { const b = el.getBoundingClientRect(); return { x: Math.round(b.left * 10) / 10, y: Math.round(b.top * 10) / 10, w: Math.round(b.width * 10) / 10, h: Math.round(b.height * 10) / 10 }; };
+    const on = el => +getComputedStyle(el.closest('.u-shell, .u-keys')).opacity > 0;
+    const shell = name => { const el = q('.u-shell[data-shell="' + name + '"]'); return el && on(el) ? r(el.querySelector('.u-rimclip')) : null; };
+    const shown = s => [...document.querySelectorAll(s)].filter(el => el.getBoundingClientRect().width > 0 && on(el));
+    const up = q('.u-fold3d').classList.contains('is-up');
+    return { shell: q('.u-body').dataset.body, closed: shell('closed'), open: shell('open'), right: shell('right'), table: shell('table'),
+      outer: r(q('.u-outer')), inner: r(q('.u-inner')), tscreen: r(q('.u-table')), keys: shown('.u-keys .u-key').map(r), covers: shown('.u-shell[data-shell="open"] .u-cover').length,
+      side: up ? r(q('.u-side')) : null }; })()`;
+  const holds = (a, b) => Boolean(a && b) && a.x < b.x && a.y < b.y && a.x + a.w > b.x + b.w && a.y + a.h > b.y + b.h;
+  await open(`frame=${F.held}&hinge=0`);
+  const b0 = await ev(bodyDom);
+  await ev(`${H}.posture('table', { animate: false }), 1`); await wait(300);
+  const bt = await ev(bodyDom);
+  const b10 = await (async () => { await open(`frame=${F.held}&hinge=1`); return ev(bodyDom); })();
+  // a detail opened and closed on the book clears the page's state classes; the body must not go with them
+  await ev(`${H}.open(${item}), 1`); await wait(700); await ev(`${H}.close(), 1`); await wait(500);
+  const bd = await ev(bodyDom);
+  check('机身：合上是前盖连外屏，侧键从上沿、右缘露出；展开是宽机身，折痕处有铰链盖（开过详情也还在）；桌面也装在机身里',
+    b0.shell === 'closed' && holds(b0.closed, b0.outer) && b0.keys.length === 4 && b0.keys.some(k => k.y < b0.closed.y) && b0.keys.some(k => k.x + k.w > b0.closed.x + b0.closed.w)
+      && b10.shell === 'open' && holds(b10.open, b10.inner) && b10.covers === 2 && bd.shell === 'open' && holds(bd.open, bd.inner) && bd.keys.length === 4
+      && bt.shell === 'table' && holds(bt.table, bt.tscreen),
+    { closed: [b0.shell, b0.closed, b0.outer, b0.keys.length], open: [b10.shell, b10.open, b10.inner, b10.covers], afterDetail: [bd.shell, bd.open, bd.keys.length], table: [bt.shell, bt.table, bt.tscreen] });
+  const turning = {};
+  for (const [h, a] of [[0.15, 27], [0.3, 54], [0.5, 90], [0.8, 144]]) { await open(`frame=${F.held}&hinge=${h}`); turning[a] = { ...(await ev(bodyDom)), light: (await state()).body.light }; }
+  const T = turning, same = [54, 90, 144].every(a => JSON.stringify(T[a].right) === JSON.stringify(T[27].right));
+  check('翻页途中：手里那半台的机身一像素不动；前板的自由边随板转（90° 时迎面最宽，54° 在右、144° 在左都更窄），高光随角度变',
+    same && Object.values(T).every(t => t.shell === 'right' && t.side) && T[90].side.w > T[54].side.w && T[90].side.w > T[144].side.w
+      && T[54].side.x > T[90].side.x && T[90].side.x > T[144].side.x && T[54].light.shade !== T[90].light.shade && T[90].light.sheen !== T[144].light.sheen,
+    { right: Object.fromEntries(Object.entries(T).map(([a, t]) => [a, t.right])), side: Object.fromEntries(Object.entries(T).map(([a, t]) => [a, t.side])), light: Object.fromEntries(Object.entries(T).map(([a, t]) => [a, t.light])) });
+  // 31: reduced motion: fold and unfold go straight to their end states, nothing animates.
   await S('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
   await open(`frame=${F.held}`);
   await ev(`${H}.posture('closed'), 1`); await wait(60);
@@ -789,7 +824,7 @@ async function runDuo(cdp, base, data, name) {
   const rb = await state(), rb2 = await ev(`document.getAnimations().length`);
   check('减少动态：合上与展开直接到终态，不动画', rc.phase === 'closed' && rb.phase === 'book' && ra === 0 && rb2 === 0, { rc: rc.phase, rb: rb.phase, ra, rb2 });
   await S('Emulation.setEmulatedMedia', { features: [] });
-  // 30: opened by itself (no frame, no referrer): the tell plays once; any key jumps to its end (closed, next round, answered).
+  // 32: opened by itself (no frame, no referrer): the tell plays once; any key jumps to its end (closed, next round, answered).
   await open('', 1400);
   const telling = await state();
   await key('x'); await wait(700);

@@ -1,51 +1,111 @@
 /* E · 折叠屏。卡、标签、按钮、回执、行、详情、操作单、概要卡沿用 d.css（宿主同时挂 .variant-d）；这里只加折叠屏的版式。
-   开合是 iPhone Duo 的翻页：承载外屏的板绕折痕朝你翻开（CSS 3D），只画板的一圈细边，不画铰链高光与戏剧化的阴影；
-   平放时折痕处只有纸色留白，唯一的分界线是份额带上那一笔。尺寸以 pt 写，整台按比例缩进视口。 */
+   屏幕装在一台 iPhone Duo 里：抛光的金属边、内屏的炭灰边框与外屏的黑玻璃边、侧键、铰链（照 Apple 的正面渲染量的，
+   duo-motion.md 3.7），全是 CSS 盒子，不用位图。开合是翻页：承载外屏的那半台连边框带厚度绕折痕朝你翻开（CSS 3D），
+   自由边那条厚边随角度转、高光随角度变。平放时折痕处只有纸色留白，唯一的分界线是份额带上那一笔。尺寸以 pt 写，
+   整台按比例缩进视口。 */
 .variant-duo [hidden] { display: none !important; }
-.variant-duo { --u-shade: #dcd9d1; --u-left: #fbfaf6; }
+.variant-duo { --u-shade: #121214; --u-left: #fbfaf6; --u-ground: #ecebe6; }
 .u-stage { display: flex; align-items: flex-start; gap: 40px; padding: 28px 24px 48px; }
 .u-siderail { width: 290px; }
 .u-area { position: relative; flex: 1; min-width: 0; }
-.u-device { position: absolute; left: 0; top: 0; transform-origin: 0 0; transform: translateX(var(--dx, 0px)) scale(var(--k, 1)); font-size: 14px; }
+.u-device { position: absolute; left: 0; top: 0; transform-origin: 0 0; transform: translate(var(--dx, 0px), var(--dy, 0px)) scale(var(--k, 1)); font-size: 14px; }
 
-/* the screens: paper, the corners a screen has; nothing else of the device */
-.u-screen { position: absolute; top: 0; background: var(--paper); overflow: hidden; border-radius: 22px; box-shadow: 0 0 0 1px #0000000b, 0 26px 50px -34px #0005; }
+/* the screens: paper, with the iPhone Duo's screen corners (the outer screen's are tighter on the hinge side); the body round
+   them is .u-body */
+/* corners: BODY.screen (36) on the inner screen, BODY.cover / screenHinge (54 / 10) on the outer one */
+.u-screen { position: absolute; top: 0; background: var(--paper); overflow: hidden; border-radius: 36px; }
 .u-inner { left: 0; z-index: 1; }
 .u-inner:not(.is-on) { visibility: hidden; }
-.u-outer { z-index: 2; }
+.u-outer { z-index: 2; border-radius: 10px 54px 54px 10px; }
 .u-outer.is-off { visibility: hidden; }
+.u-pagecut { position: absolute; display: block; z-index: 3; overflow: hidden; pointer-events: none; opacity: 0; will-change: opacity; }
+.u-pagecut.is-on { opacity: 1; }
+.u-pagecut > i { position: absolute; display: block; }
 .u-table { left: 0; z-index: 1; }
-/* unfolding: the inner screen's right page under the panel, lit (paper) once it takes over, unlit (shade) before */
-.u-lit, .u-unlit { position: absolute; top: 0; border-radius: 0 22px 22px 0; pointer-events: none; opacity: 0; z-index: 0; }
+/* unfolding: the inner screen's right page under the panel, lit (paper) once it takes over, dark glass before */
+.u-lit, .u-unlit { position: absolute; top: 0; border-radius: 0 36px 36px 0; pointer-events: none; opacity: 0; z-index: 0; }
 .u-lit.is-on, .u-unlit.is-on { opacity: 1; }
-.u-lit { background: var(--paper); box-shadow: 0 0 0 1px #0000000b, 0 26px 50px -34px #0005; }
+.u-lit { background: var(--paper); }
 .u-unlit { background: var(--u-shade); }
-.u-lit.is-whole { left: 0 !important; width: 100% !important; border-radius: 22px 0 0 22px; box-shadow: 0 0 0 1px #0000000b; }
+.u-lit.is-whole { left: 0 !important; width: 100% !important; border-radius: 36px; }
+
+/* the body (duo-motion.mjs BODY): what does not move is a layer under the screens; which shell shows is [data-body] —
+   open (lying flat), right (the half in your hand while the other turns on the panel), closed, table. Each shell is its
+   own layer, rastered once, and the shown one has opacity 1: when the panel rises or lands the swap is the compositor's,
+   nothing is painted again */
+.u-body { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; }
+.u-body-ghost { z-index: 14; }
+.u-shell, .u-keys { position: absolute; opacity: 0; will-change: opacity; }
+.u-keys { left: 0; top: 0; }
+.u-body[data-body="open"] > [data-shell="open"], .u-body[data-body="right"] > [data-shell="right"], .u-body[data-body="closed"] > [data-shell="closed"],
+.u-body[data-body="table"] > [data-shell="table"], .u-body:not([data-body="table"]) > [data-shell="book"] { opacity: 1; }
+.u-rimclip { position: absolute; display: block; inset: 0; overflow: hidden; }
+.u-shell > .u-rimclip { box-shadow: 0 36px 64px -36px #0007, 0 10px 22px -14px #0003; }
+.u-rim, .u-ink, .u-mark, .u-cover, .u-cover > i, .u-key, .u-notch { position: absolute; display: block; }
+.u-rim { top: 0; bottom: 0; }
+.u-ink { background: #000; }
+/* antenna breaks: the rim's highlight is cut by a pale band */
+.u-mark { background: #bcbab4; box-shadow: inset 0 0 0 .5px #8f8d88; }
+/* the hinge cover in the bezel at the crease, and the keys (polished, lit from above) */
+.u-cover { border-radius: 2.5px; background: #27282b; box-shadow: inset 0 0 0 .6px #1b1c1e, inset 0 .8px 0 #46474b; }
+.u-cover > i { left: 5.5px; right: 5.5px; top: 0; bottom: 0; border-radius: 2px; background: #2f3033; box-shadow: inset 0 0 0 .5px #212225, inset 0 -.6px 0 #3c3d41; }
+.u-key { border-radius: 2px; box-shadow: inset 0 0 0 .5px #57554f; }
+.u-key.is-top { background: linear-gradient(to bottom, #f5f3ee, #d2d0ca 35%, #9b9993 70%, #6c6a65); }
+.u-key.is-right { background: linear-gradient(to right, #6c6a65, #a3a19b 35%, #e9e7e2 72%, #f5f3ee); }
+.u-key.is-bottom { background: linear-gradient(to top, #6c6a65, #a3a19b 35%, #e9e7e2 72%, #f5f3ee); }
+.u-key.is-flush { opacity: .75; }
+/* a host in the screen's shape for what grows or sinks over a screen (the detail's box, the 累计 bar on its way out) */
+.u-clip { position: absolute; inset: 0; z-index: 6; pointer-events: none; clip-path: inset(0 0 9px 0 round 36px); }
+.u-clip[data-body="closed"] { clip-path: inset(0 0 0 485px round 10px 54px 54px 10px); }
+.u-clip[data-body="table"] { clip-path: inset(0 round 36px); }
 /* the book while the panel is still turning: only its right page is drawn (the left page is the panel's back) */
 .u-inner.is-lifted { clip-path: inset(0 0 0 50%); }
 .u-turn-ghost { z-index: 15; pointer-events: none; }
 
-/* the fold: the panel that carries the outer screen turns about the crease (rotateY), toward you and to the left.
-   Its face is the outer screen, its back the inner screen's left page; each face hides when it turns away. Per frame only
-   transforms and opacities change: the blurred copies sit under masks that slide while the copies slide back. */
+/* the fold: the half that carries the outer screen turns about the crease (rotateY), toward you and to the left, as a slab
+   T thick. Its face is the front cover (rim, black glass, the outer screen), its back the left half's inside (rim, bezel,
+   the inner screen's left page), its free edge a strip and twelve facets round the corners; each hides when it turns away.
+   Per frame only transforms and opacities change: the blurred copies sit under masks that slide while the copies slide back;
+   the edge's sheen and shade and the faces' glint are opacities. */
 .u-fold3d { position: absolute; left: 0; top: 0; z-index: 4; pointer-events: none; }
-.u-fold3d:not(.is-up) { visibility: hidden; }
+/* down, the panel is transparent rather than visibility: hidden, so it stays painted: lifting it paints nothing (its
+   faces, rims, edge and the screens' copies are ready). No will-change on it: at opacity 0 the compositor does not
+   draw it, its blurs included. Only the lifted, resting panel takes taps (is-live may outlast the lift). */
+.u-fold3d:not(.is-up) { opacity: 0; }
 .u-panel { position: absolute; top: 0; height: 100%; transform-origin: 0 50%; transform-style: preserve-3d; will-change: transform; }
-.u-face { position: absolute; top: 0; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; will-change: transform, opacity; }
-/* the outer screen: its corners, its hairline and the soft shadow it has when closed */
-.u-face.is-front { border-radius: 22px; box-shadow: 0 0 0 1px #00000014, 0 26px 50px -34px #0005; }
-/* the left page: lies flat at 180°, its outer corners round; a hairline so the turning page reads as a board */
-.u-face.is-back { left: 0; transform: rotateY(180deg); border-radius: 22px 0 0 22px; background: var(--paper); box-shadow: 0 0 0 1px #00000014; }
-.u-face > .u-clone, .u-layer > .u-clone, .u-blur > .u-clone { margin: 0; }
-.u-face.is-front > .u-clone { top: 0; z-index: 0; box-shadow: none; border-radius: 0; }
+.u-face { position: absolute; backface-visibility: hidden; -webkit-backface-visibility: hidden; will-change: transform; }
+.u-face.is-back { left: 0; }
+/* the screens on the panel: the outer screen fades into a window onto the page below; the left page under its veil */
+.u-glass { position: absolute; overflow: hidden; }
+.u-glass.is-front { border-radius: 10px 54px 54px 10px; will-change: opacity; }
+.u-glass.is-back { border-radius: 36px 0 0 36px; background: var(--paper); }
+.u-glass > .u-clone, .u-layer > .u-clone, .u-blur > .u-clone { margin: 0; }
+.u-glass.is-front > .u-clone { top: 0; z-index: 0; box-shadow: none; border-radius: 0; }
 .u-layer { position: absolute; inset: 0; overflow: hidden; contain: strict; }
-.u-fold3d.is-live .u-face.is-back > .u-layer { pointer-events: auto; }
+.u-fold3d.is-up.is-live .u-glass.is-back > .u-layer { pointer-events: auto; }
+/* a faint sweep of light over a face while it turns */
+.u-glintclip { position: absolute; display: block; inset: 0; z-index: 3; overflow: hidden; pointer-events: none; }
+/* the glint is only its band, 226 pt wide and tilted 14°, slid across the face: a small layer to raster as the face
+   turns into view */
+.u-glint { position: absolute; display: block; left: 0; top: -7.5%; height: 115%; width: 226px; opacity: 0; will-change: transform, opacity;
+  background: linear-gradient(90deg, #fff0, #ffffff8c 37.5%, #ffffffe6 50%, #ffffff8c 62.5%, #fff0); }
+/* the free edge, polished: dark at its two rounded edges, bright just inside them, a soft band across the flat */
+.u-side, .u-facet { position: absolute; display: block; transform-origin: 0 50%; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.u-side { transform: rotateY(90deg); border-radius: 1px;
+  background: linear-gradient(to bottom, #ffffff26, #fff0 28%, #0000 62%, #00000033),
+    linear-gradient(to right, #4f4d48, #c9c7c1 4%, #f4f2ed 9%, #9b9994 17%, #c6c4be 30%, #eceae5 46%, #c0beb8 62%, #8e8c87 80%, #e3e1dc 91%, #57554f); }
+.u-facet { background: linear-gradient(var(--lit), var(--lit)),
+    linear-gradient(to right, #4f4d48, #c9c7c1 4%, #f4f2ed 9%, #9b9994 17%, #c6c4be 30%, #eceae5 46%, #c0beb8 62%, #8e8c87 80%, #e3e1dc 91%, #57554f); }
+.u-side > i { position: absolute; display: block; left: 0; right: 0; }
+.u-side > .u-sheen, .u-side > .u-shade { top: 0; bottom: 0; opacity: 0; will-change: opacity; }
+.u-sheen { background: linear-gradient(to bottom, #fff0, #ffffffd9 26%, #ffffffa6 52%, #fff0 86%); }
+.u-shade { background: #1c1b19; }
+.u-smark { height: 7.5px; background: #bdbbb5cc; }
 .u-mask { position: absolute; left: 0; top: 0; z-index: 1; will-change: transform; }
 .u-mask.is-f { -webkit-mask-image: linear-gradient(to right, transparent calc(50% - 60px), #000 calc(50% + 60px)); mask-image: linear-gradient(to right, transparent calc(50% - 60px), #000 calc(50% + 60px)); }
 .u-mask.is-b { -webkit-mask-image: linear-gradient(to right, #000 calc(50% - 44px), transparent calc(50% + 44px)); mask-image: linear-gradient(to right, #000 calc(50% - 44px), transparent calc(50% + 44px)); }
 .u-shift { position: absolute; left: 0; top: 0; will-change: transform; }
 .u-blur { position: absolute; left: 0; top: 0; overflow: hidden; background: var(--paper); }
-.u-face.is-front .u-blur { border-radius: 22px; }
 .u-frost { position: absolute; inset: 0; z-index: 2; background: var(--paper); opacity: 0; will-change: opacity; }
 /* dark at the free edge (left), light by the crease; it slides off the page as the page opens */
 .u-veil { position: absolute; left: 0; top: 0; bottom: 0; z-index: 2; will-change: transform, opacity;
