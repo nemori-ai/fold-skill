@@ -882,6 +882,122 @@ async function runDuo(cdp, base, data, name) {
     same && Object.values(T).every(t => t.shell === 'right' && t.side) && T[90].side.w > T[54].side.w && T[90].side.w > T[144].side.w
       && T[54].side.x > T[90].side.x && T[90].side.x > T[144].side.x && T[54].light.shade !== T[90].light.shade && T[90].light.sheen !== T[144].light.sheen,
     { right: Object.fromEntries(Object.entries(T).map(([a, t]) => [a, t.right])), side: Object.fromEntries(Object.entries(T).map(([a, t]) => [a, t.side])), light: Object.fromEntries(Object.entries(T).map(([a, t]) => [a, t.light])) });
+  // Pinned heads, lists that scroll under them (duo-motion.md 4.5). The book: the two heads, the band and the account stay
+  // where they are while the stripes go by under them, both pages as one; the edge between shows only while something is
+  // under it. A wheel over a pinned head scrolls the list, not the page.
+  const pinDom = `(() => { const d = document.querySelector('.u-device'), k = d.getBoundingClientRect().width / d.offsetWidth, top = d.getBoundingClientRect().top;
+    const y = el => (el ? Math.round(((el.getBoundingClientRect().top - top) / k) * 10) / 10 : null), q = s => document.querySelector(s);
+    const edge = s => +getComputedStyle(q(s), '::after').opacity;
+    return { hL: y(q('[data-key="h:L"]')), hR: y(q('[data-key="h:R"]')), band: y(q('[data-key="band"]')), acct: y(q('[data-key="acct"]')),
+      L: y(q('.u-spread > .u-half.is-left[data-key]')), R: y(q('.u-spread > .u-half.is-right[data-key]')), edge: edge('.u-pin'), page: scrollY,
+      ohead: y(q('.u-ohead')), oedge: edge('.u-ohead'), scroll: ${H}.state().scroll, phase: ${H}.state().phase,
+      cards: Object.fromEntries([...document.querySelectorAll('.u-oscroll .d-cards > [data-key^="i:"]')].map(el => [el.dataset.key.slice(2), y(el)])),
+      looking: (() => { const head = q('.u-ohead').getBoundingClientRect().bottom; const el = [...document.querySelectorAll('.u-oscroll .d-cards > [data-key^="i:"]')].find(c => c.getBoundingClientRect().bottom > head + 24 * k); return el ? el.dataset.key.slice(2) : null; })(),
+      halves: Object.fromEntries([...document.querySelectorAll('.u-spread > .u-half.is-right[data-key]')].map(el => [el.dataset.id, y(el)])) }; })()`;
+  const brief = k => ({ ...k, cards: undefined, halves: undefined });
+  await open(`frame=${F.held}&hinge=1`);
+  const q0 = await ev(pinDom);
+  const halfway = await ev(`(() => { const el = document.querySelector('.u-iscroll'); return Math.round((el.scrollHeight - el.clientHeight) / 2); })()`);
+  await ev(`${H}.scroll('book', ${halfway}), 1`); await wait(450);
+  const q1 = await ev(pinDom);
+  check('书本滚到一半：两页页头、份额带、账一像素不动，第一组与它那张卡一起上移（同一行），钉住区下沿的分界这时才显',
+    halfway > 0 && ['hL', 'hR', 'band', 'acct'].every(x => q1[x] === q0[x]) && Math.abs(q0.R - q1.R - halfway) <= 1 && q1.L === q1.R && q0.edge === 0 && q1.edge === 1,
+    { halfway, q0: brief(q0), q1: brief(q1) });
+  const hp = await ev(`(() => { const r = document.querySelector('[data-key="h:L"]').getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }; })()`);
+  await S('Input.dispatchMouseEvent', { type: 'mouseWheel', x: hp.x, y: hp.y, deltaX: 0, deltaY: -120 }); await wait(400);
+  const q2 = await ev(pinDom);
+  check('滚轮落在钉住的页头上：滚的是下面的列表（两页一起），整页不动', q1.scroll.book - q2.scroll.book >= 100 && q2.hL === q0.hL && q2.page === 0 && q2.L === q2.R, { before: q1.scroll, after: q2.scroll, page: q2.page });
+  // The outer screen pins its head as well (D's own page is not touched). Scrolled, then opened: the card you were looking
+  // at (the first one showing under the head) is at the same height on the right page (past the first 43 pt, which the
+  // inner screen's taller head takes; the cards under it close up as the right halves tighten, 3.3); folded again, the
+  // outer screen is where it was.
+  await open(`frame=${F.held}&posture=closed`);
+  const o0 = await ev(pinDom);
+  const omax = await ev(`(() => { const el = document.querySelector('.u-oscroll'); return el.scrollHeight - el.clientHeight; })()`);
+  const os = Math.min(380, omax);
+  await ev(`${H}.scroll('outer', ${os}), 1`); await wait(600);
+  const o1 = await ev(pinDom);
+  const first = Object.keys(o0.cards)[0];
+  check('外屏页头钉住：滚动时页头不动，卡在它下面上移，分界这时才显', os > 60 && o1.ohead === o0.ohead && Math.abs(o0.cards[first] - o1.cards[first] - os) <= 1 && o0.oedge === 0 && o1.oedge === 1,
+    { os, o0: { ohead: o0.ohead, card: o0.cards[first] }, o1: { ohead: o1.ohead, card: o1.cards[first], edge: o1.oedge } });
+  await ev(`${H}.unfold(0.7), 1`); await wait(1700);
+  const o2 = await ev(pinDom);
+  const look = o1.looking, pair = look && [look, o1.cards[look], o2.halves[look]];
+  await ev(`${H}.fold(0.6), 1`); await wait(1500);
+  const o3 = await ev(pinDom);
+  check('外屏滚过以后翻开：你正看着的那张卡，在右页上与外屏同一高度、接着往下读；再合上，外屏回到原来的位置',
+    o2.phase === 'book' && pair && pair[2] != null && Math.abs(pair[1] - pair[2]) <= 1.5 && o2.scroll.book > 0 && o3.phase === 'closed' && o3.scroll.outer === o1.scroll.outer && o3.cards[first] === o1.cards[first],
+    { pair, book: o2.scroll, outer: [o1.scroll.outer, o3.scroll.outer] });
+  // The folding region (24 pt on the crease, HIG): a tap there does nothing, even where a line crosses it.
+  await open(`frame=${F.held}&hinge=1`);
+  // (the hinge's handle stands on the crease too: it is the demo's hand, not the page's, so the taps keep clear of it)
+  const cz = await ev(`(() => { const g = document.querySelector('.u-grip').getBoundingClientRect(), mid = r => r.top + r.height / 2;
+    const ys = [...document.querySelectorAll('.u-spread > .u-half.is-left[data-key] > .u-link')].map(l => mid(l.getBoundingClientRect())).filter(y => y < g.top - 12 || y > g.bottom + 12);
+    return { x: Math.round(g.left + g.width / 2), y: Math.round(ys[0] ?? g.bottom + 40), onLine: ys.length > 0 }; })()`);
+  const c0 = await state();
+  for (const dx of [-8, 0, 8]) { await tap(cz.x + dx, cz.y); await wait(350); }
+  const c1 = await state();
+  const still = x => JSON.stringify([x.open, x.detail, x.peek, x.hover, x.waiting, x.you, x.panelMode, x.phase, x.angle, x.scroll]);
+  check('点折痕的折叠区（24 pt，线从这里穿过）：什么也不发生', still(c0) === still(c1) && closed(c1), { c0: still(c0), c1: still(c1) });
+  // Half-folded (150°): the left page is the panel's picture; its stripes move under its head that stays; a finger dragged
+  // on it scrolls the book (both pages).
+  await open(`frame=${F.held}&hinge=0.8333`);
+  const hfDom = `(() => { const pin = document.querySelector('.u-glass.is-back > .u-layer .u-pin'), sp = document.querySelector('.u-glass.is-back > .u-layer .u-spread');
+    return { pin: pin ? Math.round(pin.getBoundingClientRect().top * 10) / 10 : null, shift: sp ? +new DOMMatrixReadOnly(getComputedStyle(sp).transform).m42.toFixed(1) : null, live: document.querySelector('.u-fold3d').classList.contains('is-live'), book: ${H}.state().scroll.book }; })()`;
+  const zH0 = await ev(hfDom);
+  await ev(`${H}.scroll('book', 200), 1`); await wait(300);
+  const h1 = await ev(hfDom);
+  const hpan = await ev(`(() => { const d = document.querySelector('.u-device').getBoundingClientRect(); return { x: Math.round(d.left + d.width * 0.25), y: Math.round(d.top + d.height * 0.7) }; })()`);
+  await drag(hpan.x, hpan.y, 0, -150, 300, 12); await wait(400);
+  const h2 = await ev(hfDom);
+  check('半折 150°：画上的条目在钉住的页头下平移、页头不动；手指在斜着的左页上拖，书本（两页）跟着滚',
+    zH0.live && zH0.shift === 0 && h1.shift === -200 && h1.pin === zH0.pin && h2.book > h1.book + 60 && h2.shift === -h2.book && h2.pin === zH0.pin, { zH0, h1, h2 });
+  // The tabletop: its head (with the band and the line of what the Agent has in hand) stays; the standing half's groups and
+  // the lying half's cards scroll each on its own; columns never move sideways, so each line stays in its column; the
+  // lines show only while both halves are at their tops; turning to the tabletop puts both there.
+  await S('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  await open(`frame=${F.held}&posture=table`);
+  const tf = await ev(`(async () => { const w = ms => new Promise(r => setTimeout(r, ms)), n = ${H}.model.snapshot().frames.length, b = document.querySelector('.u-bot');
+    for (let i = 0; i < n; i += 1) { ${H}.go(i); await w(120); if (b.scrollHeight - b.clientHeight > 20) return ${H}.model.snapshot().frame.id; } return null; })()`);
+  await S('Emulation.setEmulatedMedia', { features: [] });
+  await open(`frame=${tf || F.held}&posture=table`);
+  const tableDom = `(() => { const d = document.querySelector('.u-device'), k = d.getBoundingClientRect().width / d.offsetWidth, r0 = d.getBoundingClientRect(), q = s => document.querySelector(s);
+    const y = el => (el ? Math.round(((el.getBoundingClientRect().top - r0.top) / k) * 10) / 10 : null), x = el => Math.round(((el.getBoundingClientRect().left - r0.left) / k) * 10) / 10;
+    const cols = [...document.querySelectorAll('.u-tscroll > .u-half[data-id]')].map(g => { const c = q('.u-bot > [data-key="tR:' + CSS.escape(g.dataset.id) + '"]'); return [g.dataset.id, x(g), c ? x(c) : null]; });
+    return { th: y(q('[data-key="th"]')), band: y(q('[data-key="tband"]')), card: y(q('.u-bot > [data-key]')), cols, lines: document.querySelectorAll('.u-dline').length,
+      shown: +getComputedStyle(q('.u-tlinks')).opacity, apart: q('.u-table').classList.contains('is-apart'), edge: +getComputedStyle(q('.u-table'), '::after').opacity, scroll: ${H}.state().scroll }; })()`;
+  const zT0 = await ev(tableDom);
+  const tdy = tf ? 40 : 0;
+  await ev(`${H}.scroll('bottom', ${tdy}), 1`); await wait(400);
+  const t1 = await ev(tableDom);
+  await ev(`${H}.posture('book', { animate: false }), 1`); await wait(300);
+  await ev(`${H}.posture('table', { animate: false }), 1`); await wait(400);
+  const t2 = await ev(tableDom);
+  const aligned = t => t.cols.length > 0 && t.cols.every(([, a, b]) => b == null || a === b);
+  check(!tf ? '桌面：页头钉住，两半各自滚动（这套数据没有一帧溢出，只核对列对齐、线都在）' : '桌面：页头一像素不动，下半自己滚、列不横移、组与卡同列；滚开时线与小圈淡出、分界显出；转回桌面两半回到顶上、线回来',
+    aligned(zT0) && !zT0.apart && zT0.shown === 1 && (!tf || (t1.th === zT0.th && t1.band === zT0.band && Math.abs(zT0.card - t1.card - tdy) <= 1 && aligned(t1) && JSON.stringify(t1.cols) === JSON.stringify(zT0.cols)
+      && t1.apart && t1.shown === 0 && t1.edge === 1 && t2.scroll.bottom === 0 && t2.scroll.top === 0 && !t2.apart && t2.shown === 1 && t2.lines === zT0.lines)),
+    { frame: tf, zT0, t1: { ...t1, cols: undefined }, t2: { scroll: t2.scroll, apart: t2.apart, lines: t2.lines } });
+  // D's two touch gestures, in E: a row of 在办 swiped left past 80 pt is known; the left page's detail pulled down from its
+  // top goes away (a short pull springs back). And 记录 on the system strip opens 我的回应记录.
+  await open(`frame=${F.held}&posture=closed`);
+  await ev(`${H}.scroll('outer', 4000), 1`); await wait(400);
+  const row = await ev(`(() => { const el = document.querySelector('.u-oscroll .d-rows > .d-line[data-swipe]:not(.is-read)'); if (!el) return null; const r = el.getBoundingClientRect(); return { id: el.dataset.swipe, x: Math.round(r.left + r.width * 0.6), y: Math.round(r.top + r.height / 2) }; })()`);
+  if (row) { await drag(row.x, row.y, -140, 0, 300, 14); await wait(700); }
+  const swiped = row && await ev(`document.querySelector('.u-oscroll .d-rows > [data-key="i:${row.id}"]')?.classList.contains('is-read')`);
+  await open(`frame=${F.held}&hinge=1`);
+  const gp = await ev(`(() => { const r = document.querySelector('.u-spread > .u-half.is-left.is-feed[data-key]').getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + 30) }; })()`);
+  await tap(gp.x, gp.y); await wait(900);
+  const dp = await ev(`(() => { const r = document.querySelector('.u-ldetail').getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + 140), open: !document.querySelector('.u-ldetail').hidden }; })()`);
+  await drag(dp.x, dp.y, 0, 30, 200, 6); await wait(500);
+  const short = await ev(`!document.querySelector('.u-ldetail').hidden`);
+  await drag(dp.x, dp.y, 0, 320, 300, 14); await wait(700);
+  const pulled = await ev(`!document.querySelector('.u-ldetail').hidden`);
+  const pill = await ev(`(() => { const p = [...document.querySelectorAll('.u-pill')].find(el => el.getBoundingClientRect().width > 0 && !el.closest('[hidden]')); const r = p.getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }; })()`);
+  await tap(pill.x, pill.y); await wait(600);
+  const log = await ev(`({ open: !document.querySelector('.d-sheet').hidden, label: document.querySelector('.d-sheet').getAttribute('aria-label'), rows: document.querySelectorAll('.d-sheet .d-log li').length })`);
+  check('左滑 Agent 在办的一行过 80 pt：知道了；左页详情在顶上时下拉：短拉弹回、拉过四分之一收起；系统条上的“记录”打开我的回应记录',
+    (row == null || swiped) && dp.open && short && !pulled && log.open && log.label === '我的回应记录' && log.rows > 0, { row, swiped, dp, short, pulled, log });
   // 31: reduced motion: fold and unfold go straight to their end states, nothing animates.
   await S('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
   await open(`frame=${F.held}`);
