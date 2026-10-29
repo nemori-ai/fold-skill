@@ -614,6 +614,18 @@ async function runDuo(cdp, base, data, name) {
   const results = [];
   const check = (label, ok, info) => results.push({ ok: Boolean(ok), label, info: JSON.stringify(info) });
   const closed = s => !s.open && !s.detail;
+  // D's answered card (its title line and the receipt) for the same item and the same answer, in pt: an answered stripe on
+  // the book is as low as that (duo-motion.md 3.4)
+  const dCard = await (async () => {
+    const u = new URL(`index.html?variant=d&frame=${F.held}`, `${base.replace(/\/$/, '')}/`);
+    if (data) u.searchParams.set('data', data);
+    await S('Page.navigate', { url: u.href });
+    for (let t = 0; t < 75; t += 1) { if (await ev('document.readyState') === 'complete') break; await wait(200); }
+    await wait(1500);
+    const id = await ev('foldHome.top()'), label = await ev(`foldHome.answer(${JSON.stringify(id)})`);
+    await wait(1200);
+    return { id, label, h: await ev(`document.querySelector('.d-card.is-answered')?.offsetHeight ?? null`) };
+  })();
 
   // 1: a link with ?frame= lands on that frame as the end state: the spread, nothing playing but the new-question outline.
   await open(`frame=${F.held}`);
@@ -665,10 +677,16 @@ async function runDuo(cdp, base, data, name) {
   b = await blank(); await tap(b.x, b.y); await wait(700);
   s = await state();
   check('撤回后点空白：详情收回', closed(s) && !(await ev(`${H}.facts(${JSON.stringify(top)})`)).answered, s);
-  // 11–14: answer on the right half: it folds into a receipt in place, the stripe keeps its height, the shares drop;
-  // focus on 撤回; a second tap where the button was does nothing; undo brings it back.
-  // The card keeps its height and its row; its group of inputs on the left page folds into one line (no line into the card).
+  // 11–14: answer on the right half (duo-motion.md 3.4): the stripe folds as one into D's answered card — its right half a
+  // title line and the receipt, its group of inputs one line as tall, no line into the card — its top where it was; the
+  // stripe below moves up by what it lost; the shares drop; focus on 撤回; a second tap where the button was does nothing
+  // (the stripe that slid under the finger does not take it); undo brings it back. (Before 2026-10-30 the stripe kept its
+  // height: the empty shells the user saw.)
+  const stripe = `(id => { const R = document.querySelector('.u-spread > [data-key="R:' + CSS.escape(id) + '"]'), L = document.querySelector('.u-spread > [data-key="L:' + CSS.escape(id) + '"]');
+    let n = R?.nextElementSibling; while (n && !n.matches('.u-cr')) n = n.nextElementSibling;
+    return { R: R?.offsetHeight, L: L?.offsetHeight, top: R?.offsetTop, next: n ? n.offsetTop : null, nextKey: n?.dataset.key || null, title: Boolean(R?.querySelector(':scope > .d-kicker[data-part="title"]')), receipt: R?.querySelector('.d-receipt')?.offsetHeight ?? null }; })`;
   const f0 = await ev(`${H}.facts(${JSON.stringify(top)})`), y0 = (await state()).you, h0 = f0.heights, t0 = f0.feed.top;
+  const p0 = await ev(`${stripe}(${JSON.stringify(top)})`);
   const share = await ev(`${H}.model.snapshot().state.root.items.find(x => x.id === ${JSON.stringify(top)}).share`);
   const b2 = await at(top, 'button');
   await tap(b2.x, b2.y); await wait(250);
@@ -676,15 +694,21 @@ async function runDuo(cdp, base, data, name) {
   await tap(b2.x, b2.y); await wait(900);
   s = await state();
   f = await ev(`${H}.facts(${JSON.stringify(top)})`);
-  check('轻点按钮作答：右半就地收成回执，卡高与行位不变，份数少了这一件', f.mark === 'receipt' && f.heights.R === h0.R && f.feed.top.R === t0.R && s.you === y0 - share, { f, h0, t0, y0, you: s.you, share });
-  check('作答后：左页那组输入折成一行（比原来矮、在行底），不再连线进卡', f.feed.folded && !f.feed.link && f.heights.L < h0.L && Math.abs(f.feed.top.L + f.heights.L - (t0.R + h0.R)) <= 1 && s.links.n === (await ev(`document.querySelectorAll('.u-spread > .u-half.is-left[data-key]:not(.is-folded) > .u-link, .u-spread > .u-mini.is-left[data-key] > .u-link').length`)),
-    { feed: f.feed, heights: f.heights, h0, t0, links: s.links });
+  const p1 = await ev(`${stripe}(${JSON.stringify(top)})`);
+  check('轻点按钮作答：右半就地收成回执（标题一行 + 回执），行的上沿不动，份数少了这一件', f.mark === 'receipt' && p1.title && f.feed.top.R === t0.R && p1.top === p0.top && s.you === y0 - share, { f, p0, p1, y0, you: s.you, share });
+  check('作答后：整行收成回执高——两半同高，与 D 的已答卡同高（同一件、同一个回答）；左页那组折成一行、不再连线；下面那一行上移补位',
+    f.feed.folded && !f.feed.link && p1.L === p1.R && p1.R < p0.R && p1.R <= p1.receipt + 40 && (dCard.id !== top || Math.abs(p1.R - dCard.h) <= 1)
+      && p1.nextKey === p0.nextKey && p0.next != null && Math.abs((p0.next - p1.next) - (p0.R - p1.R)) <= 1
+      && s.links.n === (await ev(`document.querySelectorAll('.u-spread > .u-half.is-left[data-key]:not(.is-folded) > .u-link, .u-spread > .u-mini.is-left[data-key] > .u-link').length`)),
+    { feed: f.feed, p0, p1, dCard, top, links: s.links });
   check('0.25 秒后再点同一处：不展开、不再作答', closed(s) && s.you === y0 - share, s);
   const u2 = await at(top, 'undo');
   await tap(u2.x, u2.y); await wait(800);
   s = await state();
   f = await ev(`${H}.facts(${JSON.stringify(top)})`);
-  check('撤回：右半回到原样，份数回来，那组输入重新摊开、连线回来', !f.answered && f.mark !== 'receipt' && s.you === y0 && !f.feed.folded && f.feed.link === f0.feed.link && f.heights.L === h0.L, { f, f0: f0.feed, you: s.you });
+  const p2 = await ev(`${stripe}(${JSON.stringify(top)})`);
+  check('撤回：整行长回原样（两半原高，下面那一行回到原处），份数回来，那组输入重新摊开、连线回来', !f.answered && f.mark !== 'receipt' && s.you === y0 && !f.feed.folded && f.feed.link === f0.feed.link && p2.L === p0.L && p2.R === p0.R && p2.next === p0.next,
+    { f, f0: f0.feed, p0, p2, you: s.you });
   // 15–17: keyboard: Tab onto a left half shows its summary? (halves open on Enter) — Tab to a compact stripe or row shows the summary.
   await ev(`(document.querySelector('.u-spread > .u-mini.is-right') || document.querySelector('.u-zone .d-line')).previousElementSibling?.focus?.(), 1`);
   await ev(`(() => { const el = document.querySelector('.u-spread > .u-mini.is-left') || document.querySelector('.u-zone .d-line'); el.scrollIntoView({ block: 'center' }); const prev = [...document.querySelectorAll('.u-spread [tabindex="0"], .u-spread button')].filter(x => x.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING).at(-1); prev?.focus(); return 1; })()`);
@@ -978,6 +1002,58 @@ async function runDuo(cdp, base, data, name) {
     aligned(zT0) && !zT0.apart && zT0.shown === 1 && (!tf || (t1.th === zT0.th && t1.band === zT0.band && Math.abs(zT0.card - t1.card - tdy) <= 1 && aligned(t1) && JSON.stringify(t1.cols) === JSON.stringify(zT0.cols)
       && t1.apart && t1.shown === 0 && t1.edge === 1 && t2.scroll.bottom === 0 && t2.scroll.top === 0 && !t2.apart && t2.shown === 1 && t2.lines === zT0.lines)),
     { frame: tf, zT0, t1: { ...t1, cols: undefined }, t2: { scroll: t2.scroll, apart: t2.apart, lines: t2.lines } });
+  // The tabletop's columns (duo-motion.md 4.1, 2026-10-30): every column one fixed width (TABLE.col, 191 pt) whatever is in
+  // it, the same for both halves; three fill the screen. You answer one: its column keeps its width, its card folds into
+  // D's answered card (lower than it is wide: the receipt does not stand on end), its group into one line at the top of the
+  // column; groups and cards start at the tops of their halves; the answered column goes to the end of the strip (what is to
+  // do is what is at hand) and the strip scrolls sideways, both halves together, a column at a time. Taken back, it all
+  // comes back. A smaller window (1180 × 760) only scales the device: the same columns, as wide in pt, at least two in view.
+  const stripDom = `(() => { const d = document.querySelector('.u-device'), k = d.getBoundingClientRect().width / d.offsetWidth, c = document.querySelector('.u-tcols'), cr = c.getBoundingClientRect();
+    const box = el => { const r = el.getBoundingClientRect(); return { id: el.dataset.id, x: Math.round(((r.left - cr.left) / k) * 10) / 10, w: Math.round((r.width / k) * 10) / 10, h: Math.round(r.height / k), top: Math.round((r.top - cr.top) / k) }; };
+    const cols = [...document.querySelectorAll('.u-bot > [data-key^="tR:"]')].map(el => ({ ...box(el), done: el.matches('.is-answered') }));
+    const groups = [...document.querySelectorAll('.u-tscroll > [data-key^="tL:"]')].map(el => ({ ...box(el), folded: el.matches('.is-folded') }));
+    const view = cr.width / k;
+    return { k: +k.toFixed(3), view: Math.round(view), scrollable: c.scrollWidth > c.clientWidth + 1, left: c.scrollLeft, cols, groups,
+      shown: cols.filter(x => x.x >= -0.5 && x.x + x.w <= view + 0.5).map(x => x.id), pin: Math.round(document.querySelector('.u-tpin').getBoundingClientRect().height / k),
+      dots: [...document.querySelectorAll('.u-tdots > i')].map(i => (i.classList.contains('is-on') ? 1 : 0)).join('') }; })()`;
+  const COL = 191;
+  const equal = t => t.cols.length > 0 && t.cols.every(x => Math.abs(x.w - COL) <= 0.5) && t.groups.every(x => Math.abs(x.w - COL) <= 0.5)
+    && t.groups.every((g, j) => t.cols[j] && g.id === t.cols[j].id && g.x === t.cols[j].x) && new Set(t.cols.map(x => x.top)).size === 1 && new Set(t.groups.map(x => x.top)).size === 1;
+  await open(`frame=${F.held}&posture=table`);
+  const ta = await ev(stripDom);
+  const tTop = await ev(`${H}.top()`);
+  const tBtn = await at(tTop, 'tbutton');
+  await tap(tBtn.x, tBtn.y); await wait(1500);
+  const tq = await ev(stripDom), mine = tq.cols.find(x => x.id === tTop), mineG = tq.groups.find(x => x.id === tTop);
+  check('桌面：列宽固定、相等（191 pt），上下两半同一组列、同一 x，组与卡的上沿各在一条线上（列顶对齐）；三列占满一屏', equal(ta) && ta.shown.length === Math.min(3, ta.cols.length) && !ta.scrollable === ta.cols.length <= 3, ta);
+  check('桌面答一件：那一列不变窄，卡收成回执（高小于宽，不竖排），上半那组折成一行贴在列顶；答过的列挪到最后，三件要做的在屏上；两半一起横滚',
+    equal(tq) && mine?.done && mine.w === ta.cols[0].w && mine.h < mine.w && mineG?.folded && mineG.top === tq.groups[0].top && mineG.h < 90
+      && tq.cols.at(-1).id === tTop && tq.cols.filter(x => !x.done).every((x, j) => tq.cols[j].id === x.id) && tq.pin === ta.pin
+      && (tq.cols.length <= 3 || (tq.scrollable && !tq.shown.includes(tTop) && tq.dots.length === tq.cols.length && tq.dots.startsWith('111'))),
+    { ta: { cols: ta.cols.map(x => x.id), pin: ta.pin }, tq });
+  // sideways a column at a time: a little scroll comes to rest on a column's edge; both halves go together
+  await ev(`${H}.scroll('cols', 150), 1`); await wait(800);
+  const tr1 = await ev(stripDom);
+  await ev(`${H}.scroll('cols', 40), 1`); await wait(800);
+  const tr0 = await ev(stripDom);
+  check('桌面横滚：按列吸附（停在 0 或一列宽 199 pt 处），上下两半一起移、组与卡仍同列', tq.cols.length <= 3 || (tr1.left === 199 && tr0.left === 0 && equal(tr1) && tr1.cols[0].x === tq.cols[0].x - 199 && tr1.shown.includes(tTop) && tr1.dots.endsWith('111')),
+    { left: [tr1.left, tr0.left], x: [tq.cols[0].x, tr1.cols[0].x], shown: tr1.shown, dots: tr1.dots });
+  // taken back from the end of the strip: the column goes back to its place, and the strip follows it into view
+  await ev(`${H}.scroll('cols', 199), 1`); await wait(600);
+  await ev(`${H}.undo(${JSON.stringify(tTop)}), 1`); await wait(1200);
+  const tu = await ev(stripDom);
+  check('桌面撤回：那一列回到原处、长回原样，屏幕跟着它回来', equal(tu) && JSON.stringify(tu.cols.map(x => [x.id, x.h])) === JSON.stringify(ta.cols.map(x => [x.id, x.h])) && tu.shown.includes(tTop) && tu.left === 0,
+    { ta: ta.cols.map(x => [x.id, x.h]), tu: tu.cols.map(x => [x.id, x.h]), left: tu.left });
+  // a smaller window only scales the device
+  await S('Emulation.setDeviceMetricsOverride', { width: 1180, height: 760, deviceScaleFactor: 1, mobile: false });
+  await open(`frame=${F.held}&posture=table`);
+  const ts = await ev(stripDom);
+  await ev(`${H}.answer(${H}.top()), 1`); await wait(1500);
+  const ts1 = await ev(stripDom);
+  await S('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  check('1180 × 760 下桌面：整台只是缩小（缩放比 1440 × 900 小），列仍是 191 pt、相等，至少两列整列可见；答一件后同样',
+    ts.k < ta.k && equal(ts) && ts.shown.length >= 2 && ts.view === ta.view && equal(ts1) && ts1.shown.length >= 2 && ts1.cols.length === tq.cols.length,
+    { k: [ta.k, ts.k], shown: [ts.shown.length, ts1.shown.length], widths: ts1.cols.map(x => x.w) });
   // D's two touch gestures, in E: a row of 在办 swiped left past 80 pt is known; the left page's detail pulled down from its
   // top goes away (a short pull springs back). And 记录 on the system strip opens 我的回应记录.
   await open(`frame=${F.held}&posture=closed`);

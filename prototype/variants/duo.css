@@ -213,7 +213,12 @@
 .u-half { position: relative; box-sizing: border-box; border-radius: 20px; padding: 13px 15px 10px; display: flex; flex-direction: column; min-width: 0; cursor: pointer; text-align: left; }
 .u-half.is-left { background: var(--u-left); box-shadow: 0 0 0 1px var(--line); }
 .u-half.is-right { background: var(--card); box-shadow: 0 1px 0 #00000008, 0 8px 20px -14px #0004; }
-.u-half.is-right.is-answered { background: var(--u-left); box-shadow: 0 0 0 1px var(--line); justify-content: flex-end; cursor: default; }
+.u-half.is-right.is-answered { background: var(--u-left); box-shadow: 0 0 0 1px var(--line); cursor: default; }
+/* answered: D's answered card (d.css .d-card.is-answered), a title line and the receipt, as low as that; the stripe (the
+   tabletop's card) shrinks to it, and its group beside it folds to one line as tall (duo-motion.md 3.4) */
+.u-half.is-right.is-answered { padding: 9px 12px 9px 15px; }
+.u-half.is-answered .d-kicker { margin: 0; }
+.u-half.is-answered .d-receipt { margin-top: 4px; }
 .u-half:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--ink); }
 .u-half h3 { margin: 6px 0 0; font-size: 17.5px; line-height: 1.38; font-weight: 750; letter-spacing: -.005em; text-wrap: pretty; }
 .u-half.is-lead h3 { font-size: 19.5px; line-height: 1.34; }
@@ -238,9 +243,10 @@
 .u-fl-n { flex-shrink: 0; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .u-fl-t { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .u-fl.is-rest { color: var(--ink-3); }
-/* answered: the group folds to one line at the foot of its row, beside your receipt; the line into the card is gone */
-.u-half.is-feed.is-folded { align-self: end; padding: 8px 14px 9px; background: none; }
-.u-half.is-folded .u-fhead { color: var(--ink-2); font-weight: 600; }
+/* answered: the group folds to one line beside your receipt, as tall as it (the row is the receipt's height), its name on
+   the receipt's title line; the line into the card is gone */
+.u-half.is-feed.is-folded { align-self: stretch; padding: 7px 14px 9px; background: none; }
+.u-half.is-folded .u-fhead { flex: none; color: var(--ink-2); font-weight: 600; }
 .u-fsum { margin: 1px 0 0; font-size: 11.5px; line-height: 16px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* the line from a group into its card: a funnel from each input line's end, then one line over the crease. It grows out of
    the crease with the band (transform-origin on the crease, scaleX with the hinge) and runs on under the card */
@@ -332,28 +338,45 @@
 .u-sheethost.is-on { pointer-events: auto; }
 
 /* tabletop: the spread turned a quarter; top half stands (look), bottom half lies flat (press); one column per stripe.
-   The standing half pins its head (the numbers, the band, what the Agent has in hand); under it the groups scroll. The flat
-   half has no head of its own (its numbers are the standing half's): the whole of it is its list of cards. The two lists
-   scroll on their own, never sideways: column for column a group stays over its card */
-.u-top { position: absolute; left: 0; top: 0; right: var(--rail); height: var(--half); display: flex; flex-direction: column; }
-.u-tpin { position: relative; z-index: 2; flex: none; display: flex; flex-direction: column; gap: 8px; padding: 14px 14px 0; }
-.u-tscroll, .u-bot { display: grid; column-gap: 10px; row-gap: 8px; padding: 0 14px; box-sizing: border-box;
-  overflow-y: auto; overflow-x: hidden; scrollbar-width: none; overscroll-behavior: contain; overflow-anchor: none; }
+   The standing half pins its head (the numbers, the band, what the Agent has in hand); it is one height whatever it says.
+   Under it the strip of columns: every column var(--col) wide (duo-motion.mjs TABLE: three fill the screen), the same
+   columns for both halves, never set by what is in them; past three the strip runs on to the right and both halves
+   scroll sideways together, a column at a time. Each half scrolls up and down on its own: column for column a group stays
+   over its card. Groups and cards start at the tops of their halves. */
+.u-tmain { position: absolute; left: 0; top: 0; right: var(--rail); bottom: 0; display: flex; flex-direction: column; }
+.u-tpin { position: relative; z-index: 2; flex: none; display: flex; flex-direction: column; gap: 8px; padding: 14px var(--tpad) 0; }
+.u-tview { position: relative; flex: 1 1 0; min-height: 0; }
+.u-tcols { position: absolute; inset: 0; display: grid; grid-template-columns: var(--tw); grid-template-rows: minmax(0, 1fr) var(--bot);
+  overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-inline: var(--tpad); }
+.u-tcols::-webkit-scrollbar { display: none; }
+.u-tsnaps { position: absolute; left: 0; top: 0; width: var(--tw); height: 1px; pointer-events: none; }
+.u-tsnaps > i { position: absolute; top: 0; width: var(--col); height: 1px; scroll-snap-align: start; }
+.u-tscroll, .u-bot { position: relative; display: grid; grid-template-columns: repeat(var(--n), var(--col)); column-gap: var(--cgap); row-gap: 8px; padding: 0 var(--tpad); box-sizing: border-box; min-height: 0;
+  overflow-y: auto; overflow-x: hidden; scrollbar-width: none; overscroll-behavior: auto contain; overflow-anchor: none; }
 .u-tscroll::-webkit-scrollbar, .u-bot::-webkit-scrollbar { display: none; }
 /* 上看下按: the standing half shows what came in, the groups at its foot by the crease, each over its card on the flat half */
-.u-tscroll { position: relative; flex: 1 1 0; min-height: 0; grid-template-rows: 1fr; padding-top: 8px; padding-bottom: 10px; }
-/* the flat half keeps the standing half's columns (it stops where the rail does), so each group stands over its card */
-.u-bot { position: absolute; left: 0; top: var(--half); right: var(--rail); bottom: 0; padding-top: 12px; padding-bottom: 16px; grid-auto-rows: min-content; align-content: start; }
+.u-tscroll { grid-row: 1; grid-template-rows: 1fr; padding-top: 8px; padding-bottom: 10px; }
+.u-bot { grid-row: 2; padding-top: 12px; padding-bottom: 30px; grid-auto-rows: min-content; align-content: start; }
 .u-thead { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 0 4px; }
-.u-thead .u-hero, .u-thead .u-hero small { font-size: 30px; }
+.u-thead-l { flex: 1 1 auto; min-width: 0; }
+.u-thead .u-hero, .u-thead .u-hero small { font-size: 30px; white-space: nowrap; }
 .u-thead .u-sub { margin-top: 0; }
-.u-thead-r { text-align: right; max-width: 60%; }
-.u-thead .u-hero-2 { margin-top: 0; font-size: 16px; }
+.u-thead-r { flex: 0 1 auto; min-width: 0; max-width: 52%; text-align: right; }
+.u-thead .u-hero-2 { margin-top: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .u-thead-r .u-hero-2 small { margin-left: 6px; }
+/* one line each, never wrapping into the band: a fixed count of lines, so the pinned head keeps its height */
+.u-tlines > span { display: block; height: 18.75px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .u-tband { margin: 4px 4px 2px; }
 .u-tscroll > .u-half .u-flines { padding-right: 0; }
 .u-table .u-half { padding: 11px 12px 9px; }
 .u-table .u-half.is-feed { padding: 12px 12px 10px; }
+/* answered, on the tabletop: the folded group at the top of its column, the receipt card at the top of the flat half,
+   both their own height (the column keeps its width) */
+.u-table .u-half.is-feed.is-folded { align-self: start; padding: 8px 12px 9px; }
+.u-table .u-half.is-right.is-answered { align-self: start; }
+/* a column is narrow: 撤回 goes up to the title's line, so the receipt's words have the card's width */
+.u-table .u-half.is-answered .d-kicker { padding-right: 40px; }
+.u-table .u-half.is-answered .d-undo { position: absolute; top: 0; right: 2px; min-height: 34px; }
 /* a column is narrow: the item's name on its own line (two at most), the tags under it; the lines drop who sent them */
 .u-table .u-frow { flex-direction: column; align-items: flex-start; height: auto; gap: 4px; }
 .u-table .u-fhead { flex: none; width: 100%; align-items: flex-start; line-height: 18px; }
@@ -363,12 +386,24 @@
 .u-table .u-fsub .u-tr { display: none; }
 .u-table .u-fl-who { display: none; }
 .u-table .u-flines { margin-top: 4px; }
-/* the tabletop's lines: from the foot of each group straight down over the crease into the top of its card. They lie over
-   the crease, apart from both lists, and show only while both are at their tops; scrolled away, they and the sockets fade */
-.u-tlinks { position: absolute; inset: 0; pointer-events: none; transition: opacity .15s; }
+/* the tabletop's lines: from the foot of each group straight down over the crease into the top of its card. They lie in the
+   strip (so they go sideways with their columns), apart from both halves' lists, and show only while both are at their
+   tops; scrolled away, they and the sockets fade */
+.u-tlinks { position: absolute; left: 0; top: 0; width: var(--tw); height: 100%; pointer-events: none; transition: opacity .15s; }
 .u-dline { position: absolute; display: block; width: 1.6px; margin-left: -.8px; background: var(--ink); }
 .u-bot .u-socket { transition: opacity .15s; }
 .u-table.is-apart .u-tlinks, .u-table.is-apart .u-bot .u-socket { opacity: 0; }
+/* the strip runs on past an edge of the screen: on that side a paper fade and a hairline (the pinned heads' edge, turned) */
+.u-tedge { position: absolute; top: 0; bottom: 0; z-index: 3; width: 18px; pointer-events: none; opacity: 0; transition: opacity .18s; }
+.u-tedge.is-r { right: 0; background: linear-gradient(to left, #f6f4ef, #f6f4ef00); box-shadow: inset -.6px 0 0 #17171a0f; }
+.u-tedge.is-l { left: 0; background: linear-gradient(to right, #f6f4ef, #f6f4ef00); box-shadow: inset .6px 0 0 #17171a0f; }
+.u-table.is-more-r .u-tedge.is-r, .u-table.is-more-l .u-tedge.is-l { opacity: 1; }
+/* and a page dot per column at the foot of the flat half (iOS's page dots, under the thumb): ink while it is on the screen.
+   Only when there are more columns than the screen holds */
+.u-tdots { position: absolute; left: 0; right: 0; bottom: 9px; z-index: 3; display: flex; justify-content: center; gap: 7px; pointer-events: none; }
+.u-tdots:empty { display: none; }
+.u-tdots > i { width: 6px; height: 6px; border-radius: 50%; background: #cfcabf; transition: background-color .18s; }
+.u-tdots > i.is-on { background: var(--ink); }
 .u-table .d-actions { flex-direction: column; }
 .u-table .d-btn { flex: none; width: 100%; }
 .u-table .u-half h3 { font-size: 16.5px; }

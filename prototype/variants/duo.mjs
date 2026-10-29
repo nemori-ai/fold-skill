@@ -5,7 +5,7 @@ import { itemFacts } from '../forms/motion/dial-model.mjs';
 import { currentDataset } from '../data/select.mjs';
 import { EASE, EASE_IN, EASE_IN_OUT, BEATS, play, stepAt, makeBox, measureEl, ghostOf, morph, reveal, band, popKeys, lookOf } from './d-motion.mjs';
 import { RS, clock, stamp, dayLong, weekday, actionWords, createHomeView } from './d-view.mjs';
-import { G, HINGE, angleAt, FOLD, foldAt, SETTLE, UNSETTLE, SNAP, HAND, BOOK, DETAIL, UNDETAIL, TURN, BODY, BODY_PAD, FEED,
+import { G, HINGE, angleAt, FOLD, foldAt, SETTLE, UNSETTLE, SNAP, HAND, BOOK, DETAIL, UNDETAIL, TURN, BODY, BODY_PAD, FEED, TABLE,
   bodyHTML, panelBodyHTML, pageCutHTML, bandSegments, tween, fade, radius, cornerVars } from './duo-motion.mjs';
 import { inputsOf, intoRoot } from './inflow.mjs';
 
@@ -27,6 +27,8 @@ const PRESSABLE = `${ITEMS}, .u-bandrow, .u-ledger, .d-fold`;
 const RS_CONTROLS = '[data-rs-act],[data-rs-amount],[data-rs-open],[data-rs-pick],[data-rs-send],[data-rs-defer],[data-rs-schedule],[data-rs-schedule-custom],[data-rs-pad],[data-rs-pad-set],[data-rs-undo]';
 const PRESS = { hint: 0.15, hold: 0.45, slop: 10 };
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+/** One cell of the tabletop's band: 64 of them across its pinned head (its margins and the band row's own 4 pt each side). */
+const TCELL = (G.PH - G.rail - 2 * TABLE.pad - 8) / 64;
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const sum = list => list.reduce((n, it) => n + it.share, 0);
 const toNode = html => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
@@ -55,7 +57,6 @@ export function mount(host, model) {
   const responses = createResponseStore();
   const drafts = new Map();
   const pulsed = new Set();
-  const held = new Map(); // item → the stripe's height before you answered it, kept until the next round
   const view = createHomeView({ s, responses, open, drafts, surfaceOf: () => surface });
   const { recordOf, answersFor, answeredRecord, priorRecord, compose, whyHTML, traceOf, answerHTML, answerWords, receiptFor, dot,
     chipHTML, rowHTML, tailToggleHTML, tailItemHTML, buildView, headView, detailParts, detailControls, dueOf, dueWords } = view;
@@ -99,8 +100,8 @@ export function mount(host, model) {
         ${railHTML({ island: true })}
       </section>
       ${pageCutHTML()}
-      <section class="u-screen u-table" aria-label="桌面姿态" hidden style="width:${G.PH}px;height:${G.W}px;--half:${G.PW}px;--rail:${G.rail}px">
-        <div class="u-top"><div class="u-tpin"></div><div class="u-tscroll"></div></div><div class="u-tlinks" aria-hidden="true"></div><div class="u-bot"></div><div class="u-trail">${railHTML({})}</div>
+      <section class="u-screen u-table" aria-label="桌面姿态" hidden style="width:${G.PH}px;height:${G.W}px;--half:${G.PW}px;--rail:${G.rail}px;--bot:${G.W - G.PW}px;--col:${TABLE.col}px;--cgap:${TABLE.gap}px;--tpad:${TABLE.pad}px;--n:${TABLE.cols};--tw:${TABLE.width(TABLE.cols)}px">
+        <div class="u-tmain"><div class="u-tpin"></div><div class="u-tview"><div class="u-tcols"><div class="u-tscroll"></div><div class="u-bot"></div><div class="u-tlinks" aria-hidden="true"></div><div class="u-tsnaps" aria-hidden="true"></div></div><i class="u-tedge is-l" aria-hidden="true"></i><i class="u-tedge is-r" aria-hidden="true"></i><div class="u-tdots" aria-hidden="true"></div></div></div><div class="u-trail">${railHTML({})}</div>
       </section>
       <div class="u-fold3d" aria-hidden="true" style="width:${G.W}px;height:${G.L}px;perspective:${FOLD.P}px"><div class="u-panel" style="left:${G.crease}px;width:${G.PW}px">
         <div class="u-face is-front" style="left:${-BODY.spine}px;top:${BODY.y0}px;width:${BODY.spine + BODY.L}px;height:${BODY.H}px">${panelBody.front}
@@ -129,6 +130,8 @@ export function mount(host, model) {
   // the tabletop: the standing half's pinned head and its groups (they scroll), the flat half's cards (they scroll), the
   // lines between them (drawn over the crease while both halves are at their tops)
   const tPin = $('.u-tpin'), tScroll = $('.u-tscroll'), tBot = $('.u-bot'), tLinks = $('.u-tlinks');
+  // the tabletop's strip: both halves' columns in one sideways scroll, a column at a time (TABLE; duo-motion.md 4.1)
+  const tCols = $('.u-tcols'), tSnaps = $('.u-tsnaps'), tDots = $('.u-tdots');
   // D's components (cards, tags, buttons, receipts, rows, detail, sheets) and the summary card come with d.css and ix.css,
   // loaded as their own links (as D loads ix.css; the single-file export serves links, not @import): d.css just before
   // duo.css, so the cascade is D's and then E's. The first paint waits for both, so its first measure is right.
@@ -237,7 +240,8 @@ export function mount(host, model) {
     const n = g.gs.length;
     const head = `<p class="u-fhead" data-part="head">${dot(colorFor(item, s.state))}<span>${esc(item.title)}</span></p>`;
     if (answeredRecord(item)) {
-      // you answered its card: the group folds into one line beside your receipt (the line into the card is gone)
+      // you answered its card: the group folds into one line beside your receipt, the row as tall as the receipt (the
+      // line into the card is gone); on the tabletop it lies at the top of its column, over the receipt
       return `<article class="u-half is-left is-feed is-folded is-${mode} u-cl" data-key="${prefix}:${id}" data-id="${id}" data-n="${n}" tabindex="0" aria-label="${esc(`${item.title}：本轮 ${n} 条输入，已折进你的回答`)}">
         ${head}<p class="u-fsum" data-part="sum">${n ? `${n} 条输入` : '本轮没有新输入'} · 已折进你的回答，等 Agent 读到</p></article>`;
     }
@@ -252,7 +256,9 @@ export function mount(host, model) {
   }
   function rightHalfHTML(item, mode, prefix = 'R') {
     const ask = currentAsk(s, item.id), record = answeredRecord(item), id = esc(item.id);
-    if (record) return `<article class="u-half is-right is-answered is-${mode} u-cr" data-key="${prefix}:${id}" data-id="${id}" aria-label="${esc(`已回应：${item.title}`)}">${receiptFor(item, record)}</article>`;
+    // answered: D's answered card, a title line and the receipt (D's answeredHTML), as low as that; the stripe shrinks to it
+    if (record) return `<article class="u-half is-right is-answered is-${mode} u-cr" data-key="${prefix}:${id}" data-id="${id}" aria-label="${esc(`已回应：${item.title}`)}">
+      <p class="d-kicker" data-part="title">${dot(colorFor(item, s.state))}<span>${esc(item.title)}</span></p>${receiptFor(item, record)}</article>`;
     const trace = traceOf(item, ask), prior = priorRecord(item);
     const isNew = ask.frameIndex === s.index && Date.parse(ask.registered_at) === Date.parse(s.frame.at);
     const priorLine = prior ? `<p class="d-prior" data-part="prior">你 ${clock(prior.at)} 答过上一版：${esc(prior.label)}${prior.value ? `「${esc(prior.value)}」` : ''} · ${responseStatus(prior, s.frames, s.cursor).status === 'acknowledged' ? 'Agent 已收到，问题随后改写' : '已保存'}<button type="button" class="d-undo" data-undo-key="${esc(prior.key)}">撤回</button></p>` : '';
@@ -278,14 +284,15 @@ export function mount(host, model) {
   }
   /** D's since-line, torn by whose fact each part is: what came in and changed (the Agent's), what is asked of you and what you did. */
   function sinceParts(v) {
-    if (s.index === 0 || s.baseIndex >= s.index) return { left: '这是比较起点', right: v.answered ? `你已回应 ${v.answered} 件` : '' };
+    if (s.index === 0 || s.baseIndex >= s.index) { const did = v.answered ? [`你已回应 ${v.answered} 件`] : []; return { left: '这是比较起点', right: did.join(''), asked: [], did }; }
     const base = s.frames[s.baseIndex], frames = s.frames.slice(s.baseIndex + 1, s.index + 1);
     const received = frames.reduce((n, f) => n + f.events.length, 0);
     const fresh = v.asks.filter(item => Date.parse(currentAsk(s, item.id).registered_at) > Date.parse(base.at)).length;
     const changed = (s.diff.changes || []).filter(c => c.type !== 'annotations_changed').length;
     const mine = new Set(frames.flatMap(f => f.events.filter(e => e.self && e.feedback?.length).flatMap(e => e.feedback.map(l => l.target)))).size;
-    return { left: `上次看是 ${stamp(base.at)}，之后收到 ${received} 条，${changed} 处变化`, received, changed,
-      right: [fresh ? `<b>新问题 ${fresh} 个</b>` : '没有新问题', mine ? `你在原处处理了 ${mine} 件` : '', v.answered ? `你在这里已回应 ${v.answered} 件` : ''].filter(Boolean).join(' · ') };
+    // what is asked of you, and what you did (the tabletop's head puts them on two lines of their own)
+    const asked = [fresh ? `<b>新问题 ${fresh} 个</b>` : '没有新问题'], did = [mine ? `你在原处处理了 ${mine} 件` : '', v.answered ? `你在这里已回应 ${v.answered} 件` : ''].filter(Boolean);
+    return { left: `上次看是 ${stamp(base.at)}，之后收到 ${received} 条，${changed} 处变化`, received, changed, right: [...asked, ...did].join(' · '), asked, did };
   }
   /** Whose turn each share is on: yours (open asks), answered but not yet read, the Agent's, spare. */
   function shares(v) {
@@ -326,6 +333,8 @@ export function mount(host, model) {
     return v.asks.length ? '都回应了<small>等 Agent 整理</small>' : '没有要你回应的事';
   }
   const windowWords = () => { const F = feed(); return `${stamp(F.from)} → ${clock(F.to)}`; };
+  /** The lead stripe is the first one still waiting, as D's lead card is: an answered one is no longer one of the three. */
+  const modeOf = v => { const lead = v.zone.find(({ item }) => !answeredRecord(item))?.item.id; return item => (item.id === lead ? 'lead' : 'mid'); };
   function bookEntries(v, sh, head) {
     const sp = sinceParts(v), at = new Date(s.cursor), c = census(v);
     const sub = `<b>${sh.waiting} 件</b>${sp.right ? ` · ${sp.right}` : ''}${sh.pend ? ` · 另 ${sh.pend} 份你答过了，等 Agent 读到` : ''}`;
@@ -340,7 +349,8 @@ export function mount(host, model) {
       // the band's account, either side of the crease: what is left of it adds up to what is right of it
       { key: 'acct', html: `<div class="u-acct" data-key="acct"><span class="is-l" data-part="l">空余 ${sh.blank} + <b>${sh.agentShare} 份</b>在 Agent 那边（${sh.agent.length} 件）</span><span class="is-r" data-part="r">+ <b>${sh.you} 份</b>等你${sh.pend ? ` + ${sh.pend} 份你答过` : ''} = ${s.state.root.budget || 64} 份</span></div>` },
     ];
-    v.zone.forEach(({ item }, k) => { const mode = k ? 'mid' : 'lead'; entries.push({ key: `L:${item.id}`, html: leftHalfHTML(item, mode) }, { key: `R:${item.id}`, html: rightHalfHTML(item, mode) }); });
+    const mode = modeOf(v);
+    v.zone.forEach(({ item }) => entries.push({ key: `L:${item.id}`, html: leftHalfHTML(item, mode(item)) }, { key: `R:${item.id}`, html: rightHalfHTML(item, mode(item)) }));
     for (const entry of v.more) entries.push({ key: `ml:${entry.item.id}`, html: miniLeftHTML(entry.item) }, { key: `mr:${entry.item.id}`, html: miniRightHTML(entry) });
     entries.push({ key: 'zone', html: '<section class="u-zone u-cl" data-key="zone" aria-label="Agent 那边"></section>' });
     const others = v.rows.length + v.tail.length;
@@ -393,17 +403,26 @@ export function mount(host, model) {
   }
   function tableEntries(v, sh) {
     const sp = sinceParts(v), at = new Date(s.cursor), c = census(v);
-    // the same tracks on both halves, never widened by what is in them (minmax(0, …)): a column above is the column below
-    const cols = v.zone.map((_, k) => (k ? 'minmax(0, 1fr)' : 'minmax(0, 1.25fr)')).join(' ') || 'minmax(0, 1fr)';
-    const pinned = [{ key: 'th', html: `<div class="u-thead" data-key="th"><div><div class="d-date" data-part="date">${dayLong.format(at)} ${weekday.format(at)} · ${clock(at)}</div><h1 class="u-hero" data-part="count">${heroHTML(v, sh)}</h1><p class="u-sub" data-part="sub"><b>${sh.waiting} 件</b>${sp.right ? ` · ${sp.right}` : ''}</p></div>
-      <div class="u-thead-r"><p class="u-hero-2">本轮 ${c.n} 条输入<small>累计 ${c.total} 条</small></p><p class="u-sub">${c.n ? `<b>${c.mine}</b> 条成了这 ${c.cards} 件 · <b>${c.agentN}</b> 条进了 Agent 那边 · <b>${c.loose.length}</b> 条折掉` : '这一轮没有新输入'}</p><p class="u-sub u-quiet">${sh.agentShare} 份在 Agent 那边（${sh.agent.length} 件）· 空余 ${sh.blank}</p></div></div>` },
-      { key: 'tband', html: '<div class="u-tband" data-key="tband" aria-hidden="true"><span class="u-band"></span><span class="u-tick"></span></div>' }];
-    // what the Agent has in hand, one line above the groups (what was folded is counted in the head; its lines are the book's)
-    if (v.rows.length || v.tail.length) pinned.push({ key: 'tline', html: `<p class="u-rowsline" data-key="tline">Agent 在办：${v.rows.map(r => esc(r.title)).join('、')}${v.tail.length ? `；另有 ${v.tail.length} 项次要事项` : ''}</p>` });
-    const top = v.zone.map(({ item }, j) => ({ key: `tL:${item.id}`, html: leftHalfHTML(item, j ? 'mid' : 'lead', 'tL') }));
-    const bot = v.zone.map(({ item }, j) => ({ key: `tR:${item.id}`, html: rightHalfHTML(item, j ? 'mid' : 'lead', 'tR') }));
+    // The columns: what is still to do first, in D's order; what you answered at the end of the strip (duo-motion.md 4.1:
+    // what is at hand is what is to do). The three columns that fill the screen are then the three asks waiting, as D's
+    // three cards are; an answered column, all but empty (one folded line over a receipt), goes where you scroll to.
+    const zone = [...v.zone.filter(({ item }) => !answeredRecord(item)), ...v.zone.filter(({ item }) => answeredRecord(item))];
+    const mode = modeOf(v);
+    // The head is one height whatever it says (it never pushes the band down): what is asked of you on one line, what you
+    // did on the next; the round's numbers on the right, a line each. A line too long ends in “…” instead of wrapping.
+    const lines = list => list.map(x => `<span>${x || ''}</span>`).join('');
+    const mine = [[`<b>${sh.waiting} 件</b>`, ...sp.asked].join(' · '), sp.did.join(' · ')];
+    const round = c.n ? [`<b>${c.mine}</b> 条成了这 ${c.cards} 件 · <b>${c.agentN}</b> 条进了 Agent 那边`, `<b>${c.loose.length}</b> 条折掉 · 空余 ${sh.blank} 份`] : ['这一轮没有新输入', `空余 ${sh.blank} 份`];
+    const pinned = [{ key: 'th', html: `<div class="u-thead" data-key="th"><div class="u-thead-l"><div class="d-date" data-part="date">${dayLong.format(at)} ${weekday.format(at)} · ${clock(at)}</div><h1 class="u-hero" data-part="count">${heroHTML(v, sh)}</h1><p class="u-sub u-tlines" data-part="sub">${lines(mine)}</p></div>
+      <div class="u-thead-r"><p class="u-hero-2">本轮 ${c.n} 条输入<small>累计 ${c.total} 条</small></p><p class="u-sub u-tlines" data-part="round">${lines(round)}<span class="u-quiet">${sh.agentShare} 份在 Agent 那边（${sh.agent.length} 件）</span></p></div></div>` },
+      { key: 'tband', html: '<div class="u-tband" data-key="tband" aria-hidden="true"><span class="u-band"></span><span class="u-tick"></span></div>' },
+      // what the Agent has in hand, one line above the groups (what was folded is counted in the head; its lines are the book's);
+      // always there, so the pinned head keeps its height from round to round
+      { key: 'tline', html: `<p class="u-rowsline" data-key="tline">${v.rows.length || v.tail.length ? `Agent 在办：${v.rows.map(r => esc(r.title)).join('、')}${v.tail.length ? `${v.rows.length ? '；' : ''}另有 ${v.tail.length} 项次要事项` : ''}` : 'Agent 那边没有在办的事'}</p>` }];
+    const top = zone.map(({ item }) => ({ key: `tL:${item.id}`, html: leftHalfHTML(item, mode(item), 'tL') }));
+    const bot = zone.map(({ item }) => ({ key: `tR:${item.id}`, html: rightHalfHTML(item, mode(item), 'tR') }));
     for (const entry of v.more) bot.push({ key: `tm:${entry.item.id}`, html: miniRightHTML(entry, 'tm') });
-    return { cols, pinned, top, bot };
+    return { n: Math.max(1, zone.length), pinned, top, bot };
   }
 
   // ---------- keyed patch (as D's): only the leaves whose markup changed are replaced ----------
@@ -429,6 +448,8 @@ export function mount(host, model) {
   const devRect = el => { const d = device.getBoundingClientRect(), r = el.getBoundingClientRect(), k = scale(); return { x: (r.left - d.left) / k, y: (r.top - d.top) / k, w: r.width / k, h: r.height / k }; };
   /** A box look for the halves (d-motion's lookOf knows D's cards, rows and folds). */
   function look(el) {
+    // a folded group is a ring with no paper in it (it lies beside your receipt): its box crossfades from the group's
+    if (el.matches('.u-half.is-left.is-folded')) return { key: 'half-lf', bg: 'transparent', r: 20, ring: true };
     if (el.matches('.u-half.is-left')) return { key: 'half-l', bg: '#fbfaf6', r: 20, ring: true };
     if (el.matches('.u-half.is-answered')) return { key: 'receipt', bg: '#fbfaf6', r: 20, ring: true };
     if (el.matches('.u-half')) return { key: 'card', bg: 'var(--card)', r: 20, drop: true };
@@ -686,6 +707,7 @@ export function mount(host, model) {
       enter: el => reveal(ctx, el, B.enter),
       exit: ghost => play(ctx, ghost, [{ opacity: 1 }, { opacity: 0 }], B.exit),
     });
+    if (name === 'answer' && self) popCheck(ctx, $('.d-cards').querySelector(`[data-key="i:${CSS.escape(self)}"]`));
   }
   /** The headline's count turns over in one frame (D's roll, without its one-place slide: shares jump more than one). */
   function rollCount(ctx, el, before, at) {
@@ -714,15 +736,13 @@ export function mount(host, model) {
     patch(bpin, entries.filter(e => PIN_KEYS.has(e.key)), removed, replaced);
     patch(spread, entries.filter(e => !PIN_KEYS.has(e.key)), removed, replaced);
     patch(zone(), zEntries, removed, replaced);
-    // An answered stripe keeps its height until the next round: the left half's context holds it, nothing below moves.
-    for (const [id, h] of held) { const r = spread.querySelector(`[data-key="R:${CSS.escape(id)}"]`); if (r) r.style.minHeight = `${h}px`; }
     book.classList.toggle('is-half', phase === 'book' && angle < HINGE.half && !moving());
     keepAnchor(opts.anchor);
     const bandEl = bpin.querySelector('.u-band'), segs = bandSegments({ open: sh.open, pending: sh.pending, agent: sh.agent, blank: sh.blank });
     const B = name === 'answer' ? BOOK.answer : name === 'undo' ? BOOK.undo : name === 'turn' ? BOOK.land : null;
     paintBand(ctx, bandEl, segs, ctx && B ? B.band : null, ctx && B ? B.band[0] : 0);
-    // anything new on the spread (or a stripe held at its height): the panel's picture of the left page is out of date
-    const sig = [...entries, ...zEntries].map(e => e.html).join('') + [...held].join() + JSON.stringify(segs);
+    // anything new on the spread: the panel's picture of the left page is out of date
+    const sig = [...entries, ...zEntries].map(e => e.html).join('') + JSON.stringify(segs);
     if (sig !== sigs.book) { sigs.book = sig; fold.ok = false; }
     // the lines into the cards and the band's account, as grown as the hinge has them (they grow with the band)
     live.links = [...spread.querySelectorAll(':scope > .u-cl > .u-link')];
@@ -733,15 +753,18 @@ export function mount(host, model) {
     const after = snapshotOf(bpin, spread, zone());
     const self = opts.target, L = BOOK.local;
     if (name === 'answer' || name === 'undo') {
-      // the answered half folds in place, and its group of inputs folds into one line beside it (feedBeat); a compact
-      // stripe promoted to a full one grows out of itself
+      // The stripe you answered folds as one (duo-motion.md 3.4, D's 3a): its right half into D's answered card, its group of
+      // inputs into one line as tall, both in place and at the same pace (feedBeat), the line into the card drawn back to the
+      // crease; then the stripes below close up in one move and the ask that comes out of the fold grows into a stripe out of
+      // its compact one (BOOK.answer.others). Taken back: the same backwards, the stripe growing as the ones below make room.
       choreograph(ctx, before, after, { replaced, removed }, {
         exitTo: bookList,
         fromOf: pairing(before),
-        tOf: key => (key === `R:${self}` || key === `mr:${self}` ? { ...B.self, z: 2 } : key === `L:${self}` || key === `ml:${self}` ? feedBeat(ctx, name) : { ...B.self, flip: B.hero }),
-        enter: el => reveal(ctx, el, [B.self.in[0], B.self.in[1]]),
-        exit: g => play(ctx, g, [{ opacity: 1 }, { opacity: 0 }], B.self.out),
+        tOf: key => (key === `R:${self}` || key === `mr:${self}` ? { ...B.self, z: 2 } : key === `L:${self}` || key === `ml:${self}` ? feedBeat(ctx, name) : { ...B.others, flip: B.hero }),
+        enter: el => reveal(ctx, el, B.enter),
+        exit: g => play(ctx, g, [{ opacity: 1 }, { opacity: 0 }], B.exit),
       });
+      if (name === 'answer') popCheck(ctx, spread.querySelector(`[data-key="R:${CSS.escape(self)}"]`));
       return;
     }
     if (name === 'turn') { land(ctx, before, after, { replaced, removed }); return; }
@@ -752,12 +775,14 @@ export function mount(host, model) {
    * back to the crease as it fades (on the old face riding along). Taking the answer back unfolds it and the line grows
    * out of the crease again (FEED.fold / unfold).
    */
-  const feedBeat = (ctx, name) => {
-    const T = name === 'answer' ? FEED.fold : FEED.unfold;
+  const feedBeat = (ctx, name, move = null) => {
+    const T = { ...(name === 'answer' ? FEED.fold : FEED.unfold), ...(move ? { move } : {}) };
     return { ...T, z: 1,
       onGhost: g => { const l = name === 'answer' && g?.querySelector(':scope > [data-part="link"]'); if (l) play(ctx, l, [{ transform: 'none' }, { transform: 'scaleX(0)' }], T.line, { easing: EASE_IN }); },
       onEl: el => { const l = name === 'undo' && el.querySelector(':scope > [data-part="link"]'); if (l) play(ctx, l, [{ transform: 'scaleX(0)' }, { transform: 'none' }], T.line); } };
   };
+  /** The receipt's check comes in under your finger as it does on D: from a little smaller, 0.12–0.30 s. */
+  const popCheck = (ctx, el) => { const check = el?.querySelector('.d-check'); if (check) play(ctx, check, [{ opacity: 0, transform: 'scale(.55)' }, { opacity: 1, transform: 'none' }], [0.12, 0.18]); };
   /** Which leaf a new one was before: a stripe's half and its compact stripe, a stripe's left half and its row of 在办. */
   const idOf = key => key.slice(key.indexOf(':') + 1);
   const pairing = before => key => {
@@ -838,41 +863,94 @@ export function mount(host, model) {
 
   /** Which list a leaf of the tabletop rides out on: the standing half's head, its groups, or the flat half's cards. */
   const tableList = key => (key.startsWith('tL:') ? tScroll : key.startsWith('tR:') || key.startsWith('tm:') ? tBot : tPin);
+  let tableN = 0;
+  /**
+   * The tabletop (duo-motion.md 4.1). One column per stripe, every column TABLE.col wide whatever is in it, the same columns
+   * for both halves: the standing half's groups over the flat half's cards, column for column. Past three, the strip runs
+   * on to the right and both halves scroll sideways together, a column at a time; each half scrolls up and down on its own.
+   */
   function renderTable(v, sh, ctx, name, opts) {
     const t = tableEntries(v, sh);
-    tScroll.style.gridTemplateColumns = t.cols; tBot.style.gridTemplateColumns = t.cols;
     const before = ctx ? snapshotOf(tPin, tScroll, tBot) : null;
+    const left0 = tCols.scrollLeft;
+    if (t.n !== tableN) {
+      tableN = t.n;
+      table.style.setProperty('--n', String(t.n));
+      table.style.setProperty('--tw', `${TABLE.width(t.n)}px`);
+      // where the strip comes to rest: a column's left edge at the screen's margin (scroll-padding), a column at a time
+      tSnaps.innerHTML = Array.from({ length: t.n }, (_, j) => `<i style="left:${f1(TABLE.pad + j * TABLE.step)}px"></i>`).join('');
+      tDots.innerHTML = t.n > TABLE.cols ? '<i></i>'.repeat(t.n) : '';
+    }
     const removed = new Map(), replaced = new Map();
     patch(tPin, t.pinned, removed, replaced);
     patch(tScroll, t.top, removed, replaced);
     patch(tBot, t.bot, removed, replaced);
+    // taken back, the column goes back to its place among the ones to do: if that is off the screen, the strip follows it
+    if (name === 'undo' && opts.target) showColumn(opts.target);
     keepAnchor(opts.anchor);
     const bandEl = tPin.querySelector('.u-band');
     if (bandEl) {
-      const cell = (G.PH - 28 - G.rail) / 64, x0 = ((sh.agentShare + sh.blank) / 64) * 64 * cell;
+      const cell = TCELL, x0 = ((sh.agentShare + sh.blank) / 64) * 64 * cell;
       bandEl.style.left = '0px';
       band({ add: () => {}, clean: () => {} }, bandEl, bandSegments({ open: sh.open, pending: sh.pending, agent: sh.agent, blank: sh.blank }).map(x => ({ ...x, from: x.from - 64 + (x0 / cell) })), 64 * cell, null);
       const kinds = new Map(bandSegments({ open: sh.open, pending: sh.pending, agent: sh.agent, blank: sh.blank }).map(x => [x.id, x.kind]));
       for (const node of bandEl.children) node.className = kinds.get(node.dataset.seg) || '';
       tPin.querySelector('.u-tick').style.left = `${x0}px`;
     }
-    for (const [id, h] of held) { const r = tBot.querySelector(`[data-key="tR:${CSS.escape(id)}"]`); if (r) r.style.minHeight = `${h}px`; }
     const B = name === 'answer' ? BOOK.answer : name === 'undo' ? BOOK.undo : null;
     const after = ctx ? snapshotOf(tPin, tScroll, tBot) : null;
-    tableLinks(ctx, B ? B.self : BOOK.local);
+    // the lines over the crease go with their columns; the answered one's is drawn back first, a new column's comes last
+    const slide = tCols.scrollLeft - left0, S = B?.strip;
+    tableLinks(ctx, B ? { out: B.line, move: S, in: [S[0] + S[1] - 0.04, 0.2] } : BOOK.local, slide);
+    stripEdges();
     if (!ctx) return;
-    const T = B ? B.self : BOOK.local;
-    choreograph(ctx, before, after, { replaced, removed }, { t: { ...T, flip: B?.hero ?? 0 }, exitTo: tableList, enter: el => reveal(ctx, el, BOOK.local.enter), exit: g => play(ctx, g, [{ opacity: 1 }, { opacity: 0 }], BOOK.local.exit) });
+    if (B) {
+      // The card you answered folds into D's answered card in place and its group into one line at the top of the column
+      // (0–0.20 s); a moment later that column goes to the end of the strip while the ones to do close up to the left, and the
+      // ask out of the fold comes in where the last of them was (revealed in place, as D's does; its compact one in the flat
+      // half's last row leaves); B.strip. Taken back, the same backwards, at once.
+      const self = opts.target;
+      const others = { move: S, box: S, parts: S, out: [S[0], 0.12], in: [S[0] + 0.06, 0.2], fresh: [S[0] + S[1] - 0.12, 0.16], flip: B.hero, settle: S[0] + S[1] };
+      choreograph(ctx, before, after, { replaced, removed }, {
+        exitTo: tableList,
+        tOf: key => (key === `tR:${self}` || key === `tm:${self}` ? { ...B.self, move: S, z: 2 } : key === `tL:${self}` ? feedBeat(ctx, name, S) : key.startsWith('t') && !['th', 'tband', 'tline'].includes(key) ? others : { ...B.others, flip: B.hero }),
+        enter: el => reveal(ctx, el, [S[0] + S[1] * 0.5, 0.32]),
+        exit: g => play(ctx, g, [{ opacity: 1 }, { opacity: 0 }], B.exit),
+      });
+      if (name === 'answer') popCheck(ctx, tBot.querySelector(`[data-key="tR:${CSS.escape(self)}"]`));
+      return;
+    }
+    choreograph(ctx, before, after, { replaced, removed }, { t: { ...BOOK.local, flip: 0 }, exitTo: tableList, enter: el => reveal(ctx, el, BOOK.local.enter), exit: g => play(ctx, g, [{ opacity: 1 }, { opacity: 0 }], BOOK.local.exit) });
   }
+  /** Bring a column into view, by the fewest columns (it lands on a column's edge: the strip snaps there anyway). */
+  function showColumn(id) {
+    const el = tBot.querySelector(`:scope > [data-key="tR:${CSS.escape(id)}"], :scope > [data-key="tm:${CSS.escape(id)}"]`);
+    if (!el) return;
+    const j = [...tBot.querySelectorAll(':scope > [data-key^="tR:"]')].indexOf(el);
+    if (j < 0) return;
+    const x = j * TABLE.step, view = tCols.clientWidth - 2 * TABLE.pad;
+    if (x < tCols.scrollLeft) tCols.scrollLeft = x;
+    else if (x + TABLE.col > tCols.scrollLeft + view + 0.5) tCols.scrollLeft = x + TABLE.col - view;
+  }
+  /** The strip runs on past the screen's edge: a paper fade and a hairline on that side (the pinned heads' edge, turned),
+   * and the page dots say which columns are on the screen. */
+  const stripEdges = () => {
+    const max = tCols.scrollWidth - tCols.clientWidth, x = tCols.scrollLeft;
+    table.classList.toggle('is-more-l', x > 1);
+    table.classList.toggle('is-more-r', x < max - 1);
+    const from = Math.round(x / TABLE.step);
+    [...tDots.children].forEach((dot, j) => dot.classList.toggle('is-on', j >= from && j < from + TABLE.cols));
+  };
   /**
    * The tabletop's lines (duo-motion.md 4.1): each group that took inputs drops one straight line over the crease into the
-   * top of its card. The groups and the cards are two lists that scroll on their own, so the line lies over the crease,
-   * apart from both, measured as they stand at their tops; it shows only while both are there (column for column they
-   * never move sideways, so it is always the right column; scrolled away, the line and the card's socket fade).
+   * top of its card. The groups and the cards are two lists that scroll up and down on their own, so the line lies over the
+   * crease, apart from both, measured as they stand at their tops; it shows only while both are there. It lies in the strip,
+   * so it goes sideways with its column; when the columns change places (an answer), it goes with its column (T.move;
+   * slide: how far the strip itself was scrolled meanwhile, pt). Scrolled away, the line and the card's socket fade.
    */
-  function tableLinks(ctx, T) {
+  function tableLinks(ctx, T, slide = 0) {
     if (table.hidden) return; // drawn when the tabletop shows (showLayers): hidden, nothing has a place to measure
-    const k = scale(), d = device.getBoundingClientRect(), view = tScroll.getBoundingClientRect();
+    const k = scale(), L = tLinks.getBoundingClientRect(), view = tScroll.getBoundingClientRect();
     const was = new Map([...tLinks.children].filter(x => !x.classList.contains('is-leaving')).map(x => [x.dataset.id, x]));
     // every place is read before the first line is written
     const want = [];
@@ -882,7 +960,7 @@ export function mount(host, model) {
       const r = g.getBoundingClientRect(), c = card.getBoundingClientRect();
       // as at the tops of both lists: the foot of the group (or of the standing half, when the group runs on below it) to the card's top
       const foot = Math.min(r.bottom + tScroll.scrollTop * k, view.bottom), top = c.top + tBot.scrollTop * k;
-      want.push({ id, x: (r.left + r.width / 2 - d.left) / k, y0: (foot - d.top) / k - 5, y1: (top - d.top) / k + 3 });
+      want.push({ id, x: (r.left + r.width / 2 - L.left) / k, y0: (foot - L.top) / k - 5, y1: (top - L.top) / k + 3 });
     }
     for (const { id, x, y0, y1 } of want) {
       let line = was.get(id);
@@ -890,6 +968,9 @@ export function mount(host, model) {
       if (!line) {
         line = document.createElement('i'); line.className = 'u-dline'; line.dataset.id = id; tLinks.append(line);
         if (ctx) play(ctx, line, [{ opacity: 0 }, { opacity: 1 }], T.in || BOOK.local.enter);
+      } else if (ctx && T.move) {
+        const dx = parseFloat(line.style.left) - x + slide;
+        if (Math.abs(dx) > 0.5) play(ctx, line, [{ transform: `translateX(${f1(dx)}px)` }, { transform: 'none' }], T.move);
       }
       Object.assign(line.style, { left: `${f1(x)}px`, top: `${f1(y0)}px`, height: `${f1(Math.max(0, y1 - y0))}px` });
     }
@@ -1132,7 +1213,7 @@ export function mount(host, model) {
     applyFold();
     fit();
     // the tabletop starts at the tops of both halves (a turn of the screen is a new layout); its lines are drawn now that it shows
-    if (posture === 'table' && turned) { tScroll.scrollTop = 0; tBot.scrollTop = 0; tableLinks(null, BOOK.local); }
+    if (posture === 'table' && turned) { tScroll.scrollTop = 0; tBot.scrollTop = 0; tCols.scrollLeft = 0; tableLinks(null, BOOK.local); stripEdges(); }
   }
   /**
    * The hinge starts to fold or open (anywhere but the book's own half-folded range): what lay over a screen goes at once,
@@ -1396,7 +1477,7 @@ export function mount(host, model) {
     const bandEl = bandOf();
     if (!bandEl) return null;
     const b = bandEl.getBoundingClientRect(), k = scale();
-    const cellsAt = (x - b.left) / k / (posture === 'table' ? (G.PH - 28 - G.rail) / 64 : G.cell);
+    const cellsAt = (x - b.left) / k / (posture === 'table' ? TCELL : G.cell);
     let hit = null;
     for (const node of bandEl.children) { const from = node.__from ?? 0, seg = latestSeg(node.dataset.seg); if (seg && cellsAt >= from && cellsAt < from + seg.share) hit = node.dataset.seg; }
     return hit && hit !== 'blank' ? hit : null;
@@ -1670,14 +1751,12 @@ export function mount(host, model) {
   function give(item, action, value, until) {
     if (!item) return;
     if (s.playing && action.meaning !== 'ack') model.pause();
-    // the stripe's height, held while it is a receipt (its left half keeps the context)
-    const r = spread.querySelector(`[data-key="R:${CSS.escape(item.id)}"]`);
-    if (r && visibleLayer() === 'book' && action.meaning !== 'snooze' && action.meaning !== 'ack') held.set(item.id, r.getBoundingClientRect().height / scale());
-    const tr = tBot.querySelector(`[data-key="tR:${CSS.escape(item.id)}"]`);
-    if (tr && posture === 'table' && action.meaning !== 'snooze' && action.meaning !== 'ack') held.set(item.id, tr.getBoundingClientRect().height / scale());
     const record = responses.save(item, action, { ask: currentAsk(s, item.id), value, until, at: s.cursor });
     say(record.meaning === 'ack' || record.meaning === 'snooze' ? answerWords(record) : `已保存 · ${answerWords(record, currentAsk(s, item.id))}`);
-    render(record.meaning === 'snooze' || record.meaning === 'ack' ? 'local' : 'answer', { target: item.id });
+    const name = record.meaning === 'snooze' || record.meaning === 'ack' ? 'local' : 'answer';
+    // what was below (beside, on the tabletop) closes up under the finger that just pressed: guard it, as D does
+    if (name === 'answer' && lastDown && performance.now() - lastDown.t < 900) guard = { x: lastDown.x, y: lastDown.y, id: item.id, until: performance.now() + BOOK.answer.guard * 1000 };
+    render(name, { target: item.id });
     // focus on 撤回, under the finger
     const root = visibleLayer() === 'book' ? spread : visibleLayer() === 'table' ? table : outer;
     root.querySelector(`[data-id="${CSS.escape(item.id)}"] [data-rs-undo]`)?.focus({ preventScroll: true });
@@ -1699,13 +1778,25 @@ export function mount(host, model) {
       if (!item) return;
       const record = answeredRecord(item) || recordOf(item);
       if (record) responses.removeKey(record.key);
-      held.delete(target);
       say('已撤回');
       render('undo', { target });
       const root = visibleLayer() === 'book' ? spread : visibleLayer() === 'table' ? table : outer;
       root.querySelector(`[data-id="${CSS.escape(target)}"] [data-rs-act]`)?.focus({ preventScroll: true });
     },
   });
+
+  // Finger guard (D's): for a moment after an answer, the stripes below (the columns beside, on the tabletop) close up under
+  // the finger that pressed; a tap there in that time does not land on what slid under it. Your own receipt is yours to tap.
+  let lastDown = null, guard = null;
+  host.addEventListener('pointerdown', event => { lastDown = { x: event.clientX, y: event.clientY, t: performance.now() }; }, true);
+  host.addEventListener('click', event => {
+    if (!guard || event.detail === 0) return;
+    if (performance.now() > guard.until) { guard = null; return; }
+    if (Math.hypot(event.clientX - guard.x, event.clientY - guard.y) > 32) return;
+    if (event.target.closest(ITEMS)?.dataset.id === guard.id) return;
+    event.stopImmediatePropagation();
+    event.preventDefault();
+  }, true);
 
   // ---------- pointer: tap, long press, the hinge handle ----------
   let press = null, pressHeld = false, swallowUntil = 0, drag = null, pan = null, creaseAt = -1e9;
@@ -1882,7 +1973,7 @@ export function mount(host, model) {
     if (u === 'prev') model.goFrame(s.index - 1);
     else if (u === 'next') model.goFrame(s.index + 1);
     else if (u === 'play') model.togglePlay();
-    else if (u === 'reset') { for (const r of responses.list(Infinity)) responses.removeKey(r.key); held.clear(); render('local'); }
+    else if (u === 'reset') { for (const r of responses.list(Infinity)) responses.removeKey(r.key); render('local'); }
     else if (u === 'replay') startTell(true);
     else if (u === 'log') logSheet();
     // the outer screen's 累计 bar: this round's inputs, each with where it went (what the book lays open, one screen at a time)
@@ -1903,9 +1994,11 @@ export function mount(host, model) {
    * or the resting panel, the list under it. Nothing in the device hands a wheel on to the page.
    */
   device.addEventListener('wheel', event => {
-    if (event.ctrlKey || event.target.closest('.u-iscroll, .u-oscroll, .u-tscroll, .u-bot, .d-detail-body, .d-sheet')) return;
+    if (event.ctrlKey || event.target.closest('.u-iscroll, .u-oscroll, .u-tscroll, .u-bot, .u-tcols, .d-detail-body, .d-sheet')) return;
     event.preventDefault();
     const d = device.getBoundingClientRect(), layer = visibleLayer();
+    // sideways over the tabletop's head or rail: the strip of columns (both halves together)
+    if (layer === 'table' && !event.target.closest('.u-ldetail') && Math.abs(event.deltaX) > Math.abs(event.deltaY)) { tCols.scrollLeft += event.deltaMode === 1 ? event.deltaX * 16 : event.deltaX; return; }
     const list = event.target.closest('.u-ldetail')?.querySelector('.d-detail-body')
       || (layer === 'table' ? ((event.clientY - d.top) / scale() < G.PW ? tScroll : tBot) : scrollerOf(layer));
     const dy = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaMode === 2 ? event.deltaY * list.clientHeight : event.deltaY;
@@ -1935,6 +2028,7 @@ export function mount(host, model) {
     catchTimer = setTimeout(() => idle(() => { if (!disposed && fold.ok && fold.dirty && !panelUp() && !press && !drag && !peekState) panelScroll(); }, { timeout: 600 }), 250);
   }
   for (const el of [tScroll, tBot]) el.addEventListener('scroll', () => { scrolled(); apartTable(); }, { passive: true });
+  tCols.addEventListener('scroll', () => { scrolled(); stripEdges(); }, { passive: true });
   // keyboard focus on a row shows its summary, as a long press does
   host.addEventListener('focusin', event => {
     const el = event.target;
@@ -1970,7 +2064,7 @@ export function mount(host, model) {
   function startTell(replay = false) {
     stopTell();
     if (reduced()) return;
-    if (replay) { for (const r of responses.list(Infinity)) responses.removeKey(r.key); held.clear(); }
+    if (replay) for (const r of responses.list(Infinity)) responses.removeKey(r.key);
     tell.running = true; tell.done = false;
     const plan = TELL[dataset];
     hingeTween?.cancel();
@@ -2028,7 +2122,7 @@ export function mount(host, model) {
     if (info.type === 'frame' && next.index !== lastIndex) {
       turnPending = true;
       closeSheet({ refocus: false }); hidePeek(true);
-      open.more = false; open.tail = false; held.clear();
+      open.more = false; open.tail = false;
       detail.loose = null; // a grey line's originals are this round's: the next round closes them (render → renderDetail)
     }
     lastIndex = next.index;
@@ -2093,7 +2187,7 @@ export function mount(host, model) {
       give(getItem(s.state, id), action);
       return action.label;
     },
-    undo: name => { const id = named(name), item = id && getItem(s.state, id); const r = item && (answeredRecord(item) || recordOf(item)); if (r) { responses.removeKey(r.key); held.delete(id); render('undo', { target: id }); } },
+    undo: name => { const id = named(name), item = id && getItem(s.state, id); const r = item && (answeredRecord(item) || recordOf(item)); if (r) { responses.removeKey(r.key); render('undo', { target: id }); } },
     waiting: () => latest?.sh.waiting ?? 0,
     you: () => latest?.sh.you ?? 0,
     shares: () => ({ you: latest?.sh.you, pending: latest?.sh.pend, agent: latest?.sh.agentShare, blank: latest?.sh.blank }),
@@ -2116,7 +2210,10 @@ export function mount(host, model) {
      * Agent's side, folded; the cumulative count; and the items that left the page this round. */
     census: () => { const c = census(compose()); return { n: c.n, mine: c.mine, cards: c.cards, agent: c.agentN, folded: c.loose.length, total: c.total, gone: c.gone.length, counts: c.counts }; },
     /** Scroll a list as a finger would — book (both pages), outer, top / bottom (the tabletop's halves) — to y pt; returns where it is. */
-    scroll: (layer, y) => { const el = { book: iscroll, outer: oscroll, top: tScroll, bottom: tBot }[layer]; if (!el) return null; if (y != null) setScroll(el, y); return el.scrollTop; },
+    scroll: (layer, y) => {
+      // cols: the tabletop's strip, sideways (both halves together), x pt
+      if (layer === 'cols') { if (y != null) tCols.scrollLeft = y; return tCols.scrollLeft; }
+      const el = { book: iscroll, outer: oscroll, top: tScroll, bottom: tBot }[layer]; if (!el) return null; if (y != null) setScroll(el, y); return el.scrollTop; },
     posture: (name, opts) => setPosture(name, opts),
     hinge: (value, opts = {}) => { hingeTween?.cancel(); if (opts.animate) tweenTo(value); else setAngle(value); },
     unfold: seconds => tweenTo(180, seconds ?? HAND.open, HAND.ease),
@@ -2132,7 +2229,7 @@ export function mount(host, model) {
       hero: (visibleLayer() === 'outer' ? outer.querySelector('.d-headline') : visibleLayer() === 'table' ? table.querySelector('.u-hero') : bpin.querySelector('.u-hero'))?.textContent.replace(/\s+/g, ' ').trim(),
       settling: Boolean(morphCtx && !morphCtx.done), tell: tell.running, told: tell.done,
       /** how far each list is scrolled (pt): the book (both pages), the outer screen, the tabletop's two halves */
-      scroll: { book: iscroll.scrollTop, outer: oscroll.scrollTop, top: tScroll.scrollTop, bottom: tBot.scrollTop },
+      scroll: { book: iscroll.scrollTop, outer: oscroll.scrollTop, top: tScroll.scrollTop, bottom: tBot.scrollTop, cols: tCols.scrollLeft },
       /** the lines from the left page's groups into the cards: how many, and how far grown out of the crease (0–1) */
       links: { n: live.links.length, grown: +growthNow().toFixed(3) },
       /** what the left page's detail shows: 'feed' (a group's originals) or 'item' (D's detail); null when it is closed */
