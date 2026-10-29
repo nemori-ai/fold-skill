@@ -280,15 +280,25 @@ export const HAND = { open: 1.5, close: 1.1, ease: minJerk };
 
 /**
  * On the spread, the beats are morph tables for d-motion's morph(): move, box, parts, out, in, fresh, flip, settle.
- * answer: the right half folds into a receipt in place; the stripe keeps its height, so nothing below moves.
- * undo: backwards, 0.30 s. land: the next 整理 — the receipt fills, the count turns, the answered stripe goes over the fold
- * to the Agent's page in one diagonal (receipt) and one vertical (left half) stroke, the rest move once, new asks arrive.
+ * answer (duo-motion.md 3.4, D's 3a): the stripe you answered folds, both halves at once and in place (its top stays), into
+ * D's answered card — a title line and the receipt — and its group into one line as tall; 0–0.20 s. Then what is below
+ * (beside, on the tabletop) closes up in one move and the ask that comes out of the fold grows into a stripe, 0.20–0.52 s
+ * (others). On the tabletop the column you answered then goes to the end of the strip and the ones to do close up to the
+ * left (strip, 0.40–0.76 s: the receipt shows where you pressed a moment longer first); the ask out of the fold grows into
+ * its column. guard: for that long after the press, a tap where the finger was does not land on what slid under it (D's).
+ * undo: backwards and quicker (0.36 s): the stripe grows back while the ones below make room, in step.
+ * land: the next 整理 — the receipt fills, the count turns, the answered stripe goes over the fold to the Agent's page in
+ * one diagonal (receipt) and one vertical (left half) stroke, the rest move once, new asks arrive.
+ * (Before 2026-10-30 an answered stripe kept its height until the next round, so nothing moved; the user saw the empty
+ * shells that left on the book and the tabletop.)
  */
 export const BOOK = {
   answer: { self: { move: [0, 0.20], box: [0, 0.20], parts: [0, 0.20], out: [0, 0.12], in: [0.10, 0.20], fresh: [0.10, 0.20], flip: 0.20, settle: 0.30 },
-    hero: 0.20, band: [0.20, 0.20], total: 0.40 },
-  undo: { self: { move: [0, 0.18], box: [0, 0.18], parts: [0, 0.18], out: [0, 0.10], in: [0.10, 0.18], fresh: [0.10, 0.18], flip: 0.10, settle: 0.20 },
-    hero: 0.10, band: [0.10, 0.20], total: 0.30 },
+    others: { move: [0.20, 0.32], box: [0.20, 0.32], parts: [0.20, 0.32], out: [0.20, 0.12], in: [0.26, 0.20], fresh: [0.36, 0.16], flip: 0.20, settle: 0.52 },
+    strip: [0.40, 0.36], enter: [0.36, 0.36], exit: [0.20, 0.20], line: [0, 0.18], hero: 0.20, band: [0.20, 0.20], guard: 1.12, total: 0.72 },
+  undo: { self: { move: [0, 0.20], box: [0, 0.20], parts: [0, 0.20], out: [0, 0.10], in: [0.08, 0.18], fresh: [0.10, 0.18], flip: 0.10, settle: 0.20 },
+    others: { move: [0, 0.20], box: [0, 0.20], parts: [0, 0.20], out: [0, 0.10], in: [0.08, 0.18], fresh: [0.10, 0.18], flip: 0.10, settle: 0.20 },
+    strip: [0, 0.24], enter: [0.12, 0.24], exit: [0, 0.16], line: [0.10, 0.18], hero: 0.10, band: [0.10, 0.20], total: 0.36 },
   land: { receipt: [0, 0.30], hero: 0.30, lead: [0.30, 0.40], lapse: [0.28, 0.12], move: [0.34, 0.36], enter: [0.46, 0.36], exit: [0.28, 0.14],
     band: [0.30, 0.40], glow: 0.80, total: 1.0 },
   local: { move: [0, 0.32], box: [0, 0.32], parts: [0, 0.32], out: [0, 0.14], in: [0.08, 0.20], fresh: [0.10, 0.22], flip: 0, settle: 0.32, enter: [0, 0.36], exit: [0, 0.24] },
@@ -302,13 +312,25 @@ export const BOOK = {
  * how many lines a lead or a mid group shows (the rest fold into “还有 N 条”; on the tabletop each group has the standing
  * half's height to itself, and its line drops straight down over the crease, so it shows more); the funnel (from the lines'
  * ends to the group's edge) and the run past the edge (across the 24 pt fold, 48 half-folded, and on under the card).
- *   fold    you answer its card: the lines fold into one line beside your receipt (the box shrinks to it), the line into
- *           the card is drawn back to the crease and fades; unfold: you take the answer back, backwards.
+ *   fold    you answer its card: the lines fold into one line (the box shrinks to it) in the same beat and at the same pace
+ *           as the card folds into its receipt, so the two halves stay one height all the way (BOOK.answer.self); the
+ *           line into the card is drawn back to the crease and fades; unfold: you take the answer back, backwards.
  * The line grows from the crease with the band while the hinge goes from 120° to 170° (FOLD.band) and draws back with it.
  */
 export const FEED = { pad: 12, head: 20, sub: 18, gapTop: 6, pitch: 19, cap: { lead: 6, mid: 4, table: 7 }, funnel: 30, run: 56,
-  fold: { move: [0.04, 0.24], box: [0.04, 0.24], parts: [0.04, 0.24], out: [0, 0.12], in: [0.12, 0.16], fresh: [0.14, 0.16], flip: 0.20, settle: 0.28, line: [0, 0.18] },
-  unfold: { move: [0, 0.20], box: [0, 0.20], parts: [0, 0.20], out: [0, 0.10], in: [0.08, 0.16], fresh: [0.10, 0.16], flip: 0.10, settle: 0.20, line: [0.10, 0.18] } };
+  fold: { move: [0, 0.20], box: [0, 0.20], parts: [0, 0.20], out: [0, 0.12], in: [0.10, 0.20], fresh: [0.10, 0.20], flip: 0.20, settle: 0.30, line: [0, 0.18] },
+  unfold: { move: [0, 0.20], box: [0, 0.20], parts: [0, 0.20], out: [0, 0.10], in: [0.08, 0.18], fresh: [0.10, 0.18], flip: 0.10, settle: 0.20, line: [0.10, 0.18] } };
+/**
+ * The tabletop's columns (duo-motion.md 4.1): one per stripe, a fixed width, the same for every column and for both halves,
+ * never set by what is in them. Three fill the screen beside the rail exactly (pad at either side, gap between); a fourth
+ * and more lie to the right and both halves scroll sideways together, a column at a time (snap). The window only scales
+ * the whole device, so a smaller window shows the same three columns, smaller: the layout is the phone's, in pt.
+ */
+export const TABLE = { pad: 12, gap: 8, cols: 3 };
+TABLE.col = (G.PH - G.rail - 2 * TABLE.pad - (TABLE.cols - 1) * TABLE.gap) / TABLE.cols; // 191
+TABLE.step = TABLE.col + TABLE.gap;                                                      // one snap, 199
+/** The strip's width for n columns (pt): the screen beside the rail at least. */
+TABLE.width = n => Math.max(G.PH - G.rail, 2 * TABLE.pad + n * TABLE.col + Math.max(0, n - 1) * TABLE.gap);
 /** The left page's detail grows out of the half you tapped (0.48 s) and shrinks back into it (0.36 s). */
 export const DETAIL = { dim: 0.15, pop: [0, 0.12], frame: [0.12, 0.24], content: [0.30, 0.18], total: 0.48 };
 export const UNDETAIL = { content: [0, 0.10], frame: [0.06, 0.24], total: 0.36 };
