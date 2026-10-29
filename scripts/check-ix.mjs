@@ -4,7 +4,7 @@
 // 共 16 项，每个接入 ix.mjs 的页面都跑同一套；各页只在 PAGES 里写自己的地址、挑哪一件、怎样算“切到这一件”。
 // D 手机首页（home）没有悬停，另走一套触屏流程（runHome，iPhone 尺寸、CDP 触屏事件）：长按代替悬停、轻点从卡长出详情、
 // 下拉收回、左滑知道了、作答与撤回、手指保护、换轮时回执跟着条目走，以及键盘与连播的同一组打断规则。
-// E 折叠屏（duo）走 runDuo：同一组触屏标准，加铰链、左页详情、色带格联动与讲一遍。
+// E 折叠屏（duo）走 runDuo：同一组触屏标准，加铰链、左页摊开的原料与详情、色带格联动、圆角同心与讲一遍。
 // 回应托盘（trays）也是触屏，走 runTrays：同一组触屏规则，加上托盘高度 = 几下、两下的托盘一下矮一排、直接打开讲一遍。
 // 只用 Node 22 内置的 WebSocket 驱动本机 Chrome（无头），不装依赖。原型需先在本地提供服务。
 //
@@ -560,7 +560,9 @@ async function runHome(cdp, base, data, name) {
 }
 
 // E 折叠屏：桌面视口（整台按 pt 缩进来）加触屏事件。长按、轻点、色带格、左页详情、作答撤回、键盘、连播打断与 D 同一套标准；
-// 另加铰链：姿态按钮、F、[ ]、拖把手松手落位、?hinge= 定格、减少动态直接到终态，以及不带帧号直接打开时讲一遍、按键跳过。
+// 另加铰链：姿态按钮、F、[ ]、拖把手松手落位、?hinge= 定格、减少动态直接到终态，以及不带帧号直接打开时讲一遍、按键跳过；
+// 左页摊开的原料：每条输入记一次、每组与它那张卡同一行同一高、线穿过折痕并随铰链长出、作答后那组折成一行，灰的几行
+// 点开是原文；屏的圆角与机身同心（读计算出的圆角与盒子）。
 async function runDuo(cdp, base, data, name) {
   const P = PAGES[name], F = P.frames[data || 'composite'] || P.frames.composite;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -647,7 +649,7 @@ async function runDuo(cdp, base, data, name) {
   const geo = await ev(`(() => { const d = document.querySelector('.u-ldetail').getBoundingClientRect(), g = document.querySelector('.u-grip').getBoundingClientRect();
     const btn = ${H}.at(${JSON.stringify(top)}, 'button'); const hit = btn && document.elementFromPoint(btn.x, btn.y);
     return { right: Math.round(d.right), crease: Math.round(g.left + g.width / 2), answerable: Boolean(hit?.closest('[data-rs-act]')) }; })()`);
-  check(`轻点左半：详情长满左页，焦点进详情（${top}）`, s.open === top && s.detail && s.clip === 'none' && s.focus === 'detail' && geo.right <= geo.crease, { ...s, ...geo });
+  check(`轻点左半：那组输入的原文长满左页，焦点进详情（${top}）`, s.open === top && s.detail && s.panelMode === 'feed' && s.clip === 'none' && s.focus === 'detail' && geo.right <= geo.crease, { ...s, ...geo });
   check('详情开着：右半的按钮仍露在外面、可以点', geo.answerable, geo);
   await key('Escape'); await wait(700);
   s = await state();
@@ -665,7 +667,8 @@ async function runDuo(cdp, base, data, name) {
   check('撤回后点空白：详情收回', closed(s) && !(await ev(`${H}.facts(${JSON.stringify(top)})`)).answered, s);
   // 11–14: answer on the right half: it folds into a receipt in place, the stripe keeps its height, the shares drop;
   // focus on 撤回; a second tap where the button was does nothing; undo brings it back.
-  const y0 = (await state()).you, h0 = (await ev(`${H}.facts(${JSON.stringify(top)})`)).heights;
+  // The card keeps its height and its row; its group of inputs on the left page folds into one line (no line into the card).
+  const f0 = await ev(`${H}.facts(${JSON.stringify(top)})`), y0 = (await state()).you, h0 = f0.heights, t0 = f0.feed.top;
   const share = await ev(`${H}.model.snapshot().state.root.items.find(x => x.id === ${JSON.stringify(top)}).share`);
   const b2 = await at(top, 'button');
   await tap(b2.x, b2.y); await wait(250);
@@ -673,13 +676,15 @@ async function runDuo(cdp, base, data, name) {
   await tap(b2.x, b2.y); await wait(900);
   s = await state();
   f = await ev(`${H}.facts(${JSON.stringify(top)})`);
-  check('轻点按钮作答：右半就地收成回执，条高不变，份数少了这一件', f.mark === 'receipt' && f.heights.R === h0.R && f.heights.L === h0.L && s.you === y0 - share, { f, h0, y0, you: s.you, share });
+  check('轻点按钮作答：右半就地收成回执，卡高与行位不变，份数少了这一件', f.mark === 'receipt' && f.heights.R === h0.R && f.feed.top.R === t0.R && s.you === y0 - share, { f, h0, t0, y0, you: s.you, share });
+  check('作答后：左页那组输入折成一行（比原来矮、在行底），不再连线进卡', f.feed.folded && !f.feed.link && f.heights.L < h0.L && Math.abs(f.feed.top.L + f.heights.L - (t0.R + h0.R)) <= 1 && s.links.n === (await ev(`document.querySelectorAll('.u-spread > .u-half.is-left[data-key]:not(.is-folded) > .u-link, .u-spread > .u-mini.is-left[data-key] > .u-link').length`)),
+    { feed: f.feed, heights: f.heights, h0, t0, links: s.links });
   check('0.25 秒后再点同一处：不展开、不再作答', closed(s) && s.you === y0 - share, s);
   const u2 = await at(top, 'undo');
   await tap(u2.x, u2.y); await wait(800);
   s = await state();
   f = await ev(`${H}.facts(${JSON.stringify(top)})`);
-  check('撤回：右半回到原样，份数回来', !f.answered && f.mark !== 'receipt' && s.you === y0, { f, you: s.you });
+  check('撤回：右半回到原样，份数回来，那组输入重新摊开、连线回来', !f.answered && f.mark !== 'receipt' && s.you === y0 && !f.feed.folded && f.feed.link === f0.feed.link && f.heights.L === h0.L, { f, f0: f0.feed, you: s.you });
   // 15–17: keyboard: Tab onto a left half shows its summary? (halves open on Enter) — Tab to a compact stripe or row shows the summary.
   await ev(`(document.querySelector('.u-spread > .u-mini.is-right') || document.querySelector('.u-zone .d-line')).previousElementSibling?.focus?.(), 1`);
   await ev(`(() => { const el = document.querySelector('.u-spread > .u-mini.is-left') || document.querySelector('.u-zone .d-line'); el.scrollIntoView({ block: 'center' }); const prev = [...document.querySelectorAll('.u-spread [tabindex="0"], .u-spread button')].filter(x => x.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING).at(-1); prev?.focus(); return 1; })()`);
@@ -780,6 +785,68 @@ async function runDuo(cdp, base, data, name) {
     d6.up && d8.up && Math.abs(d6.turn - 108) < 0.6 && Math.abs(d8.turn - 144) < 0.6 && d6.blurred > d8.blurred && d6.edge > d8.edge && d6.veil > d8.veil
       && s6.fold.blur > s8.fold.blur && s6.fold.veil > s8.fold.veil && !d10.up && s10.panel === 0 && s10.phase === 'book',
     { d6, d8, d10, f6: s6.fold, f8: s8.fold });
+  // The left page is the fold laid open (duo-motion.md 2.1): every input of the round counted once (into a card on the
+  // right page, into the Agent's side, folded); each card's group in the card's row (same top, same height), and a line
+  // from every group that took inputs across the crease into its card (none across from a group that took none).
+  const feedDom = `(() => { const ids = [...document.querySelectorAll('.u-spread > .u-half.is-left[data-key]')].map(el => el.dataset.id);
+    const groups = ids.map(id => ({ id, f: ${H}.facts(id) })).map(({ id, f }) => ({ id, n: f.feed.n, link: f.feed.link, top: f.feed.top, h: f.heights }));
+    const g = document.querySelector('.u-grip').getBoundingClientRect(), crease = g.left + g.width / 2;
+    const lines = [...document.querySelectorAll('.u-spread > .u-half.is-left[data-key] > .u-link')].map(l => { const r = l.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.right)]; });
+    return { census: ${H}.census(), events: ${H}.model.snapshot().frame.events.length, groups, crease: Math.round(crease), lines }; })()`;
+  const fd = await ev(feedDom), cs = fd.census;
+  check('左页摊开：本轮每条输入记一次（进右页 + 进 Agent 那边 + 折掉 = 本轮条数）；每组与它那张卡同一行、同一高，进了输入的组有一条线穿过折痕',
+    cs.n === fd.events && cs.mine + cs.agent + cs.folded === cs.n && fd.groups.length > 0 && fd.groups.some(x => x.n > 0)
+      && fd.groups.every(x => x.top.L === x.top.R && x.h.L === x.h.R && x.link === x.n > 0) && fd.lines.length === fd.groups.filter(x => x.n > 0).length
+      && fd.lines.every(([l, r]) => l < fd.crease && r > fd.crease), fd);
+  // A grey line of what was folded opens those inputs' originals on the left page (the right page does not move); from a
+  // group's originals, “它为什么在这里” turns the same panel into the item's story.
+  const grey = await ev(`(async () => { const w = ms => new Promise(r => setTimeout(r, ms)), card = document.querySelector('.u-spread > .u-half.is-right[data-key]');
+    const y0 = Math.round(card.getBoundingClientRect().top), line = document.querySelector('.u-folded .u-fold-line[data-feed]');
+    if (!line) return { none: true };
+    line.click(); await w(800);
+    const n = +(line.querySelector('.u-fl-n')?.textContent.replace(/\\D/g, '') || 0), raws = document.querySelectorAll('.u-ldetail .u-raw').length, mode = ${H}.state().panelMode;
+    ${H}.close(); await w(500);
+    const group = document.querySelector('.u-spread > .u-half.is-left.is-feed[data-key]:not(.is-folded)'); group.click(); await w(800);
+    const feed = ${H}.state().panelMode; document.querySelector('.u-ldetail [data-d="why"]')?.click(); await w(400);
+    const story = ${H}.state().panelMode; ${H}.close(); await w(500);
+    return { n, raws, mode, feed, story, moved: Math.round(card.getBoundingClientRect().top) - y0 }; })()`);
+  check('轻点一行灰的：那几条输入的原文开在左页、条数对得上，右页不动；从一组原文点“为什么在这里”换成这件事的来龙去脉',
+    grey.none || (grey.mode === 'feed' && grey.raws === grey.n && grey.n > 0 && grey.moved === 0 && grey.feed === 'feed' && grey.story === 'item'), grey);
+  // The lines grow out of the crease with the band (FOLD.band, 120° → 170°): none at 108°, part-way at 144° (on the
+  // panel's sharp copy of the left page, the one you see; the blurred copies carry none), all the way flat.
+  const linkDom = `(() => { const m = el => el ? +new DOMMatrixReadOnly(getComputedStyle(el).transform).m11.toFixed(3) : null;
+    return { grown: ${H}.state().links.grown, n: ${H}.state().links.n, sharp: m(document.querySelector('.u-glass.is-back > .u-layer .u-link')), blurred: document.querySelectorAll('.u-glass.is-back .u-mask .u-link').length,
+      live: m(document.querySelector('.u-spread > .u-half.is-left[data-key] > .u-link')) }; })()`;
+  await open(`frame=${F.held}&hinge=0.6`);
+  const l6 = await ev(linkDom);
+  await open(`frame=${F.held}&hinge=0.8`);
+  const l8 = await ev(linkDom);
+  await open(`frame=${F.held}&hinge=1`);
+  const l10 = await ev(linkDom);
+  check('线随铰链从折痕长出：108° 还没有，144° 长到一部分（看得见的那张左页上），180° 长满；模糊副本上不画线',
+    l6.grown === 0 && l6.sharp === 0 && l8.grown > 0.2 && l8.grown < 0.8 && Math.abs(l8.sharp - l8.grown) < 0.01 && l8.blurred === 0 && l10.grown === 1 && l10.live === 1 && l10.n > 0,
+    { l6, l8, l10 });
+  // Concentric corners (duo-motion.md 3.6): each corner of the screen in view is its body's corner less the border on each
+  // side, the closed body's hinge side included (its corner is tighter, and so is the screen's there); the inner screen's
+  // corners are the open body's, the tabletop's the turned body's. Read from the computed radii and boxes, in pt.
+  const cornerDom = `(() => { const q = s => document.querySelector(s), d = q('.u-device'), k = d.getBoundingClientRect().width / d.offsetWidth;
+    const rad = (el, c) => { const v = getComputedStyle(el)['border' + c + 'Radius'].split(' ').map(parseFloat); return [v[0], v[1] ?? v[0]]; };
+    const fit = (shell, screen) => { const bodyEl = q('.u-shell[data-shell="' + shell + '"] .u-rimclip'), el = q(screen), b = bodyEl.getBoundingClientRect(), s = el.getBoundingClientRect();
+      const border = { l: (s.left - b.left) / k, r: (b.right - s.right) / k, t: (s.top - b.top) / k, b: (b.bottom - s.bottom) / k };
+      return Object.entries({ tl: 'TopLeft', tr: 'TopRight', br: 'BottomRight', bl: 'BottomLeft' }).map(([c, name]) => {
+        const R = rad(bodyEl, name), r = rad(el, name), want = [R[0] - border[c[1]], R[1] - border[c[0]]].map(v => Math.max(0, v));
+        return { c, body: R, screen: r, want: want.map(v => Math.round(v * 10) / 10), err: Math.max(Math.abs(r[0] - want[0]), Math.abs(r[1] - want[1])) }; }); };
+    return fit; })()`;
+  const corners = async (shell, screen) => ev(`${cornerDom}(${JSON.stringify(shell)}, ${JSON.stringify(screen)})`);
+  await open(`frame=${F.held}&hinge=0`);
+  const cc0 = await corners('closed', '.u-outer');
+  await open(`frame=${F.held}&hinge=1`);
+  const cc1 = await corners('open', '.u-inner');
+  await ev(`${H}.posture('table', { animate: false }), 1`); await wait(300);
+  const cct = await corners('table', '.u-table');
+  check('圆角同心：合上时外屏四角（铰链侧也是）、展开时内屏四角、桌面四角，都等于机身圆角减去那一侧的边框',
+    [cc0, cc1, cct].every(list => list.length === 4 && list.every(x => x.err < 0.6 && x.screen[0] > 0)) && cc0.find(x => x.c === 'tl').body[0] < cc0.find(x => x.c === 'tr').body[0],
+    { closed: cc0, open: cc1, table: cct });
   // 29–30: the body (duo-motion.md 3.7). At rest each posture has its body round its screen: closed, the front cover round
   // the outer screen, the keys of the half behind it standing out above and to the right; flat, the open body round the
   // inner screen with the hinge's covers at the crease; tabletop, the body turned with the screen. While it turns, the half

@@ -5,6 +5,7 @@ import { createResponseStore, normalizeAsk, responseStatus } from '../respond.mj
 import { createIx, placeBeside, placeColumn, edgePoint, IX, peekHTML as ixPeekHTML, detailHTML as ixDetailHTML } from '../forms/motion/ix.mjs';
 import { itemFacts, shortOf, dueText } from '../forms/motion/dial-model.mjs';
 import { responseSentence } from '../forms/sketches/stage.mjs';
+import { inputsOf } from './inflow.mjs';
 
 // C · 流动形态。64 份是同一池水：每件 3 份以上的事是水面上的一滴，面积 = 份额；不足 3 份的沉到水面以下成为小珠，
 // 你推后的事在下一轮整理读到之后沉进水下的托盘，到点那一轮浮回原处。水面以下的一切按同一深度比例画（面积九分之一）。
@@ -38,39 +39,18 @@ const shortTitle = title => String(title || '').split(/[：:]/)[0].trim();
 const frames = scenario.frames, LAST = frames.length - 1;
 
 // ---------- the replay, read once per frame and layer ----------
-/** Which item of layer `layerId` (null = root) reference `id` belongs to at frame i: along merges, up through parents. */
-function inLayer(i, layerId, id) {
-  const items = records[i].snapshot.items;
-  let item = id && items[id];
-  for (let guard = 0; item && guard < 24; guard += 1) {
-    if (item.status === 'merged' && item.merged_into && items[item.merged_into]) { item = items[item.merged_into]; continue; }
-    if ((item.parent_id || null) === (layerId || null)) return item.id;
-    if (!item.parent_id || !items[item.parent_id]) return null;
-    item = items[item.parent_id];
-  }
-  return null;
-}
-const DISP = new Set(['used', 'deferred', 'noise', 'duplicate']);
 const planCache = new Map();
-/** Where each input of frame i goes (the item of the layer it was taken into, as 整理脉冲 counts it). Only the adopted
- * ones that land in an item of the layer are drawn, one grain each; the deferred are the mud's count. */
+/** Where each input of frame i goes (the item of the layer it was taken into, as 整理脉冲 counts it; the rule is shared
+ * with E in inflow.mjs). Only the adopted ones that land in an item of the layer are drawn, one grain each; the deferred
+ * are the mud's count. Here each input also gets its place in the round's window and its jitter. */
 function grainPlan(i, layerId) {
   const key = `${i}|${layerId || ''}`;
   if (planCache.has(key)) return planCache.get(key);
-  const frame = frames[i];
-  const cited = new Map();
-  for (const d of frame.batch?.declarations || []) for (const s of d.sources || []) if (s.ref?.startsWith('event:')) cited.set(s.ref.slice(6), d.id);
+  const frame = frames[i], base = inputsOf(i, layerId);
   const prevAt = i ? Date.parse(frames[i - 1].at) : Date.parse(frame.at) - 1;
   const from = Date.parse(frame.signal?.window?.from || '') || prevAt, to = Date.parse(frame.signal?.window?.to || '') || Date.parse(frame.at);
-  const list = frame.events.map((e, k) => {
-    const disp = DISP.has(e.disposition) ? e.disposition : 'unjudged';
-    return { k, id: e.id, disp, at: Date.parse(e.at), when: clamp((Date.parse(e.at) - from) / Math.max(1, to - from)),
-      target: disp === 'used' ? inLayer(i, layerId, cited.get(e.id) || e.relatedIds?.[0]) : null,
-      h1: hash01(`${e.id}:x`), h2: hash01(`${e.id}:y`), h3: hash01(`${e.id}:z`) };
-  }).sort((a, b) => a.at - b.at);
-  const targetOf = [];
-  for (const g of list) targetOf[g.k] = g.target;
-  const value = { list, targetOf, counts: list.reduce((n, g) => ({ ...n, [g.disp]: (n[g.disp] || 0) + 1 }), {}) };
+  const list = base.list.map(g => ({ ...g, when: clamp((g.at - from) / Math.max(1, to - from)), h1: hash01(`${g.id}:x`), h2: hash01(`${g.id}:y`), h3: hash01(`${g.id}:z`) }));
+  const value = { list, targetOf: base.targetOf, counts: base.counts };
   planCache.set(key, value);
   return value;
 }

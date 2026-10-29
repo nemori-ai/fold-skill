@@ -10,24 +10,23 @@
 .u-area { position: relative; flex: 1; min-width: 0; }
 .u-device { position: absolute; left: 0; top: 0; transform-origin: 0 0; transform: translate(var(--dx, 0px), var(--dy, 0px)) scale(var(--k, 1)); font-size: 14px; }
 
-/* the screens: paper, with the iPhone Duo's screen corners (the outer screen's are tighter on the hinge side); the body round
-   them is .u-body */
-/* corners: BODY.screen (36) on the inner screen, BODY.cover / screenHinge (54 / 10) on the outer one */
-.u-screen { position: absolute; top: 0; background: var(--paper); overflow: hidden; border-radius: 36px; }
+/* the screens: paper, their corners concentric with the body's (duo-motion.mjs BODY.corners: the body's corner less the border,
+   an ellipse where the side and top borders differ; the variables are set on the device at mount); the body round them is .u-body */
+.u-screen { position: absolute; top: 0; background: var(--paper); overflow: hidden; border-radius: var(--r-in); }
 .u-inner { left: 0; z-index: 1; }
 .u-inner:not(.is-on) { visibility: hidden; }
-.u-outer { z-index: 2; border-radius: 10px 54px 54px 10px; }
+.u-outer { z-index: 2; border-radius: var(--r-out); }
 .u-outer.is-off { visibility: hidden; }
 .u-pagecut { position: absolute; display: block; z-index: 3; overflow: hidden; pointer-events: none; opacity: 0; will-change: opacity; }
 .u-pagecut.is-on { opacity: 1; }
 .u-pagecut > i { position: absolute; display: block; }
-.u-table { left: 0; z-index: 1; }
+.u-table { left: 0; z-index: 1; border-radius: var(--r-table); }
 /* unfolding: the inner screen's right page under the panel, lit (paper) once it takes over, dark glass before */
-.u-lit, .u-unlit { position: absolute; top: 0; border-radius: 0 36px 36px 0; pointer-events: none; opacity: 0; z-index: 0; }
+.u-lit, .u-unlit { position: absolute; top: 0; border-radius: var(--r-rpage); pointer-events: none; opacity: 0; z-index: 0; }
 .u-lit.is-on, .u-unlit.is-on { opacity: 1; }
 .u-lit { background: var(--paper); }
 .u-unlit { background: var(--u-shade); }
-.u-lit.is-whole { left: 0 !important; width: 100% !important; border-radius: 36px; }
+.u-lit.is-whole { left: 0 !important; width: 100% !important; border-radius: var(--r-in); }
 
 /* the body (duo-motion.mjs BODY): what does not move is a layer under the screens; which shell shows is [data-body] —
    open (lying flat), right (the half in your hand while the other turns on the panel), closed, table. Each shell is its
@@ -55,9 +54,9 @@
 .u-key.is-bottom { background: linear-gradient(to top, #6c6a65, #a3a19b 35%, #e9e7e2 72%, #f5f3ee); }
 .u-key.is-flush { opacity: .75; }
 /* a host in the screen's shape for what grows or sinks over a screen (the detail's box, the 累计 bar on its way out) */
-.u-clip { position: absolute; inset: 0; z-index: 6; pointer-events: none; clip-path: inset(0 0 9px 0 round 36px); }
-.u-clip[data-body="closed"] { clip-path: inset(0 0 0 485px round 10px 54px 54px 10px); }
-.u-clip[data-body="table"] { clip-path: inset(0 round 36px); }
+.u-clip { position: absolute; inset: 0; z-index: 6; pointer-events: none; clip-path: inset(0 0 9px 0 round var(--r-in)); }
+.u-clip[data-body="closed"] { clip-path: inset(0 0 0 485px round var(--r-out)); }
+.u-clip[data-body="table"] { clip-path: inset(0 round var(--r-table)); }
 /* the book while the panel is still turning: only its right page is drawn (the left page is the panel's back) */
 .u-inner.is-lifted { clip-path: inset(0 0 0 50%); }
 .u-turn-ghost { z-index: 15; pointer-events: none; }
@@ -77,8 +76,8 @@
 .u-face.is-back { left: 0; }
 /* the screens on the panel: the outer screen fades into a window onto the page below; the left page under its veil */
 .u-glass { position: absolute; overflow: hidden; }
-.u-glass.is-front { border-radius: 10px 54px 54px 10px; will-change: opacity; }
-.u-glass.is-back { border-radius: 36px 0 0 36px; background: var(--paper); }
+.u-glass.is-front { border-radius: var(--r-out); will-change: opacity; }
+.u-glass.is-back { border-radius: var(--r-lpage); background: var(--paper); }
 .u-glass > .u-clone, .u-layer > .u-clone, .u-blur > .u-clone { margin: 0; }
 .u-glass.is-front > .u-clone { top: 0; z-index: 0; box-shadow: none; border-radius: 0; }
 .u-layer { position: absolute; inset: 0; overflow: hidden; contain: strict; }
@@ -114,9 +113,13 @@
 /* the band grows from the crease (cell 64 of its own coordinates) to both sides with the hinge */
 .u-bandrow .u-band { transform-origin: calc(var(--cell, 7px) * 64) 0; }
 
-/* system strip on the right edge of either screen (HIG: island, clock, status stand vertically there) */
-.u-sysrail { position: absolute; top: 0; right: 0; bottom: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 14px; z-index: 5; pointer-events: none; }
-.u-island { width: 26px; height: 26px; border-radius: 50%; background: #111; margin-bottom: 4px; }
+/* system strip on the right edge of either screen (HIG: island, clock, status stand vertically there). It stands in the
+   screen's safe area, clear of the round corner (as on the device, where the clock sits under the island well inside the
+   corner): the inner screen and the tabletop keep an empty spot where the outer screen has its island, so the clock and
+   记录 are at the same height on every screen and do not move when the spread is reported (3.6) */
+.u-sysrail { position: absolute; top: 0; right: 0; bottom: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 16px; z-index: 5; pointer-events: none; }
+.u-island { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: #111; margin-bottom: 4px; }
+.u-island.is-spot { background: none; }
 .u-clock { font-size: 13px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink); }
 .u-wifi { font-size: 15px; line-height: 1; color: var(--ink-2); margin-top: -2px; }
 .u-pill { margin-top: 10px; width: 40px; padding: 8px 0; border-radius: 20px; background: var(--card); box-shadow: 0 0 0 1px var(--line), 0 4px 10px -8px #0004; font-size: 12px; line-height: 1.25; color: var(--ink-3); text-align: center; }
@@ -158,10 +161,19 @@
 .u-quiet { color: var(--ink-3); }
 .u-quiet b { color: var(--ink-2); font-weight: 600; }
 .u-quiet small { margin-left: 6px; }
-/* the Agent's ledger heads its page: D's 累计 bar (grain included) moved up */
-.u-ledger { display: flex; gap: 10px; align-items: stretch; padding: 19px 4px 2px; box-sizing: border-box; }
-.u-tex { flex-shrink: 0; width: 40px; margin: 3px 0 4px; border-radius: 6px; align-self: stretch; }
-.u-ledger-text { flex: 1; min-width: 0; }
+/* the left page's head: the round in numbers, and its inputs as ticks along the round's window (tall and ink: taken into
+   a card on the right page; mid: the Agent's side; low and light: folded) */
+.u-ledger { padding: 19px 4px 2px; box-sizing: border-box; }
+.u-ledger .u-hero-2 { margin: 2px 0 0; font-size: 21px; line-height: 1.25; color: var(--ink); }
+.u-ticks { display: block; margin: 7px 0 5px; overflow: visible; }
+.u-ticks .is-you { fill: var(--ink); }
+.u-ticks .is-agent { fill: #b3aea2; }
+.u-ticks .is-fold { fill: #d8d4ca; }
+/* the band's account under it, either side of the crease: what is left of it adds up with what is right of it to the budget */
+.u-spread > .u-acct { grid-column: 1 / 3; display: grid; grid-template-columns: var(--pw) var(--pw); margin-top: -5px; font-size: 11.5px; line-height: 16px; color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; will-change: opacity; }
+.u-acct > .is-l { text-align: right; padding-right: calc(var(--gap) / 2 + 5px); overflow: hidden; text-overflow: ellipsis; }
+.u-acct > .is-r { padding-left: calc(var(--gap) / 2 + 5px); padding-right: calc(var(--rail) + 4px); overflow: hidden; text-overflow: ellipsis; }
+.u-acct b { color: var(--ink-2); font-weight: 650; }
 
 /* the 64-cell band, one page wide, its boundary on the crease (the one line the crease gets) */
 .u-bandrow, .u-tband { position: relative; height: 14px; }
@@ -187,24 +199,47 @@
 .u-half > h3:first-child { margin-top: 0; }
 .u-half .d-why:empty { display: none; }
 .u-half .d-why:empty + h3 { margin-top: 0; }
-.u-lhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.u-lhead .d-kicker { margin: 1px 0 0; flex: 1; font-size: 13px; color: var(--ink); font-weight: 650; min-width: 0; }
-.u-lhead .d-kicker > span { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.u-lhead .d-why { flex-shrink: 0; flex-wrap: nowrap; min-height: 0; }
-.u-lhead .d-tag.is-share { margin-left: 0; }
-.u-sum { margin: 8px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--ink); }
-.u-reason { margin: 5px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.u-facts { margin: auto 0 0; padding-top: 8px; font-size: 12px; color: var(--ink-2); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; align-items: flex-end; }
-.u-facts b { color: var(--ink); font-weight: 650; }
-.u-in { flex: 1 1 9em; min-width: 9em; }
+/* a card's group of inputs on the left page. Its rows have fixed heights (duo-motion.mjs FEED: pad, head, sub, gapTop,
+   pitch), so the line into the card can be drawn from where each input line is without measuring the page */
+.u-half.is-feed { padding: 12px 14px 10px; }
+.u-frow { display: flex; align-items: center; gap: 8px; height: 20px; }
+.u-fhead { margin: 0; flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 20px; font-weight: 650; color: var(--ink); }
+.u-fhead > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.u-frow .d-why { flex-shrink: 0; flex-wrap: nowrap; min-height: 0; height: 20px; overflow: hidden; }
+.u-frow .d-tag.is-share { margin-left: 0; }
+.u-fsub { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 18px; margin: 0; font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+.u-fsub b { color: var(--ink); font-weight: 650; }
+.u-flines { margin-top: 6px; padding-right: 24px; }
+.u-fl { display: flex; align-items: baseline; gap: 6px; height: 19px; margin: 0; font-size: 11.5px; line-height: 19px; color: var(--ink-2); white-space: nowrap; overflow: hidden; }
+.u-fl time { flex-shrink: 0; width: 33px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.u-fl b { flex-shrink: 0; font-weight: 600; color: var(--ink); }
+.u-fl-who { flex-shrink: 1; min-width: 2em; max-width: 8em; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; }
+.u-fl-n { flex-shrink: 0; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.u-fl-t { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.u-fl.is-rest { color: var(--ink-3); }
+/* answered: the group folds to one line at the foot of its row, beside your receipt; the line into the card is gone */
+.u-half.is-feed.is-folded { align-self: end; padding: 8px 14px 9px; background: none; }
+.u-half.is-folded .u-fhead { color: var(--ink-2); font-weight: 600; }
+.u-fsum { margin: 1px 0 0; font-size: 11.5px; line-height: 16px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the line from a group into its card: a funnel from each input line's end, then one line over the crease. It grows out of
+   the crease with the band (transform-origin on the crease, scaleX with the hinge) and runs on under the card */
+.u-link { position: absolute; top: 0; left: calc(100% - 30px); display: block; pointer-events: none; transform-origin: calc(30px + var(--gap) / 2) 0; will-change: transform; }
+.u-link svg { display: block; overflow: visible; fill: none; stroke: #8e8b84; stroke-width: 1.1; stroke-linecap: round; }
+.u-link svg circle { fill: #8e8b84; stroke: none; }
+.u-link svg .is-run { stroke: var(--ink); stroke-width: 1.4; }
+.u-link svg .is-rest { stroke-dasharray: 2 2.6; }
+.u-link.is-mini { top: 50%; height: 4px; margin-top: -2px; }
+.u-link desc { display: none; }
+/* where the line meets the card */
+.u-socket { position: absolute; left: -4px; width: 7px; height: 7px; margin-top: -3.5px; box-sizing: border-box; border-radius: 50%; background: var(--card); border: 1.5px solid var(--ink); pointer-events: none; z-index: 2; will-change: opacity; }
+.u-socket[data-at="mid"] { top: 50%; }
+.u-socket[data-at="top"] { top: 0; left: 50%; margin-left: -3.5px; }
 .u-tr { display: inline-flex; gap: 6px; align-items: flex-end; }
 .u-trend { display: inline-flex; align-items: flex-end; gap: 1px; flex-shrink: 0; }
 .u-trend i { width: 4px; background: #d3cec3; border-radius: 1px 1px 0 0; }
 .u-trend i.is-now { background: var(--ink); }
 .u-trend i.is-zero { background: #e4e0d6; }
 .u-trendlabel { font-size: 11px; color: var(--ink-3); white-space: nowrap; }
-.u-inputs { margin: 5px 0 0; font-size: 11.5px; line-height: 1.45; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.u-inputs b { color: var(--ink-2); font-weight: 600; }
 .u-half .d-answer { margin-top: auto; padding-top: 10px; }
 .u-half .d-receipt { margin-top: 0; }
 .u-half.is-mid { padding: 11px 14px 10px; }
@@ -212,7 +247,6 @@
 .u-half.is-mid .d-trace { margin-top: 4px; font-size: 11.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .u-half.is-mid .d-btn { min-height: 38px; font-size: 14px; border-radius: 11px; }
 .u-half.is-mid .d-answer { padding-top: 8px; }
-.u-half.is-left.is-mid .u-sum { margin-top: 5px; font-size: 12.5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
 /* compact stripes: the asks past the first three, unfolded from "还有 N 件"; the left half is one line too */
 .u-mini { position: relative; box-sizing: border-box; min-height: 50px; border-radius: 16px; padding: 6px 10px 6px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left; }
@@ -226,12 +260,25 @@
 .u-mini-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
 .u-mini h3 { margin: 0; font-size: 14px; line-height: 1.38; font-weight: 650; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .u-mini .d-tag { flex-shrink: 0; }
+.u-mini.is-folded .d-kicker { color: var(--ink-2); }
 
 /* the Agent's page below the stripes; your page says there is nothing else */
 .u-zone { display: flex; flex-direction: column; padding-top: 6px; }
 .u-zone .d-zone-head { padding: 0 4px; }
 .u-zone .d-fold-row { width: 100%; margin-top: 8px; }
 .u-note { align-self: start; padding: 12px 4px 0; margin-top: 0; margin-bottom: 0; font-size: 12.5px; color: var(--ink-3); line-height: 1.5; }
+/* grey lines: the inputs into the Agent's side (one per item), and what the round folded away (by disposition and source) */
+.u-afeed { padding: 2px 4px 12px; }
+.u-folded { padding: 6px 4px 0; display: flex; flex-direction: column; }
+.u-afeed > .u-fsub, .u-folded > .u-fsub { display: block; height: auto; line-height: 18px; color: var(--ink-3); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; }
+.u-afeed > .u-fsub b, .u-folded > .u-fsub b { color: var(--ink-2); }
+.u-fsub.is-gone { margin-top: 12px; }
+.u-fold-line { display: flex; align-items: baseline; gap: 6px; box-sizing: border-box; width: 100%; height: 28px; margin: 0; padding: 0; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; font-size: 11.5px; line-height: 27px; color: var(--ink-3); text-align: left; white-space: nowrap; overflow: hidden; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.u-fold-line b { flex-shrink: 0; max-width: 12em; overflow: hidden; text-overflow: ellipsis; font-weight: 600; color: var(--ink-2); }
+.u-fold-line .u-fd { flex-shrink: 0; width: 2.3em; }
+.u-fold-line:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.u-fold-line.is-open { color: var(--ink); box-shadow: inset 3px 0 0 var(--ink); padding-left: 7px; }
+.u-fold-line.is-gone { cursor: default; }
 
 /* gestures: a press darkens a little at 0.15 s; while one is summarised the rest dim to 70 %; a band run outlines its stripe */
 :is(.u-half, .u-mini, .u-bandrow)::before { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; background: var(--ink); opacity: 0; transition: opacity .15s; pointer-events: none; }
@@ -252,6 +299,12 @@
 .u-ldetail .d-detail-bar { padding-top: 8px; }
 .u-ldetail .d-detail-actions { padding-bottom: 16px; }
 .u-ldetail.is-leaving { pointer-events: none; }
+/* a group's originals, in full: who, where, when, the subject and the text */
+.u-raws { margin-top: 14px; }
+.u-raw small { display: block; }
+.u-raw-s { display: block; margin-top: 3px; font-size: 13px; line-height: 1.4; font-weight: 650; overflow-wrap: anywhere; }
+.u-raw.is-fold { opacity: .7; }
+.u-why { min-height: 40px; margin-top: 4px; font-size: 13px; }
 .u-detail-box { z-index: 19; }
 /* sheets open over the half you answer on: the right page, the outer screen, the bottom half */
 .u-sheethost { position: absolute; z-index: 30; overflow: hidden; border-radius: 22px; pointer-events: none; }
@@ -259,8 +312,12 @@
 
 /* tabletop: the spread turned a quarter; top half stands (look), bottom half lies flat (press); one column per stripe */
 .u-top, .u-bot { position: absolute; left: 0; display: grid; column-gap: 10px; row-gap: 8px; padding: 0 14px; box-sizing: border-box; }
-.u-top { top: 0; right: var(--rail); height: var(--half); padding-top: 14px; padding-bottom: 10px; grid-template-rows: auto auto minmax(0, 1fr) auto; }
-.u-bot { top: var(--half); right: 0; bottom: 0; padding-top: 12px; padding-bottom: 16px; grid-auto-rows: min-content; align-content: start; }
+.u-top { top: 0; right: var(--rail); height: var(--half); padding-top: 14px; padding-bottom: 10px; grid-template-rows: auto auto auto minmax(0, 1fr); }
+/* 上看下按: the standing half shows what came in, the groups at its foot by the crease, each over its card on the flat half */
+.u-top > .u-rowsline { grid-row: 3; }
+.u-top > .u-half { grid-row: 4; }
+/* the flat half keeps the standing half's columns (it stops where the rail does), so each group stands over its card */
+.u-bot { top: var(--half); right: var(--rail); bottom: 0; padding-top: 12px; padding-bottom: 16px; grid-auto-rows: min-content; align-content: start; }
 .u-thead, .u-tband, .u-rowsline { grid-column: 1 / -1; }
 .u-thead { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 0 4px; }
 .u-thead .u-hero, .u-thead .u-hero small { font-size: 30px; }
@@ -269,12 +326,21 @@
 .u-thead .u-hero-2 { margin-top: 0; font-size: 16px; }
 .u-thead-r .u-hero-2 small { margin-left: 6px; }
 .u-tband { margin: 4px 4px 2px; }
-.u-top > .u-half { min-height: 0; overflow: hidden; }
+.u-top > .u-half { min-height: 0; }
+.u-top > .u-half .u-flines { flex: 1 1 0; min-height: 0; overflow: hidden; padding-right: 0; }
 .u-table .u-half { padding: 11px 12px 9px; }
-.u-table .u-lhead { flex-direction: column; gap: 6px; }
-.u-table .u-sum { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-.u-table .u-reason { display: none; }
-.u-table .u-half.is-lead .u-reason { display: -webkit-box; -webkit-line-clamp: 4; }
+.u-table .u-half.is-feed { padding: 12px 12px 10px; }
+/* a column is narrow: the item's name on its own line (two at most), the tags under it; the lines drop who sent them */
+.u-table .u-frow { flex-direction: column; align-items: flex-start; height: auto; gap: 4px; }
+.u-table .u-fhead { flex: none; width: 100%; align-items: flex-start; line-height: 18px; }
+.u-table .u-fhead > span { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.u-table .u-fhead .d-dot, .u-table .u-fhead > i { margin-top: 5px; }
+.u-table .u-frow .d-why { height: auto; max-width: 100%; }
+.u-table .u-fsub .u-tr { display: none; }
+.u-table .u-fl-who { display: none; }
+.u-table .u-flines { margin-top: 4px; }
+/* the tabletop's line: from under the group's lines straight down over the crease into the top of its card */
+.u-link.is-down { top: auto; bottom: -25px; left: 50%; width: 1.6px; height: 30px; margin-left: -.8px; background: var(--ink); transform-origin: 0 15px; }
 .u-table .d-actions { flex-direction: column; }
 .u-table .d-btn { flex: none; width: 100%; }
 .u-table .u-half h3 { font-size: 16.5px; }
