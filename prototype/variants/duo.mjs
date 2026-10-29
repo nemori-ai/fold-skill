@@ -5,8 +5,8 @@ import { itemFacts } from '../forms/motion/dial-model.mjs';
 import { currentDataset } from '../data/select.mjs';
 import { EASE, EASE_IN_OUT, BEATS, play, stepAt, makeBox, measureEl, ghostOf, morph, reveal, band, popKeys, lookOf } from './d-motion.mjs';
 import { RS, clock, stamp, dayLong, weekday, createHomeView } from './d-view.mjs';
-import { G, HINGE, angleAt, FOLD, foldAt, SETTLE, UNSETTLE, SNAP, HAND, BOOK, DETAIL, UNDETAIL, TURN,
-  bandSegments, tween, fade } from './duo-motion.mjs';
+import { G, HINGE, angleAt, FOLD, foldAt, SETTLE, UNSETTLE, SNAP, HAND, BOOK, DETAIL, UNDETAIL, TURN, BODY, BODY_PAD,
+  bodyHTML, panelBodyHTML, pageCutHTML, bandSegments, tween, fade } from './duo-motion.mjs';
 
 // E · 折叠屏。合上是 D（同一套 d-view.mjs 标记）；展开时，每件等你的事沿折痕拆成两半：左半 = Agent 为它做了什么，
 // 右半 = 要你答什么。右页就是外屏，合上时留在手里的正是右半。铰链是 Agent 与你的分界：64 格份额带的分界压在折痕上，
@@ -57,6 +57,7 @@ export function mount(host, model) {
   const { recordOf, answersFor, answeredRecord, priorRecord, compose, whyHTML, traceOf, answerHTML, answerWords, receiptFor, dot,
     chipHTML, rowHTML, tailToggleHTML, tailItemHTML, buildView, headView, detailParts, detailControls, dueOf, dueWords } = view;
   host.classList.add('variant-d');
+  const panelBody = panelBodyHTML();
 
   host.innerHTML = `<div class="u-stage">
     <aside class="d-rail u-siderail" aria-label="回放、姿态与读法">
@@ -78,6 +79,7 @@ export function mount(host, model) {
       <p class="d-small">回应只留在本页内存里，不写回状态：先“已保存”，下一轮整理后“已收到”。<button class="d-link" data-u="reset">清除本页回应</button></p>
     </aside>
     <div class="u-area"><div class="u-device" style="width:${G.W}px;height:${G.L}px">
+      <div class="u-body" data-body="open" aria-hidden="true">${bodyHTML()}</div>
       <div class="u-unlit" aria-hidden="true" style="left:${G.crease}px;width:${G.PW}px;height:${G.PH}px"></div><div class="u-lit" aria-hidden="true" style="left:${G.crease}px;width:${G.PW}px;height:${G.PH}px"></div>
       <section class="u-screen u-inner" aria-label="内屏" style="width:${G.W}px;height:${G.PH}px">
         <div class="u-iscroll"><div class="u-spread" style="--pw:${G.PW}px;--gut:${G.gut}px;--gap:${G.gap}px;--rail:${G.rail}px"></div></div>
@@ -90,13 +92,18 @@ export function mount(host, model) {
         </div><button class="d-fold u-ofold" data-u="fold" aria-label="累计输入与本轮变化"><span class="d-fold-tex" aria-hidden="true"></span><span class="d-fold-text"></span><span class="d-fold-more" aria-hidden="true">›</span><span class="d-band" aria-hidden="true"></span></button></div>
         ${railHTML({ island: true })}
       </section>
+      ${pageCutHTML()}
       <section class="u-screen u-table" aria-label="桌面姿态" hidden style="width:${G.PH}px;height:${G.W}px;--half:${G.PW}px;--rail:${G.rail}px">
         <div class="u-top"></div><div class="u-bot"></div><div class="u-trail">${railHTML({})}</div>
       </section>
       <div class="u-fold3d" aria-hidden="true" style="width:${G.W}px;height:${G.L}px;perspective:${FOLD.P}px"><div class="u-panel" style="left:${G.crease}px;width:${G.PW}px">
-        <div class="u-face is-front" style="left:${G.OX - G.crease}px;width:${G.S}px;height:${G.L}px"></div>
-        <div class="u-face is-back" style="width:${G.PW}px;height:${G.PH}px"></div>
+        <div class="u-face is-front" style="left:${-BODY.spine}px;top:${BODY.y0}px;width:${BODY.spine + BODY.L}px;height:${BODY.H}px">${panelBody.front}
+          <div class="u-glass is-front" style="left:${BODY.spine + G.OX - G.crease}px;top:${BODY.top}px;width:${G.S}px;height:${G.L}px"></div><i class="u-glintclip" style="border-radius:${BODY.Rh}px ${BODY.R}px ${BODY.R}px ${BODY.Rh}px"><i class="u-glint"></i></i></div>
+        <div class="u-face is-back" style="top:${BODY.y0}px;width:${BODY.L}px;height:${BODY.H}px;transform:translateZ(${-BODY.T}px) rotateY(180deg)">${panelBody.back}
+          <div class="u-glass is-back" style="left:${BODY.side}px;top:${BODY.top}px;width:${G.PW}px;height:${G.PH}px"></div><i class="u-glintclip" style="border-radius:${BODY.R}px 0 0 ${BODY.R}px"><i class="u-glint"></i></i></div>
+        ${panelBody.edge}
       </div></div>
+      <div class="u-clip" aria-hidden="true"></div>
       <button class="u-grip" role="slider" aria-label="铰链：拖动折、展；[ ] 微调，F 折 / 展" aria-valuemin="0" aria-valuemax="180"><i aria-hidden="true"></i><span class="u-grip-read" aria-hidden="true"></span></button>
       <div class="d-peek u-peek" role="tooltip" hidden></div>
       <section class="u-ldetail" aria-label="事项详情" hidden><div class="d-detail-bar"></div><div class="d-detail-body"></div><div class="d-detail-actions"></div></section>
@@ -107,7 +114,9 @@ export function mount(host, model) {
   const $ = q => host.querySelector(q);
   const area = $('.u-area'), device = $('.u-device'), inner = $('.u-inner'), outer = $('.u-outer'), table = $('.u-table');
   const spread = $('.u-spread'), iscroll = $('.u-iscroll'), oscroll = $('.u-oscroll'), grip = $('.u-grip');
-  const fold3d = $('.u-fold3d'), panelEl = $('.u-panel'), faceF = $('.u-face.is-front'), faceB = $('.u-face.is-back');
+  const fold3d = $('.u-fold3d'), panelEl = $('.u-panel'), glassF = $('.u-glass.is-front'), glassB = $('.u-glass.is-back');
+  const bodyEl = $('.u-body'), clipEl = $('.u-clip'), pageCut = $('.u-pagecut'), sideSheen = $('.u-side > .u-sheen'), sideShade = $('.u-side > .u-shade');
+  const glints = [...host.querySelectorAll('.u-face .u-glint')];
   const lit = $('.u-lit'), unlit = $('.u-unlit'), peekEl = $('.u-peek'), panel = $('.u-ldetail'), sheet = $('.d-sheet'), backdrop = $('.d-sheet-backdrop');
   const sheetHost = $('.u-sheethost'), track = $('.d-track');
   const tTop = $('.u-top'), tBot = $('.u-bot');
@@ -631,18 +640,18 @@ export function mount(host, model) {
     o.classList.remove('is-off'); o.classList.add('u-clone'); o.style.left = '0px';
     fold.front = maskedLayer(o.cloneNode(true), G.S, G.L, FOLD.front.blur, 'is-f');
     fold.frost = document.createElement('i'); fold.frost.className = 'u-frost';
-    faceF.replaceChildren(o, fold.front.el, fold.frost);
+    glassF.replaceChildren(o, fold.front.el, fold.frost);
     // the back: the left page, sharp (its items answer a tap when the panel rests half-folded), three blurred copies, the veil
     const sharp = document.createElement('div');
     sharp.className = 'u-layer'; sharp.append(spreadCopy(heights, true));
     const proto = spreadCopy(heights, false);
     fold.back = FOLD.back.radii.map((r, j) => maskedLayer(j ? proto.cloneNode(true) : proto, G.PW, G.PH, r, 'is-b'));
     fold.veil = document.createElement('i'); fold.veil.className = 'u-veil'; fold.veil.style.width = `${2 * G.PW}px`;
-    faceB.replaceChildren(sharp, ...fold.back.map(l => l.el), fold.veil);
-    fold.spreads = [...faceB.querySelectorAll('.u-spread')];
-    fold.bands = [...faceB.querySelectorAll('.u-band')];
+    glassB.replaceChildren(sharp, ...fold.back.map(l => l.el), fold.veil);
+    fold.spreads = [...glassB.querySelectorAll('.u-spread')];
+    fold.bands = [...glassB.querySelectorAll('.u-band')];
     fold.half = spread.classList.contains('is-half');
-    for (const sc of faceF.querySelectorAll('.u-oscroll')) if (os) sc.scrollTop = os;
+    for (const sc of glassF.querySelectorAll('.u-oscroll')) if (os) sc.scrollTop = os;
     fold.ok = true;
     applyFold();
   }
@@ -670,11 +679,17 @@ export function mount(host, model) {
     // the right page: the outer screen while closed (at 0°) and while the inner screen shows its right page (reveal);
     // between 0° and the takeover the outer screen is on the panel and the inner screen has not lit yet
     outer.classList.toggle('is-off', table_ || !(phase === 'reveal' || (phase === 'closed' && angle <= 0)));
+    // as the right page the outer screen is cut to the inner screen's height (it is 9 pt taller), so the page's lower edge
+    // does not step when the spread is reported (a cover that fades: pageCutHTML)
+    pageCut.classList.toggle('is-on', !table_ && phase === 'reveal');
     // lying flat, the whole inner screen is lit (its hairline the same as before the turn existed)
     const whole = !table_ && phase === 'book' && !up;
     lit.classList.toggle('is-on', !table_ && (phase === 'reveal' || whole));
     lit.classList.toggle('is-whole', whole);
     unlit.classList.toggle('is-on', !table_ && phase === 'closed' && angle > 0);
+    // the body that does not move: the tabletop's; the half in your hand while the other is on the panel; open; closed
+    const shell = table_ ? 'table' : up ? 'right' : phase === 'book' ? 'open' : 'closed';
+    if (bodyEl.dataset.body !== shell) { bodyEl.dataset.body = shell; clipEl.dataset.body = shell; }
     const f = foldAt(up ? angle : phase === 'book' || table_ ? HINGE.flat : 0);
     lastFold = up ? f : null;
     const grow = f.band < 1 ? `scaleX(${f.band.toFixed(4)})` : '';
@@ -683,8 +698,20 @@ export function mount(host, model) {
     if (!up) return;
     fold3d.classList.toggle('is-live', phase === 'book' && !moving());
     fold3d.style.perspectiveOrigin = `${f.camX.toFixed(1)}px ${Math.round(G.L * FOLD.eye)}px`;
-    panelEl.style.transform = `rotateY(${(-f.a).toFixed(2)}deg)`;
-    faceF.style.opacity = f.front.alpha.toFixed(3);
+    // the panel is a slab T thick: its front (the outer screen) turns about the crease and its back (the left page) lands
+    // where the front was, so the slab slides T along its normal over the turn — nothing jumps at 0° or 180°
+    panelEl.style.transform = `rotateY(${(-f.a).toFixed(2)}deg) translateZ(${((BODY.T * f.a) / HINGE.flat).toFixed(2)}px)`;
+    const b = f.body;
+    sideSheen.style.opacity = b.sheen.toFixed(3);
+    sideShade.style.opacity = b.shade.toFixed(3);
+    glints[0].style.opacity = b.glint.front.toFixed(3);
+    glints[1].style.opacity = b.glint.back.toFixed(3);
+    // the band's centre crosses its face from 1.1 to −0.1 of the face's width (the front face is the spine wider)
+    glints.forEach((g, i) => {
+      const w = i ? BODY.L : BODY.spine + BODY.L, x = (1.1 - 1.2 * b.glint.at[i]) * w - 113;
+      g.style.transform = `translateX(${x.toFixed(1)}px) rotate(14deg)`;
+    });
+    glassF.style.opacity = f.front.alpha.toFixed(3);
     slide(fold.front, f.front.cut);
     fold.frost.style.opacity = f.front.frost.toFixed(3);
     fold.back.forEach((layer, j) => {
@@ -779,7 +806,7 @@ export function mount(host, model) {
       play(ctx, d, [{ transform: `translate(${(dm.left - dr.left) / k}px, ${(dm.top - dr.top) / k}px)` }, { transform: 'none' }], S.compact);
     }
     if (fm) {
-      const ghost = ghostOf(fm.node, fm.r, k, device, 6);
+      const ghost = ghostOf(fm.node, fm.r, k, clipEl, 6); // in the screen's shape: it sinks away inside the glass, not over the bezel
       play(ctx, ghost, [{ transform: 'none', opacity: 1 }, { transform: 'translateY(24px)', opacity: 0 }], S.ledger);
       ctx.clean(() => ghost.remove());
     }
@@ -827,11 +854,11 @@ export function mount(host, model) {
     if (name === 'table') {
       if (posture === 'table') return;
       hingeTween?.cancel();
-      const from = visibleLayer() === 'book' ? inner : outer;
+      const from = visibleLayer() === 'book' ? inner : outer, shell = bodyEl.dataset.body;
       posture = 'table'; phase = 'book'; angle = 180;
       renderTable(latest.v, latest.sh, null, 'none', {});
       showLayers();
-      if (animate) turnIn(from);
+      if (animate) turnIn(from, false, shell);
       renderRail(); renderGrip();
       return;
     }
@@ -842,15 +869,16 @@ export function mount(host, model) {
       angle = name === 'closed' ? 0 : 180;
       stale.book = false; renderBook(latest.v, latest.sh, latest.head, null, 'none', {});
       showLayers();
-      if (animate) turnIn(fromTable, true);
+      if (animate) turnIn(fromTable, true, 'table');
       renderRail(); renderGrip();
       if (!fold.ok) prebuild();
       return;
     }
     tweenTo(name === 'closed' ? 0 : 180, animate ? null : 0);
   }
-  /** The system turns the screen: the old layout fades, the new one comes in, its columns one by one (0.36 s). */
-  function turnIn(from, back = false) {
+  /** The system turns the screen: the old layout fades, the new one comes in, its columns one by one (0.36 s). The body
+   * turns with it: the old one (`shell`) fades over the new one at the same pace. */
+  function turnIn(from, back = false, shell = null) {
     const ctx = newCtx();
     const ghost = from.cloneNode(true);
     ghost.hidden = false; ghost.classList.remove('is-off', 'is-on');
@@ -858,6 +886,15 @@ export function mount(host, model) {
     device.append(ghost);
     ctx.clean(() => ghost.remove());
     play(ctx, ghost, [{ opacity: 1 }, { opacity: 0 }], TURN.out);
+    if (shell && shell !== bodyEl.dataset.body) {
+      // only the shell being left (and its keys): every shell is a layer of its own, so cloning all four would raster four
+      const old = document.createElement('div');
+      old.className = 'u-body u-body-ghost'; old.dataset.body = shell; old.setAttribute('aria-hidden', 'true');
+      old.append(bodyEl.querySelector(`.u-shell[data-shell="${shell}"]`).cloneNode(true), bodyEl.querySelector(`.u-keys[data-shell="${shell === 'table' ? 'table' : 'book'}"]`).cloneNode(true));
+      device.append(old);
+      ctx.clean(() => old.remove());
+      play(ctx, old, [{ opacity: 1 }, { opacity: 0 }], TURN.out);
+    }
     const items = back ? [...spread.querySelectorAll(':scope > .u-half, :scope > .u-mini')] : [...tTop.children, ...tBot.children];
     items.forEach((el, j) => play(ctx, el, [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], [TURN.in[0] + Math.min(8, j % 4) * TURN.stagger, TURN.in[1]]));
     settle(beat); beat = ctx; arm(ctx, () => { beat = null; });
@@ -880,10 +917,13 @@ export function mount(host, model) {
     const room = area.getBoundingClientRect();
     // the shell's switcher sits at the bottom of the window (hidden when embedded in all.html or the site's viewer)
     const bar = document.querySelector('.lab-switcher'), reserve = bar && getComputedStyle(bar).display !== 'none' ? 104 : 24;
-    const k = Math.max(0.3, Math.min(1.1, room.width / w, (innerHeight - room.top - window.scrollY - reserve) / h));
+    // the body reaches past the screens (the left half, the keys, its shadow): fit that, not just the screens
+    const pad = BODY_PAD[posture === 'table' ? 'table' : 'book'], W = w + pad.l + pad.r, H = h + pad.t + pad.b;
+    const k = Math.max(0.3, Math.min(1.1, room.width / W, (innerHeight - room.top - window.scrollY - reserve) / H));
     device.style.setProperty('--k', k.toFixed(4));
-    device.style.setProperty('--dx', `${Math.max(0, (room.width - w * k) / 2).toFixed(1)}px`);
-    area.style.height = `${Math.ceil(h * k) + 8}px`;
+    device.style.setProperty('--dx', `${(Math.max(0, (room.width - W * k) / 2) + pad.l * k).toFixed(1)}px`);
+    device.style.setProperty('--dy', `${(pad.t * k).toFixed(1)}px`);
+    area.style.height = `${Math.ceil(H * k) + 8}px`;
   }
   addEventListener('resize', fit);
   // embedded (all.html, the site's viewer, a preview shot) hides the shell's switcher: refit when that class changes
@@ -971,10 +1011,12 @@ export function mount(host, model) {
   // ---------- the detail: on the left page (book), the outer screen (closed), the top half (tabletop) ----------
   let detailCtx = null;
   const detail = { id: null, origin: null };
+  /** Where the detail lies, and its corners: where it meets the screen's own corner it takes that corner's radius. */
   function panelRect() {
-    if (posture === 'table') return { x: 0, y: 0, w: G.PH - G.rail, h: G.PW };
-    if (phase === 'book') return { x: 0, y: 0, w: G.PW - G.gap / 2 + 4, h: G.PH };
-    return { x: G.OX, y: 0, w: G.S - G.rail, h: G.L };
+    const S = BODY.screen;
+    if (posture === 'table') return { x: 0, y: 0, w: G.PH - G.rail, h: G.PW, r: `${S}px 20px 20px 20px` };
+    if (phase === 'book') return { x: 0, y: 0, w: G.PW - G.gap / 2 + 4, h: G.PH, r: `${S}px 20px 20px ${S}px` };
+    return { x: G.OX, y: 0, w: G.S - G.rail, h: G.L, r: `${BODY.screenHinge}px 20px 20px ${BODY.screenHinge}px` };
   }
   const elOf = id => {
     const root = visibleLayer() === 'book' ? spread : visibleLayer() === 'table' ? table : outer;
@@ -1013,7 +1055,7 @@ export function mount(host, model) {
     settle(detailCtx);
     hidePeek(true);
     const r = panelRect();
-    Object.assign(panel.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
+    Object.assign(panel.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px`, borderRadius: r.r });
     panel.hidden = false;
     panel.classList.remove('is-leaving');
     const origin = detail.origin?.isConnected ? detail.origin : elOf(detail.id);
@@ -1023,7 +1065,8 @@ export function mount(host, model) {
     detailCtx = ctx;
     panel.classList.add('is-growing');
     const o = originRect || devRect(origin);
-    const box = makeBox(device, { bg: 'var(--paper)', r: 20 }, Math.max(o.w, r.w));
+    // the growing box rides in a host clipped to the screen's shape, so its square-ish corners never cross the bezel
+    const box = makeBox(clipEl, { bg: 'var(--paper)', r: 20 }, Math.max(o.w, r.w));
     box.el.classList.add('u-detail-box');
     box.animate(ctx, o, o, DETAIL.pop);
     box.animate(ctx, o, r, DETAIL.frame);
@@ -1047,7 +1090,7 @@ export function mount(host, model) {
     detailCtx = ctx;
     panel.classList.add('is-leaving');
     const r = panelRect(), o = devRect(origin);
-    const box = makeBox(device, { bg: 'var(--paper)', r: 20 }, Math.max(o.w, r.w));
+    const box = makeBox(clipEl, { bg: 'var(--paper)', r: 20 }, Math.max(o.w, r.w));
     box.el.classList.add('u-detail-box');
     box.animate(ctx, r, o, UNDETAIL.frame);
     play(ctx, box.el, [{ opacity: 1 }, { opacity: 1, offset: 0.7 }, { opacity: 0 }], UNDETAIL.frame, { easing: 'linear' });
@@ -1061,8 +1104,9 @@ export function mount(host, model) {
   let sheetReturn = null;
   function openSheet(html, label = '操作') {
     hidePeek(true);
-    const r = posture === 'table' ? { x: 0, y: G.PW, w: G.PH, h: G.PW } : phase === 'book' ? { x: G.PW, y: 0, w: G.PW, h: G.PH } : { x: G.OX, y: 0, w: G.S, h: G.L };
-    Object.assign(sheetHost.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
+    const S = BODY.screen, C = BODY.cover, Sh = BODY.screenHinge;
+    const r = posture === 'table' ? { x: 0, y: G.PW, w: G.PH, h: G.PW, r: `0 0 ${S}px ${S}px` } : phase === 'book' ? { x: G.PW, y: 0, w: G.PW, h: G.PH, r: `0 ${S}px ${S}px 0` } : { x: G.OX, y: 0, w: G.S, h: G.L, r: `${Sh}px ${C}px ${C}px ${Sh}px` };
+    Object.assign(sheetHost.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px`, borderRadius: r.r });
     if (sheet.hidden) sheetReturn = document.activeElement;
     sheet.setAttribute('aria-label', label);
     sheet.innerHTML = `<div class="d-sheet-grip" aria-hidden="true"></div>${html}`;
@@ -1420,6 +1464,9 @@ export function mount(host, model) {
      * the band's growth), the same numbers foldAt() gives. */
     state: () => ({ posture, phase, angle: Math.round(angle), half: spread.classList.contains('is-half'), panel: panelUp() ? Math.round(angle) : 0,
       fold: lastFold ? { front: +lastFold.front.alpha.toFixed(3), blur: +lastFold.Bmax.toFixed(2), layers: lastFold.layers.filter(l => l.on).length, veil: +lastFold.veil.alpha.toFixed(3), edge: Math.round(lastFold.veil.edge), band: +lastFold.band.toFixed(3) } : null,
+      /** the body: which shell lies still (closed / right while the panel turns / open / table) and the light on the
+       * panel's free edge (its sheen and shade, the faces' glint), null while the panel is down */
+      body: { shell: bodyEl.dataset.body, light: lastFold ? { sheen: +lastFold.body.sheen.toFixed(3), shade: +lastFold.body.shade.toFixed(3), glint: [+lastFold.body.glint.front.toFixed(3), +lastFold.body.glint.back.toFixed(3)] } : null },
       hero: (visibleLayer() === 'outer' ? outer.querySelector('.d-headline') : visibleLayer() === 'table' ? table.querySelector('.u-hero') : spread.querySelector('.u-hero'))?.textContent.replace(/\s+/g, ' ').trim(),
       settling: Boolean(morphCtx && !morphCtx.done), tell: tell.running, told: tell.done }),
     tell: { start: () => startTell(true), skip: () => skipTell(), get running() { return tell.running; } },
