@@ -33,6 +33,7 @@ export const FORMS = {
   tug: 'forms/sketches/tug.html',
   khipu: 'forms/sketches/khipu.html',   // 默认样张是手写情境（composite 两周没有子层），截预览时带 --data story
   trays: 'forms/trays.html', // 手机 390 × 844 的一列，截图在 1440 × 900 下居中
+  glasses: 'forms/glasses.html', // 单色绿眼镜：576 × 288 显示面按 1:1 像素放大；不带 --frame 时顶层打开会先讲一遍
   // 第一轮撤下后恢复的八个形式：只做了能在两个数据集下运行的最小适配，未打磨。
   radio: 'forms/radio.html', strips: 'forms/strips.html', frontpage: 'forms/frontpage.html', receipt: 'forms/receipt.html',
   orb: 'forms/orb.html', departures: 'forms/departures.html', blame: 'forms/blame.html', chat: 'forms/chat.html',

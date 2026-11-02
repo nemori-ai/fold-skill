@@ -6,6 +6,8 @@
 // 下拉收回、左滑知道了、作答与撤回、手指保护、换轮时回执跟着条目走，以及键盘与连播的同一组打断规则。
 // E 折叠屏（duo）走 runDuo：同一组触屏标准，加铰链、左页摊开的原料与详情、色带格联动、圆角同心与讲一遍。
 // 回应托盘（trays）也是触屏，走 runTrays：同一组触屏规则，加上托盘高度 = 几下、两下的托盘一下矮一排、直接打开讲一遍。
+// 智能眼镜（glasses）没有悬停卡，走 runGlasses：每一页落进 Even Hub 的容器上限、亮度只用四档、上屏的数与回放一致、图片按真机
+// 的代价逐张送达；镜腿五个手势（键盘与显示面上的触屏）、通话与挂断、换轮不亮、两周时间轴、作答记录与撤回、直接打开讲一遍。
 // 只用 Node 22 内置的 WebSocket 驱动本机 Chrome（无头），不装依赖。原型需先在本地提供服务。
 //
 //   node scripts/check-ix.mjs --base http://127.0.0.1:4173                 # 全部页面，默认数据
@@ -228,6 +230,11 @@ const PAGES = {
   // tell 是直接打开时讲一遍的起点与终态。
   trays: { hook: 'foldTrays', touch: true, runner: runTrays, page: 'forms/trays.html',
     held: { composite: 'f26', story: 'f20' }, tell: { composite: { from: 'f25', end: 'f26' }, story: { from: 'f19', end: 'f21' } } },
+  // 智能眼镜：显示面是 576 × 288 的容器页，流程见 runGlasses。expect 是这份数据上应得的数（规格 B 节）：甲亮几次、乙对上几次、
+  // 通话几次，一次对上的通话、一次对不上的通话与一个早上；story 没有通话记录。
+  glasses: { hook: 'foldGlasses', runner: runGlasses, page: 'forms/glasses.html',
+    expect: { composite: { pushes: 4, lit: 3, calls: 10, call: '2026-08-13T19:30:00+02:00', miss: '2026-08-14T08:02:00+02:00', morning: '2026-08-16T07:25:00+02:00' },
+      story: { calls: 0, lit: 0 } } },
 };
 
 function args(argv) {
@@ -1303,6 +1310,199 @@ async function runTrays(cdp, base, data, name) {
   await open('', 600);
   const calm = await ev(`({ telling: ${H}.telling(), running: ${running} })`);
   check('减弱动态：直接打开也不讲、不动', !calm.telling && calm.running === 0, calm);
+  await S('Emulation.setEmulatedMedia', { features: [] });
+  await cdp.send('Target.closeTarget', { targetId });
+  return { results, errors };
+}
+
+// 智能眼镜（glasses）：没有悬停卡，检查它自己的契约。显示面每一页都要落进 Even Hub 的容器模型（文本 ≤ 8、图片 ≤ 4 且 20–288 ×
+// 20–144、恰好一个收手势、都在 576 × 288 里、textColor 0–4、图片只用 0 / 5 / 8 / 11 / 15），15 档只给题目与选中的选项；上屏的数
+// 要与回放推出的一致（另 N 件、还有几小时、甲亮几次、乙对上几次）；换页时文本立刻换、图片逐张送达（每张至少 104 ms）；键盘的
+// 五个手势、抬头、时刻跳转、两周时间轴、作答与撤回走通；通话中亮对方在等的那件，挂断出按住的，对不上的通话 0 像素；换轮不亮；
+// 直接打开讲一遍、任意键跳到终态、减弱动态不讲；手机尺寸上显示面可以直接点、双击。
+async function runGlasses(cdp, base, data, name) {
+  const P = PAGES[name], X = P.expect[data === 'story' ? 'story' : 'composite'];
+  const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+  const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+  const S = (m, p) => cdp.send(m, p, sessionId);
+  const errors = [];
+  cdp.listeners.add(m => {
+    if (m.sessionId !== sessionId) return;
+    if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.exception?.description || m.params.exceptionDetails.text);
+    if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') errors.push(m.params.args.map(a => a.value ?? a.description).join(' '));
+  });
+  await S('Runtime.enable'); await S('Page.enable');
+  const desk = () => S('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  await desk();
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const ev = async expr => {
+    const { result, exceptionDetails } = await S('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true });
+    if (exceptionDetails) throw new Error(exceptionDetails.exception?.description || exceptionDetails.text);
+    return result.value;
+  };
+  const open = async (query, settle = 1200) => {
+    const u = new URL(`${P.page}${query ? `?${query}` : ''}`, `${base.replace(/\/$/, '')}/`);
+    if (data) u.searchParams.set('data', data);
+    await S('Page.navigate', { url: u.href });
+    for (let t = 0; t < 75; t += 1) { if (await ev('document.readyState') === 'complete' && await ev('Boolean(window.foldGlasses)')) break; await wait(200); }
+    await wait(settle);
+  };
+  const KEYS = { Escape: 27, Enter: 13, Backspace: 8, ArrowDown: 40, ArrowUp: 38, ArrowRight: 39, h: 72, ']': 221, '[': 219 };
+  const key = async k => {
+    await S('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: k, code: k, windowsVirtualKeyCode: KEYS[k] });
+    if (k === 'Enter') await S('Input.dispatchKeyEvent', { type: 'char', text: '\r' });
+    else if (k.length === 1) await S('Input.dispatchKeyEvent', { type: 'char', text: k });
+    await S('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code: k, windowsVirtualKeyCode: KEYS[k] });
+    await wait(150);
+  };
+  const H = P.hook;
+  const results = [];
+  const check = (label, ok, info) => results.push({ ok: Boolean(ok), label, info: JSON.stringify(info) });
+  // One page against the container model and the brightness words; returns why it fails (empty = fine).
+  const law = async () => ev(`(() => { const g = ${H}, page = g.page(), n = g.counts(), f = g.facts(), bad = [];
+    if (!n.sys) { if (n.text > 8) bad.push('文本 ' + n.text); if (n.image > 4) bad.push('图片 ' + n.image); if (n.events !== 1) bad.push('收手势 ' + n.events); }
+    for (const c of page) {
+      if (c.x < 0 || c.y < 0 || c.x + c.w > 576 || c.y + c.h > 288) bad.push('越界 ' + c.name);
+      if (c.type === 'image') {
+        if (c.w < 20 || c.w > 288 || c.h < 20 || c.h > 144) bad.push('图片尺寸 ' + c.name + ' ' + c.w + '×' + c.h);
+        for (const v of c.px) if (![0, 5, 8, 11, 15].includes(v)) bad.push('灰度 ' + c.name + ' ' + v);
+      } else {
+        if (![0, 1, 2, 3, 4].includes(c.c)) bad.push('textColor ' + c.name + ' ' + c.c);
+        if (c.c === 4 && c.text.trim() && ![...f.shorts, ...f.labels].some(s => c.text.includes(s))) bad.push('15 档给了 ' + JSON.stringify(c.text));
+      }
+    }
+    return bad; })()`);
+  const sees = async () => ({ screen: await ev(`${H}.screen()`), text: await ev(`${H}.text()`), lit: await ev(`${H}.lit()`), counts: await ev(`${H}.counts()`), records: await ev(`${H}.records().length`) });
+  const pages = {};
+
+  // 1: the two weeks as the replay says; the legend and the axis agree with it.
+  await open('frame=26');
+  const two = await ev(`({ pushes: ${H}.pushes().map(p => p.frame), lit: ${H}.calls().filter(c => c.lit).length, calls: ${H}.calls().length,
+    ticks: document.querySelectorAll('.gl-round.is-push').length, dots: document.querySelectorAll('.gl-call.is-lit').length, legend: document.querySelector('.gl-weeks-h').textContent })`);
+  check(`两周里甲亮 ${two.pushes.length} 次（${two.pushes.join('、')}）、乙对上 ${two.lit} 次（通话 ${two.calls} 次），时间轴与图例一致`,
+    (X.pushes == null || two.pushes.length === X.pushes) && two.lit === X.lit && two.calls === X.calls && two.ticks === two.pushes.length && two.dots === two.lit
+      && two.legend.includes(`甲 亮 ${two.pushes.length} 次`) && two.legend.includes(`乙 对上 ${two.lit} 次`), two);
+  // 2: ?frame= on a push lands on the neutral phone notification; nothing is told.
+  let v = await sees();
+  const pushed = two.pushes.includes(await ev(`${H}.model.snapshot().frame.id`));
+  check('带 ?frame= 进来：不讲一遍；落在推送的那一轮时是中性的手机通知卡（不占 Fold 的容器）',
+    !(await ev(`${H}.telling()`)) && (!pushed || (v.screen === 'notice' && v.counts.sys && v.text.includes('手机通知'))), v);
+  pages.notice = await law();
+  // 3–4: Enter opens the one item; its numbers are the replay's; text first, images one by one.
+  await key('Enter'); await wait(60);
+  const lagged = await ev(`({ text: ${H}.text().length > 0, pending: ${H}.pending() })`);
+  await wait(400);
+  v = await sees();
+  const f = await ev(`${H}.facts()`);
+  const rest = `另 ${f.open - (f.top ? 1 : 0)} 件不用现在`;
+  const hours = f.top && f.topDue != null ? `${f.topDue >= f.cursor ? '还有' : '已过'} ${Math.round(Math.abs(f.topDue - f.cursor) / 3600000)} 小时` : null;
+  check(`轻点：打开那一件，“${rest}”${hours ? `与“${hours}”` : ''}与回放一致`, v.screen === 'item' && v.text.includes(rest)
+    && (!hours || Math.abs(f.topDue - f.cursor) >= 172800000 || v.text.includes(hours)), { v, f });
+  pages.item = await law();
+  await ev(`${H}.settle()`);
+  const log = await ev(`${H}.imageLog()`);
+  if (v.counts.image) check('换页时文本立刻换，图片逐张送达（不并发，每张至少 104 ms）', lagged.text && lagged.pending > 0 && log.length >= 1 && log.every(x => x.ms >= 100), { log, lagged });
+  else check('这一页没有图片：文本立刻换', lagged.text && lagged.pending === 0, lagged);
+  // 5–6: Enter, ↓, Enter answer (a record via button at the cursor); Backspace undoes it.
+  if (f.top) {
+    await key('Enter'); await key('ArrowDown');
+    v = await sees(); pages.answer = await law();
+    await key('Enter');
+    const rec = await ev(`${H}.records()`);
+    v = await sees(); pages.receipt = await law();
+    check('作答：轻点 → 下滑 → 轻点，存一条回应记录（via button、at = 此刻），出回执', v.screen === 'receipt' && rec.length === 1 && rec[0].via === 'button'
+      && rec[0].at === f.cursor && v.text.includes('已存'), { v, rec });
+    await key('Backspace');
+    v = await sees();
+    check('双击撤回：记录清掉，回到那一件', v.records === 0 && v.screen === 'item', v);
+  } else check('这一轮没有要紧的事：不作答', true, f);
+  // 7: H puts the head down: 0 pixels.
+  await key('h'); await wait(300);
+  v = await sees();
+  check('H 低头：0 像素', v.screen === 'off' && v.lit === 0, v);
+  // 8: the axis: the first tick that lit lands on that round's notification.
+  // (the first lit tick that nothing else covers: close rounds of the story's cold start overlap)
+  const tick = await ev(`(() => { for (const b of document.querySelectorAll('.gl-round.is-push')) { b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height - 6;
+    if (document.elementFromPoint(x, y)?.closest('.gl-round') === b) return { x, y, k: Number(b.dataset.k) }; } return null; })()`);
+  if (tick) {
+    await S('Input.dispatchMouseEvent', { type: 'mousePressed', x: tick.x, y: tick.y, button: 'left', clickCount: 1 });
+    await S('Input.dispatchMouseEvent', { type: 'mouseReleased', x: tick.x, y: tick.y, button: 'left', clickCount: 1 });
+    await wait(500);
+    v = await sees();
+    check('点时间轴上亮过的一格：跳到那一轮，出手机通知', (await ev(`${H}.index`)) === tick.k && v.screen === 'notice', { v, tick });
+  }
+  // 9–11: 乙. ] lands on the call; the page shows whom you talk to and the ask she waits on; ] again is the hang-up with
+  // what was held; a call nobody behind an open ask is on stays dark.
+  if (X.call) {
+    const t = Date.parse(X.call);
+    await ev(`${H}.at(${t - 3600000}), 1`); await wait(300);
+    await key(']'); await wait(500);
+    v = await sees();
+    const call = await ev(`${H}.calls().find(c => c.t === ${t})`);
+    check(`] 跳到下一个时刻：${X.call.slice(5, 16)} 的通话，亮${call?.who}在等的那一件，按住 ${call?.held.length} 件`, v.screen === 'call' && (await ev(`${H}.facts().cursor`)) === t
+      && v.text.includes(call.who) && v.text.includes(`另 ${call.held.length} 件要紧`) && v.counts.image >= 2, { v, call });
+    pages.call = await law();
+    await key('Enter'); pages.callAnswer = await law(); await key('Backspace');
+    await key(']'); await wait(500);
+    v = await sees();
+    check('再 ]：挂断，按住的几件出一次', v.screen === 'hangup' && v.text.includes(`刚才按住 ${call.held.length} 件`), v);
+    pages.hangup = await law();
+    await ev(`${H}.at(${Date.parse(X.miss)}), 1`); await wait(400);
+    v = await sees();
+    check('对不上等待者的通话：0 像素', v.screen === 'off' && v.lit === 0, v);
+  } else check('这份数据没有通话记录：乙不亮', two.calls === 0 && two.lit === 0, two);
+  // Every moment worth a look (each push opened, each call or voicemail, each hang-up) goes through the same law, so a
+  // page reached only on one day of the two weeks cannot slip past the container model.
+  const sweep = [];
+  for (const m of await ev(`${H}.moments()`)) {
+    await ev(`${H}.at(${m.t}), 1`); await wait(250);
+    if ((await ev(`${H}.screen()`)) === 'notice') { await ev(`${H}.press('click'), 1`); await wait(150); }
+    const bad = await law();
+    if (bad.length) sweep.push([`${m.kind} ${new Date(m.t).toISOString().slice(5, 16)}Z`, [...new Set(bad)]]);
+  }
+  pages[`两周里 ${(await ev(`${H}.moments().length`))} 个时刻`] = sweep;
+  // 12: answered before a round lands → the next round does not light the glasses; head up says 已收到.
+  if (X.morning) {
+    await ev(`${H}.at(${Date.parse(X.morning)}), 1`); await wait(300);
+    await key('h'); await key('Enter'); await key('Enter');
+    const before = await ev(`${H}.index`);
+    await key('ArrowRight'); await wait(500);
+    v = await sees();
+    const off = v.screen === 'off' && v.lit === 0;
+    await key('h'); await wait(300);
+    const up = await sees();
+    check('换轮（最前那件没换）：不亮；抬头时回执降成“已收到”', off && (await ev(`${H}.index`)) === before + 1 && up.text.includes('已收到'), { v, up });
+  }
+  const broken = Object.entries(pages).filter(([, bad]) => bad.length);
+  check(`每一页都落进容器模型、亮度只用四档（${Object.keys(pages).join('、')}）`, broken.length === 0, broken);
+  // 13: on a phone the display takes taps itself, and fits the width.
+  await S('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 3, mobile: true });
+  await S('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  await open('frame=26');
+  const box = await ev(`(() => { const r = document.querySelector('.gl-screen').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, right: r.right }; })()`);
+  const touch = (type, x, y) => S('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
+  await touch('touchStart', box.x, box.y); await wait(40); await touch('touchEnd'); await wait(700);
+  const tapped = await ev(`${H}.screen()`);
+  await touch('touchStart', box.x, box.y); await wait(40); await touch('touchEnd'); await wait(80);
+  await touch('touchStart', box.x, box.y); await wait(40); await touch('touchEnd'); await wait(600);
+  v = await sees();
+  check('手机上：显示面轻点打开、双击收起；显示面按宽度放下', tapped === 'item' && v.screen === 'off' && box.right <= 390, { tapped, v, box });
+  await S('Emulation.setTouchEmulationEnabled', { enabled: false });
+  await desk();
+  // 14–16: opened directly it tells once; any key skips to the end; with reduced motion it does not tell.
+  await open('', 500);
+  const told = await ev(`({ telling: ${H}.telling(), frame: ${H}.model.snapshot().frame.id, pushes: ${H}.pushes() })`);
+  await wait(1200);
+  await key('Escape'); await wait(600);
+  const end = await ev(`({ telling: ${H}.telling(), frame: ${H}.model.snapshot().frame.id, screen: ${H}.screen(), records: ${H}.records().length, pending: ${H}.pending() })`);
+  const target = [...told.pushes].reverse().find(p => p.k <= 26) || told.pushes[0];
+  if (target) {
+    check(`直接打开：讲一遍（从 ${target.frame} 的前一轮起）`, told.telling && told.frame !== target.frame, told);
+    check(`讲一遍中按任意键：跳到终态（${target.frame}，打开那一件，不留记录、图片已送达）`, !end.telling && end.frame === target.frame && end.screen === 'item' && end.records === 0 && end.pending === 0, end);
+  } else check('没有推送：不讲', !told.telling, told);
+  await S('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  await open('', 500);
+  check('减弱动态：直接打开也不讲', !(await ev(`${H}.telling()`)), {});
   await S('Emulation.setEmulatedMedia', { features: [] });
   await cdp.send('Target.closeTarget', { targetId });
   return { results, errors };
