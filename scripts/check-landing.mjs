@@ -2,9 +2,10 @@
 // 1. 页面上每个带 data-k 的数都等于 site/landing/data.json 里那个出处（gallery.count 等于原型总数减六）；
 // 2. 七个尺寸（375×667、390×844、430×932、820×1180、1180×820、1440×900、1920×1080）从头滚到底：没有报错、没有失败的请求、
 //    没有横向滚动；
-// 3. 减弱动态时首屏直接是终态：与正常播放结束后的样子逐项相同，且没有动画在跑；
-// 4. 画廊块数等于原型总数减六，Top 6 不在其中，其余一个不少；
-// 5. 三拍按阅读线切换（1 → 2 → 3 → 回流），演示卡的按钮真的作答、撤回；首屏与第 2 拍演完后尺上没有残留的点；
+// 3. 减弱动态时首屏直接是终态：与正常播放结束后的样子逐项相同，且没有动画在跑；首屏演完后前两扇窗的内容、
+//    铺点的盖板都不留残渣，三个处境按钮切得动；
+// 4. 画廊块数等于原型总数减六，Top 6 不在其中，其余一个不少；第 3 节六个处境从窄到宽、各链到一张卡；
+// 5. 三拍按阅读线切换（1 → 2 → 3 → 回流），演示卡的按钮真的作答、撤回；第 2 拍演完后尺上没有残留的点；
 // 6. 导航“全部原型”的画册面板与查看弹框照常可用；
 // 7. 首屏标题的字都在字体子集里，六张卡与画廊的录像文件都在。
 //
@@ -20,7 +21,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { prototypes } from '../site/.vitepress/theme/prototypes.mjs';
-import { TOP, galleryOf } from '../site/.vitepress/theme/landing.mjs';
+import { LADDER, TOP, galleryOf } from '../site/.vitepress/theme/landing.mjs';
 import { serve } from './serve-static.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -124,15 +125,26 @@ async function open([width, height], { reduced = false } = {}) {
   };
 }
 
-// The first screen's computed end state: the playhead's window, the tick groups, segments, colours, dots, the
-// caption over the ruler, the legend.
+// The first screen's computed state: the window's shape, which content and which lit layer shows, the base dots'
+// dimming, the cover that lays the field in, the situation buttons, the ledger line.
 // Transforms are compared as rounded matrices: an animation that ends on \`none\` computes as the identity matrix.
-const heroState = `(() => { const q = s => [...document.querySelectorAll('.fl-hero ' + s)];
+const paint = `const px = (() => { const c = document.createElement('canvas').getContext('2d', { willReadFrequently: true }); c.canvas.width = c.canvas.height = 1;
+    return css => { c.clearRect(0, 0, 1, 1); c.fillStyle = '#000'; c.fillStyle = css; c.fillRect(0, 0, 1, 1); return [...c.getImageData(0, 0, 1, 1).data].join(','); }; })();`;
+const heroState = `(() => { ${paint} const q = s => [...document.querySelectorAll('.h2-stage ' + s)];
   const t = e => { const v = getComputedStyle(e).transform, m = new DOMMatrixReadOnly(v === 'none' ? undefined : v); return [m.a, m.b, m.c, m.d, m.e, m.f].map(x => (Math.abs(x) < 0.005 ? 0 : x).toFixed(2)).join(','); };
   const o = e => Number(getComputedStyle(e).opacity).toFixed(2);
-  return { sweep: [...q('.fl-sweep'), ...q('.fl-sweep-in')].map(t).join('|'), ticks: q('.fl-lane .g').map(e => t(e) + '/' + o(e)).join('|'), segs: q('.sg').map(t).join('|'),
-    colours: q('.sg .v').map(o).join('|'), dots: q('.dt').map(e => { const m = new DOMMatrixReadOnly(getComputedStyle(e).transform === 'none' ? undefined : getComputedStyle(e).transform); return Number(o(e)) > 0.05 && Math.abs(m.a) > 0.05 ? 'seen' : 'gone'; }).join('|'), caption: q('.fl-cap span').map(o).join('|'),
-    count: q('.fl-tag .rs').map(t).join('|'), legend: q('.fl-legend > span').map(o).join('|') }; })()`;
+  const win = q('.h2-win')[0], ws = getComputedStyle(win);
+  return { win: [ws.width, ws.height, ws.borderTopLeftRadius, o(win), t(win)].join('/'), content: q('.h2-c').map(o).join('|'),
+    dots: q('.h2-dots').map(o).join('|'), cover: q('.h2-cover').map(e => t(e) + '/' + o(e)).join('|'),
+    tiles: q('.h2-desk .tl').map(e => o(e) + t(e)).join('|'), columns: q('.h2-stack .col').map(t).join('|'),
+    chips: q('.h2-chip').map(e => px(getComputedStyle(e).color)).join('|'), bar: q('.h2-bar').map(e => t(e) + '/' + o(e)).join('|'),
+    ledger: q('.h2-ledger > span').map(o).join('|') }; })()`;
+// What must be gone once the first screen has played: the first two windows' content, the cover over the field, the
+// first two ledger lines; and exactly one situation button lit.
+const heroLeft = `(() => { ${paint} const q = s => [...document.querySelectorAll('.h2-stage ' + s)], o = e => Number(getComputedStyle(e).opacity);
+  const cover = q('.h2-cover')[0], field = q('.h2-field')[0], cb = cover.getBoundingClientRect(), fb = field.getBoundingClientRect();
+  const lit = q('.h2-chip').filter(e => px(getComputedStyle(e).color) === px(getComputedStyle(document.querySelector('.fl')).color)).length;
+  return { c1: o(q('.h2-c1')[0]), c2: o(q('.h2-c2')[0]), lg: q('.lg1, .lg2').map(o).reduce((a, b) => a + b, 0), cover: o(cover) > 0.02 && cb.left < fb.right - 1, lit }; })()`;
 // Dots still to be seen on a stage (once absorbed they are at scale 0 or transparent): none may be left lying on the ruler.
 const dotsLeft = scope => `[...document.querySelectorAll('${scope} .dt')].filter(e => { const cs = getComputedStyle(e), m = new DOMMatrixReadOnly(cs.transform === 'none' ? undefined : cs.transform);
   return Number(cs.opacity) > 0.05 && Math.abs(m.a) > 0.05 && Math.abs(m.d) > 0.05; }).length`;
@@ -151,8 +163,8 @@ try {
     && [...tiles].sort().join() === [...expected].sort().join() && !TOP.some(t => tiles.includes(t.id)), { tiles: tiles.length, heading, missing: expected.filter(id => !tiles.includes(id)) });
   const cards = await page.evaluate(`[...document.querySelectorAll('.fl-form')].map(e => e.id.replace('form-', ''))`);
   check(`六张卡按定下的顺序：${TOP.map(t => t.id).join(' → ')}`, cards.join() === TOP.map(t => t.id).join(), cards);
-  const glyphs = await page.evaluate(`[...document.querySelectorAll('.fl-glyph')].map(e => e.getAttribute('href').replace('#form-', ''))`);
-  check('桥的六个小图与六张卡同序', glyphs.join() === cards.join(), glyphs);
+  const rungs = await page.evaluate(`[...document.querySelectorAll('.fl-ladder a')].map(e => e.getAttribute('href').replace('#form-', ''))`);
+  check(`第 3 节六个处境从窄到宽（${LADDER.map(l => l.id).join(' → ')}），各链到一张卡`, rungs.join() === LADDER.map(l => l.id).join() && [...rungs].sort().join() === [...cards].sort().join(), rungs);
   const headings = await page.evaluate(`[...document.querySelectorAll('.fl .fl-h, .fl-form .hd h3')].map(e => e.textContent).join('')`);
   const subset = JSON.parse(await readFile(path.join(root, 'site/fonts/subset.json'), 'utf8'));
   const uncovered = [...new Set([...headings])].filter(c => /[　-鿿＀-￯]/.test(c) && !subset.landing.includes(c));
@@ -198,19 +210,30 @@ try {
   check('390 × 844：脚本过程中没有报错', !page.problems.length, page.problems);
   await page.close();
 
-  // ---- 3. reduced motion: the first screen is its end state at once ----
+  // ---- 3. reduced motion: the first screen is its end state at once; the situations switch ----
   const played = await open([390, 844]);
-  await wait(5200);
+  await wait(9400);
   const after = await played.evaluate(heroState);
-  const heroDots = await played.evaluate(dotsLeft('.fl-hero'));
+  const left = await played.evaluate(heroLeft);
+  check('首屏演完：前两扇窗的内容与两行账都已收起，铺点的盖板已移开，只亮一个处境', !left.c1 && !left.c2 && !left.lg && !left.cover && left.lit === 1, left);
+  const picks = [];
+  for (const k of [1, 2, 3]) {
+    await played.evaluate(`document.querySelector('.h2-chip[data-sit="${k}"]').click(), 1`);
+    await wait(1200);
+    picks.push(await played.evaluate(`(() => { const st = document.querySelector('.h2-stage'), w = document.querySelector('.h2-win').getBoundingClientRect(), c = document.querySelector('.h2-c${k}');
+      return { s: st.dataset.s, w: Math.round(w.width), h: Math.round(w.height), shown: Number(getComputedStyle(c).opacity), others: [...document.querySelectorAll('.h2-c')].filter(e => e !== c && Number(getComputedStyle(e).opacity) > 0.02).length,
+        pressed: document.querySelector('.h2-chip[data-sit="${k}"]').getAttribute('aria-pressed') }; })()`));
+  }
+  check('首屏三个处境按得动：窗改形（骑车是圆、桌前 1.7 : 1、复盘最宽），窗里换成那个处境的内容，别的收起', picks.every((p, i) => p.s === String(i + 1) && p.shown === 1 && !p.others && p.pressed === 'true')
+    && picks[0].w === picks[0].h && Math.abs(picks[1].w / picks[1].h - 1.7) < 0.06 && picks[2].w > picks[1].w, picks);
+  if (played.problems.length) check('390 × 844：首屏播放与切换过程中没有报错', false, played.problems);
   await played.close();
-  check('首屏演完：点都被吸收，尺上没有残留的点', heroDots === 0, heroDots);
   const still = await open([390, 844], { reduced: true });
   const immediate = await still.evaluate(heroState);
   const running = await still.evaluate(`document.getAnimations().filter(a => a.playState === 'running').length`);
   const roundStep = await still.evaluate(`document.querySelector('.fl-round').dataset.step`);
   const differing = Object.keys(after).filter(k => after[k] !== immediate[k]);
-  check('减弱动态：首屏一打开就是终态（与播放结束后逐项相同），没有动画在跑，三拍从第一拍的终态起', !differing.length && running === 0 && roundStep === '1', { differing, running, roundStep });
+  check('减弱动态：首屏一打开就是终态（与播放结束后逐项相同），没有动画在跑，三拍从第一拍的终态起', !differing.length && running === 0 && roundStep === '1', { differing: differing.map(k => [k, after[k], immediate[k]]), running, roundStep });
   if (shots) { await mkdir(shots, { recursive: true }); await still.shot(path.join(shots, 'reduced-390x844-full.png'), true); }
   await still.close();
 
@@ -218,7 +241,7 @@ try {
   for (const size of SIZES) {
     const p = await open(size);
     await wait(400);
-    if (shots) { await mkdir(shots, { recursive: true }); await wait(4600); await p.shot(path.join(shots, `${size.join('x')}-first.png`)); }
+    if (shots) { await mkdir(shots, { recursive: true }); await wait(9000); await p.shot(path.join(shots, `${size.join('x')}-first.png`)); }
     let overflow = 0;
     const total = await p.evaluate('document.documentElement.scrollHeight');
     for (let y = 0; y < total; y += Math.round(size[1] * 0.8)) {
