@@ -1,8 +1,8 @@
 ---
 layout: FoldLanding
-title: Fold · 给 Agent 用的注意力预算
+title: Fold · 按处境给 Agent 的汇报编码
 titleTemplate: false
-description: 涌进来的再多，你也只有 64 份：Agent 每一轮在 64 份注意力里取舍，只把要你开口的推到你面前。看一轮整理，再看同一份状态的六种读法与全部原型。
+description: 同一刻的信息，按你此刻的带宽编码。Agent 看见的没有上限，你接得住的有上限、而且随处境在变：骑车只剩一块表盘，桌前多一些，停下来复盘才全部展开。先看问题与切入点，再看同一刻的六种读法与全部原型。
 aside: false
 sidebar: false
 ---
