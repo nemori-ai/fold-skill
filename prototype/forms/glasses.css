@@ -1,0 +1,98 @@
+/* 12 智能眼镜. A dark stage; the only colour on it is the display's green (#3CFA44), and only where the display is lit:
+   the 576 × 288 canvas at 1:1 pixels (scaled whole, never resampled), and the same light added onto a flat first-person view.
+   Everything around it (the temple, the two weeks) stays grey so the green keeps one meaning: what the glasses show. */
+.gl-page {
+  --gl-bg: #111214;
+  --gl-panel: #1a1c1f;
+  --gl-ink: #e6e8e3;
+  --gl-ink-2: #9ba19a;
+  --gl-ink-3: #6b706b;
+  --gl-line: #2c2f31;
+  --gl-green: #3cfa44;
+  --gl-green-dim: rgb(60 250 68 / .45);
+}
+.gl-page .fs-stage { background: var(--gl-bg); color: var(--gl-ink); }
+.gl-wrap { display: grid; gap: 16px; max-width: 1320px; margin: 0 auto; padding: 18px 24px 32px; }
+.gl-lede { margin: 0; min-height: 2.9em; font-size: 15px; line-height: 1.45; text-wrap: pretty; }
+.gl-when { display: block; font: 12px var(--mono); color: var(--gl-ink-2); font-weight: 400; letter-spacing: .02em; }
+
+.gl-main { display: grid; grid-template-columns: minmax(0, 3fr) minmax(300px, 2fr); gap: 20px; align-items: start; }
+.gl-fig { margin: 0; min-width: 0; }
+.gl-fig figcaption { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 12px; color: var(--gl-ink-2); }
+.gl-fig figcaption b { color: var(--gl-ink); font-weight: 600; }
+.gl-screen { position: relative; background: #000; box-shadow: 0 0 0 1px var(--gl-line); touch-action: none; cursor: pointer;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+.gl-px { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+.gl-view { display: block; width: 100%; height: auto; aspect-ratio: 5 / 3; border-radius: 4px; background: #000; }
+
+.gl-pad { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--gl-line); border-radius: 10px; background: var(--gl-panel); }
+.gl-pad-name { font-size: 12px; color: var(--gl-ink-2); margin-right: 4px; }
+.gl-pad-gap { flex: 1; }
+.gl-pad button { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border: 1px solid var(--gl-line); border-radius: 8px;
+  background: #22252a; color: var(--gl-ink); font-size: 13.5px; }
+.gl-pad button:hover { border-color: var(--gl-ink-3); }
+.gl-pad button:active { background: #2b2f35; }
+.gl-pad button[aria-pressed="true"] { border-color: var(--gl-ink-2); }
+.gl-pad kbd { font: 11px var(--mono); color: var(--gl-ink-2); }
+
+.gl-weeks { padding: 10px 12px 12px; border: 1px solid var(--gl-line); border-radius: 10px; background: var(--gl-panel); }
+.gl-weeks-h { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 10px; font-size: 12.5px; color: var(--gl-ink-2); }
+.gl-weeks-h b { color: var(--gl-ink); font-weight: 600; }
+.gl-weeks-h i { display: inline-block; width: 4px; height: 12px; margin-right: 6px; vertical-align: -1px; background: var(--gl-ink-3); }
+.gl-weeks-h .gl-k-push { background: var(--gl-green); }
+.gl-weeks-h .gl-k-call { width: 8px; height: 8px; border-radius: 50%; background: var(--gl-green); vertical-align: 0; }
+.gl-weeks-h .gl-k-miss { width: 8px; height: 8px; border-radius: 50%; background: none; box-shadow: inset 0 0 0 1.5px var(--gl-ink-3); vertical-align: 0; }
+.gl-axis { position: relative; height: 64px; margin: 0 8px; border-bottom: 1px solid var(--gl-line); }
+.gl-round { position: absolute; bottom: 0; width: 14px; height: 30px; margin-left: -7px; padding: 0; border: 0; background: none; }
+.gl-round::after { content: ""; position: absolute; left: 6px; bottom: 0; width: 2px; height: 10px; background: var(--gl-ink-3); }
+.gl-round.is-push::after { left: 5px; width: 4px; height: 28px; background: var(--gl-green); }
+.gl-round.is-on::before { content: ""; position: absolute; left: 1px; right: 1px; bottom: -6px; height: 3px; background: var(--gl-ink); }
+.gl-call { position: absolute; top: 2px; width: 22px; height: 22px; margin-left: -11px; padding: 0; border: 0; background: none; }
+.gl-call::after { content: ""; position: absolute; left: 6px; top: 6px; width: 10px; height: 10px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--gl-ink-3); }
+.gl-call.is-lit::after { background: var(--gl-green); box-shadow: none; }
+.gl-day { position: absolute; bottom: -20px; transform: translateX(-50%); font: 10.5px var(--mono); color: var(--gl-ink-3); white-space: nowrap; }
+.gl-now { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--gl-ink); pointer-events: none; }
+.gl-weeks { padding-bottom: 28px; }
+
+.gl-keys { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0; font-size: 12px; color: var(--gl-ink-2); }
+.gl-replay { border: 1px solid var(--gl-line); border-radius: 6px; background: none; color: var(--gl-ink); padding: 4px 10px; font-size: 12px; }
+
+/* iPad and narrower: the concept card folds away and the page is one column. */
+@media (max-width: 1024px) {
+  .gl-page .fs-body { grid-template-columns: minmax(0, 1fr); }
+  .gl-page .fs-card, .gl-page .fs-ticks, .gl-page .fs-tools [data-card] { display: none; }
+  .gl-page .fs-tools button { white-space: nowrap; }
+  /* one column, in the order a hand needs it: what the glasses show, the temple, then the view and the two weeks */
+  .gl-main { display: contents; }
+  .gl-lede { order: 0; } .gl-fig-display { order: 1; } .gl-pad { order: 2; } .gl-fig-view { order: 3; } .gl-weeks { order: 4; } .gl-keys { order: 5; }
+}
+@media (max-width: 640px) {
+  .gl-page .fs-bar { height: 48px; gap: 4px; padding: 0 4px 0 2px; }
+  .gl-page .fs-home { display: grid; place-items: center; width: 40px; height: 44px; font-size: 0; }
+  .gl-page .fs-home::before { content: "⌂"; font-size: 17px; color: var(--ink-2); }
+  .gl-page :is(.fs-name, .fs-ticks, .fs-tools) { display: none; }
+  .gl-page .fs-nav { flex: 1; min-width: 0; gap: 2px; }
+  .gl-page .fs-nav button { flex-shrink: 0; width: 44px; height: 44px; border: 0; font-size: 22px; background: none; }
+  .gl-page .fs-when { flex: 1; min-width: 0; align-items: center; }
+  .gl-page .fs-when > span { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gl-page .fs-body { height: calc(100dvh - 48px); }
+  .gl-wrap { padding: 12px 16px 28px; gap: 12px; }
+  .gl-lede { font-size: 14px; }
+  .gl-pad { gap: 6px; padding: 8px; }
+  .gl-pad-name, .gl-pad-gap { display: none; }
+  .gl-pad button { flex: 1 1 calc(33% - 6px); justify-content: center; min-height: 44px; padding: 0 6px; }
+  .gl-pad kbd { display: none; }
+  .gl-day:nth-of-type(2n) { display: none; }
+}
+
+/* ?still=display / ?still=view: only that picture, at its own pixels (stills for the spec and the site). */
+.gl-still .fs-bar, .gl-still .fs-card, .gl-still .gl-lede, .gl-still .gl-pad, .gl-still .gl-weeks, .gl-still .gl-keys, .gl-still figcaption { display: none !important; }
+.gl-still .fs-body { display: block; height: auto; }
+.gl-still .gl-wrap { display: block; padding: 0; margin: 0; max-width: none; }
+.gl-still .gl-main { display: block; }
+.gl-still-display .gl-fig-view, .gl-still-view .gl-fig-display { display: none; }
+.gl-still .gl-screen { width: 576px !important; height: 288px !important; box-shadow: none; }
+.gl-still-boxes .gl-screen { width: 1152px !important; height: 576px !important; }
+.gl-still-boxes .gl-fig-view { display: none; }
+.gl-still-view .gl-view { width: 1200px; height: 720px; border-radius: 0; }
+.gl-still, .gl-still .fs-stage { background: #000; overflow: hidden; }

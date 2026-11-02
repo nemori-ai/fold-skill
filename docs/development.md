@@ -153,6 +153,7 @@ node scripts/shoot-forms.mjs --out $out/kh --only khipu --data story --frame f26
 node scripts/shoot-forms.mjs --out $out/m --only dial --frame 26 --eval "document.querySelector('[data-card]').click()"
 node scripts/shoot-forms.mjs --out $out/p --only pulse --gpu --frame 20 --eval "(async () => { document.querySelector('[data-card]').click(); await new Promise(r => setTimeout(r, 400)); foldPulse.seek(20, 3.55); })()"
 node scripts/shoot-forms.mjs --out $out/t4 --only trays --frame 26 --eval "document.querySelector('[data-card]').click()"   # 回应托盘带帧打开不讲一遍
+node scripts/shoot-forms.mjs --out $out/gl --only glasses --frame 26 --eval "(async () => { document.querySelector('[data-card]').click(); foldGlasses.press('click'); await foldGlasses.settle(); })()"   # 智能眼镜带帧打开不讲一遍，预览取 f26 打开的那一件
 for f in $out/*.png $out/*/*.png; do cwebp -quiet -q 82 -m 6 -sharp_yuv -resize 640 0 "$f" -o "site/previews/$(basename "$f" .png).webp"; done
 ```
 

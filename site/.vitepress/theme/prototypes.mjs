@@ -43,6 +43,7 @@ const entries = [
   { id: 'dial', name: motion('dial').name, line: '64 份是怎样的硬约束：一轮整理演成 20 秒动画', page: '/prototype/forms/motion/dial.html', embed: { card: 0 } },
   { id: 'respond', name: '回应组件', line: '六种回应控件逐类演示，附反馈记录', page: '/prototype/forms/respond.html' },
   ...withdrawn.map(f => ({ id: f.id, name: f.name, line: f.question, page: `/prototype/forms/${f.id}.html`, embed: { card: 0 }, withdrawn: true })),
+  { id: 'glasses', name: form('glasses').name, line: '眼镜上只给一件：最前那件换了才亮，通话时亮对方在等的那件', page: '/prototype/forms/glasses.html', embed: { card: 0 }, frame: 26 },
 ]
 
 function address(entry, embedded) {
