@@ -1,58 +1,101 @@
+/* The whole site on the landing's paper and ink (site/landing/style.md「文档页怎样跟上」): VitePress's variables
+   are remapped, the documents keep their layout. Vermilion is not a link colour: it means “waiting for you”,
+   and only the landing and the prototypes use it. */
+@import "./fonts.css";
+
 :root {
-  --vp-font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-  --vp-font-family-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --vp-c-bg: oklch(0.97 0.008 95);
-  --vp-c-bg-alt: oklch(0.953 0.009 100);
-  --vp-c-bg-elv: oklch(0.99 0.005 95);
-  --vp-c-bg-soft: oklch(0.945 0.011 110);
-  --vp-c-text-1: oklch(0.28 0.025 155);
-  --vp-c-text-2: oklch(0.46 0.02 150);
-  --vp-c-text-3: oklch(0.5 0.018 145);
-  --vp-c-divider: oklch(0.87 0.013 105);
-  --vp-c-border: oklch(0.78 0.018 130);
+  --fold-paper: oklch(0.975 0.006 95);
+  --fold-ink: oklch(0.21 0.014 155);
+  --vp-font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --vp-font-family-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --fold-font-display: "Fold Serif SC", "Songti SC", "Noto Serif CJK SC", serif;
+  --fold-font-numeral: "Instrument Serif", "Times New Roman", serif;
+  --vp-c-bg: var(--fold-paper);
+  --vp-c-bg-alt: oklch(0.958 0.007 95);
+  --vp-c-bg-elv: oklch(0.992 0.004 95);
+  --vp-c-bg-soft: oklch(0.948 0.008 95);
+  --vp-c-text-1: var(--fold-ink);
+  --vp-c-text-2: oklch(0.47 0.014 150);
+  --vp-c-text-3: oklch(0.6 0.012 145);
+  --vp-c-divider: oklch(0.885 0.008 95);
+  --vp-c-border: oklch(0.8 0.01 120);
   --vp-c-gutter: var(--vp-c-divider);
-  --vp-c-brand-1: oklch(0.37 0.047 154);
-  --vp-c-brand-2: oklch(0.43 0.049 154);
-  --vp-c-brand-3: oklch(0.37 0.047 154);
-  --vp-c-brand-soft: oklch(0.9 0.026 145 / 0.55);
-  --vp-c-default-1: oklch(0.58 0.018 145);
-  --vp-c-default-2: oklch(0.86 0.012 110);
-  --vp-c-default-3: oklch(0.92 0.012 110);
-  --vp-c-default-soft: oklch(0.9 0.013 110 / 0.4);
-  --vp-button-brand-bg: var(--vp-c-brand-1);
-  --vp-button-brand-hover-bg: var(--vp-c-brand-2);
-  --vp-button-brand-text: oklch(0.99 0.005 95);
-  --vp-button-brand-hover-text: var(--vp-button-brand-text);
+  --vp-c-brand-1: var(--fold-ink);
+  --vp-c-brand-2: oklch(0.38 0.014 150);
+  --vp-c-brand-3: var(--fold-ink);
+  --vp-c-brand-soft: oklch(0.9 0.008 95 / 0.6);
+  --vp-c-default-1: oklch(0.58 0.012 145);
+  --vp-c-default-2: oklch(0.87 0.008 100);
+  --vp-c-default-3: oklch(0.92 0.008 100);
+  --vp-c-default-soft: oklch(0.9 0.008 100 / 0.45);
+  --vp-c-tip-1: var(--fold-ink);
+  --vp-c-tip-2: oklch(0.38 0.014 150);
+  --vp-c-tip-3: var(--fold-ink);
+  --vp-c-tip-soft: oklch(0.93 0.01 140 / 0.6);
+  --vp-button-brand-bg: var(--fold-ink);
+  --vp-button-brand-hover-bg: oklch(0.38 0.014 150);
+  --vp-button-brand-text: var(--fold-paper);
+  --vp-button-brand-hover-text: var(--fold-paper);
   --vp-code-block-bg: var(--vp-c-bg-alt);
   --vp-nav-bg-color: var(--vp-c-bg);
   --vp-sidebar-bg-color: var(--vp-c-bg-alt);
   --fold-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Ink ground, paper type for the documents in dark appearance (the landing never goes dark). */
 .dark {
-  --vp-c-bg: oklch(0.22 0.012 155);
-  --vp-c-bg-alt: oklch(0.195 0.011 155);
-  --vp-c-bg-elv: oklch(0.255 0.012 155);
-  --vp-c-bg-soft: oklch(0.275 0.015 155);
-  --vp-c-text-1: oklch(0.91 0.01 95);
-  --vp-c-text-2: oklch(0.76 0.014 130);
-  --vp-c-text-3: oklch(0.68 0.013 140);
-  --vp-c-divider: oklch(0.35 0.016 155);
-  --vp-c-border: oklch(0.45 0.021 150);
-  --vp-c-brand-1: oklch(0.78 0.067 154);
-  --vp-c-brand-2: oklch(0.84 0.052 154);
-  --vp-c-brand-3: oklch(0.66 0.066 154);
-  --vp-c-brand-soft: oklch(0.49 0.042 154 / 0.26);
-  --vp-c-default-1: oklch(0.64 0.018 145);
-  --vp-c-default-2: oklch(0.41 0.016 150);
-  --vp-c-default-3: oklch(0.32 0.014 150);
-  --vp-c-default-soft: oklch(0.4 0.02 145 / 0.3);
-  --vp-button-brand-text: oklch(0.22 0.015 155);
+  --fold-paper: oklch(0.19 0.012 155);
+  --fold-ink: oklch(0.93 0.008 95);
+  --vp-c-bg: var(--fold-paper);
+  --vp-c-bg-alt: oklch(0.165 0.011 155);
+  --vp-c-bg-elv: oklch(0.225 0.012 155);
+  --vp-c-bg-soft: oklch(0.24 0.012 155);
+  --vp-c-text-1: var(--fold-ink);
+  --vp-c-text-2: oklch(0.76 0.01 120);
+  --vp-c-text-3: oklch(0.62 0.01 130);
+  --vp-c-divider: oklch(0.32 0.012 155);
+  --vp-c-border: oklch(0.42 0.014 150);
+  --vp-c-brand-1: var(--fold-ink);
+  --vp-c-brand-2: oklch(0.82 0.01 100);
+  --vp-c-brand-3: oklch(0.75 0.01 110);
+  --vp-c-brand-soft: oklch(0.4 0.012 150 / 0.35);
+  --vp-c-default-1: oklch(0.64 0.012 140);
+  --vp-c-default-2: oklch(0.38 0.012 150);
+  --vp-c-default-3: oklch(0.3 0.012 150);
+  --vp-c-default-soft: oklch(0.4 0.014 145 / 0.3);
+  --vp-c-tip-1: var(--fold-ink);
+  --vp-c-tip-2: oklch(0.82 0.01 100);
+  --vp-c-tip-3: var(--fold-ink);
+  --vp-c-tip-soft: oklch(0.35 0.012 150 / 0.35);
+  --vp-button-brand-text: var(--fold-paper);
+  --vp-button-brand-hover-text: var(--fold-paper);
 }
 
+/* The wordmark: Fold in the numeral serif, as on the landing. */
 .VPNavBarTitle .title {
-  font-weight: 650;
-  letter-spacing: -0.03em;
+  font-family: var(--fold-font-numeral);
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.VPNavBar,
+.VPNavBar:not(.home.top) .content-body {
+  border-bottom-color: var(--vp-c-divider);
+}
+
+/* Links are ink with an underline, not a brand colour. */
+.vp-doc a {
+  color: var(--vp-c-text-1);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--vp-c-border);
+  text-underline-offset: 4px;
+}
+
+.vp-doc a:hover {
+  color: var(--vp-c-text-1);
+  text-decoration-color: currentColor;
 }
 
 .vp-doc {
@@ -64,292 +107,75 @@
   line-height: 1.85;
 }
 
-.vp-doc h1,
+.vp-doc h1 {
+  font-family: var(--fold-font-display);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
 .vp-doc h2,
 .vp-doc h3 {
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
+}
+
+.vp-doc h2 {
+  border-top-color: var(--vp-c-divider);
 }
 
 .vp-doc img {
   border-radius: 4px;
 }
 
-.vp-doc :is(a, button):focus-visible,
-.fold-home a:not(.fold-gallery-card):focus-visible {
-  outline: 2px solid var(--vp-c-brand-1);
+.vp-doc :is(a, button):focus-visible {
+  outline: 2px solid var(--vp-c-text-1);
   outline-offset: 5px;
 }
 
-.fold-home {
-  max-width: 1328px;
-  margin: 0 auto;
-  padding: 42px 40px 64px;
-  color: var(--vp-c-text-1);
+/* The landing: full width, paper only, no appearance switch (theme/index.mjs keeps the dark class off). */
+.fold-landing-page .VPNavBarAppearance,
+.fold-landing-page .VPNavScreenAppearance,
+.fold-landing-page .VPNavBarExtra,
+.fold-landing-page .VPLocalNav {
+  display: none !important;
 }
 
-.fold-intro {
-  padding-bottom: 28px;
-  border-bottom: 1px solid var(--vp-c-divider);
+.fold-landing-page {
+  color-scheme: light;
 }
 
-.fold-intro-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px 24px;
-}
-
-.fold-intro h1 {
-  margin: 0;
-  font-size: 36px;
-  font-weight: 600;
-  line-height: 1.4;
-  letter-spacing: -0.04em;
-}
-
-.fold-intro-copy {
-  max-width: 65ch;
-  margin: 13px 0 0;
-  color: var(--vp-c-text-2);
-  font-size: 17px;
-  line-height: 1.85;
-}
-
-.fold-read-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 40px;
-  color: var(--vp-c-brand-1);
-  font-size: 14px;
-  font-weight: 550;
-  text-decoration: underline;
-  text-decoration-color: var(--vp-c-border);
-  text-underline-offset: 5px;
-}
-
-.fold-read-link:hover {
-  color: var(--vp-c-brand-2);
-  text-decoration-color: currentColor;
-}
-
-.fold-stage {
-  margin: 13px 0 0;
-  color: var(--vp-c-text-2);
-  font-size: 12px;
-  line-height: 1.85;
-}
-
-.fold-stage > span {
-  margin-right: 10px;
-  color: var(--vp-c-text-1);
-  font-weight: 600;
-}
-
-.fold-home h2 {
-  margin: 0;
-  scroll-margin-top: 92px;
-  font-size: 23px;
-  font-weight: 600;
-  line-height: 1.45;
-  letter-spacing: -0.025em;
-}
-
-.fold-prototypes {
-  padding-top: 30px;
-}
-
-.fold-prototypes-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px 32px;
-}
-
-.fold-prototypes-heading p {
-  margin: 7px 0 0;
-  color: var(--vp-c-text-2);
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-.fold-prototypes .fold-gallery {
-  margin-top: 26px;
-}
-
-.fold-demo-note {
-  max-width: 75ch;
-  margin: 23px 0 0;
-  color: var(--vp-c-text-2);
-  font-size: 12px;
-  line-height: 1.9;
-}
-
-.fold-documents {
-  display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
-  gap: 32px 48px;
-  margin-top: 48px;
-  padding-top: 34px;
-  border-top: 1px solid var(--vp-c-divider);
-}
-
-.fold-section-intro {
-  margin: 10px 0 0;
-  color: var(--vp-c-text-2);
-  font-size: 14px;
-  line-height: 1.85;
-}
-
-.fold-document-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 40px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.fold-document-list li {
-  border-bottom: 1px solid var(--vp-c-divider);
-}
-
-.fold-document-list a {
-  display: block;
-  padding: 15px 0 17px;
-  color: inherit;
-  text-decoration: none;
-}
-
-.fold-document-list li:nth-child(-n + 2) a {
+.fold-landing-page .VPContent {
   padding-top: 0;
 }
 
-.fold-document-name {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  color: var(--vp-c-brand-1);
-  font-size: 16px;
-  font-weight: 550;
-  line-height: 1.5;
-}
-
-.fold-document-name > span {
-  font-weight: 400;
-  transition: transform 180ms var(--fold-ease);
-}
-
-.fold-document-description {
-  display: block;
-  margin-top: 6px;
-  color: var(--vp-c-text-2);
-  font-size: 13px;
-  line-height: 1.75;
-}
-
-.fold-document-list a:hover .fold-document-name {
-  text-decoration: underline;
-  text-underline-offset: 5px;
-}
-
-.fold-document-list a:hover .fold-document-name > span {
-  transform: translateX(3px);
-}
-
-@media (max-width: 959px) {
-  .fold-home {
-    padding: 34px 28px 48px;
-  }
-
-  .fold-prototypes-heading {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .fold-documents {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 24px;
+@media (min-width: 960px) {
+  .fold-landing-page .VPContent {
+    padding-top: var(--vp-nav-height);
   }
 }
 
-@media (max-width: 639px) {
-  .fold-home {
-    padding: 24px 20px 40px;
+/* The 文档 menu holds six reader groups: two columns on a desk, so it never grows taller than the screen and
+   turns into a scrolling box under the nav. */
+@media (min-width: 960px) {
+  .VPNavBarMenuGroup .VPMenu:has(.VPMenuGroup + .VPMenuGroup) {
+    max-height: none;
+    overflow: visible;
   }
 
-  .fold-intro {
-    padding-bottom: 21px;
+  .VPNavBarMenuGroup .VPMenu:has(.VPMenuGroup + .VPMenuGroup) .items {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(184px, 1fr));
+    column-gap: 20px;
   }
 
-  .fold-intro-heading {
-    gap: 5px 16px;
+  .VPNavBarMenuGroup .VPMenu .items > .VPMenuGroup {
+    margin: 0;
+    border-top: 0;
+    padding: 0 0 10px;
   }
 
-  .fold-intro h1 {
-    font-size: 28px;
-  }
-
-  .fold-read-link {
-    min-height: 36px;
-    font-size: 13px;
-  }
-
-  .fold-intro-copy {
-    margin-top: 10px;
-    font-size: 15px;
-  }
-
-  .fold-stage {
-    margin-top: 10px;
-    font-size: 12px;
-  }
-
-  .fold-stage > span {
-    margin-right: 7px;
-  }
-
-  .fold-home h2 {
-    font-size: 21px;
-  }
-
-  .fold-prototypes {
-    padding-top: 24px;
-  }
-
-  .fold-prototypes-heading {
-    gap: 7px;
-  }
-
-  .fold-prototypes .fold-gallery {
-    margin-top: 18px;
-  }
-
-  .fold-demo-note {
-    margin-top: 19px;
-  }
-
-  .fold-documents {
-    gap: 22px;
-    margin-top: 32px;
-    padding-top: 28px;
-  }
-
-  .fold-document-list {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .fold-document-list li:nth-child(2) a {
-    padding-top: 15px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .fold-home a,
-  .fold-document-name > span {
-    transition: none;
+  .VPNavBarMenuGroup .VPMenu .items > .VPMenuGroup:nth-child(n + 3) {
+    border-top: 1px solid var(--vp-c-divider);
+    padding-top: 10px;
   }
 }

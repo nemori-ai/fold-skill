@@ -1,0 +1,633 @@
+{
+  "about": "入口页上出现的每个数。由 scripts/landing-data.mjs 从演示回放现算（只读原型模块，规则与原型同名函数一致）；页面只读本文件，不加载回放。--check 核对本文件与回放一致。",
+  "dataset": {
+    "value": "composite",
+    "source": "prototype/data/select.mjs defaultDataset；人物化名、输入为化名改写的真实公开数据，家庭流由作者编写（datasets.composite.notice）"
+  },
+  "person": {
+    "value": "Jonas Berglund",
+    "source": "scenario.persona.name"
+  },
+  "frame": {
+    "id": {
+      "value": "f26",
+      "source": "scenario.frames[26].id"
+    },
+    "at": {
+      "value": "2026-08-16T00:00:00+02:00",
+      "source": "frames[26].at"
+    },
+    "title": {
+      "value": "车道下的铜管裂了",
+      "source": "frames[26].title"
+    },
+    "window": {
+      "value": [
+        "2026-08-15T12:00:00+02:00",
+        "2026-08-16T00:00:00+02:00"
+      ],
+      "source": "frames[26].signal.window（缺省时取上一帧 at 到本帧 at），即“你离开的 12 小时”"
+    }
+  },
+  "budget": {
+    "value": 64,
+    "source": "records[26].state.root.budget（prototype/engine.mjs BUDGET；每层 64 份，从不变）"
+  },
+  "beat1": {
+    "n": {
+      "value": 158,
+      "source": "frames[26].events.length；signal.received 同为 158"
+    },
+    "streams": {
+      "value": {
+        "work": 56,
+        "life": 35,
+        "community": 49,
+        "family": 16,
+        "subscription": 2
+      },
+      "source": "按 frames[26].events[].stream 计数；车道顺序 work / community / life / family / subscription"
+    },
+    "context": {
+      "twoWeeks": {
+        "value": 3196,
+        "source": "Σ frames[].events.length（corpus 的 3217 条是 Σ signal.received，含未收进演示的条目）"
+      },
+      "rounds": {
+        "value": 28,
+        "source": "phase 不是 initial 的帧数"
+      },
+      "perRound": {
+        "value": {
+          "min": 54,
+          "median": 108.5,
+          "max": 234
+        },
+        "source": "各轮 events.length 的最小、中位、最大"
+      }
+    },
+    "ticks": {
+      "value": [
+        [2,"work","you",2],
+        [3,"life","fold",-1],
+        [10,"community","fold",-1],
+        [11,"life","fold",-1],
+        [11,"life","fold",-1],
+        [16,"work","agent",3],
+        [19,"community","fold",-1],
+        [19,"life","fold",-1],
+        [20,"work","agent",3],
+        [25,"work","fold",-1],
+        [32,"work","you",2],
+        [33,"work","you",2],
+        [41,"family","you",0],
+        [52,"work","fold",-1],
+        [55,"community","fold",-1],
+        [62,"work","fold",-1],
+        [66,"work","you",1],
+        [70,"family","you",0],
+        [78,"work","you",1],
+        [79,"work","you",2],
+        [80,"family","you",0],
+        [81,"family","you",0],
+        [83,"family","you",0],
+        [98,"community","fold",-1],
+        [101,"family","you",0],
+        [102,"work","you",1],
+        [105,"family","you",0],
+        [108,"life","you",0],
+        [109,"community","fold",-1],
+        [115,"work","you",1],
+        [116,"life","you",0],
+        [117,"life","fold",-1],
+        [119,"life","you",0],
+        [120,"life","you",0],
+        [122,"community","fold",-1],
+        [123,"life","fold",-1],
+        [123,"subscription","fold",-1],
+        [125,"community","fold",-1],
+        [130,"community","fold",-1],
+        [140,"community","fold",-1],
+        [142,"work","fold",-1],
+        [142,"work","fold",-1],
+        [150,"family","you",0],
+        [158,"community","fold",-1],
+        [163,"community","fold",-1],
+        [168,"life","fold",-1],
+        [172,"life","fold",-1],
+        [172,"community","fold",-1],
+        [174,"life","fold",-1],
+        [183,"family","fold",-1],
+        [185,"life","fold",-1],
+        [189,"life","fold",-1],
+        [192,"work","you",1],
+        [198,"work","fold",-1],
+        [199,"community","fold",-1],
+        [200,"family","fold",-1],
+        [208,"community","fold",-1],
+        [211,"community","fold",-1],
+        [219,"community","fold",-1],
+        [226,"work","you",1],
+        [227,"work","fold",-1],
+        [228,"work","fold",-1],
+        [229,"work","fold",-1],
+        [229,"work","fold",-1],
+        [231,"work","you",1],
+        [232,"work","fold",-1],
+        [242,"family","agent",5],
+        [248,"work","fold",-1],
+        [249,"life","fold",-1],
+        [255,"life","fold",-1],
+        [256,"work","fold",-1],
+        [258,"life","fold",-1],
+        [269,"life","you",0],
+        [271,"life","you",0],
+        [280,"work","fold",-1],
+        [290,"work","fold",-1],
+        [291,"work","fold",-1],
+        [300,"family","agent",6],
+        [303,"life","fold",-1],
+        [304,"life","fold",-1],
+        [305,"life","fold",-1],
+        [306,"community","fold",-1],
+        [308,"work","fold",-1],
+        [312,"community","fold",-1],
+        [313,"life","you",0],
+        [317,"work","you",1],
+        [319,"community","fold",-1],
+        [325,"work","fold",-1],
+        [331,"subscription","fold",-1],
+        [331,"work","fold",-1],
+        [331,"work","fold",-1],
+        [339,"work","fold",-1],
+        [341,"community","fold",-1],
+        [345,"life","fold",-1],
+        [356,"work","you",1],
+        [357,"work","you",1],
+        [362,"family","fold",-1],
+        [370,"work","fold",-1],
+        [371,"family","fold",-1],
+        [371,"family","fold",-1],
+        [376,"life","fold",-1],
+        [387,"community","fold",-1],
+        [393,"community","fold",-1],
+        [396,"community","fold",-1],
+        [405,"work","fold",-1],
+        [409,"work","fold",-1],
+        [414,"community","fold",-1],
+        [414,"community","fold",-1],
+        [425,"life","you",0],
+        [430,"family","agent","kraftskiva-22-8"],
+        [433,"life","fold",-1],
+        [435,"community","fold",-1],
+        [437,"community","fold",-1],
+        [440,"life","fold",-1],
+        [442,"life","fold",-1],
+        [445,"community","fold",-1],
+        [446,"work","fold",-1],
+        [461,"life","fold",-1],
+        [466,"community","fold",-1],
+        [474,"community","fold",-1],
+        [482,"community","fold",-1],
+        [484,"life","fold",-1],
+        [489,"work","fold",-1],
+        [501,"work","fold",-1],
+        [502,"work","fold",-1],
+        [511,"life","fold",-1],
+        [557,"community","fold",-1],
+        [558,"life","fold",-1],
+        [560,"work","you",1],
+        [562,"life","fold",-1],
+        [565,"community","fold",-1],
+        [574,"community","fold",-1],
+        [588,"community","fold",-1],
+        [602,"community","fold",-1],
+        [604,"community","fold",-1],
+        [610,"work","fold",-1],
+        [613,"community","fold",-1],
+        [617,"community","fold",-1],
+        [617,"community","fold",-1],
+        [621,"community","fold",-1],
+        [621,"community","fold",-1],
+        [625,"work","fold",-1],
+        [632,"community","fold",-1],
+        [634,"work","you",2],
+        [636,"work","you",2],
+        [637,"work","you",1],
+        [645,"community","fold",-1],
+        [645,"community","fold",-1],
+        [651,"work","agent",3],
+        [661,"work","fold",-1],
+        [666,"community","fold",-1],
+        [671,"work","fold",-1],
+        [674,"work","fold",-1],
+        [677,"community","fold",-1],
+        [682,"work","fold",-1],
+        [694,"community","fold",-1],
+        [714,"work","fold",-1],
+        [718,"community","fold",-1]
+      ],
+      "source": "每条输入一项 [距窗口起点的分钟, stream, 去向 you|agent|fold, 落进的条目在 beat2.segments 里的下标；-1 = 没落进任何一件；字符串 = 落进了本轮离开根层的条目（见 beat2.gone）]；按时间排序；去向的规则同 variants/inflow.mjs inputsOf 与 variants/duo.mjs census"
+    }
+  },
+  "beat2": {
+    "adopted": {
+      "value": 40,
+      "source": "inputsOf(26).list 里 target 不为空的条数 = disposition used 的条数 40"
+    },
+    "toYou": {
+      "value": 34,
+      "source": "落进等你回应那几件的输入；E 折叠屏左页“34 条成了右页的 3 件”"
+    },
+    "cardsFed": {
+      "value": 3,
+      "source": "本轮有输入落进的等你回应的件数"
+    },
+    "toAgent": {
+      "value": 6,
+      "source": "落进 Agent 那边条目的输入；E 折叠屏“6 条进了 Agent 那边”"
+    },
+    "folded": {
+      "value": 118,
+      "source": "没落进任何一件的输入；E 折叠屏“118 条折掉”"
+    },
+    "foldedBy": {
+      "value": {
+        "deferred": 84,
+        "noise": 31,
+        "duplicate": 3
+      },
+      "source": "folded 按 disposition 拆分（deferred 暂缓 / noise 噪音 / duplicate 重复）"
+    },
+    "segments": {
+      "value": [
+        {
+          "id": "driveway-wet",
+          "title": "车道下铜管裂，周一前定修法",
+          "turn": "you",
+          "before": 12,
+          "share": 24,
+          "weight": "critical",
+          "due": "2026-08-17T08:00:00.000Z"
+        },
+        {
+          "id": "issue-13587",
+          "title": "#13587重开，修复#13596待你审",
+          "turn": "you",
+          "before": 1,
+          "share": 6,
+          "weight": "normal",
+          "due": null
+        },
+        {
+          "id": "pr-reviews-0814",
+          "title": "3个旧PR待审，15日合#13591",
+          "turn": "you",
+          "before": 6,
+          "share": 6,
+          "weight": "normal",
+          "due": null
+        },
+        {
+          "id": "ci-urls-master",
+          "title": "master仍红：Windows持续失败",
+          "turn": "agent",
+          "before": 6,
+          "share": 6,
+          "weight": "normal",
+          "due": null
+        },
+        {
+          "id": "smilla-vet",
+          "title": "Smilla已减量，24日9:30复诊",
+          "turn": "agent",
+          "before": 12,
+          "share": 6,
+          "weight": "normal",
+          "due": "2026-08-24T07:30:00.000Z"
+        },
+        {
+          "id": "kajsa-bike-brake",
+          "title": "Kajsa提醒修旧车刹车，新车18日到",
+          "turn": "agent",
+          "before": 1,
+          "share": 3,
+          "weight": "low",
+          "due": null
+        },
+        {
+          "id": "mamma-stambyte",
+          "title": "Mamma选疏散公寓，Ulrika问进展",
+          "turn": "agent",
+          "before": 3,
+          "share": 3,
+          "weight": "low",
+          "due": null
+        },
+        {
+          "id": "issue-13586",
+          "title": "#13586上传卡在65KB，未能复现",
+          "turn": "agent",
+          "before": 3,
+          "share": 3,
+          "weight": "low",
+          "due": null
+        },
+        {
+          "id": "ture-pickup-0812",
+          "title": "Ture已退烧再休一天，记得报vab",
+          "turn": "you",
+          "before": 3,
+          "share": 1,
+          "weight": "trace",
+          "due": null
+        },
+        {
+          "id": "signe-school-start",
+          "title": "Signe 19日开学：签同意书、查头虱",
+          "turn": "you",
+          "before": 1,
+          "share": 1,
+          "weight": "trace",
+          "due": "2026-08-18T21:59:00.000Z"
+        },
+        {
+          "id": "signe-comic-talk",
+          "title": "Signe看的漫画有裸露图，12日谈",
+          "turn": "agent",
+          "before": 1,
+          "share": 1,
+          "weight": "trace",
+          "due": "2026-08-12T21:59:00.000Z"
+        },
+        {
+          "id": "fan-delivery-0815",
+          "title": "台扇应已送到信箱",
+          "turn": "agent",
+          "before": 1,
+          "share": 1,
+          "weight": "trace",
+          "due": null
+        },
+        {
+          "id": "issue-13466",
+          "title": "#13466另一问题已确认，待另开issue",
+          "turn": "agent",
+          "before": 1,
+          "share": 1,
+          "weight": "trace",
+          "due": null
+        },
+        {
+          "id": "release-8-22-rc1",
+          "title": "8.22.0-rc1已发，9月2日发布",
+          "turn": "agent",
+          "before": 1,
+          "share": 1,
+          "weight": "trace",
+          "due": null
+        }
+      ],
+      "source": "records[26].state.root.items 按 rank；before 是 records[25] 的份额（新出现的为 0）；turn = 此刻是否有 currentAsk（variants/shared.mjs）；due 取问题的 due_at，没有时取条目的 due_at（forms/watch.mjs dueOf）"
+    },
+    "gone": {
+      "value": [
+        {
+          "id": "kraftskiva-22-8",
+          "title": "Kräftskiva报名12日已截止未回",
+          "status": "withdrawn",
+          "mergedInto": null
+        }
+      ],
+      "source": "本轮有输入落进、但在 f26 已不在根层的条目（records[26].snapshot.items）；E 折叠屏把这类输入也算进“Agent 那边”"
+    },
+    "blank": {
+      "value": {
+        "before": 12,
+        "now": 1
+      },
+      "source": "64 − state.root.used，f25 与 f26"
+    },
+    "account": {
+      "value": {
+        "blank": 1,
+        "agent": 25,
+        "agentItems": 9,
+        "you": 38,
+        "youItems": 5,
+        "used": 63,
+        "items": 14
+      },
+      "source": "与 E 折叠屏份额带下的账同一算法（variants/duo.mjs shares）：空余 + Agent 那边 + 等你 = 64；used 是 state.root.used（原版树图“已用 63 / 64”）"
+    },
+    "yielded": {
+      "value": [
+        {
+          "id": "driveway-wet",
+          "before": 12,
+          "share": 24,
+          "delta": 12
+        },
+        {
+          "id": "issue-13587",
+          "before": 1,
+          "share": 6,
+          "delta": 5
+        },
+        {
+          "id": "smilla-vet",
+          "before": 12,
+          "share": 6,
+          "delta": -6
+        },
+        {
+          "id": "kajsa-bike-brake",
+          "before": 1,
+          "share": 3,
+          "delta": 2
+        },
+        {
+          "id": "ture-pickup-0812",
+          "before": 3,
+          "share": 1,
+          "delta": -2
+        }
+      ],
+      "source": "本轮份额变了的条目：f25 → f26 的份数与差"
+    }
+  },
+  "dueAhead": {
+    "value": [
+      {
+        "id": "driveway-wet",
+        "you": true,
+        "hours": 34
+      },
+      {
+        "id": "signe-school-start",
+        "you": true,
+        "hours": 72
+      },
+      {
+        "id": "smilla-vet",
+        "you": false,
+        "hours": 202
+      }
+    ],
+    "source": "f26 此刻之后才到期的条目，按先后；hours 是距 frames[26].at 的小时数（B 时间展开的“此刻线之后”）"
+  },
+  "beat3": {
+    "open": {
+      "value": 5,
+      "source": "f26 有 currentAsk 的根层条目数；D 手机首页“5 件等你回应”"
+    },
+    "fresh": {
+      "value": [
+        "主水管：挖开换还是免挖？",
+        "#13596 计时修复：批准？"
+      ],
+      "source": "askLife：f26 开着而 f25 没开的问题；D“新问题 2 个”"
+    },
+    "urgent": {
+      "value": [
+        "主水管：挖开换还是免挖？"
+      ],
+      "source": "forms/watch.mjs isUrgent：24 小时内到期或档位 critical/high；腕上一瞥“1 件要紧”"
+    },
+    "lead": {
+      "value": {
+        "item": "driveway-wet",
+        "short": "主水管：挖开换还是免挖？",
+        "prompt": "车道下的主水管：整根挖开换（约 6.8 万克朗），还是免挖穿新管（约 4.1 万）？",
+        "due": "2026-08-17T10:00:00+02:00",
+        "actions": [
+          "整根挖开换",
+          "免挖穿新管"
+        ],
+        "share": 24,
+        "weight": "critical",
+        "inputs": 16
+      },
+      "source": "frames[26].asks 里这一件的 short / prompt / due_at / actions；share 与 weight 取 state；inputs 是本轮落进它的条数"
+    },
+    "asks": {
+      "value": [
+        {
+          "item": "driveway-wet",
+          "short": "主水管：挖开换还是免挖？",
+          "expects": "choose",
+          "share": 24,
+          "taps": 1
+        },
+        {
+          "item": "issue-13587",
+          "short": "#13596 计时修复：批准？",
+          "expects": "approve",
+          "share": 6,
+          "taps": 1
+        },
+        {
+          "item": "pr-reviews-0814",
+          "short": "三个旧 PR 推到哪天？",
+          "expects": "defer",
+          "share": 6,
+          "taps": 2
+        },
+        {
+          "item": "ture-pickup-0812",
+          "short": "VAB 报了吗？",
+          "expects": "confirm",
+          "share": 1,
+          "taps": 1
+        },
+        {
+          "item": "signe-school-start",
+          "short": "Signe 的同意书签了吗？",
+          "expects": "confirm",
+          "share": 1,
+          "taps": 1
+        }
+      ],
+      "source": "f26 开着的问题，按 rank；taps 按 forms/trays.mjs 的规则"
+    },
+    "taps": {
+      "value": 6,
+      "source": "回应托盘“6 下答完 5 个问题”"
+    },
+    "loop": {
+      "responses": {
+        "value": 32,
+        "source": "两周里带 feedback[].ask 的输入条数：你回应了一个登记的问题"
+      },
+      "via": {
+        "value": [
+          "source"
+        ],
+        "source": "feedback[].via 的取值：全部是 source，即在原处回应，Agent 下一轮读到"
+      },
+      "byChannel": {
+        "value": {
+          "GitHub": 25,
+          "问答": 3,
+          "iMessage": 3,
+          "Telefon": 1
+        },
+        "source": "这些回应发生在哪里：event.channel 第一段（Telefon 是电话）"
+      },
+      "asksRegistered": {
+        "value": 26,
+        "source": "两周登记过的不同问题数"
+      },
+      "closedAfterResponse": {
+        "value": 11,
+        "source": "askLife.answered 累计：你回应后、下一次整理时关上的问题"
+      },
+      "example": {
+        "value": {
+          "frame": "f23",
+          "ask": "Smilla 多吃了药：打诊所？",
+          "item": "smilla-vet",
+          "share": [
+            24,
+            12
+          ],
+          "response": {
+            "at": "2026-08-14T08:02:00+02:00",
+            "stream": "family",
+            "channel": "Telefon",
+            "text": "Utgående samtal till Djurkliniken Kvarnbacken · 6 min"
+          }
+        },
+        "source": "让出份额最多的一次关闭：share 是关闭前后两帧这件的份额"
+      }
+    }
+  },
+  "twoWeeks": {
+    "total": {
+      "value": 3196,
+      "source": "Σ frames[].events.length"
+    },
+    "used": {
+      "value": 1177,
+      "source": "disposition === used 的条数"
+    },
+    "byDisposition": {
+      "value": {
+        "used": 1177,
+        "noise": 864,
+        "deferred": 1117,
+        "duplicate": 33,
+        "unjudged": 5
+      },
+      "source": "按 event.disposition 计数"
+    },
+    "roundsAtFull": {
+      "value": 13,
+      "source": "state.root.used === 64 的轮数；两周小倍数“13 次用满 64 份”"
+    },
+    "maxItems": {
+      "value": 26,
+      "source": "同一时刻根层最多的件数"
+    }
+  }
+}

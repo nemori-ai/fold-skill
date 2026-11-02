@@ -1,11 +1,6 @@
 <script setup>
 import { openPrototype, prototypes } from './prototypes.mjs'
 
-defineProps({
-  // `compact` fills the nav panel (seven across at 1440 wide); `large` is the home page's three across.
-  size: { type: String, default: 'compact' },
-})
-
 // A plain click opens the viewer in place; modified and middle clicks keep the link's own behaviour.
 function open(event, prototype) {
   if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
@@ -15,7 +10,7 @@ function open(event, prototype) {
 </script>
 
 <template>
-  <ul class="fold-gallery" :class="`is-${size}`">
+  <ul class="fold-gallery">
     <li v-for="prototype in prototypes" :key="prototype.id">
       <a class="fold-gallery-card" :href="prototype.href" target="_self" @click="open($event, prototype)">
         <span class="fold-gallery-thumb">
@@ -156,58 +151,10 @@ function open(event, prototype) {
   box-shadow: 0 14px 30px -12px oklch(0 0 0 / 0.7);
 }
 
-.fold-gallery.is-large {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 36px 28px;
-}
-
-.fold-gallery.is-large .fold-gallery-thumb {
-  border-radius: 8px;
-}
-
-.fold-gallery.is-large .fold-gallery-text {
-  padding-top: 12px;
-}
-
-.fold-gallery.is-large .fold-gallery-name {
-  gap: 9px;
-  font-size: 16px;
-}
-
-.fold-gallery.is-large .fold-gallery-no {
-  font-size: 12px;
-}
-
-.fold-gallery.is-large .fold-gallery-tag {
-  font-size: 12px;
-}
-
-.fold-gallery.is-large .fold-gallery-line {
-  margin-top: 3px;
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-@media (max-width: 959px) {
-  .fold-gallery.is-large {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 28px 20px;
-  }
-}
-
 @media (max-width: 639px) {
-  .fold-gallery,
-  .fold-gallery.is-large {
+  .fold-gallery {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px 12px;
-  }
-
-  .fold-gallery.is-large .fold-gallery-name {
-    font-size: 14px;
-  }
-
-  .fold-gallery.is-large .fold-gallery-line {
-    font-size: 12px;
   }
 }
 

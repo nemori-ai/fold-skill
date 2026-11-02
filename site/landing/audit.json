@@ -1,0 +1,2124 @@
+{
+ "about": "31 个原型的适配审计：逐个直接打开 href（整页，不是嵌入），在 390×844（手机，DPR 2，移动模拟 + 触屏）、820×1180 与 1180×820（iPad，移动模拟 + 触屏）、1440×900（桌面）下截图并量版面。scores 为 1–5，口径见 spec.md「打分口径」；measured 是截图时在页面里量到的事实；shot 是截图在审计目录里的相对路径（截图不入库，见 spec.md）。2026-11-02，原型取自 main fa99395。",
+ "method": {
+  "open": "Page.navigate 到 http://127.0.0.1:4173 上的 href（去掉 /prototype 前缀），等 load 后 5 秒截第一张，再按一下 Shift（讲一遍会被任意键跳过）等 2.2 秒截第二张；measured 取第二张时的页面。",
+  "layoutWidth": "页面实际排版宽度（innerWidth）。大于设备宽时手机浏览器整页缩小，scale = 设备宽 / 排版宽。",
+  "minFontPx": "视口内可见文字的最小字号 × scale（SVG 文字按屏幕变换折算）；canvas 上画的字不计。",
+  "targets": "视口内可见的 button、a[href]、[role=button]、input、select、summary；targetsUnder24 是短边小于 24px 的个数（未乘 scale，缩放后实际更小）。"
+ },
+ "showcase": [
+  "d",
+  "trays",
+  "watch",
+  "duo",
+  "multiples",
+  "b"
+ ],
+ "gallery": [
+  "original",
+  "pulse",
+  "a",
+  "chain",
+  "c",
+  "morph",
+  "dial",
+  "timing",
+  "peak",
+  "yield",
+  "age",
+  "notation",
+  "tug",
+  "lineage",
+  "provenance",
+  "khipu",
+  "respond",
+  "chat",
+  "radio",
+  "departures",
+  "blame",
+  "frontpage",
+  "receipt",
+  "strips",
+  "orb"
+ ],
+ "prototypes": [
+  {
+   "id": "original",
+   "no": "01",
+   "name": "原版树图",
+   "href": "/prototype/?frame=26",
+   "phoneOpen": "/prototype/?frame=26",
+   "situation": "坐在电脑前掌握全局，顺手处理评审",
+   "scores": {
+    "phone": 2,
+    "pad": 3,
+    "quality": 5,
+    "rep": 4
+   },
+   "evidence": "桌面与 iPad 横完整；iPad 竖三栏挤；手机版面 448 宽缩到 87%，纵向 8.9 屏，树图被压成一窄条",
+   "place": {
+    "gallery": 1
+   },
+   "phoneTreatment": "hint",
+   "measured": {
+    "phone": {
+     "layoutWidth": 448,
+     "scale": 0.87,
+     "minFontPx": 0,
+     "textUnder10": 8,
+     "targets": 39,
+     "targetsUnder24": 18,
+     "screens": 8.9,
+     "errors": 0,
+     "shot": "phone/original.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 0,
+     "textUnder10": 4,
+     "targets": 62,
+     "targetsUnder24": 19,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/original.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 0,
+     "textUnder10": 2,
+     "targets": 59,
+     "targetsUnder24": 19,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/original.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 0,
+     "textUnder10": 2,
+     "targets": 61,
+     "targetsUnder24": 19,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/original.png"
+    }
+   }
+  },
+  {
+   "id": "a",
+   "no": "02",
+   "name": "A 空间排布",
+   "href": "/prototype/?variant=a&frame=26",
+   "phoneOpen": "/prototype/?variant=a&frame=26",
+   "situation": "桌前，生活急事要当场二选一",
+   "scores": {
+    "phone": 4,
+    "pad": 4,
+    "quality": 4,
+    "rep": 3
+   },
+   "evidence": "手机单列贴合，卡里能直接二选一；Pad 竖 1.5 屏、横完整；场景与 D 重叠",
+   "place": {
+    "gallery": 3
+   },
+   "phoneTreatment": "open",
+   "measured": {
+    "phone": {
+     "layoutWidth": 390,
+     "scale": 1,
+     "minFontPx": 10,
+     "textUnder10": 0,
+     "targets": 30,
+     "targetsUnder24": 12,
+     "screens": 2.1,
+     "errors": 0,
+     "shot": "phone/a.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 0,
+     "textUnder10": 4,
+     "targets": 39,
+     "targetsUnder24": 13,
+     "screens": 1.5,
+     "errors": 0,
+     "shot": "padP/a.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 0,
+     "textUnder10": 4,
+     "targets": 48,
+     "targetsUnder24": 14,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/a.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 0,
+     "textUnder10": 3,
+     "targets": 49,
+     "targetsUnder24": 14,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/a.png"
+    }
+   }
+  },
+  {
+   "id": "b",
+   "no": "03",
+   "name": "B 时间展开",
+   "href": "/prototype/?variant=b&frame=26",
+   "phoneOpen": "/prototype/?variant=b&frame=26",
+   "situation": "期限落在此刻之后的哪里，谁先到",
+   "scores": {
+    "phone": 3,
+    "pad": 4,
+    "quality": 4,
+    "rep": 4
+   },
+   "evidence": "手机贴合但密，57 个目标里 18 个小于 24px、最小字 9.5px；Pad 横竖都完整",
+   "place": {
+    "showcase": 6
+   },
+   "phoneTreatment": "open",
+   "measured": {
+    "phone": {
+     "layoutWidth": 390,
+     "scale": 1,
+     "minFontPx": 9.5,
+     "textUnder10": 3,
+     "targets": 57,
+     "targetsUnder24": 18,
+     "screens": 1,
+     "errors": 0,
+     "shot": "phone/b.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 9,
+     "textUnder10": 6,
+     "targets": 76,
+     "targetsUnder24": 25,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/b.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 9,
+     "textUnder10": 6,
+     "targets": 69,
+     "targetsUnder24": 21,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/b.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 9,
+     "textUnder10": 6,
+     "targets": 71,
+     "targetsUnder24": 20,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/b.png"
+    }
+   }
+  },
+  {
+   "id": "c",
+   "no": "04",
+   "name": "C 流动形态",
+   "href": "/prototype/?variant=c&frame=25",
+   "phoneOpen": "/prototype/?variant=c&frame=25",
+   "situation": "可以推后的事沉下去，到点浮起",
+   "scores": {
+    "phone": 4,
+    "pad": 4,
+    "quality": 4,
+    "rep": 3
+   },
+   "evidence": "手机贴合，11 个目标全部 ≥24px；液滴靠 WebGL，概念强于读数",
+   "place": {
+    "gallery": 5
+   },
+   "phoneTreatment": "open",
+   "measured": {
+    "phone": {
+     "layoutWidth": 390,
+     "scale": 1,
+     "minFontPx": 10,
+     "textUnder10": 0,
+     "targets": 11,
+     "targetsUnder24": 0,
+     "screens": 2.6,
+     "errors": 0,
+     "shot": "phone/c.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 9,
+     "textUnder10": 1,
+     "targets": 16,
+     "targetsUnder24": 0,
+     "screens": 1.7,
+     "errors": 0,
+     "shot": "padP/c.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 9,
+     "textUnder10": 1,
+     "targets": 21,
+     "targetsUnder24": 5,
+     "screens": 1.2,
+     "errors": 0,
+     "shot": "padL/c.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 9,
+     "textUnder10": 1,
+     "targets": 28,
+     "targetsUnder24": 12,
+     "screens": 1.1,
+     "errors": 0,
+     "shot": "desk/c.png"
+    }
+   }
+  },
+  {
+   "id": "d",
+   "no": "05",
+   "name": "D 手机首页",
+   "href": "/prototype/?variant=d&frame=26",
+   "phoneOpen": "/prototype/?variant=d&frame=26",
+   "situation": "离开半天回来，掏出手机一分钟：先答最急的",
+   "scores": {
+    "phone": 5,
+    "pad": 4,
+    "quality": 5,
+    "rep": 5
+   },
+   "evidence": "390 宽原生贴合，最小字 11px，21 个点按目标只有 1 个小于 24px；Pad 上是手机框加说明栏，也完整",
+   "place": {
+    "showcase": 1
+   },
+   "phoneTreatment": "open",
+   "measured": {
+    "phone": {
+     "layoutWidth": 390,
+     "scale": 1,
+     "minFontPx": 11,
+     "textUnder10": 0,
+     "targets": 21,
+     "targetsUnder24": 1,
+     "screens": 1.6,
+     "errors": 0,
+     "shot": "phone/d.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 9,
+     "textUnder10": 2,
+     "targets": 34,
+     "targetsUnder24": 2,
+     "screens": 1.1,
+     "errors": 0,
+     "shot": "padP/d.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 9,
+     "textUnder10": 2,
+     "targets": 31,
+     "targetsUnder24": 1,
+     "screens": 1.1,
+     "errors": 0,
+     "shot": "padL/d.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 9,
+     "textUnder10": 2,
+     "targets": 31,
+     "targetsUnder24": 1,
+     "screens": 1.1,
+     "errors": 0,
+     "shot": "desk/d.png"
+    }
+   }
+  },
+  {
+   "id": "duo",
+   "no": "06",
+   "name": "E 折叠屏",
+   "href": "/prototype/?variant=duo&frame=26",
+   "phoneOpen": "/prototype/?variant=duo&frame=26",
+   "situation": "翻开折叠屏或横放 iPad：这几张卡是从哪来的",
+   "scores": {
+    "phone": 2,
+    "pad": 4,
+    "quality": 5,
+    "rep": 5
+   },
+   "evidence": "iPad 横与桌面是全尺寸的展开机身（最好的一屏）；iPad 竖机身只画在页底；手机上机身缩到约 350px，123 个目标里 111 个小于 24px",
+   "place": {
+    "showcase": 4
+   },
+   "phoneTreatment": "hint",
+   "measured": {
+    "phone": {
+     "layoutWidth": 390,
+     "scale": 1,
+     "minFontPx": 11,
+     "textUnder10": 0,
+     "targets": 123,
+     "targetsUnder24": 111,
+     "screens": 1,
+     "errors": 0,
+     "shot": "phone/duo.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 9,
+     "textUnder10": 1,
+     "targets": 52,
+     "targetsUnder24": 35,
+     "screens": 1.1,
+     "errors": 0,
+     "shot": "padP/duo.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 9,
+     "textUnder10": 1,
+     "targets": 74,
+     "targetsUnder24": 18,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/duo.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 9,
+     "textUnder10": 1,
+     "targets": 53,
+     "targetsUnder24": 3,
+     "screens": 1.2,
+     "errors": 0,
+     "shot": "desk/duo.png"
+    }
+   }
+  },
+  {
+   "id": "watch",
+   "no": "07",
+   "name": "腕上一瞥",
+   "href": "/prototype/forms/watch.html?frame=26",
+   "phoneOpen": "/prototype/forms/watch.html?frame=26&card=0",
+   "situation": "会议间隙抬腕两秒：要不要现在掏手机",
+   "scores": {
+    "phone": 3,
+    "pad": 4,
+    "quality": 5,
+    "rep": 5
+   },
+   "evidence": "手机上默认概念卡盖住表盘；带 card=0 打开时版面 520 宽缩到 75%，表盘与“1 件要紧”清楚；Pad 竖两只表、横三只表",
+   "place": {
+    "showcase": 3
+   },
+   "phoneTreatment": "open",
+   "measured": {
+    "phone": {
+     "layoutWidth": 520,
+     "scale": 0.75,
+     "minFontPx": 8.3,
+     "textUnder10": 0,
+     "targets": 42,
+     "targetsUnder24": 40,
+     "screens": 1.3,
+     "errors": 0,
+     "shot": "phone/watch.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 11,
+     "textUnder10": 0,
+     "targets": 49,
+     "targetsUnder24": 45,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/watch.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 11,
+     "textUnder10": 0,
+     "targets": 49,
+     "targetsUnder24": 41,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/watch.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 11,
+     "textUnder10": 0,
+     "targets": 53,
+     "targetsUnder24": 45,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/watch.png"
+    }
+   },
+   "measuredCard0": [
+    {
+     "viewport": "phone",
+     "layoutWidth": 520,
+     "shot": "extra/watch-card0-phone.png"
+    },
+    {
+     "viewport": "padP",
+     "layoutWidth": 820,
+     "shot": "extra/watch-card0-padP.png"
+    }
+   ]
+  },
+  {
+   "id": "multiples",
+   "no": "08",
+   "name": "两周小倍数",
+   "href": "/prototype/forms/multiples.html?frame=26",
+   "phoneOpen": "/prototype/forms/multiples.html?frame=26&card=0",
+   "situation": "周末复盘：两周注意力怎样成块挪动，不作答",
+   "scores": {
+    "phone": 3,
+    "pad": 4,
+    "quality": 4,
+    "rep": 4
+   },
+   "evidence": "iPad 横与桌面完整；手机带 card=0 版面 534 宽缩到 73%，98/111 个目标小于 24px，只适合看",
+   "place": {
+    "showcase": 5
+   },
+   "phoneTreatment": "open",
+   "measured": {
+    "phone": {
+     "layoutWidth": 534,
+     "scale": 0.73,
+     "minFontPx": 6.9,
+     "textUnder10": 29,
+     "targets": 111,
+     "targetsUnder24": 98,
+     "screens": 1.4,
+     "errors": 0,
+     "shot": "phone/multiples.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 9.5,
+     "textUnder10": 29,
+     "targets": 122,
+     "targetsUnder24": 107,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/multiples.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 9.5,
+     "textUnder10": 29,
+     "targets": 122,
+     "targetsUnder24": 107,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/multiples.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 9.5,
+     "textUnder10": 29,
+     "targets": 122,
+     "targetsUnder24": 107,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/multiples.png"
+    }
+   },
+   "measuredCard0": [
+    {
+     "viewport": "phone",
+     "layoutWidth": 534,
+     "shot": "extra/multiples-card0-phone.png"
+    },
+    {
+     "viewport": "padP",
+     "layoutWidth": 820,
+     "shot": "extra/multiples-card0-padP.png"
+    }
+   ]
+  },
+  {
+   "id": "lineage",
+   "no": "09",
+   "name": "身份线",
+   "href": "/prototype/forms/sketches/lineage.html",
+   "phoneOpen": "/prototype/forms/sketches/lineage.html",
+   "situation": "追一件事的来龙去脉：改名、撤下、并入",
+   "scores": {
+    "phone": 1,
+    "pad": 3,
+    "quality": 3,
+    "rep": 3
+   },
+   "evidence": "版面 1101 宽：手机 35%，最小字 3px；iPad 横贴合",
+   "place": {
+    "gallery": 14
+   },
+   "phoneTreatment": "desk-only",
+   "measured": {
+    "phone": {
+     "layoutWidth": 1101,
+     "scale": 0.35,
+     "minFontPx": 3,
+     "textUnder10": 143,
+     "targets": 15,
+     "targetsUnder24": 1,
+     "screens": 2.8,
+     "errors": 0,
+     "shot": "phone/lineage.png"
+    },
+    "padP": {
+     "layoutWidth": 1100,
+     "scale": 0.75,
+     "minFontPx": 6.4,
+     "textUnder10": 143,
+     "targets": 15,
+     "targetsUnder24": 1,
+     "screens": 1.3,
+     "errors": 0,
+     "shot": "padP/lineage.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 8.5,
+     "textUnder10": 143,
+     "targets": 15,
+     "targetsUnder24": 1,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/lineage.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 8.5,
+     "textUnder10": 119,
+     "targets": 15,
+     "targetsUnder24": 1,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/lineage.png"
+    }
+   }
+  },
+  {
+   "id": "timing",
+   "no": "10",
+   "name": "回应时序",
+   "href": "/prototype/forms/sketches/timing.html",
+   "phoneOpen": "/prototype/forms/sketches/timing.html",
+   "situation": "我欠了谁什么回应，开了多久",
+   "scores": {
+    "phone": 1,
+    "pad": 3,
+    "quality": 4,
+    "rep": 4
+   },
+   "evidence": "版面 1101 宽：手机 35%，iPad 竖 74%，iPad 横贴合",
+   "place": {
+    "gallery": 8
+   },
+   "phoneTreatment": "desk-only",
+   "measured": {
+    "phone": {
+     "layoutWidth": 1101,
+     "scale": 0.35,
+     "minFontPx": 3,
+     "textUnder10": 27,
+     "targets": 20,
+     "targetsUnder24": 15,
+     "screens": 2.8,
+     "errors": 0,
+     "shot": "phone/timing.png"
+    },
+    "padP": {
+     "layoutWidth": 1100,
+     "scale": 0.75,
+     "minFontPx": 6.4,
+     "textUnder10": 27,
+     "targets": 20,
+     "targetsUnder24": 15,
+     "screens": 1.3,
+     "errors": 0,
+     "shot": "padP/timing.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 8.5,
+     "textUnder10": 27,
+     "targets": 20,
+     "targetsUnder24": 15,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/timing.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 8.5,
+     "textUnder10": 27,
+     "targets": 20,
+     "targetsUnder24": 15,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/timing.png"
+    }
+   }
+  },
+  {
+   "id": "provenance",
+   "no": "11",
+   "name": "来源矩阵",
+   "href": "/prototype/forms/sketches/provenance.html",
+   "phoneOpen": "/prototype/forms/sketches/provenance.html",
+   "situation": "某件事背后是谁在推动",
+   "scores": {
+    "phone": 1,
+    "pad": 2,
+    "quality": 3,
+    "rep": 3
+   },
+   "evidence": "版面 1440 宽：手机 27%，608 处文字里 141 处小于 10px",
+   "place": {
+    "gallery": 15
+   },
+   "phoneTreatment": "desk-only",
+   "measured": {
+    "phone": {
+     "layoutWidth": 1440,
+     "scale": 0.27,
+     "minFontPx": 2.5,
+     "textUnder10": 141,
+     "targets": 27,
+     "targetsUnder24": 22,
+     "screens": 3.7,
+     "errors": 0,
+     "shot": "phone/provenance.png"
+    },
+    "padP": {
+     "layoutWidth": 1441,
+     "scale": 0.57,
+     "minFontPx": 5.2,
+     "textUnder10": 94,
+     "targets": 27,
+     "targetsUnder24": 22,
+     "screens": 1.8,
+     "errors": 0,
+     "shot": "padP/provenance.png"
+    },
+    "padL": {
+     "layoutWidth": 1441,
+     "scale": 0.82,
+     "minFontPx": 7.5,
+     "textUnder10": 45,
+     "targets": 27,
+     "targetsUnder24": 22,
+     "screens": 1.2,
+     "errors": 0,
+     "shot": "padL/provenance.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 9.2,
+     "textUnder10": 40,
+     "targets": 27,
+     "targetsUnder24": 22,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/provenance.png"
+    }
+   }
+  },
+  {
+   "id": "yield",
+   "no": "12",
+   "name": "让位图",
+   "href": "/prototype/forms/sketches/yield.html",
+   "phoneOpen": "/prototype/forms/sketches/yield.html",
+   "situation": "一件事变大，份额从谁那里来",
+   "scores": {
+    "phone": 1,
+    "pad": 2,
+    "quality": 4,
+    "rep": 4
+   },
+   "evidence": "版面 1440 宽：手机 27%，iPad 竖 56%、横 81%；103/109 个目标小于 24px",
+   "place": {
+    "gallery": 10
+   },
+   "phoneTreatment": "desk-only",
+   "measured": {
+    "phone": {
+     "layoutWidth": 1440,
+     "scale": 0.27,
+     "minFontPx": 2.3,
+     "textUnder10": 35,
+     "targets": 109,
+     "targetsUnder24": 103,
+     "screens": 3.7,
+     "errors": 0,
+     "shot": "phone/yield.png"
+    },
+    "padP": {
+     "layoutWidth": 1441,
+     "scale": 0.57,
+     "minFontPx": 4.8,
+     "textUnder10": 35,
+     "targets": 109,
+     "targetsUnder24": 103,
+     "screens": 1.8,
+     "errors": 0,
+     "shot": "padP/yield.png"
+    },
+    "padL": {
+     "layoutWidth": 1441,
+     "scale": 0.82,
+     "minFontPx": 7,
+     "textUnder10": 35,
+     "targets": 101,
+     "targetsUnder24": 95,
+     "screens": 1.2,
+     "errors": 0,
+     "shot": "padL/yield.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 8.5,
+     "textUnder10": 35,
+     "targets": 101,
+     "targetsUnder24": 95,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/yield.png"
+    }
+   }
+  },
+  {
+   "id": "notation",
+   "no": "13",
+   "name": "批次记谱",
+   "href": "/prototype/forms/sketches/notation.html",
+   "phoneOpen": "/prototype/forms/sketches/notation.html",
+   "situation": "每一轮读了多少、丢了多少、动了几件",
+   "scores": {
+    "phone": 1,
+    "pad": 2,
+    "quality": 4,
+    "rep": 3
+   },
+   "evidence": "版面 1440 宽：手机 27%，最小字 2.3px；与入口页的概念叙述重叠",
+   "place": {
+    "gallery": 12
+   },
+   "phoneTreatment": "desk-only",
+   "measured": {
+    "phone": {
+     "layoutWidth": 1440,
+     "scale": 0.27,
+     "minFontPx": 2.3,
+     "textUnder10": 97,
+     "targets": 66,
+     "targetsUnder24": 62,
+     "screens": 3.7,
+     "errors": 0,
+     "shot": "phone/notation.png"
+    },
+    "padP": {
+     "layoutWidth": 1441,
+     "scale": 0.57,
+     "minFontPx": 4.8,
+     "textUnder10": 97,
+     "targets": 66,
+     "targetsUnder24": 62,
+     "screens": 1.8,
+     "errors": 0,
+     "shot": "padP/notation.png"
+    },
+    "padL": {
+     "layoutWidth": 1441,
+     "scale": 0.82,
+     "minFontPx": 7,
+     "textUnder10": 97,
+     "targets": 50,
+     "targetsUnder24": 46,
+     "screens": 1.2,
+     "errors": 0,
+     "shot": "padL/notation.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 8.5,
+     "textUnder10": 97,
+     "targets": 46,
+     "targetsUnder24": 42,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/notation.png"
+    }
+   }
+  },
+  {
+   "id": "morph",
+   "no": "14",
+   "name": "变形",
+   "href": "/prototype/forms/sketches/morph.html",
+   "phoneOpen": "/prototype/forms/sketches/morph.html",
+   "situation": "收到多少不等于给多少：Agent 放大了谁",
+   "scores": {
+    "phone": 1,
+    "pad": 2,
+    "quality": 4,
+    "rep": 4
+   },
+   "evidence": "版面 1440 宽：手机缩到 27%，iPad 竖 56%、横 81%；圆的变形在桌面上很有力",
+   "place": {
+    "gallery": 6
+   },
+   "phoneTreatment": "desk-only",
+   "measured": {
+    "phone": {
+     "layoutWidth": 1440,
+     "scale": 0.27,
+     "minFontPx": 2.5,
+     "textUnder10": 4,
+     "targets": 36,
+     "targetsUnder24": 30,
+     "screens": 3.7,
+     "errors": 0,
+     "shot": "phone/morph.png"
+    },
+    "padP": {
+     "layoutWidth": 1441,
+     "scale": 0.57,
+     "minFontPx": 5.2,
+     "textUnder10": 4,
+     "targets": 36,
+     "targetsUnder24": 30,
+     "screens": 1.8,
+     "errors": 0,
+     "shot": "padP/morph.png"
+    },
+    "padL": {
+     "layoutWidth": 1441,
+     "scale": 0.82,
+     "minFontPx": 7.5,
+     "textUnder10": 4,
+     "targets": 36,
+     "targetsUnder24": 30,
+     "screens": 1.2,
+     "errors": 0,
+     "shot": "padL/morph.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 9.2,
+     "textUnder10": 4,
+     "targets": 27,
+     "targetsUnder24": 21,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/morph.png"
+    }
+   }
+  },
+  {
+   "id": "peak",
+   "no": "15",
+   "name": "峰值保持",
+   "href": "/prototype/forms/sketches/peak.html",
+   "phoneOpen": "/prototype/forms/sketches/peak.html",
+   "situation": "离开期间升起又落下、回来时看不出来的事",
+   "scores": {
+    "phone": 1,
+    "pad": 2,
+    "quality": 4,
+    "rep": 4
+   },
+   "evidence": "版面 1440 宽：手机 27%，iPad 竖 56%、横 81%",
+   "place": {
+    "gallery": 9
+   },
+   "phoneTreatment": "desk-only",
+   "measured": {
+    "phone": {
+     "layoutWidth": 1440,
+     "scale": 0.27,
+     "minFontPx": 2.3,
+     "textUnder10": 16,
+     "targets": 36,
+     "targetsUnder24": 28,
+     "screens": 3.7,
+     "errors": 0,
+     "shot": "phone/peak.png"
+    },
+    "padP": {
+     "layoutWidth": 1441,
+     "scale": 0.57,
+     "minFontPx": 4.8,
+     "textUnder10": 16,
+     "targets": 36,
+     "targetsUnder24": 28,
+     "screens": 1.8,
+     "errors": 0,
+     "shot": "padP/peak.png"
+    },
+    "padL": {
+     "layoutWidth": 1441,
+     "scale": 0.82,
+     "minFontPx": 7,
+     "textUnder10": 16,
+     "targets": 36,
+     "targetsUnder24": 28,
+     "screens": 1.2,
+     "errors": 0,
+     "shot": "padL/peak.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 8.5,
+     "textUnder10": 16,
+     "targets": 32,
+     "targetsUnder24": 24,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/peak.png"
+    }
+   }
+  },
+  {
+   "id": "age",
+   "no": "16",
+   "name": "驻龄",
+   "href": "/prototype/forms/sketches/age.html",
+   "phoneOpen": "/prototype/forms/sketches/age.html",
+   "situation": "此刻的份额多少是沉淀的、多少是刚换手的",
+   "scores": {
+    "phone": 1,
+    "pad": 2,
+    "quality": 4,
+    "rep": 3
+   },
+   "evidence": "版面 1440 宽：手机 27%，iPad 竖 56%、横 81%",
+   "place": {
+    "gallery": 11
+   },
+   "phoneTreatment": "desk-only",
+   "measured": {
+    "phone": {
+     "layoutWidth": 1440,
+     "scale": 0.27,
+     "minFontPx": 2.4,
+     "textUnder10": 3,
+     "targets": 34,
+     "targetsUnder24": 30,
+     "screens": 3.7,
+     "errors": 0,
+     "shot": "phone/age.png"
+    },
+    "padP": {
+     "layoutWidth": 1441,
+     "scale": 0.57,
+     "minFontPx": 5,
+     "textUnder10": 3,
+     "targets": 34,
+     "targetsUnder24": 30,
+     "screens": 1.8,
+     "errors": 0,
+     "shot": "padP/age.png"
+    },
+    "padL": {
+     "layoutWidth": 1441,
+     "scale": 0.82,
+     "minFontPx": 7.2,
+     "textUnder10": 3,
+     "targets": 34,
+     "targetsUnder24": 30,
+     "screens": 1.2,
+     "errors": 0,
+     "shot": "padL/age.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 8.8,
+     "textUnder10": 3,
+     "targets": 34,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/age.png"
+    }
+   }
+  },
+  {
+   "id": "chain",
+   "no": "17",
+   "name": "等待链",
+   "href": "/prototype/forms/sketches/chain.html",
+   "phoneOpen": "/prototype/forms/sketches/chain.html",
+   "situation": "谁在等你、你挡住了谁：答掉一件放走一串人",
+   "scores": {
+    "phone": 1,
+    "pad": 3,
+    "quality": 5,
+    "rep": 5
+   },
+   "evidence": "版面 1101 宽：手机缩到 35%（最小字 3.4px），iPad 竖 74%，iPad 横贴合；桌面最好的关系图之一",
+   "place": {
+    "gallery": 4
+   },
+   "phoneTreatment": "desk-only",
+   "measured": {
+    "phone": {
+     "layoutWidth": 1101,
+     "scale": 0.35,
+     "minFontPx": 3.3,
+     "textUnder10": 21,
+     "targets": 25,
+     "targetsUnder24": 20,
+     "screens": 2.8,
+     "errors": 0,
+     "shot": "phone/chain.png"
+    },
+    "padP": {
+     "layoutWidth": 1100,
+     "scale": 0.75,
+     "minFontPx": 7.1,
+     "textUnder10": 22,
+     "targets": 25,
+     "targetsUnder24": 20,
+     "screens": 1.3,
+     "errors": 0,
+     "shot": "padP/chain.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 9.5,
+     "textUnder10": 22,
+     "targets": 24,
+     "targetsUnder24": 19,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/chain.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 9.5,
+     "textUnder10": 20,
+     "targets": 24,
+     "targetsUnder24": 19,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/chain.png"
+    }
+   }
+  },
+  {
+   "id": "tug",
+   "no": "18",
+   "name": "拔河",
+   "href": "/prototype/forms/sketches/tug.html",
+   "phoneOpen": "/prototype/forms/sketches/tug.html",
+   "situation": "家里与工作在 64 份里此消彼长",
+   "scores": {
+    "phone": 1,
+    "pad": 2,
+    "quality": 3,
+    "rep": 4
+   },
+   "evidence": "版面 1440 宽：手机 27%，iPad 竖 56%；画面稀，主图只占一角",
+   "place": {
+    "gallery": 13
+   },
+   "phoneTreatment": "desk-only",
+   "measured": {
+    "phone": {
+     "layoutWidth": 1440,
+     "scale": 0.27,
+     "minFontPx": 2.5,
+     "textUnder10": 12,
+     "targets": 79,
+     "targetsUnder24": 75,
+     "screens": 3.7,
+     "errors": 0,
+     "shot": "phone/tug.png"
+    },
+    "padP": {
+     "layoutWidth": 1441,
+     "scale": 0.57,
+     "minFontPx": 5.2,
+     "textUnder10": 12,
+     "targets": 79,
+     "targetsUnder24": 75,
+     "screens": 1.8,
+     "errors": 0,
+     "shot": "padP/tug.png"
+    },
+    "padL": {
+     "layoutWidth": 1441,
+     "scale": 0.82,
+     "minFontPx": 7.5,
+     "textUnder10": 11,
+     "targets": 69,
+     "targetsUnder24": 65,
+     "screens": 1.2,
+     "errors": 0,
+     "shot": "padL/tug.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 9.2,
+     "textUnder10": 11,
+     "targets": 67,
+     "targetsUnder24": 63,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/tug.png"
+    }
+   }
+  },
+  {
+   "id": "khipu",
+   "no": "19",
+   "name": "结绳",
+   "href": "/prototype/forms/sketches/khipu.html?data=story",
+   "phoneOpen": "/prototype/forms/sketches/khipu.html?data=story",
+   "situation": "一件事里还有自己的 64 份",
+   "scores": {
+    "phone": 1,
+    "pad": 2,
+    "quality": 3,
+    "rep": 3
+   },
+   "evidence": "版面 1440 宽：手机 27%；默认样张是手写情境（composite 两周没有子层）",
+   "place": {
+    "gallery": 16
+   },
+   "phoneTreatment": "desk-only",
+   "measured": {
+    "phone": {
+     "layoutWidth": 1440,
+     "scale": 0.27,
+     "minFontPx": 2.5,
+     "textUnder10": 3,
+     "targets": 23,
+     "targetsUnder24": 18,
+     "screens": 3.7,
+     "errors": 0,
+     "shot": "phone/khipu.png"
+    },
+    "padP": {
+     "layoutWidth": 1441,
+     "scale": 0.57,
+     "minFontPx": 5.2,
+     "textUnder10": 3,
+     "targets": 23,
+     "targetsUnder24": 18,
+     "screens": 1.8,
+     "errors": 0,
+     "shot": "padP/khipu.png"
+    },
+    "padL": {
+     "layoutWidth": 1441,
+     "scale": 0.82,
+     "minFontPx": 7.5,
+     "textUnder10": 3,
+     "targets": 14,
+     "targetsUnder24": 9,
+     "screens": 1.2,
+     "errors": 0,
+     "shot": "padL/khipu.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 9.2,
+     "textUnder10": 2,
+     "targets": 14,
+     "targetsUnder24": 9,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/khipu.png"
+    }
+   }
+  },
+  {
+   "id": "trays",
+   "no": "20",
+   "name": "回应托盘",
+   "href": "/prototype/forms/trays.html?frame=26",
+   "phoneOpen": "/prototype/forms/trays.html?frame=26&card=0",
+   "situation": "排队、通勤的几分钟，一口气答完：要点几下",
+   "scores": {
+    "phone": 5,
+    "pad": 3,
+    "quality": 5,
+    "rep": 4
+   },
+   "evidence": "本身就是 390×844 的手机页，11 个点按目标全部 ≥24px；Pad 与桌面上是一列手机加概念卡",
+   "place": {
+    "showcase": 2
+   },
+   "phoneTreatment": "open",
+   "measured": {
+    "phone": {
+     "layoutWidth": 390,
+     "scale": 1,
+     "minFontPx": 0,
+     "textUnder10": 1,
+     "targets": 11,
+     "targetsUnder24": 0,
+     "screens": 1,
+     "errors": 0,
+     "shot": "phone/trays.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 10,
+     "textUnder10": 0,
+     "targets": 44,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/trays.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 10,
+     "textUnder10": 0,
+     "targets": 42,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/trays.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 10,
+     "textUnder10": 0,
+     "targets": 42,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/trays.png"
+    }
+   }
+  },
+  {
+   "id": "pulse",
+   "no": "21",
+   "name": "整理脉冲",
+   "href": "/prototype/forms/motion/pulse.html",
+   "phoneOpen": "/prototype/forms/motion/pulse.html?card=0",
+   "situation": "第一次看 Fold 的人：一轮整理演成一次脉冲",
+   "scores": {
+    "phone": 2,
+    "pad": 4,
+    "quality": 5,
+    "rep": 3
+   },
+   "evidence": "手机带 card=0 版面 524 宽缩到 74%，标题与旁白叠字；Pad 完整；与入口页自身的概念叙述重叠",
+   "place": {
+    "gallery": 2
+   },
+   "phoneTreatment": "hint",
+   "measured": {
+    "phone": {
+     "layoutWidth": 524,
+     "scale": 0.74,
+     "minFontPx": 7.8,
+     "textUnder10": 0,
+     "targets": 44,
+     "targetsUnder24": 43,
+     "screens": 1.3,
+     "errors": 0,
+     "shot": "phone/pulse.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 10.5,
+     "textUnder10": 0,
+     "targets": 44,
+     "targetsUnder24": 43,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/pulse.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 10.5,
+     "textUnder10": 0,
+     "targets": 44,
+     "targetsUnder24": 40,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/pulse.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 10.5,
+     "textUnder10": 0,
+     "targets": 44,
+     "targetsUnder24": 40,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/pulse.png"
+    }
+   },
+   "measuredCard0": [
+    {
+     "viewport": "phone",
+     "layoutWidth": 524,
+     "shot": "extra/pulse-card0-phone.png"
+    },
+    {
+     "viewport": "padP",
+     "layoutWidth": 820,
+     "shot": "extra/pulse-card0-padP.png"
+    }
+   ]
+  },
+  {
+   "id": "dial",
+   "no": "22",
+   "name": "份额拨盘",
+   "href": "/prototype/forms/motion/dial.html",
+   "phoneOpen": "/prototype/forms/motion/dial.html?card=0",
+   "situation": "第一次看 Fold 的人：64 份是怎样的硬约束",
+   "scores": {
+    "phone": 2,
+    "pad": 3,
+    "quality": 4,
+    "rep": 3
+   },
+   "evidence": "手机版面 615 宽缩到 63%，环被车道挤到一边；Pad 竖环只占一半宽",
+   "place": {
+    "gallery": 7
+   },
+   "phoneTreatment": "hint",
+   "measured": {
+    "phone": {
+     "layoutWidth": 615,
+     "scale": 0.63,
+     "minFontPx": 6.6,
+     "textUnder10": 0,
+     "targets": 57,
+     "targetsUnder24": 54,
+     "screens": 1.6,
+     "errors": 0,
+     "shot": "phone/dial.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 9,
+     "textUnder10": 7,
+     "targets": 53,
+     "targetsUnder24": 50,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/dial.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 8.5,
+     "textUnder10": 15,
+     "targets": 53,
+     "targetsUnder24": 48,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/dial.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 8.5,
+     "textUnder10": 15,
+     "targets": 53,
+     "targetsUnder24": 48,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/dial.png"
+    }
+   },
+   "measuredCard0": [
+    {
+     "viewport": "phone",
+     "layoutWidth": 615,
+     "shot": "extra/dial-card0-phone.png"
+    },
+    {
+     "viewport": "padP",
+     "layoutWidth": 820,
+     "shot": "extra/dial-card0-padP.png"
+    }
+   ]
+  },
+  {
+   "id": "respond",
+   "no": "23",
+   "name": "回应组件",
+   "href": "/prototype/forms/respond.html",
+   "phoneOpen": "/prototype/forms/respond.html",
+   "situation": "六种回应控件逐类演示",
+   "scores": {
+    "phone": 4,
+    "pad": 4,
+    "quality": 3,
+    "rep": 2
+   },
+   "evidence": "手机贴合；是组件演示，不是一种读法",
+   "place": {
+    "gallery": 17
+   },
+   "phoneTreatment": "open",
+   "measured": {
+    "phone": {
+     "layoutWidth": 390,
+     "scale": 1,
+     "minFontPx": 11,
+     "textUnder10": 0,
+     "targets": 7,
+     "targetsUnder24": 1,
+     "screens": 2.4,
+     "errors": 0,
+     "shot": "phone/respond.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 11,
+     "textUnder10": 0,
+     "targets": 19,
+     "targetsUnder24": 2,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/respond.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 11,
+     "textUnder10": 0,
+     "targets": 19,
+     "targetsUnder24": 2,
+     "screens": 1.2,
+     "errors": 0,
+     "shot": "padL/respond.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 11,
+     "textUnder10": 0,
+     "targets": 19,
+     "targetsUnder24": 2,
+     "screens": 1.1,
+     "errors": 0,
+     "shot": "desk/respond.png"
+    }
+   }
+  },
+  {
+   "id": "radio",
+   "no": "24",
+   "name": "晨间朗读",
+   "href": "/prototype/forms/radio.html",
+   "phoneOpen": "/prototype/forms/radio.html?card=0",
+   "situation": "通勤、做早饭：不看屏幕，听一分多钟",
+   "scores": {
+    "phone": 3,
+    "pad": 4,
+    "quality": 2,
+    "rep": 3
+   },
+   "evidence": "第一轮撤下；唯一不靠视觉的形式；手机带 card=0 缩到 75%",
+   "place": {
+    "gallery": 19
+   },
+   "phoneTreatment": "open",
+   "measured": {
+    "phone": {
+     "layoutWidth": 520,
+     "scale": 0.75,
+     "minFontPx": 7.9,
+     "textUnder10": 0,
+     "targets": 63,
+     "targetsUnder24": 56,
+     "screens": 1.3,
+     "errors": 0,
+     "shot": "phone/radio.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 10.5,
+     "textUnder10": 0,
+     "targets": 63,
+     "targetsUnder24": 53,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/radio.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 10.5,
+     "textUnder10": 0,
+     "targets": 61,
+     "targetsUnder24": 42,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/radio.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 10.5,
+     "textUnder10": 0,
+     "targets": 61,
+     "targetsUnder24": 31,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/radio.png"
+    }
+   },
+   "measuredCard0": [
+    {
+     "viewport": "phone",
+     "layoutWidth": 520,
+     "shot": "extra/radio-card0-phone.png"
+    }
+   ]
+  },
+  {
+   "id": "strips",
+   "no": "25",
+   "name": "进程条架",
+   "href": "/prototype/forms/strips.html",
+   "phoneOpen": "/prototype/forms/strips.html?card=0",
+   "situation": "白天值守，多 Agent 并行的进程条架",
+   "scores": {
+    "phone": 2,
+    "pad": 3,
+    "quality": 2,
+    "rep": 2
+   },
+   "evidence": "第一轮撤下；手机 75% 且 48 处文字小于 10px",
+   "place": {
+    "gallery": 24
+   },
+   "phoneTreatment": "hint",
+   "measured": {
+    "phone": {
+     "layoutWidth": 520,
+     "scale": 0.75,
+     "minFontPx": 7.1,
+     "textUnder10": 48,
+     "targets": 36,
+     "targetsUnder24": 34,
+     "screens": 1.3,
+     "errors": 0,
+     "shot": "phone/strips.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 9.5,
+     "textUnder10": 90,
+     "targets": 36,
+     "targetsUnder24": 32,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/strips.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 9.5,
+     "textUnder10": 60,
+     "targets": 34,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/strips.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 9.5,
+     "textUnder10": 66,
+     "targets": 34,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/strips.png"
+    }
+   }
+  },
+  {
+   "id": "frontpage",
+   "no": "26",
+   "name": "头版",
+   "href": "/prototype/forms/frontpage.html",
+   "phoneOpen": "/prototype/forms/frontpage.html?card=0",
+   "situation": "周末早餐，像读报纸一样深读",
+   "scores": {
+    "phone": 3,
+    "pad": 4,
+    "quality": 2,
+    "rep": 2
+   },
+   "evidence": "第一轮撤下；载体换皮，手机 79%",
+   "place": {
+    "gallery": 22
+   },
+   "phoneTreatment": "open",
+   "measured": {
+    "phone": {
+     "layoutWidth": 492,
+     "scale": 0.79,
+     "minFontPx": 7.5,
+     "textUnder10": 1,
+     "targets": 36,
+     "targetsUnder24": 34,
+     "screens": 1.3,
+     "errors": 0,
+     "shot": "phone/frontpage.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 9.5,
+     "textUnder10": 4,
+     "targets": 36,
+     "targetsUnder24": 32,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/frontpage.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 9.5,
+     "textUnder10": 11,
+     "targets": 34,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/frontpage.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 9.5,
+     "textUnder10": 11,
+     "targets": 34,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/frontpage.png"
+    }
+   }
+  },
+  {
+   "id": "receipt",
+   "no": "27",
+   "name": "小票",
+   "href": "/prototype/forms/receipt.html",
+   "phoneOpen": "/prototype/forms/receipt.html?card=0",
+   "situation": "早上打出一张小票带走",
+   "scores": {
+    "phone": 3,
+    "pad": 4,
+    "quality": 2,
+    "rep": 2
+   },
+   "evidence": "第一轮撤下；载体换皮，手机 79%",
+   "place": {
+    "gallery": 23
+   },
+   "phoneTreatment": "open",
+   "measured": {
+    "phone": {
+     "layoutWidth": 492,
+     "scale": 0.79,
+     "minFontPx": 8.3,
+     "textUnder10": 0,
+     "targets": 36,
+     "targetsUnder24": 34,
+     "screens": 1.3,
+     "errors": 0,
+     "shot": "phone/receipt.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 10.5,
+     "textUnder10": 0,
+     "targets": 36,
+     "targetsUnder24": 32,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/receipt.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 10.5,
+     "textUnder10": 0,
+     "targets": 34,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/receipt.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 10.5,
+     "textUnder10": 0,
+     "targets": 34,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/receipt.png"
+    }
+   }
+  },
+  {
+   "id": "orb",
+   "no": "28",
+   "name": "环境球",
+   "href": "/prototype/forms/orb.html",
+   "phoneOpen": "/prototype/forms/orb.html?card=0",
+   "situation": "在场工作，余光里：要不要分心看一下",
+   "scores": {
+    "phone": 2,
+    "pad": 3,
+    "quality": 2,
+    "rep": 2
+   },
+   "evidence": "第一轮撤下；拟物发光球，用户评审时认为最不成立",
+   "place": {
+    "gallery": 25
+   },
+   "phoneTreatment": "hint",
+   "measured": {
+    "phone": {
+     "layoutWidth": 505,
+     "scale": 0.77,
+     "minFontPx": 7.3,
+     "textUnder10": 29,
+     "targets": 66,
+     "targetsUnder24": 63,
+     "screens": 1.3,
+     "errors": 0,
+     "shot": "phone/orb.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 9.5,
+     "textUnder10": 29,
+     "targets": 66,
+     "targetsUnder24": 61,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/orb.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 9.5,
+     "textUnder10": 29,
+     "targets": 64,
+     "targetsUnder24": 59,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/orb.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 9.5,
+     "textUnder10": 29,
+     "targets": 64,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/orb.png"
+    }
+   }
+  },
+  {
+   "id": "departures",
+   "no": "29",
+   "name": "到期时刻表",
+   "href": "/prototype/forms/departures.html",
+   "phoneOpen": "/prototype/forms/departures.html?card=0",
+   "situation": "规划今天：接下来几点会有什么到期",
+   "scores": {
+    "phone": 3,
+    "pad": 4,
+    "quality": 2,
+    "rep": 3
+   },
+   "evidence": "第一轮撤下；手机带 card=0 缩到 73%",
+   "place": {
+    "gallery": 20
+   },
+   "phoneTreatment": "open",
+   "measured": {
+    "phone": {
+     "layoutWidth": 534,
+     "scale": 0.73,
+     "minFontPx": 8,
+     "textUnder10": 0,
+     "targets": 36,
+     "targetsUnder24": 34,
+     "screens": 1.4,
+     "errors": 0,
+     "shot": "phone/departures.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 11,
+     "textUnder10": 0,
+     "targets": 36,
+     "targetsUnder24": 32,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/departures.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 11,
+     "textUnder10": 0,
+     "targets": 34,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/departures.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 11,
+     "textUnder10": 0,
+     "targets": 34,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/departures.png"
+    }
+   }
+  },
+  {
+   "id": "blame",
+   "no": "30",
+   "name": "出处栏",
+   "href": "/prototype/forms/blame.html",
+   "phoneOpen": "/prototype/forms/blame.html?card=0",
+   "situation": "对某条表述有疑问：它来自哪一轮、哪条输入",
+   "scores": {
+    "phone": 3,
+    "pad": 4,
+    "quality": 2,
+    "rep": 3
+   },
+   "evidence": "第一轮撤下；手机带 card=0 缩到 77%",
+   "place": {
+    "gallery": 21
+   },
+   "phoneTreatment": "open",
+   "measured": {
+    "phone": {
+     "layoutWidth": 505,
+     "scale": 0.77,
+     "minFontPx": 8,
+     "textUnder10": 0,
+     "targets": 34,
+     "targetsUnder24": 32,
+     "screens": 1.3,
+     "errors": 0,
+     "shot": "phone/blame.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 10.4,
+     "textUnder10": 0,
+     "targets": 36,
+     "targetsUnder24": 32,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/blame.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 11,
+     "textUnder10": 0,
+     "targets": 34,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/blame.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 10.4,
+     "textUnder10": 0,
+     "targets": 34,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/blame.png"
+    }
+   }
+  },
+  {
+   "id": "chat",
+   "no": "31",
+   "name": "对话线程",
+   "href": "/prototype/forms/chat.html",
+   "phoneOpen": "/prototype/forms/chat.html?card=0",
+   "situation": "被打断后回来，在聊天窗里随手看",
+   "scores": {
+    "phone": 4,
+    "pad": 4,
+    "quality": 2,
+    "rep": 3
+   },
+   "evidence": "第一轮撤下；手机带 card=0 缩到 75% 仍像一个聊天窗，可用",
+   "place": {
+    "gallery": 18
+   },
+   "phoneTreatment": "open",
+   "measured": {
+    "phone": {
+     "layoutWidth": 520,
+     "scale": 0.75,
+     "minFontPx": 7.5,
+     "textUnder10": 0,
+     "targets": 42,
+     "targetsUnder24": 34,
+     "screens": 1.3,
+     "errors": 0,
+     "shot": "phone/chat.png"
+    },
+    "padP": {
+     "layoutWidth": 820,
+     "scale": 1,
+     "minFontPx": 10,
+     "textUnder10": 0,
+     "targets": 47,
+     "targetsUnder24": 32,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padP/chat.png"
+    },
+    "padL": {
+     "layoutWidth": 1180,
+     "scale": 1,
+     "minFontPx": 10,
+     "textUnder10": 0,
+     "targets": 45,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "padL/chat.png"
+    },
+    "desk": {
+     "layoutWidth": 1440,
+     "scale": 1,
+     "minFontPx": 10,
+     "textUnder10": 0,
+     "targets": 45,
+     "targetsUnder24": 30,
+     "screens": 1,
+     "errors": 0,
+     "shot": "desk/chat.png"
+    }
+   },
+   "measuredCard0": [
+    {
+     "viewport": "phone",
+     "layoutWidth": 520,
+     "shot": "extra/chat-card0-phone.png"
+    }
+   ]
+  }
+ ],
+ "decided": "2026-11-02 用户拍板：Top 6 顺序 D 手机首页 → 回应托盘 → 腕上一瞥 → E 折叠屏 → 两周小倍数 → B 时间展开；原版树图放画廊第一。实现以 site/.vitepress/theme/landing.mjs 的 TOP 与 GALLERY_ORDER 为准（画廊由 prototypes.mjs 现算，新原型自动排在末尾）。"
+}
