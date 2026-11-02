@@ -42,6 +42,9 @@ const desk = deskHTML(data)
 const review = reviewSVG(data)
 const hero = { seen: v(data.hero.seen), sources: v(data.hero.sources), days: v(data.hero.days), rounds: v(data.hero.rounds), lit: v(data.hero.lit), dark: v(data.hero.dark), itemsEver: v(data.hero.itemsEver) }
 const urgentShort = v(data.beat3.urgent)[0]
+// The watch window sets the question as "subject / question" on two unbreakable lines, so no single character is left
+// alone at the end ("主水管：挖开换还是免挖？" → "主水管" + "挖开换还是免挖？"). Without a colon it stays one balanced block.
+const urgentLines = urgentShort.includes('：') ? [urgentShort.slice(0, urgentShort.indexOf('：')), urgentShort.slice(urgentShort.indexOf('：') + 1)] : [urgentShort]
 const firstDue = v(data.dueAhead)[0].hours
 // "8/3", "8/16 00:00": read off the replay's clock as written (Europe/Stockholm), not the reader's.
 const md = t => t.slice(5, 10).split('-').map(Number).join('/')
@@ -349,7 +352,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
           <i class="h2-win" aria-hidden="true" />
           <div class="h2-c h2-c1">
             <span class="n fl-num" data-k="beat3.urgent.length">{{ n.urgent }}</span><span class="u">件要紧</span>
-            <span class="q">{{ urgentShort }}</span><span class="t">还有 <span data-k="dueAhead.0.hours">{{ firstDue }}</span> 小时</span>
+            <span class="q"><span v-for="line in urgentLines" :key="line">{{ line }}</span></span><span class="t">还有 <span data-k="dueAhead.0.hours">{{ firstDue }}</span> 小时</span>
           </div>
           <div class="h2-c h2-c2" aria-hidden="true"><Raw :html="desk" /></div>
           <div class="h2-c h2-c3" aria-hidden="true"><Raw :html="review" /><p class="ax"><span>{{ span[0].day }}</span><span>此刻</span></p></div>
@@ -690,7 +693,9 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .h2-c1 { display: flex; flex-direction: column; align-items: center; justify-content: center; width: var(--w1); height: var(--h1); padding: 0 16px; text-align: center; }
 .h2-c1 .n { font-size: 56px; }
 .h2-c1 .u { margin-top: 4px; font: 600 12px/1.3 var(--sans); color: var(--ver); }
-.h2-c1 .q { margin-top: 6px; font: 600 12px/1.35 var(--sans); }
+.h2-c1 .q { margin-top: 6px; font: 600 12px/1.35 var(--sans); text-wrap: balance; }
+.h2-c1 .q > span { display: block; }
+.h2-c1 .q > span + span { white-space: nowrap; }
 .h2-c1 .t { margin-top: 4px; font: 10.5px/1.3 var(--mono); color: var(--ink-2); }
 .h2-c2 { width: var(--w2); height: var(--h2); padding: 5px; }
 .h2-desk { position: relative; width: 100%; height: 100%; }
