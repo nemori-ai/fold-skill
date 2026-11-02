@@ -57,7 +57,7 @@ make setup  # 创建本地 Python 虚拟环境，不安装第三方依赖；需�
 make check  # 检查启动文件、用例文件、文档链接与基础格式
 make test   # 用内存内核运行 conformance/cases
 make prototype  # 本地原型，http://127.0.0.1:4173
-npm run site:build  # 文档与原型体验站（含小册子）构建到 dist/；npm run deploy 发布到 fold.vibecoding.icu，只在用户指示时运行
+npm run site:build  # 文档与原型体验站（含小册子）构建到 dist/；npm run deploy 发布到 fold.vibecoding.icu、npm run deploy:v2 发布到 fold-v2.vibecoding.icu，都只在用户指示时运行
 node scripts/export-all.mjs --out ~/Downloads/fold-prototypes.html  # 全部原型合页导出为单个 HTML，双击以 file:// 打开即用；默认写到 .local/export/
 python3 scripts/eval_judgment.py --dry-run --frames f01     # 生成判断评测提示，不调用模型
 python3 scripts/eval_judgment.py --frames f01,f05 --report  # 用真实模型评测，产生调用费用

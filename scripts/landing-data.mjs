@@ -76,6 +76,22 @@ frames.forEach((f, i) => { for (const a of life[i].answered) {
 } });
 const biggest = closures.reduce((best, c) => ((c.share[0] - (c.share[1] ?? 0)) > (best.share[0] - (best.share[1] ?? 0)) ? c : best));
 
+// The moment the first screen stands on: everything the Agent has read by f26, one dot per input, and which of them
+// each situation's window is made from. An input "feeds" an item when inputsOf(k) sends it there in its round; an item
+// merged since is followed to the one it merged into (records[26].snapshot.items[].merged_into).
+const snapItems = records[FRAME].snapshot.items;
+const settle = id => { let at = id; for (let n = 0; snapItems[at]?.merged_into && n < 20; n += 1) at = snapItems[at].merged_into; return at; };
+const urgentIds = new Set(urgent.map(it => it.id));
+const nowIds = new Set(items.map(it => it.id));
+// 0 never fed an item (noise, duplicate, deferred) · 1 fed an item no longer on the root · 2 fed one the Agent holds
+// now · 3 fed one waiting for you now · 4 fed the urgent one.
+const levelOf = target => { if (!target) return 0; const id = settle(target); return urgentIds.has(id) ? 4 : askIds.has(id) ? 3 : nowIds.has(id) ? 2 : 1; };
+const field = frames.slice(1, FRAME + 1).map((f, j) => inputsOf(j + 1, null).list.map(g => levelOf(g.target)).join(''));
+const level = k => sum(field.map(col => [...col].filter(c => Number(c) >= k).length));
+const seenEvents = frames.slice(0, FRAME + 1).flatMap(f => f.events);
+const channelOf = e => String(e.channel || e.stream).split(' · ')[0];
+const byChannel = Object.entries(seenEvents.reduce((n, e) => ({ ...n, [channelOf(e)]: (n[channelOf(e)] || 0) + 1 }), {})).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
+
 const minutes = t => Math.round((t - from) / 60000);
 /** Where a tick lands: its item's index in beat2.segments, the item's id when it left the root this round, -1 when folded. */
 const segmentOf = target => { if (!target) return -1; const i = items.findIndex(it => it.id === target); return i >= 0 ? i : target; };
@@ -86,6 +102,24 @@ const data = {
   frame: { id: v(frame.id, `scenario.frames[${FRAME}].id`), at: v(frame.at, 'frames[26].at'), title: v(frame.title, 'frames[26].title'),
     window: v([frame.signal?.window?.from || before.at, frame.signal?.window?.to || frame.at], 'frames[26].signal.window（缺省时取上一帧 at 到本帧 at），即“你离开的 12 小时”') },
   budget: v(state.root.budget, 'records[26].state.root.budget（prototype/engine.mjs BUDGET；每层 64 份，从不变）'),
+  hero: {
+    seen: v(seenEvents.length, 'Σ frames[0..26].events.length：到 f26 为止 Agent 读过的输入；D 手机首页底栏“累计 3051 条输入 → 现在 14 件”'),
+    sources: v(byChannel.length, 'frames[0..26].events[].channel 第一段（“GitHub · skarv/skarv”记为 GitHub）的不同取值数'),
+    span: v([frames[0].at, frame.at], '首屏那片点从哪一刻到哪一刻：frames[0].at（空状态）到 frames[26].at'),
+    days: v(Math.round((Date.parse(frame.at) - Date.parse(frames[0].at)) / DAY), '(frames[26].at − frames[0].at) / 1 天'),
+    rounds: v(FRAME, 'f01 到 f26 的整理次数（f00 是空状态）'),
+    field: v(field, '首屏那片点：f01…f26 每轮一列，列里每条输入一位数字，按到达先后（inputsOf(k).list 的顺序）；0 = 没落进任何一件（噪音、重复、暂缓）、1 = 落进的那件此刻已不在根层、2 = 落进 Agent 此刻在办的一件、3 = 落进此刻等你回应的一件、4 = 落进要紧的那一件；落进的那件后来并入别处时，跟到它并入的那件（records[26].snapshot.items[].merged_into）'),
+    lit: v({ used: level(1), now: level(2), you: level(3), urgent: level(4) },
+      'field 里各档及以上的条数：used = 两周落进过任何一件（等于 disposition used 的条数），now = 落进此刻根层的 14 件，you = 落进此刻等你的 5 件，urgent = 落进要紧的那一件'),
+    dark: v({ urgent: seenEvents.length - level(4), now: seenEvents.length - level(2), used: seenEvents.length - level(1) },
+      'seen − lit：各扇窗没用到、原地暗下的条数（骑车 / 桌前 / 复盘）'),
+    itemsEver: v(Object.keys(snapItems).length, 'records[26].snapshot.items 的条目数：到 f26 为止到过根层的事（两周小倍数“60 件事到过根层”）'),
+    review: v(records.slice(1, FRAME + 1).map((r, j) => [frames[j + 1].id, r.state.root.used, [...r.state.root.items].sort((a, b) => a.rank - b.rank).map(it => it.share)]),
+      '复盘那扇窗：f01…f26 每轮一项 [帧号, 已用份数, 根层各件的份额（按 rank）]，records[k].state.root'),
+  },
+  sources: {
+    byChannel: v(byChannel, '到 f26 为止各渠道的条数：frames[0..26].events[].channel 第一段，按条数从多到少'),
+  },
   beat1: {
     n: v(frame.events.length, 'frames[26].events.length；signal.received 同为 ' + frame.signal?.received),
     streams: v(streams, '按 frames[26].events[].stream 计数；车道顺序 work / community / life / family / subscription'),
@@ -145,7 +179,7 @@ const data = {
 
 const file = path.join(root, 'site/landing/data.json');
 const text = `${JSON.stringify(data, (key, value) => (key === 'value' && Array.isArray(value) && Array.isArray(value[0]) ? value.map(x => JSON.stringify(x)) : value), 2)
-  .replace(/"(\[[^\]]*\])"/g, (m, inner) => inner.replace(/\\"/g, '"'))}\n`;
+  .replace(/"(\[(?:[^"\\]|\\.)*\])"/g, (m, inner) => inner.replace(/\\"/g, '"'))}\n`;
 if (process.argv.includes('--check')) {
   const committed = await readFile(file, 'utf8').catch(() => '');
   if (committed !== text) { console.error('site/landing/data.json 与回放现算的结果不一致；运行 node scripts/landing-data.mjs 重写'); process.exitCode = 1; } else console.log('data.json 与回放一致');

@@ -8,5 +8,21 @@
     "directory": "./dist",
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page"
+  },
+  // 第二版入口页：npm run deploy:v2（wrangler deploy --env v2）发布到 fold-v2.vibecoding.icu，另一个 Worker。
+  // Wrangler 4 里这几个键都会从顶层继承，其中 routes 不写就会继承 fold.vibecoding.icu 的自定义域名，所以这里全部写明，
+  // 不依赖继承；没有用到不继承的键（vars、绑定等）。
+  "env": {
+    "v2": {
+      "name": "fold-experience-v2",
+      "compatibility_date": "2026-10-10",
+      "workers_dev": true,
+      "routes": [{ "pattern": "fold-v2.vibecoding.icu", "custom_domain": true }],
+      "assets": {
+        "directory": "./dist",
+        "html_handling": "auto-trailing-slash",
+        "not_found_handling": "404-page"
+      }
+    }
   }
 }

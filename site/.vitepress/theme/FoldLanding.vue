@@ -3,17 +3,18 @@
 // Every number comes from site/landing/data.json (the f26 replay); elements that show one carry data-k="<path>"
 // so scripts/check-landing.mjs can hold them to it.
 //
-// Motion: the first screen builds itself once with CSS only (it starts on first paint, before any script). The
-// three beats below are static states with CSS motion that runs only under `tx`: this script only sets the state
-// classes on the round section (s1–s3, ans) as the reader scrolls, adds `tx` when one beat follows the previous,
-// and drops it to jump (a skipped or reversed beat lands on its end state). The times are landing.mjs's TIMING.
+// Motion: the first screen plays once with CSS only (it starts on first paint, before any script; the times are
+// landing.mjs's MOMENT) and stops on its last situation; a tap on a situation switches it with transitions. The
+// three beats of the fourth section are static states with CSS motion that runs only under `tx`: this script only
+// sets the state classes on the round section (s1–s3, ans) as the reader scrolls, adds `tx` when one beat follows
+// the previous, and drops it to jump (a skipped or reversed beat lands on its end state). Their times are TIMING.
 // prefers-reduced-motion: no motion at all.
 import { createStaticVNode, onBeforeUnmount, onMounted, ref } from 'vue'
 import data from '../../landing/data.json'
 // Written by scripts/prepare-site.mjs: the recordings in site/media (a prototype without one shows its preview).
 import media from '../../.generated/landing-media.json'
 import { combinedPage, datasetNotice, openPrototype, prototypes } from './prototypes.mjs'
-import { DESK_ONLY, DOC_GROUPS, TIMING, bridgeOf, directHref, galleryOf, showcaseOf, stageHTML, stageModel } from './landing.mjs'
+import { CHANNEL_NAMES, DESK_ONLY, DOC_GROUPS, ONE_APP, SITUATIONS, TIMING, deskHTML, directHref, fieldSVG, galleryOf, ladderOf, momentCSS, reviewSVG, showcaseOf, stageHTML, stageModel } from './landing.mjs'
 
 const v = field => field.value
 const n = {
@@ -33,9 +34,26 @@ const model = stageModel(data)
 const Raw = props => createStaticVNode(props.html, 1)
 Raw.props = ['html']
 const halves = html => { const at = html.indexOf('<div class="fl-plot"'); return [html.slice(0, at), html.slice(at)] }
-const heroStage = halves(stageHTML(data, 'hero'))
 const beatStage = halves(stageHTML(data, 'beats'))
-const bridge = bridgeOf(data)
+// The first screen: the field of everything read so far (with the screen's motion, generated from MOMENT), and the
+// two windows that are drawn rather than written.
+const field = `<div class="h2-field">${fieldSVG(data)}<i class="h2-cover"></i><style>${momentCSS()}</style></div>`
+const desk = deskHTML(data)
+const review = reviewSVG(data)
+const hero = { seen: v(data.hero.seen), sources: v(data.hero.sources), days: v(data.hero.days), rounds: v(data.hero.rounds), lit: v(data.hero.lit), dark: v(data.hero.dark), itemsEver: v(data.hero.itemsEver) }
+const urgentShort = v(data.beat3.urgent)[0]
+// The watch window sets the question as "subject / question" on two unbreakable lines, so no single character is left
+// alone at the end ("主水管：挖开换还是免挖？" → "主水管" + "挖开换还是免挖？"). Without a colon it stays one balanced block.
+const urgentLines = urgentShort.includes('：') ? [urgentShort.slice(0, urgentShort.indexOf('：')), urgentShort.slice(urgentShort.indexOf('：') + 1)] : [urgentShort]
+const firstDue = v(data.dueAhead)[0].hours
+// "8/3", "8/16 00:00": read off the replay's clock as written (Europe/Stockholm), not the reader's.
+const md = t => t.slice(5, 10).split('-').map(Number).join('/')
+const span = v(data.hero.span).map(t => ({ day: md(t), clock: t.slice(11, 16) }))
+// The second section: every channel read so far, against one app's own count.
+const sourceRows = v(data.sources.byChannel)
+const widest = sourceRows[0][1]
+const oneApp = sourceRows.findIndex(([name]) => name === ONE_APP)
+const ladder = ladderOf(data)
 const showcase = showcaseOf(prototypes).map((t, i) => ({ ...t, no: String(i + 1).padStart(2, '0'), figure: t.fig(data), href: directHref(t.prototype) }))
 const gallery = galleryOf(prototypes)
 // Three rows dealt round-robin, so every row mixes pages that open well on a phone with desk-only ones.
@@ -141,13 +159,24 @@ function watchRound() {
   cleanups.push(() => { io.disconnect(); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); cancelAnimationFrame(frame) })
 }
 
-// ---------- the bridge glyphs draw themselves once, in place, when they come into view ----------
+// ---------- the first screen: a tap on a situation drops the one-time motion and switches with transitions ----------
 
-const bridgeEl = ref(null)
-function watchBridge() {
-  const el = bridgeEl.value
+const moment = ref(null)
+function pick(k) {
+  const el = moment.value
+  if (!el) return
+  el.classList.add('manual')
+  el.dataset.s = String(k)
+  for (const b of el.querySelectorAll('.h2-chip')) b.setAttribute('aria-pressed', String(b.dataset.sit === String(k)))
+}
+
+// ---------- the second and third sections draw themselves once, in place, when they come into view ----------
+
+const whyEl = ref(null)
+const ladderEl = ref(null)
+function drawOnce(el, threshold) {
   if (reduced) { el.classList.add('in'); return }
-  const io = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { el.classList.add('in'); io.disconnect() } }, { threshold: 0.35 })
+  const io = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { el.classList.add('in'); io.disconnect() } }, { threshold })
   io.observe(el)
   cleanups.push(() => io.disconnect())
 }
@@ -296,7 +325,8 @@ onMounted(() => {
   reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   document.querySelector('.fl').dataset.js = ''
   watchRound()
-  watchBridge()
+  drawOnce(whyEl.value, 0.3)
+  drawOnce(ladderEl.value, 0.2)
   watchShowcase()
   watchGallery()
 })
@@ -305,28 +335,81 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 
 <template>
   <div class="fl">
-    <!-- 首屏：它自己搭一次（CSS，首绘即开始），停在终态。 -->
+    <!-- 首屏：同一刻的全部输入铺成一片点；一扇窗随处境改形，窗里重新编码，没用到的原地暗下。CSS 首绘即演一次，停在“复盘”。 -->
     <section class="fl-hero" aria-labelledby="fl-title">
-      <p class="fl-kick fl-hero-kick">Fold · 给 Agent 用的注意力预算</p>
-      <div class="fl-hero-top">
-        <div class="fl-big"><span class="fl-num" data-k="budget">{{ v(data.budget) }}</span><small>份</small></div>
-        <div class="fl-hero-text">
-          <h1 id="fl-title" class="fl-h">涌进来的再多，<br>你也只有 {{ v(data.budget) }} 份。</h1>
-          <p class="fl-sub">Agent 把工作进展、外部观测、别人和你说的话整理成一份有预算的状态：每一轮在 64 份里取舍，大部分折掉，只把要你开口的推到你面前。</p>
-          <p class="fl-ctas"><a class="fl-btn solid" href="#round">看一轮整理 ↓</a><a class="fl-btn" href="#forms">直接看原型</a></p>
-        </div>
+      <div class="h2-text">
+        <p class="fl-kick">Fold · 按处境给 Agent 的汇报编码</p>
+        <h1 id="fl-title" class="fl-h">同一刻的信息，<br>按你此刻的带宽编码。</h1>
+        <p class="fl-sub">Agent 能替你看着所有的软件、消息和家里的琐事，看见的没有上限；你每一刻接得住的有上限，而且随处境在变：骑车时只剩一块表盘，坐到桌前多一些，停下来复盘才全部展开。Fold 让 Agent 在每一种处境的带宽里，又快又准地，只交出你接得住、也最值得接的那部分。</p>
+        <p class="fl-sub-m">Agent 看见的没有上限；<br>你接得住的有，而且随处境在变。</p>
+        <p class="fl-ctas"><a class="fl-btn solid" href="#why">为什么是新问题 ↓</a><a class="fl-btn" href="#forms">直接看原型</a></p>
       </div>
-      <div class="fl-stage fl-hero-stage" data-mode="hero" aria-hidden="true"><Raw :html="heroStage[0]" /><Raw :html="heroStage[1]" /></div>
-      <p class="fl-legend">
-        <span class="lg1"><b data-k="beat1.n">{{ n.n }}</b> 条进来</span>
-        <span class="lg2"><b data-k="beat2.folded">{{ n.folded }}</b> 条折掉</span>
-        <span class="lg3 ver"><b data-k="beat2.account.you">{{ n.account.you }}</b> 份等你</span>
-        <span class="lg3"><b data-k="beat2.account.agent">{{ n.account.agent }}</b> 份 Agent 在办</span>
-        <span class="lg3"><b data-k="beat2.account.blank">{{ n.account.blank }}</b> 份空余</span>
-      </p>
-      <p class="fl-one">每一轮在 {{ v(data.budget) }} 份里取舍，只把要你开口的推到你面前。</p>
-      <p class="fl-cue"><a href="#round">一轮整理：涌入 · 折 · 开口 ↓</a><span>{{ v(data.person) }} · 第 {{ v(data.frame.id).slice(1) }} 轮</span></p>
+      <div ref="moment" class="h2-stage" data-s="3">
+        <p class="h2-cap"><span>Agent 到此刻读过 <b data-k="hero.seen">{{ hero.seen }}</b> 条</span><span><b data-k="hero.sources">{{ hero.sources }}</b> 个来源 · <b data-k="hero.days">{{ hero.days }}</b> 天</span></p>
+        <Raw :html="field" />
+        <p class="h2-axis" aria-hidden="true"><span>{{ span[0].day }}</span><span class="mid">一列 12 小时 · 一点一条</span><span>此刻 {{ span[1].day }} {{ span[1].clock }}</span></p>
+        <div class="h2-zone">
+          <i class="h2-win" aria-hidden="true" />
+          <div class="h2-c h2-c1">
+            <span class="n fl-num" data-k="beat3.urgent.length">{{ n.urgent }}</span><span class="u">件要紧</span>
+            <span class="q"><span v-for="line in urgentLines" :key="line">{{ line }}</span></span><span class="t">还有 <span data-k="dueAhead.0.hours">{{ firstDue }}</span> 小时</span>
+          </div>
+          <div class="h2-c h2-c2" aria-hidden="true"><Raw :html="desk" /></div>
+          <div class="h2-c h2-c3" aria-hidden="true"><Raw :html="review" /><p class="ax"><span>{{ span[0].day }}</span><span>此刻</span></p></div>
+        </div>
+        <div class="h2-chips" role="group" aria-label="处境">
+          <i class="h2-bar" aria-hidden="true" />
+          <button v-for="sit in SITUATIONS" :key="sit.k" type="button" class="h2-chip" :class="`ch${sit.k}`" :data-sit="sit.k" :aria-pressed="String(sit.k === 3)" @click="pick(sit.k)"><b>{{ sit.name }}</b><span>{{ sit.time }}</span></button>
+        </div>
+        <p class="h2-ledger">
+          <span class="lg1">交出 <b data-k="beat3.urgent.length">{{ n.urgent }}</b> 件要紧，用到其中 <b class="ver" data-k="hero.lit.urgent">{{ hero.lit.urgent }}</b> 条；其余 <span data-k="hero.dark.urgent">{{ hero.dark.urgent }}</span> 条原地暗下。</span>
+          <span class="lg2">交出 <b data-k="beat2.account.items">{{ items }}</b> 件，<b class="ver" data-k="beat3.open">{{ n.open }}</b> 件等你，用到 <b data-k="hero.lit.now">{{ hero.lit.now }}</b> 条；其余 <span data-k="hero.dark.now">{{ hero.dark.now }}</span> 条原地暗下。</span>
+          <span class="lg3">交出两周的走向：<b data-k="hero.rounds">{{ hero.rounds }}</b> 次整理、<b data-k="hero.itemsEver">{{ hero.itemsEver }}</b> 件事，用到 <b data-k="hero.lit.used">{{ hero.lit.used }}</b> 条；其余 <span data-k="hero.dark.used">{{ hero.dark.used }}</span> 条没落进任何一件。</span>
+        </p>
+      </div>
+      <p class="fl-cue"><a href="#why">为什么是新问题 ↓</a></p>
     </section>
+
+    <!-- 为什么是新问题：一个软件的通知有尽头；Agent 读的是所有渠道的总和。 -->
+    <section id="why" class="fl-why" aria-labelledby="fl-why-title">
+      <div class="hd">
+        <p class="fl-kick">为什么是新问题</p>
+        <h2 id="fl-why-title" class="fl-h">一个软件的通知有尽头，<br>Agent 看见的没有。</h2>
+        <p class="fl-lede">软件是为人做的，只管自己那一摊：{{ v(data.person).split(' ')[0] }} 的幼儿园 App {{ hero.days }} 天发了 <span :data-k="`sources.byChannel.${oneApp}.1`">{{ sourceRows[oneApp][1] }}</span> 条，平铺开也看得完。Agent 不一样，它同时替他看着 GitHub、论坛、银行、幼儿园、家里的群：<span data-k="hero.sources">{{ hero.sources }}</span> 个来源，{{ hero.days }} 天 <span data-k="hero.seen">{{ hero.seen }}</span> 条，来源只会更多。看见的必然超出人接得住的；总有一刻它得替你舍掉一些，而留下的，得是你此刻接得住、也最值得接的。</p>
+      </div>
+      <div ref="whyEl" class="fl-src" role="img" :aria-label="`${hero.sources} 个来源各自的条数，与 Agent 读到的总数 ${hero.seen} 条`">
+        <p v-for="([name, count], i) in sourceRows" :key="name" class="row" :class="{ one: i === oneApp }" :style="{ '--i': i, '--w': count / widest }">
+          <span class="nm">{{ CHANNEL_NAMES[name] || name }}</span><span class="ct" :data-k="`sources.byChannel.${i}.1`">{{ count }}</span><span class="bar"><i /><em v-if="i === oneApp">← 一个软件</em></span>
+        </p>
+        <p class="row all" :style="{ '--i': sourceRows.length, '--w': hero.seen / widest }">
+          <span class="nm">Agent</span><span class="ct" data-k="hero.seen">{{ hero.seen }}</span><span class="bar"><i /></span>
+        </p>
+      </div>
+      <p class="fl-note">到 {{ span[1].day }} {{ span[1].clock }} 为止各渠道的条数，同一比例。最后一行是它们的总和：这一屏放不下。</p>
+    </section>
+
+    <!-- 带宽随处境变：六个原型按带宽从窄到宽，都读同一刻；点一个滚到它的卡。 -->
+    <section id="bandwidth" class="fl-band" aria-labelledby="fl-band-title">
+      <p class="fl-kick">带宽随处境变 · 同一刻 {{ span[1].day }} {{ span[1].clock }}</p>
+      <h2 id="fl-band-title" class="fl-h">处境定了带宽，带宽定了编码。</h2>
+      <p class="fl-lede">能看多久、屏幕多大、能不能当场作答，决定了交出什么、按什么顺序、用什么形式。下面六个原型读的是同一刻，按带宽从窄到宽排；它们都是表现层上的尝试，点一个看它自己讲一遍。</p>
+      <ol ref="ladderEl" class="fl-ladder">
+        <li v-for="(l, i) in ladder" :key="l.id" :style="{ '--gi': i, '--size': l.size }">
+          <a :href="`#form-${l.id}`" :class="`g-${l.id}`">
+            <span class="art"><Raw :html="l.svg" /></span>
+            <span class="tx"><span class="when">{{ l.when }}</span><b>{{ l.name }}</b><span class="room">{{ l.room }}</span></span>
+            <span class="fig"><span class="fl-num" :class="{ ver: l.ver }" :data-k="l.figure[2]">{{ l.figure[0] }}</span>{{ l.figure[1] }}</span>
+          </a>
+        </li>
+      </ol>
+    </section>
+
+    <!-- 一种编码的例子：把注意力切成固定的份数；下面是一轮整理的三拍。 -->
+    <header id="example" class="fl-ex" aria-labelledby="fl-ex-title">
+      <p class="fl-kick">一种编码的例子</p>
+      <h2 id="fl-ex-title" class="fl-h">把注意力切成固定的份数</h2>
+      <p class="fl-lede">原型里试的一种编码：每一层的注意力切成固定的份数，演示里是 <span data-k="budget">{{ v(data.budget) }}</span> 份（这个数可以配）。Agent 每一轮在这些份里取舍，份数就是面积。有了面积，同一份重要性就能在手表、手机、桌面上各画各的。下面是第 {{ v(data.frame.id).slice(1) }} 轮：{{ v(data.person).split(' ')[0] }} 离开的 12 小时。</p>
+    </header>
 
     <!-- 一轮整理：舞台钉住，文字滚过阅读线时演那一拍。 -->
     <section id="round" ref="round" class="fl-round s1 s2 s3" data-step="3" aria-labelledby="fl-round-title">
@@ -367,7 +450,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
         <article class="fl-step" data-step-block="1">
           <p class="no">01 / 03 · 涌入</p>
           <h3 class="fl-h">你离开的 12 小时里，五条渠道进来 <span data-k="beat1.n">{{ n.n }}</span> 条。</h3>
-          <p>一条一道刻痕，按到达时刻落在车道上。下面这把尺是你的注意力：<b data-k="budget">64</b> 份，不会变多。</p>
+          <p>一条一道刻痕，按到达时刻落在车道上。下面这把尺是这种编码里你的注意力：<b data-k="budget">64</b> 份，一轮里不会变多。</p>
         </article>
         <article class="fl-step" data-step-block="2">
           <p class="no">02 / 03 · 折</p>
@@ -390,20 +473,6 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
           <p>Jonas 没点任何按钮，直接打给诊所；下一轮 Agent 读到通话记录，猫那件从 <span data-k="beat3.loop.example.share.0">{{ example.share[0] }}</span> 份让到 <span data-k="beat3.loop.example.share.1">{{ example.share[1] }}</span> 份。</p>
           <p class="fl-note">两周回应 <span data-k="beat3.loop.responses">{{ v(n.loop.responses) }}</span> 次，全在原处 · GitHub <span data-k="beat3.loop.byChannel.GitHub">{{ channels.GitHub }}</span> · iMessage <span data-k="beat3.loop.byChannel.iMessage">{{ channels.iMessage }}</span> · 问答站 <span data-k="beat3.loop.byChannel.问答">{{ channels['问答'] }}</span> · 电话 <span data-k="beat3.loop.byChannel.Telefon">{{ channels.Telefon }}</span></p>
         </article>
-      </div>
-    </section>
-
-    <!-- 桥：同一组 64 份的六种画法，顺序与下面的六张卡相同。 -->
-    <section id="same" class="fl-bridge-sec" aria-labelledby="fl-bridge-title">
-      <p class="fl-kick">同一份状态 · {{ v(data.frame.id) }}</p>
-      <h2 id="fl-bridge-title" class="fl-h">同一组 64 份，换一个处境，换一种读法。</h2>
-      <p class="fl-lede">六个小图读的是同一组数：<span data-k="beat2.account.items">{{ items }}</span> 件、<span data-k="beat2.account.you">{{ n.account.you }}</span> 份等你、<span data-k="beat2.account.agent">{{ n.account.agent }}</span> 份在 Agent 那边、空余 <span data-k="beat2.account.blank">{{ n.account.blank }}</span>。</p>
-      <div ref="bridgeEl" class="fl-bridge">
-        <a v-for="(g, i) in bridge" :key="g.id" class="fl-glyph" :class="`g-${g.id}`" :href="`#form-${g.id}`" :style="{ '--gi': i }">
-          <span class="art"><Raw :html="g.svg" /></span>
-          <span class="gt"><b>{{ g.name }}</b><span>{{ g.time }}</span></span>
-          <span class="gn" :class="{ ver: g.ver }">{{ g.fig }}</span>
-        </a>
       </div>
     </section>
 
@@ -596,35 +665,136 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .roll { display: inline-block; height: var(--rl, 1.4em); overflow: hidden; vertical-align: top; line-height: var(--rl, 1.4em); }
 .rs { display: block; transform: translateY(calc(var(--steps) * -1 * var(--rl, 1.4em))); }
 
-/* ===== the first screen ===== */
-.fl-hero { max-width: calc(var(--maxw) + 2 * var(--m)); margin: 0 auto; padding: 16px var(--m) 0; }
-.fl-big { display: flex; align-items: flex-end; gap: 8px; margin: 0 0 4px -0.06em; }
-.fl-big .fl-num { font-size: clamp(88px, 13svh, 116px); }
-.fl-big small { margin-bottom: 0.9em; font: 600 18px/1 var(--sans); }
-.fl-hero-kick { margin: 0 0 4px; }
-.fl-hero h1 { font-size: 27px; line-height: 1.28; }
-.fl-sub { display: none; margin: 12px 0 0; color: var(--ink-2); font-size: 15px; line-height: 1.65; }
-.fl-one { margin-top: 12px; color: var(--ink-2); font-size: 14px; line-height: 1.5; }
+/* ===== the first screen: one field of everything read, a window that takes the situation's shape ===== */
+.fl-hero { max-width: calc(var(--maxw) + 2 * var(--m)); margin: 0 auto; padding: 14px var(--m) 0; }
+.fl-hero h1 { margin-top: 6px; font-size: 28px; line-height: 1.3; }
+.fl-sub { display: none; margin: 14px 0 0; color: var(--ink-2); font-size: 15px; line-height: 1.7; }
+.fl-sub-m { margin-top: 8px; color: var(--ink-2); font-size: 14.5px; line-height: 1.6; }
 .fl-ctas { display: none; }
-/* on a phone the motion is the first screen: lanes ≥ 140px, a 28px ruler, the text above and one line below */
-.fl-hero-stage { --gut: 30px; --lh: 22px; --lg: 8px; --ax: 20px; --rg: 4px; --rh: 28px; --tw: 1.3px; margin-top: 18px; }
-.fl-hero-stage .fl-plot { height: calc(var(--R) + var(--rh) + 32px); }
-.fl-hero-stage .fl-gutter { height: calc(var(--R) + var(--rh) + 32px); }
-.fl-hero-stage .fl-lab { font-size: 10.5px; color: var(--ink-3); }
-.fl-hero-stage .fl-lab b { display: none; }
-.fl-cap { position: absolute; left: 0; right: 0; top: var(--HL); height: var(--ax); font: 10.5px/1 var(--mono); color: var(--ink-2); white-space: nowrap; }
-.fl-cap span { position: absolute; left: 0; bottom: 4px; }
-.fl-cap b { color: var(--ink); font-weight: 600; }
-.fl-cap .cb { opacity: 0; }
-.fl-tag { --rl: 16px; position: absolute; left: calc(var(--x) * 1%); top: calc(var(--R) + var(--rh) + 12px); font: 11px/16px var(--mono); color: var(--ink-2); white-space: nowrap; }
-.fl-tag b { color: var(--ver); font: 600 11.5px/16px var(--sans); }
-.fl-tag .roll { color: var(--ink); font-weight: 700; }
-.fl-legend { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 4px; font: 12px/1.5 var(--mono); color: var(--ink-2); }
-.fl-legend b { color: var(--ink); font-weight: 600; }
-.fl-legend .ver b { color: var(--ver); }
-.fl-cue { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; padding: 12px 0; border-top: 1px solid var(--rule); font: 12px/1.5 var(--mono); color: var(--ink-2); }
-.fl-cue a { color: var(--ink); }
-.fl-cue span { display: none; text-align: right; }
+/* window sizes per situation (1 骑车, 2 桌前, 3 复盘); the desk window keeps the treemap's 1.7 : 1, the review window
+   is 8px wider than the field on each side so its rounds stand under the field's own columns */
+.h2-stage { --zh: 236px; --w1: 156px; --h1: 156px; --r1: 78px; --w2: 330px; --h2: 194px; --r2: 10px; --w3: calc(100% + 16px); --h3: var(--zh); --r3: 6px;
+  position: relative; margin-top: 16px; }
+.h2-cap { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; font: 11px/1.4 var(--mono); color: var(--ink-2); }
+.h2-cap b { color: var(--ink); font-weight: 600; }
+.h2-field { position: relative; overflow: hidden; aspect-ratio: 155 / 47; }
+.h2-dots { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.h2-dots path { fill: none; stroke-width: 0.72; }
+.h2-base { opacity: 0.14; }
+.h2-base path, .h2-l1 path, .h2-l2 path { stroke: var(--ink); }
+.h2-l3 path, .h2-l4 path { stroke: var(--ver); }
+/* the two weeks are laid in left to right: a paper cover with the playhead on its edge slides off */
+.h2-cover { position: absolute; inset: 0 -2px 0 0; border-left: 1.5px solid var(--ink); background: var(--paper); transform: translateX(calc(100% + 2px)); opacity: 0; }
+.h2-axis { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; padding-top: 3px; border-top: 1px solid var(--rule); font: 10px/1.4 var(--mono); color: var(--ink-3); }
+.h2-axis .mid { display: none; }
+.h2-zone { position: relative; height: var(--zh); margin-top: 12px; }
+.h2-win { position: absolute; left: 50%; top: 50%; width: var(--w3); height: var(--h3); translate: -50% -50%; border: 1.5px solid var(--ink); border-radius: var(--r3); background: var(--paper-2); }
+.h2-c { position: absolute; left: 50%; top: 50%; translate: -50% -50%; opacity: 0; pointer-events: none; }
+.h2-c1 { display: flex; flex-direction: column; align-items: center; justify-content: center; width: var(--w1); height: var(--h1); padding: 0 16px; text-align: center; }
+.h2-c1 .n { font-size: 56px; }
+.h2-c1 .u { margin-top: 4px; font: 600 12px/1.3 var(--sans); color: var(--ver); }
+.h2-c1 .q { margin-top: 6px; font: 600 12px/1.35 var(--sans); text-wrap: balance; }
+.h2-c1 .q > span { display: block; }
+.h2-c1 .q > span + span { white-space: nowrap; }
+.h2-c1 .t { margin-top: 4px; font: 10.5px/1.3 var(--mono); color: var(--ink-2); }
+.h2-c2 { width: var(--w2); height: var(--h2); padding: 5px; }
+.h2-desk { position: relative; width: 100%; height: 100%; }
+.h2-desk .tl { position: absolute; left: calc(var(--x) * 1%); top: calc(var(--y) * 1%); width: calc(var(--w) * 1%); height: calc(var(--h) * 1%); overflow: hidden;
+  padding: 4px 6px; border: 1.5px solid var(--paper-2); border-radius: 5px; background: var(--agent); }
+.h2-desk .tl.you { background: var(--ver-soft); }
+.h2-desk .tl.lead { background: var(--ver); color: var(--paper-2); }
+.h2-desk .tl.blank { border: 1px dashed var(--ink-3); background: none; }
+.h2-desk .tl b { display: block; font: 600 11px/1.25 var(--sans); white-space: nowrap; }
+.h2-c3 { width: var(--w3); height: var(--h3); padding: 12px 8px 0; }
+.h2-stack { display: block; width: 100%; height: calc(100% - 20px); }
+.h2-stack .col { transform-box: fill-box; transform-origin: 50% 100%; }
+.h2-c3 .ax { display: flex; justify-content: space-between; height: 20px; font: 10px/20px var(--mono); color: var(--ink-3); }
+.h2-chips { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 12px; border-top: 1px solid var(--rule); }
+.h2-bar { position: absolute; left: 0; top: -1px; width: calc(100% / 3); height: 2px; background: var(--ink); transform: translateX(200%); }
+.h2-chip { min-height: 48px; padding: 8px 6px 4px 0; border: 0; background: none; color: var(--ink-3); text-align: left; font: inherit; cursor: pointer; }
+.h2-chip b { display: block; font: 600 14.5px/1.3 var(--sans); }
+.h2-chip span { display: block; font: 11px/1.4 var(--mono); }
+.h2-ledger { position: relative; min-height: 64px; margin-top: 6px; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+.h2-ledger > span { position: absolute; left: 0; right: 0; top: 0; opacity: 0; }
+.h2-ledger b { color: var(--ink); font-weight: 600; }
+.h2-ledger b.ver { color: var(--ver); }
+/* the static states (the last one, 复盘, is where the motion stops; reduced motion starts there) */
+.h2-stage .ch3 { color: var(--ink); }
+.h2-stage .h2-c3, .h2-stage .lg3 { opacity: 1; }
+.h2-stage[data-s="1"] .h2-win { width: var(--w1); height: var(--h1); border-radius: var(--r1); }
+.h2-stage[data-s="2"] .h2-win { width: var(--w2); height: var(--h2); border-radius: var(--r2); }
+.h2-stage[data-s="1"] .h2-c3, .h2-stage[data-s="2"] .h2-c3, .h2-stage[data-s="1"] .lg3, .h2-stage[data-s="2"] .lg3 { opacity: 0; }
+.h2-stage[data-s="1"] .ch3, .h2-stage[data-s="2"] .ch3 { color: var(--ink-3); }
+.h2-stage[data-s="1"] .h2-c1, .h2-stage[data-s="1"] .lg1, .h2-stage[data-s="2"] .h2-c2, .h2-stage[data-s="2"] .lg2 { opacity: 1; }
+.h2-stage[data-s="1"] .ch1, .h2-stage[data-s="2"] .ch2 { color: var(--ink); }
+.h2-stage[data-s="1"] .h2-bar { transform: translateX(0); }
+.h2-stage[data-s="2"] .h2-bar { transform: translateX(100%); }
+.h2-stage[data-s="1"] .h2-l1, .h2-stage[data-s="1"] .h2-l2, .h2-stage[data-s="1"] .h2-l3, .h2-stage[data-s="2"] .h2-l1 { opacity: 0; }
+/* a tap: the window changes shape, the old content goes first, the new one comes once the window has its shape */
+.h2-stage.manual .h2-win { transition: width 650ms var(--e-yield), height 650ms var(--e-yield), border-radius 650ms var(--e-yield); }
+.h2-stage.manual .h2-c, .h2-stage.manual .h2-ledger > span { transition: opacity 140ms ease-in; }
+.h2-stage.manual[data-s="1"] .h2-c1, .h2-stage.manual[data-s="2"] .h2-c2, .h2-stage.manual[data-s="3"] .h2-c3,
+.h2-stage.manual[data-s="1"] .lg1, .h2-stage.manual[data-s="2"] .lg2, .h2-stage.manual[data-s="3"] .lg3 { transition: opacity 260ms ease-out 380ms; }
+.h2-stage.manual .h2-dots { transition: opacity 300ms ease-out 150ms; }
+.h2-stage.manual .h2-bar { transition: transform 400ms var(--e-yield); }
+.h2-stage.manual .h2-chip { transition: color 200ms; }
+@keyframes h2-sweep { from { transform: translateX(0); opacity: 1; } 96% { opacity: 1; } to { transform: translateX(calc(100% + 2px)); opacity: 0; } }
+@keyframes h2-dim { from { opacity: 1; } }
+@keyframes h2-in { from { opacity: 0; } }
+@keyframes h2-open { from { opacity: 0; transform: scale(0.86); width: var(--w1); height: var(--h1); border-radius: var(--r1); } to { opacity: 1; transform: none; width: var(--w1); height: var(--h1); border-radius: var(--r1); } }
+@keyframes h2-12 { from { width: var(--w1); height: var(--h1); border-radius: var(--r1); } to { width: var(--w2); height: var(--h2); border-radius: var(--r2); } }
+@keyframes h2-23 { from { width: var(--w2); height: var(--h2); border-radius: var(--r2); } to { width: var(--w3); height: var(--h3); border-radius: var(--r3); } }
+@keyframes h2-rise { from { transform: scaleY(0); } }
+.fl-cue { margin-top: 8px; padding: 12px 0; border-top: 1px solid var(--rule); font: 12px/1.5 var(--mono); }
+
+/* ===== why it is new, the situations' ladder, the example's heading ===== */
+.fl-why, .fl-band, .fl-ex { max-width: calc(var(--maxw) + 2 * var(--m)); margin: 0 auto; padding: 64px var(--m) 0; }
+.fl-why h2, .fl-band h2, .fl-ex h2 { margin: 8px 0 8px; font-size: 24px; line-height: 1.34; }
+/* the figure runs to the screen's right edge, so the last row (the sum, same scale) visibly runs off it */
+.fl-src { margin: 20px calc(-1 * var(--m)) 0 0; overflow: hidden; }
+.fl-src .row { display: grid; grid-template-columns: 72px 38px minmax(0, 1fr); align-items: center; gap: 0 8px; height: 13px; font: 10.5px/13px var(--mono); color: var(--ink-3); white-space: nowrap; }
+.fl-src .nm { overflow: hidden; text-overflow: ellipsis; }
+.fl-src .ct { text-align: right; }
+.fl-src .bar { position: relative; display: flex; align-items: center; gap: 6px; height: 100%; container-type: inline-size; }
+.fl-src .bar i { flex: none; width: max(1px, calc(var(--w) * (100cqw - var(--m)))); height: 5px; background: var(--ink-3); transform-origin: 0 50%; }
+.fl-src .bar em { font-style: normal; color: var(--ink); }
+.fl-src .row.one { color: var(--ink); font-weight: 600; }
+.fl-src .row.one .bar i { background: var(--ink); }
+.fl-src .row.all { height: 24px; margin-top: 10px; color: var(--ink); font: 600 12px/24px var(--mono); }
+.fl-src .row.all .bar i { height: 12px; background: var(--ink); }
+.fl[data-js] .fl-src:not(.in) .bar i { transform: scaleX(0); }
+.fl[data-js] .fl-src:not(.in) .bar em { opacity: 0; }
+.fl-src.in .bar i { transition: transform 420ms var(--e-out) calc(var(--i) * 28ms); }
+.fl-src.in .bar em { transition: opacity 240ms ease-out 900ms; }
+.fl-src.in .row.all .bar i { transition: transform 1100ms var(--e-yield) 900ms; }
+.fl-why .fl-note { margin-top: 10px; font: 11.5px/1.6 var(--mono); color: var(--ink-3); }
+
+.fl-ladder { margin: 18px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); }
+.fl-ladder a { display: grid; grid-template-columns: 112px minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; gap: 4px 14px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.fl-ladder .art { grid-row: 1 / 3; display: grid; place-items: center; }
+.fl-ladder .art svg { display: block; width: calc(var(--size) * 1px); height: auto; overflow: visible; }
+.fl-ladder .tx { display: flex; flex-direction: column; font-size: 14.5px; line-height: 1.4; }
+.fl-ladder .when { font: 11px/1.4 var(--mono); color: var(--ink-2); }
+.fl-ladder .tx b { font-weight: 600; }
+.fl-ladder .room { font-size: 12.5px; color: var(--ink-2); }
+.fl-ladder .fig { font: 12px/1.3 var(--mono); color: var(--ink-2); }
+.fl-ladder .fig .fl-num { margin-right: 5px; font-size: 30px; color: var(--ink); vertical-align: -3px; }
+.fl-ladder .fig .fl-num.ver { color: var(--ver); }
+.fl-ladder svg text { font: 9px var(--mono); fill: var(--ink-2); }
+.fl-ladder svg .g-num { font: 44px var(--num); fill: var(--ink); }
+.fl-ladder svg .g-frame { fill: none; stroke: var(--ink); stroke-width: 1.2; }
+.fl-ladder svg .g-tick { stroke-width: 2.4; stroke-linecap: round; }
+@media (hover: hover) { .fl-ladder a:hover .tx b { text-decoration: underline; text-underline-offset: 3px; } }
+.fl[data-js] .fl-ladder:not(.in) li { opacity: 0; transform: translateY(6px); }
+.fl-ladder.in li { transition: opacity 260ms ease-out calc(var(--gi) * 150ms), transform 360ms var(--e-out) calc(var(--gi) * 150ms); }
+.fl[data-js] .fl-ladder:not(.in) .g-a { opacity: 0; }
+.fl-ladder .g-rise { transform-box: fill-box; transform-origin: 50% 100%; }
+.fl-ladder .g-band { transform-box: fill-box; transform-origin: 0 50%; }
+.fl[data-js] .fl-ladder:not(.in) .g-rise { transform: scaleY(0.2); }
+.fl[data-js] .fl-ladder:not(.in) .g-band { transform: scaleX(0); }
+.fl-ladder.in .g-a { transition: opacity 260ms ease-out calc(var(--gi) * 150ms + 120ms + var(--i) * 90ms), transform 420ms var(--e-out) calc(var(--gi) * 150ms + 120ms + var(--i) * 90ms); }
+.fl-ladder.in .g-tick, .fl-ladder.in .g-cell { transition: opacity 160ms ease-out calc(var(--gi) * 150ms + 120ms + var(--i) * 7ms); }
+.fl-ex .fl-lede { max-width: 40em; }
 
 /* the motion, shared by the first screen and the beats */
 @keyframes fl-open { from { transform: translateX(-100%); } }
@@ -635,7 +805,6 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 @keyframes fl-in { from { opacity: 0; } }
 @keyframes fl-yield { from { transform: translateX(calc((var(--bx) - var(--x)) * 1cqw)) scaleX(calc(var(--bw) / var(--w))); } }
 @keyframes fl-flash { 0% { opacity: 0; } 14%, 76% { opacity: 0.16; } 100% { opacity: 0; } }
-@keyframes fl-cap-before { 0% { opacity: 0; } 9%, 96% { opacity: 1; } 100% { opacity: 0; } }
 /* a dot: an arc from its tick (sideways easing out, down easing in, sampled from landing.mjs's curves), then it
    shrinks into its segment */
 @keyframes fl-drop {
@@ -654,32 +823,8 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
   100% { opacity: 0; transform: translate(0, 0) scale(0); }
 }
 
-/* first screen: the playhead runs the 12 hours → the unadopted fold → the 40 fall into their items, absorbed as
-   they land, while the ruler re-divides → your items take colour, the urgent one last. Once, from first paint;
-   the times are landing.mjs's TIMING.hero. */
-@media (prefers-reduced-motion: no-preference) {
-  .fl-hero-stage .fl-sweep { animation: fl-open 1400ms linear 120ms both; }
-  .fl-hero-stage .fl-sweep-in { animation: fl-hold 1400ms linear 120ms both; }
-  .fl-hero-stage .fl-head { animation: fl-head 1400ms linear 120ms both; }
-  .fl-hero-stage .fl-lane .a { animation: fl-agent 240ms var(--e-fold) 1600ms both; }
-  .fl-hero-stage .fl-lane .f { animation: fl-fold 240ms var(--e-fold) 1600ms both; }
-  .fl-hero-stage .fl-segs { animation: fl-in 300ms ease-out 300ms both; }
-  .fl-hero-stage .fl-cap .cb { animation: fl-cap-before 3440ms linear both; }
-  .fl-hero-stage .fl-cap .ca { animation: fl-in 140ms ease-out 3440ms both; }
-  .fl-hero-stage .dt { animation: fl-drop var(--dd) linear var(--d) both; }
-  .fl-hero-stage .sg { animation: fl-yield var(--yd) var(--e-yield) var(--yt) both; }
-  .fl-hero-stage .sg .h { animation: fl-flash var(--fd) linear var(--fa) both; }
-  .fl-hero-stage .fl-tag { animation: fl-in 200ms ease-out calc(var(--yt) - 120ms) both; }
-  .fl-hero-stage .fl-tag .rs { animation: var(--roll) var(--yd) linear var(--yt) both; }
-  .fl-hero-stage .sg .v { animation: fl-in 300ms ease-out 3420ms both; }
-  .fl-hero-stage .sg.lead .v { animation: fl-in 300ms ease-out 3680ms both; }
-  .fl-legend .lg1 { animation: fl-in 220ms ease-out 1540ms both; }
-  .fl-legend .lg2 { animation: fl-in 220ms ease-out 1850ms both; }
-  .fl-legend .lg3 { animation: fl-in 220ms ease-out 3800ms both; }
-}
-
 /* ===== one round: the pinned stage and the three beats ===== */
-.fl-round { position: relative; max-width: calc(var(--maxw) + 2 * var(--m)); margin: 40px auto 0; padding: 0 var(--m); }
+.fl-round { position: relative; max-width: calc(var(--maxw) + 2 * var(--m)); margin: 28px auto 0; padding: 0 var(--m); }
 .fl-sticky { position: sticky; top: 0; z-index: 2; padding: 12px 0 10px; background: var(--paper); border-bottom: 1px solid var(--rule); }
 .fl-meta { position: relative; display: flex; align-items: center; height: 18px; }
 .fl-meta .fl-kick { position: absolute; left: 0; top: 2px; opacity: 0; transition: opacity 140ms ease-in; white-space: nowrap; }
@@ -813,28 +958,8 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .fl-real h3 { font-size: 19px; }
 .fl-note { margin-top: 8px; font: 11.5px/1.6 var(--mono) !important; color: var(--ink-3) !important; }
 
-/* ===== the bridge ===== */
-.fl-bridge-sec, .fl-show, .fl-docs { max-width: calc(var(--maxw) + 2 * var(--m)); margin: 0 auto; padding: 56px var(--m) 0; }
-.fl-bridge-sec h2, .fl-show > h2 { margin: 8px 0 8px; font-size: 25px; line-height: 1.3; }
-.fl-bridge { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin-top: 18px; border: 1px solid var(--rule); background: var(--rule); }
-.fl-glyph { display: flex; flex-direction: column; gap: 6px; min-height: 44px; padding: 8px 8px 10px; background: var(--paper); }
-.fl-glyph .art svg { display: block; width: 100%; height: auto; overflow: visible; }
-.fl-glyph svg text { font: 9px var(--mono); fill: var(--ink-2); }
-.fl-glyph svg .g-num { font: 44px var(--num); fill: var(--ink); }
-.fl-glyph svg .g-frame { fill: none; stroke: var(--ink); stroke-width: 1.2; }
-.fl-glyph svg .g-tick { stroke-width: 2.4; stroke-linecap: round; }
-.fl-glyph .gt { display: flex; flex-direction: column; font-size: 12.5px; line-height: 1.35; }
-.fl-glyph .gt b { font-weight: 600; }
-.fl-glyph .gt span, .fl-glyph .gn { font: 11px/1.4 var(--mono); color: var(--ink-2); }
-.fl-glyph .gn.ver { color: var(--ver); }
-@media (hover: hover) { .fl-glyph:hover { background: var(--paper-2); } .fl-glyph:hover .gt b { text-decoration: underline; text-underline-offset: 3px; } }
-.fl[data-js] .fl-bridge:not(.in) .g-a { opacity: 0; }
-.fl-bridge .g-rise { transform-box: fill-box; transform-origin: 50% 100%; }
-.fl-bridge .g-band { transform-box: fill-box; transform-origin: 0 50%; }
-.fl[data-js] .fl-bridge:not(.in) .g-rise { transform: scaleY(0.2); }
-.fl[data-js] .fl-bridge:not(.in) .g-band { transform: scaleX(0); }
-.fl-bridge.in .g-a { transition: opacity 260ms ease-out calc(var(--gi) * 80ms + var(--i) * 110ms), transform 420ms var(--e-out) calc(var(--gi) * 80ms + var(--i) * 110ms); }
-.fl-bridge.in .g-tick, .fl-bridge.in .g-cell { transition: opacity 160ms ease-out calc(var(--gi) * 80ms + var(--i) * 9ms); }
+.fl-show, .fl-docs { max-width: calc(var(--maxw) + 2 * var(--m)); margin: 0 auto; padding: 56px var(--m) 0; }
+.fl-show > h2 { margin: 8px 0 8px; font-size: 25px; line-height: 1.3; }
 
 /* ===== the six situations ===== */
 .fl-form { margin-top: 26px; padding-top: 12px; border-top: 1px solid var(--ink); }
@@ -901,15 +1026,27 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 /* ===== iPad portrait and up ===== */
 @media (min-width: 700px) {
   .fl { --m: 32px; }
-  .fl-hero { padding-top: 40px; }
-  .fl-big .fl-num { font-size: clamp(112px, 15svh, 172px); }
-  .fl-hero h1 { font-size: 40px; }
+  .fl-hero { padding-top: 32px; }
+  .fl-hero h1 { font-size: 40px; line-height: 1.26; }
   .fl-sub { display: block; font-size: 16px; max-width: 40em; }
-  .fl-one { display: none; }
-  .fl-hero-stage { --gut: 64px; --lh: 24px; --lg: 8px; --rh: 30px; --tw: 1.4px; margin-top: 26px; }
-  .fl-hero-stage .fl-lab { font-size: 11px; color: var(--ink-2); }
-  .fl-hero-stage .fl-lab b { display: inline; }
-  .fl-cue span { display: inline; }
+  .fl-sub-m { display: none; }
+  .h2-stage { --zh: 300px; --w1: 200px; --h1: 200px; --r1: 100px; --h2: 286px; --w2: calc(286px * 1.7); margin-top: 26px; }
+  .h2-cap { font-size: 12px; }
+  .h2-axis { font-size: 11px; }
+  .h2-axis .mid { display: inline; }
+  .h2-c1 .n { font-size: 74px; }
+  .h2-c1 .u { font-size: 13.5px; }
+  .h2-c1 .q { font-size: 14px; }
+  .h2-c1 .t { font-size: 11.5px; }
+  .h2-desk .tl b { font-size: 12.5px; }
+  .h2-chip b { font-size: 16px; }
+  .h2-chip span { font-size: 12px; }
+  .h2-ledger { min-height: 48px; font-size: 14.5px; }
+  .fl-why h2, .fl-band h2, .fl-ex h2 { font-size: 32px; }
+  .fl-why .fl-lede, .fl-band .fl-lede { font-size: 15.5px; max-width: 40em; }
+  .fl-src .row { grid-template-columns: 96px 44px minmax(0, 1fr); height: 15px; font-size: 11.5px; line-height: 15px; }
+  .fl-ladder a { grid-template-columns: 160px minmax(0, 1fr); padding: 16px 0; }
+  .fl-ladder .art svg { width: calc(var(--size) * 1.3px); }
   .fl-beat-stage { --gut: 60px; --rh: 32px; --cardH: 180px; }
   .fl-deltas > div { position: relative; display: block; }
   .dl { position: absolute; left: calc(var(--x) * 1%); top: 0; translate: -50% 0; }
@@ -919,8 +1056,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
   .fl-step h3 { font-size: 26px; }
   .fl-step p:not(.no) { font-size: 15.5px; max-width: 36em; }
   .fl-beat-stage { --zw: min(100%, 560px); --zmax: 560px; }
-  .fl-bridge { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .fl-bridge-sec h2, .fl-show > h2 { font-size: 32px; }
+  .fl-show > h2 { font-size: 32px; }
   .fl-tile { width: 260px; }
   .fl-docs .groups { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 32px; }
 }
@@ -928,20 +1064,29 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 /* ===== desk: 8 columns of the 64 grid ===== */
 @media (min-width: 960px) {
   .fl { --m: 48px; }
-  .fl-hero { padding-top: 44px; }
-  .fl-hero-top { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); column-gap: 32px; align-items: end; }
-  .fl-hero-top .fl-big { grid-column: 1 / 4; margin: 0 0 -10px -0.06em; padding-top: 0.16em; }
-  .fl-big .fl-num { font-size: clamp(220px, 34vh, 330px); }
-  .fl-big small { font-size: 24px; }
-  .fl-hero-text { grid-column: 4 / 9; padding-bottom: 18px; }
-  .fl-hero h1 { font-size: clamp(40px, 3.6vw, 52px); line-height: 1.22; }
-  .fl-sub { font-size: 17px; line-height: 1.7; }
-  .fl-ctas { display: flex; gap: 12px; margin-top: 22px; }
-  .fl-hero-stage { --gut: 88px; --lh: 22px; --lg: 7px; --rh: 28px; margin-top: 30px; }
-  .fl-legend { margin-left: 88px; font-size: 12.5px; }
-  .fl-cue { margin-left: 88px; }
+  .fl-hero { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); column-gap: 32px; align-items: start; padding-top: 36px; }
+  .h2-text { grid-column: 1 / 4; padding-top: 26px; }
+  .h2-stage { grid-column: 4 / 9; margin-top: 0; --zh: clamp(250px, 35vh, 340px); --h1: calc(var(--zh) * 0.66); --w1: var(--h1); --r1: calc(var(--h1) / 2);
+    --h2: calc(var(--zh) - 14px); --w2: calc((var(--zh) - 14px) * 1.7); }
+  .fl-hero h1 { font-size: clamp(34px, 3.1vw, 46px); line-height: 1.26; }
+  .fl-sub { font-size: 16px; line-height: 1.75; }
+  .fl-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+  .fl-cue { display: none; }
+  .h2-ledger { min-height: 30px; font-size: 14px; }
 
-  .fl-round { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); column-gap: 32px; margin-top: 72px; }
+  .fl-why { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); column-gap: 32px; padding-top: 112px; }
+  .fl-why .hd { grid-column: 1 / 4; }
+  .fl-why .fl-src { grid-column: 4 / 9; margin-top: 6px; }
+  .fl-why .fl-note { grid-column: 4 / 9; }
+  .fl-why h2, .fl-band h2, .fl-ex h2 { font-size: 34px; }
+  .fl-band { padding-top: 112px; }
+  .fl-ladder { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); column-gap: 24px; margin-top: 28px; border-top: 1px solid var(--ink); }
+  .fl-ladder a { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; height: 100%; padding: 16px 0 18px; border-bottom: 0; }
+  .fl-ladder .art { height: 176px; place-items: end start; margin-bottom: 8px; }
+  .fl-ladder .art svg { width: calc(var(--size) * 1.5px); }
+  .fl-ex { padding-top: 112px; }
+
+  .fl-round { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); column-gap: 32px; margin-top: 48px; }
   .fl-steps { grid-column: 1 / 4; grid-row: 1; }
   .fl-sticky { grid-column: 4 / 9; grid-row: 1; align-self: start; top: calc(var(--vp-nav-height) + max(12px, (100vh - var(--vp-nav-height) - 560px) / 2)); border-bottom: 0; }
   .fl-step { display: flex; flex-direction: column; justify-content: center; min-height: 72vh; padding: 0; opacity: 0.32; transition: opacity 300ms; }
@@ -953,8 +1098,6 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
   .fl-count { height: 104px; }
   .fl-count .alt { font-size: 12.5px; }
   .fl-beat-stage { --gut: 72px; --ax: 22px; --rg: 14px; --rh: 38px; --cardH: 196px; }
-  .fl-bridge { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  .fl-glyph { padding: 12px 14px 14px; }
   .fl-show > h2 { margin-bottom: 8px; }
   .fl-form { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); column-gap: 32px; row-gap: 0; margin-top: 44px; }
   .fl-form .hd { grid-column: 1 / 9; }
