@@ -50,11 +50,12 @@ export const TOP = [
   },
 ]
 
-// The rest, in the gallery's order: the original tree map first, then the ones still usable on a phone or a pad
+// The rest, in the gallery's order: the smart glasses (newest, fine on a phone and a pad) and the original tree map
+// first, then the ones still usable on a phone or a pad
 // and the strongest pictures, the desk-only relation views by finish × representativeness, the component demo,
 // and the eight forms withdrawn after round one. A prototype missing here (a new one) goes to the end.
 export const GALLERY_ORDER = [
-  'original', 'pulse', 'a', 'chain', 'c', 'morph', 'dial', 'timing', 'peak', 'yield', 'age', 'notation', 'tug',
+  'glasses', 'original', 'pulse', 'a', 'chain', 'c', 'morph', 'dial', 'timing', 'peak', 'yield', 'age', 'notation', 'tug',
   'lineage', 'provenance', 'khipu', 'respond', 'chat', 'radio', 'departures', 'blame', 'frontpage', 'receipt', 'strips', 'orb',
 ]
 
@@ -144,8 +145,8 @@ export function stageModel(d) {
   const ticks = v(d.beat1.ticks).map(([m, stream, to, target], i) => ({
     i, m, x: m / WINDOW_MINUTES * 100, lane: LANES.findIndex(l => l[0] === stream), to, target,
   }))
-  // The 40 adopted inputs: each falls into its own item's segment, spread evenly across it in arrival order, and
-  // rides along when the segments yield. One went to an item withdrawn this round: it drops to the ruler and fades.
+  // The 40 adopted inputs: each falls into its own item's segment, spread evenly across it in arrival order, and is
+  // absorbed there. One went to an item withdrawn this round: it drops to the ruler and fades.
   const adopted = ticks.filter(t => t.to !== 'fold')
   const byItem = new Map()
   for (const t of adopted) {
@@ -156,10 +157,11 @@ export function stageModel(d) {
   const dots = adopted.map((t, k) => {
     const id = typeof t.target === 'number' ? v(d.beat2.segments)[t.target]?.id : t.target
     const list = byItem.get(id), j = list.indexOf(t), n = list.length
-    const b = before.get(id), a = after.get(id)
-    // Withdrawn this round: it has no segment, so it drops to the axis under its own tick and fades there.
-    if (!a) return { k, x0: t.x, lane: t.lane, xb: t.x, xa: t.x, gone: true, id }
-    return { k, x0: t.x, lane: t.lane, xb: b.x + b.w * (j + 0.5) / n, xa: a.x + a.w * (j + 0.5) / n, id, you: t.to === 'you' }
+    // Withdrawn this round: it has no segment, so it drops onto the ruler under its own tick and fades there.
+    if (!after.get(id)) return { k, x0: t.x, lane: t.lane, gone: true, id }
+    // f: where in its segment it lands: they converge on its middle (a narrow band, in arrival order), so the
+    // inputs read as going into that one item rather than lining up along the ruler
+    return { k, x0: t.x, lane: t.lane, f: n > 1 ? 0.5 + (j / (n - 1) - 0.5) * 0.36 : 0.5, id, you: t.to === 'you' }
   })
   const deltas = v(d.beat2.yielded).map(y => ({ ...y, ...after.get(y.id), title: segs.find(s => s.id === y.id)?.title }))
   return { segments, ticks, dots, deltas, used, blank, leadId, count: { n: ticks.length, adopted: adopted.length } }
@@ -169,30 +171,135 @@ export function stageModel(d) {
 export const SHORT = { 'driveway-wet': '主水管', 'smilla-vet': '猫看病', 'issue-13587': '#13596', 'kajsa-bike-brake': '车刹', 'ture-pickup-0812': 'Ture' }
 
 /**
+ * When things happen on each stage, in ms: the first screen from first paint, a beat from the moment it starts.
+ * The CSS reads the per-element times from inline variables, so this table is their single source:
+ *   sweep   the 12 hours pass left to right and the ticks appear as the playhead reaches them
+ *   fold    the 118 unadopted ticks shrink to stubs (and the Agent's shorten), in their lane groups
+ *   squeeze (beats) the lanes compress towards the ruler
+ *   drop    the 40 adopted inputs fall one after another (start, gap); each falls for `fall` ms, lands inside its
+ *           own item's segment and is absorbed in `absorb` ms
+ *   yield   the ruler re-divides on one curve while the dots arrive: an item grows as its inputs land in it
+ */
+export const TIMING = {
+  hero: { sweep: [120, 1400], fold: 1600, drop: [1950, 20], fall: 520, absorb: 190, yield: [2300, 1000], swap: 3300, colour: 3420, lead: 3680 },
+  beats: { sweep: [150, 1600], fold: 0, squeeze: [260, 600], drop: [900, 22], fall: 560, absorb: 190, yield: [1300, 1100] },
+}
+// The yield's curve (the CSS --e-yield), to know where a segment is when a dot reaches it.
+const YIELD_CURVE = [0.65, 0, 0.35, 1]
+export function bezier([x1, y1, x2, y2], x) {
+  if (x <= 0) return 0
+  if (x >= 1) return 1
+  const at = (a, b, t) => 3 * a * t * (1 - t) ** 2 + 3 * b * t * t * (1 - t) + t ** 3
+  let lo = 0, hi = 1, t = x
+  for (let i = 0; i < 40; i += 1) { t = (lo + hi) / 2; if (at(x1, x2, t) < x) lo = t; else hi = t }
+  return at(y1, y2, t)
+}
+// The share of a dot's animation spent falling; the rest is it being absorbed into its segment (the CSS fl-drop).
+export const FALL_SHARE = 0.74
+
+// A number that counts from `from` to `to` in step with the yield: a strip of every value in between, clipped to one
+// line, that moves on one value each time the segment's width passes the next whole share on the yield's curve
+// (keyframes fl-roll-<steps>, from rollKeyframes). The final value is also in a visually hidden twin (for data-k).
+function roll(from, to, key) {
+  const step = to >= from ? 1 : -1
+  const values = []
+  for (let n = from; ; n += step) { values.push(n); if (n === to) break }
+  const twin = key ? `<span class="fl-sr" data-k="${key}">${to}</span>` : ''
+  return `${twin}<span class="roll" aria-hidden="true" style="--steps:${values.length - 1};--roll:fl-roll-${values.length - 1}"><span class="rs">${values.join('<br>')}</span></span>`
+}
+// The inverse of the yield's curve: when (as a share of its duration) it reaches progress y.
+function curveTime(y) {
+  let lo = 0, hi = 1
+  for (let i = 0; i < 40; i += 1) { const m = (lo + hi) / 2; if (bezier(YIELD_CURVE, m) < y) lo = m; else hi = m }
+  return (lo + hi) / 2
+}
+// One @keyframes per strip length: hold each value until the curve passes halfway to the next, then step.
+export function rollKeyframes(counts) {
+  return [...new Set(counts)].sort((a, b) => a - b).map(n => {
+    const frames = ['0% { transform: translateY(0); }']
+    for (let i = 0; i < n; i += 1) {
+      const at = curveTime((i + 0.5) / n) * 100
+      frames.push(`${at.toFixed(2)}% { transform: translateY(calc(${-i} * var(--rl))); }`, `${(at + 0.01).toFixed(2)}% { transform: translateY(calc(${-(i + 1)} * var(--rl))); }`)
+    }
+    frames.push(`100% { transform: translateY(calc(${-n} * var(--rl))); }`)
+    return `@keyframes fl-roll-${n} { ${frames.join(' ')} }`
+  }).join('\n')
+}
+
+/**
  * The stage's inner HTML. `mode` is 'hero' (the first screen builds it once by itself, CSS only) or 'beats'
- * (scroll-triggered, FoldLanding.vue sets data-step and play classes). Every position is a share of the plot's
- * width (x, in % / cqw) or a CSS variable (y), so the server-rendered page needs no viewport.
+ * (scroll-triggered, FoldLanding.vue sets the state classes). Every position is a share of the plot's width
+ * (x, in % / cqw) or a CSS variable (y), so the server-rendered page needs no viewport.
+ *
+ * The ticks sit in one group per lane and destination (yours, the Agent's, folded) inside a window that slides open
+ * with the playhead: a handful of animations instead of one per tick. Each dot is one element that falls, lands
+ * inside its own segment where that segment is at that moment, and is absorbed.
  */
 export function stageHTML(d, mode) {
   const m = stageModel(d)
+  const T = TIMING[mode]
   const streams = v(d.beat1.streams)
   const lab = LANES.map(([id, name], l) => `<span class="fl-lab" style="--l:${l}">${name}<b data-k="beat1.streams.${id}">${streams[id]}</b></span>`).join('')
   const lanes = LANES.map((_, l) => `<i class="fl-ln" style="--l:${l}"></i>`).join('')
-  const ticks = m.ticks.map(t => `<i class="tk ${t.to[0]}" style="--x:${r(t.x)};--l:${t.lane};--t:${r(t.m / WINDOW_MINUTES)}"></i>`).join('')
+  const groups = LANES.map((_, l) => {
+    const of = to => m.ticks.filter(t => t.lane === l && t.to === to).map(t => `<i style="--x:${r(t.x)}"></i>`).join('')
+    return `<div class="fl-lane" style="--l:${l}"><div class="g y">${of('you')}</div><div class="g a">${of('agent')}</div><div class="g f">${of('fold')}</div></div>`
+  }).join('')
+  const sweep = `<div class="fl-sweep"><div class="fl-sweep-in">${groups}</div><i class="fl-head"></i></div>`
   const axis = [[0, '12:00'], [180, '15:00'], [360, '18:00'], [540, '21:00'], [720, '00:00']]
     .map(([min, text]) => `<span style="--x:${r(min / WINDOW_MINUTES * 100)}">${text}</span>`).join('')
-  const segs = m.segments.map(s => `<div class="sg ${s.turn}${s.lead ? ' lead' : ''}" style="--x:${r(s.x)};--w:${r(s.w)};--bx:${r(s.bx)};--bw:${r(s.bw)}" data-id="${s.id}"><i class="f"></i>${s.turn === 'you' ? '<i class="v"></i>' : ''}${s.lead && mode !== 'hero' ? '<i class="done">答过 · 等读到</i>' : ''}</div>`).join('')
-  const dots = m.dots.map(t => `<i class="dt${t.gone ? ' gone' : ''}" style="--x0:${r(t.x0)};--l:${t.lane};--xb:${r(t.xb)};--xa:${r(t.xa)};--k:${t.k}"><i><b></b></i></i>`).join('')
-  const ruler = `<div class="fl-ruler"><div class="fl-bar">${segs}</div><i class="fl-scale"></i></div>`
-  if (mode === 'hero') {
-    return `<div class="fl-gutter" aria-hidden="true">${lab}</div><div class="fl-plot"><div class="fl-lanes">${lanes}${ticks}</div>${ruler}<div class="fl-dots">${dots}</div></div>`
+
+  // Where every dot lands: inside its own segment, where that segment is at the moment it arrives.
+  const [d0, gap] = T.drop
+  const [y0, yd] = T.yield
+  const dur = Math.round(T.fall / FALL_SHARE)
+  const landAt = k => d0 + k * gap + T.fall
+  const progress = t => bezier(YIELD_CURVE, (t - y0) / yd)
+  const byId = new Map(m.segments.map(s => [s.id, s]))
+  const arrivals = new Map()
+  const dots = m.dots.map(t => {
+    const s = byId.get(t.id)
+    let xl = t.x0
+    if (s) {
+      const q = progress(landAt(t.k))
+      xl = s.bx + (s.x - s.bx) * q + (s.bw + (s.w - s.bw) * q) * t.f
+      if (!arrivals.has(s.id)) arrivals.set(s.id, [])
+      arrivals.get(s.id).push(landAt(t.k))
+    }
+    return `<i class="dt${t.gone ? ' gone' : ''}" style="--x0:${r(t.x0)};--xl:${r(xl)};--l:${t.lane};--d:${d0 + t.k * gap}ms"></i>`
+  }).join('')
+  // A segment darkens while its inputs land in it.
+  const flash = id => {
+    const list = arrivals.get(id)
+    if (!list) return ''
+    const a = Math.min(...list), b = Math.max(...list)
+    return `<i class="h" style="--fa:${a - 60}ms;--fd:${b - a + T.absorb + 200}ms"></i>`
   }
-  // Who gave to whom: the items that grew on one row, the ones that gave way (and the blank) on the row below.
-  const deltas = m.deltas.map(x => `<span class="dl ${x.delta > 0 ? 'up' : 'down'}" data-id="${x.id}" style="--x:${r(x.x + x.w / 2)}">${SHORT[x.id] || ''} ${x.before}→${x.share}</span>`).join('')
-    + `<span class="dl down blank" style="--x:100">空余 <span data-k="beat2.blank.before">${m.blank.before}</span>→<span data-k="beat2.blank.now">${m.blank.now}</span></span>`
+  const segs = m.segments.map(s => `<div class="sg ${s.turn}${s.lead ? ' lead' : ''}" style="--x:${r(s.x)};--w:${r(s.w)};--bx:${r(s.bx)};--bw:${r(s.bw)}" data-id="${s.id}"><i class="f"></i>${s.turn === 'you' ? '<i class="v"></i>' : ''}${flash(s.id)}${s.lead && mode !== 'hero' ? '<i class="done">答过 · 等读到</i>' : ''}</div>`).join('')
+  const ruler = `<div class="fl-ruler"><div class="fl-bar"><div class="fl-segs">${segs}</div></div><i class="fl-scale"></i></div>`
+  const times = `--yt:${y0}ms;--yd:${yd}ms;--dd:${dur}ms`
+
+  if (mode === 'hero') {
+    // Above the ruler, which allocation it shows: last round's until the yield, this round's after.
+    const cap = `<div class="fl-cap"><span class="cb">64 份 · 上一轮 · 已用 ${m.used.before} · 空余 <b data-k="beat2.blank.before">${m.blank.before}</b></span>`
+      + `<span class="ca">64 份 · 这一轮 · 已用 ${m.used.after} · 空余 <b data-k="beat2.blank.now">${m.blank.now}</b></span></div>`
+    // Under the ruler, the one change to see: the urgent item doubles, its number rolling with it.
+    const lead = byId.get(m.leadId)
+    const i = v(d.beat2.segments).findIndex(s => s.id === lead.id)
+    const tag = `<div class="fl-tag" style="--x:${r(lead.x)}"><b>${SHORT[lead.id] || lead.title}</b> <span data-k="beat2.segments.${i}.before">${lead.before}</span> → ${roll(lead.before, lead.share, `beat2.segments.${i}.share`)} 份</div>`
+    return `<div class="fl-gutter" aria-hidden="true" style="${times}">${lab}</div>`
+      + `<div class="fl-plot" style="${times}"><style>${rollKeyframes([Math.abs(lead.share - lead.before)])}</style><div class="fl-lanes">${lanes}${sweep}</div>${cap}${ruler}<div class="fl-dots">${dots}</div>${tag}</div>`
+  }
+  // Who gave to whom: the items that grew on one row, the ones that gave way (and the blank) on the row below. On a
+  // desk each sits under its segment; on a phone each row flows (CSS), so the labels never run into each other.
+  const delta = x => `<span class="dl" data-id="${x.id}" style="--x:${r(x.x + x.w / 2)}">${SHORT[x.id] || ''} ${x.before}→${roll(x.before, x.share)}</span>`
+  const deltas = `<div class="up">${m.deltas.filter(x => x.delta > 0).map(delta).join('')}</div>`
+    + `<div class="down">${m.deltas.filter(x => x.delta < 0).map(delta).join('')}`
+    + `<span class="dl blank" style="--x:100">空余 <span data-k="beat2.blank.before">${m.blank.before}</span>→${roll(m.blank.before, m.blank.now, 'beat2.blank.now')}</span></div>`
+  const rolls = [...m.deltas.map(x => Math.abs(x.share - x.before)), Math.abs(m.blank.now - m.blank.before)]
   const lead = m.segments.find(s => s.lead)
-  return `<div class="fl-gutter" aria-hidden="true">${lab}<span class="fl-lab-r">64 份</span><span class="fl-lab-d up">涨</span><span class="fl-lab-d down">让</span></div>`
-    + `<div class="fl-plot" style="--lx:${r(lead.x)};--lw:${r(lead.w)}"><div class="fl-lanes">${lanes}${ticks}</div><div class="fl-axis" aria-hidden="true">${axis}</div>${ruler}<div class="fl-dots">${dots}</div>`
+  return `<div class="fl-gutter" aria-hidden="true" style="${times}">${lab}<span class="fl-lab-r">64 份</span><span class="fl-lab-d up">涨</span><span class="fl-lab-d down">让</span></div>`
+    + `<div class="fl-plot" style="${times};--lx:${r(lead.x)};--lw:${r(lead.w)}"><style>${rollKeyframes(rolls)}</style><div class="fl-lanes">${lanes}${sweep}</div><div class="fl-axis" aria-hidden="true">${axis}</div>${ruler}<div class="fl-dots">${dots}</div>`
     + `<div class="fl-deltas" aria-hidden="true">${deltas}</div>`
     + `<div class="fl-prev" aria-hidden="true">上一轮 · 已用 ${m.used.before} 份 · 空余 ${m.blank.before}</div>`
     + '<i class="fl-lead brace"></i><i class="fl-lead stem"></i><i class="fl-ret b"></i><i class="fl-ret v"></i><i class="fl-ret t"></i>'

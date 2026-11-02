@@ -4,7 +4,7 @@
 //    没有横向滚动；
 // 3. 减弱动态时首屏直接是终态：与正常播放结束后的样子逐项相同，且没有动画在跑；
 // 4. 画廊块数等于原型总数减六，Top 6 不在其中，其余一个不少；
-// 5. 三拍按阅读线切换（1 → 2 → 3 → 回流），演示卡的按钮真的作答、撤回；
+// 5. 三拍按阅读线切换（1 → 2 → 3 → 回流），演示卡的按钮真的作答、撤回；首屏与第 2 拍演完后尺上没有残留的点；
 // 6. 导航“全部原型”的画册面板与查看弹框照常可用；
 // 7. 首屏标题的字都在字体子集里，六张卡与画廊的录像文件都在。
 //
@@ -124,13 +124,18 @@ async function open([width, height], { reduced = false } = {}) {
   };
 }
 
-// The first screen's computed end state: ticks, segments, colours, dots, legend.
+// The first screen's computed end state: the playhead's window, the tick groups, segments, colours, dots, the
+// caption over the ruler, the legend.
 // Transforms are compared as rounded matrices: an animation that ends on \`none\` computes as the identity matrix.
 const heroState = `(() => { const q = s => [...document.querySelectorAll('.fl-hero ' + s)];
-  const t = e => { const v = getComputedStyle(e).transform, m = new DOMMatrixReadOnly(v === 'none' ? undefined : v); return [m.a, m.b, m.c, m.d, m.e, m.f].map(x => x.toFixed(2)).join(','); };
+  const t = e => { const v = getComputedStyle(e).transform, m = new DOMMatrixReadOnly(v === 'none' ? undefined : v); return [m.a, m.b, m.c, m.d, m.e, m.f].map(x => (Math.abs(x) < 0.005 ? 0 : x).toFixed(2)).join(','); };
   const o = e => Number(getComputedStyle(e).opacity).toFixed(2);
-  return { ticks: q('.tk').map(e => t(e) + '/' + o(e)).join('|'), segs: q('.sg').map(t).join('|'), colours: q('.sg .v').map(o).join('|'),
-    dots: q('.dt b').map(o).join('|'), legend: q('.fl-legend > span').map(o).join('|') }; })()`;
+  return { sweep: [...q('.fl-sweep'), ...q('.fl-sweep-in')].map(t).join('|'), ticks: q('.fl-lane .g').map(e => t(e) + '/' + o(e)).join('|'), segs: q('.sg').map(t).join('|'),
+    colours: q('.sg .v').map(o).join('|'), dots: q('.dt').map(e => { const m = new DOMMatrixReadOnly(getComputedStyle(e).transform === 'none' ? undefined : getComputedStyle(e).transform); return Number(o(e)) > 0.05 && Math.abs(m.a) > 0.05 ? 'seen' : 'gone'; }).join('|'), caption: q('.fl-cap span').map(o).join('|'),
+    count: q('.fl-tag .rs').map(t).join('|'), legend: q('.fl-legend > span').map(o).join('|') }; })()`;
+// Dots still to be seen on a stage (once absorbed they are at scale 0 or transparent): none may be left lying on the ruler.
+const dotsLeft = scope => `[...document.querySelectorAll('${scope} .dt')].filter(e => { const cs = getComputedStyle(e), m = new DOMMatrixReadOnly(cs.transform === 'none' ? undefined : cs.transform);
+  return Number(cs.opacity) > 0.05 && Math.abs(m.a) > 0.05 && Math.abs(m.d) > 0.05; }).length`;
 
 try {
   // ---- 1. numbers, 4. gallery, 7. fonts and media (at a phone size) ----
@@ -166,8 +171,13 @@ try {
     window.scrollTo(0, el.getBoundingClientRect().top + scrollY - line + 24); return 1; })()`);
   const stepNow = () => page.evaluate(`document.querySelector('.fl-round').dataset.step`);
   const seen = [];
-  for (const k of [1, 2, 3]) { await goTo(k); await wait(k === 2 ? 3600 : 2200); seen.push(await stepNow()); }
+  let beatDots = -1
+  for (const k of [1, 2, 3]) {
+    await goTo(k); await wait(k === 2 ? 3200 : 2200); seen.push(await stepNow());
+    if (k === 2) beatDots = await page.evaluate(dotsLeft('.fl-beat-stage'));
+  }
   check('三拍随阅读线依次切换：1 → 2 → 3', seen.join() === '1,2,3', seen);
+  check('第 2 拍演完：40 颗点都被吸收进各自的段，尺上没有残留的点', beatDots === 0, beatDots);
   await page.evaluate(`document.querySelector('.fl-card .btns button').click()`);
   await wait(900);
   const answered = await page.evaluate(`({ ans: document.querySelector('.fl-round').classList.contains('ans'), receipt: getComputedStyle(document.querySelector('.fl-receipt')).visibility, text: document.querySelector('.fl-receipt .t').textContent })`);
@@ -192,7 +202,9 @@ try {
   const played = await open([390, 844]);
   await wait(5200);
   const after = await played.evaluate(heroState);
+  const heroDots = await played.evaluate(dotsLeft('.fl-hero'));
   await played.close();
+  check('首屏演完：点都被吸收，尺上没有残留的点', heroDots === 0, heroDots);
   const still = await open([390, 844], { reduced: true });
   const immediate = await still.evaluate(heroState);
   const running = await still.evaluate(`document.getAnimations().filter(a => a.playState === 'running').length`);

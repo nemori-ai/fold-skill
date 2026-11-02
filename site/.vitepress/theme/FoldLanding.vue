@@ -4,15 +4,16 @@
 // so scripts/check-landing.mjs can hold them to it.
 //
 // Motion: the first screen builds itself once with CSS only (it starts on first paint, before any script). The
-// three beats below are CSS transitions between static states: this script only sets the state classes on the
-// round section (s1–s3, ans) as the reader scrolls, adds `tx` when one beat follows the previous, and drops it to
-// jump (a skipped or reversed beat lands on its end state). prefers-reduced-motion: no transitions at all.
+// three beats below are static states with CSS motion that runs only under `tx`: this script only sets the state
+// classes on the round section (s1–s3, ans) as the reader scrolls, adds `tx` when one beat follows the previous,
+// and drops it to jump (a skipped or reversed beat lands on its end state). The times are landing.mjs's TIMING.
+// prefers-reduced-motion: no motion at all.
 import { createStaticVNode, onBeforeUnmount, onMounted, ref } from 'vue'
 import data from '../../landing/data.json'
 // Written by scripts/prepare-site.mjs: the recordings in site/media (a prototype without one shows its preview).
 import media from '../../.generated/landing-media.json'
 import { combinedPage, datasetNotice, openPrototype, prototypes } from './prototypes.mjs'
-import { DESK_ONLY, DOC_GROUPS, bridgeOf, directHref, galleryOf, showcaseOf, stageHTML, stageModel } from './landing.mjs'
+import { DESK_ONLY, DOC_GROUPS, TIMING, bridgeOf, directHref, galleryOf, showcaseOf, stageHTML, stageModel } from './landing.mjs'
 
 const v = field => field.value
 const n = {
@@ -78,8 +79,9 @@ let countFrame = 0
 const cleanups = []
 
 function countUp(el) {
-  // Beat 1 counts the ticks as they stand up: the same delays as the CSS (--t × 1600 ms after a 150 ms start).
-  const times = model.ticks.map(t => 150 + t.m / 720 * 1600 + 120).sort((a, b) => a - b)
+  // Beat 1 counts the ticks as the playhead reaches them (the CSS sweep: TIMING.beats.sweep).
+  const [from, span] = TIMING.beats.sweep
+  const times = model.ticks.map(t => from + t.x / 100 * span).sort((a, b) => a - b)
   const start = performance.now()
   cancelAnimationFrame(countFrame)
   const tick = now => {
@@ -322,6 +324,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
         <span class="lg3"><b data-k="beat2.account.agent">{{ n.account.agent }}</b> 份 Agent 在办</span>
         <span class="lg3"><b data-k="beat2.account.blank">{{ n.account.blank }}</b> 份空余</span>
       </p>
+      <p class="fl-one">每一轮在 {{ v(data.budget) }} 份里取舍，只把要你开口的推到你面前。</p>
       <p class="fl-cue"><a href="#round">一轮整理：涌入 · 折 · 开口 ↓</a><span>{{ v(data.person) }} · 第 {{ v(data.frame.id).slice(1) }} 轮</span></p>
     </section>
 
@@ -541,7 +544,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .fl-stage {
   --gut: 0px; --lh: 18px; --lg: 6px; --ls: calc(var(--lh) + var(--lg));
   --HL: calc(var(--ls) * 4 + var(--lh)); --ax: 18px; --rg: 10px; --R: calc(var(--HL) + var(--ax) + var(--rg)); --rh: 26px;
-  --s: 1; --tw: 1.3px;
+  --sd: 1; --tw: 1.3px; --dot: 5px;
   position: relative;
   display: grid;
   grid-template-columns: var(--gut) minmax(0, 1fr);
@@ -553,111 +556,159 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .fl-plot { grid-column: 2; grid-row: 1; position: relative; container-type: inline-size; height: calc(var(--R) + var(--rh) + 10px); }
 .fl-lanes { position: absolute; inset: 0 0 auto; height: var(--HL); transform-origin: 50% 100%; }
 .fl-ln { position: absolute; left: 0; right: 0; top: calc(var(--l) * var(--ls) + var(--lh)); height: 1px; background: var(--rule); }
-.tk { position: absolute; left: calc(var(--x) * 1%); top: calc(var(--l) * var(--ls)); width: var(--tw); height: var(--lh); background: var(--ink); transform-origin: 50% 100%; }
-.tk.a { transform: scaleY(0.62); }
-.tk.f { transform: scaleY(0.17); opacity: 0.3; }
+/* the ticks: one group per lane and destination, in a window that slides open behind the playhead (two
+   counter-moving transforms, so the ticks themselves never move) */
+.fl-sweep { position: absolute; inset: 0; overflow: hidden; }
+.fl-sweep-in { position: absolute; inset: 0; }
+.fl-head { position: absolute; top: 0; bottom: 0; right: 0; width: 1.5px; background: var(--ink); opacity: 0; }
+.fl-lane { position: absolute; left: 0; right: 0; top: calc(var(--l) * var(--ls)); height: var(--lh); }
+.fl-lane .g { position: absolute; inset: 0; transform-origin: 50% 100%; }
+.fl-lane i { position: absolute; left: calc(var(--x) * 1%); top: 0; bottom: 0; width: var(--tw); background: var(--ink); }
+.fl-lane .a { transform: scaleY(0.62); }
+.fl-lane .f { transform: scaleY(0.17); opacity: 0.3; }
 .fl-axis { position: absolute; left: 0; right: 0; top: var(--HL); height: var(--ax); font: 10px/1 var(--mono); color: var(--ink-3); }
 .fl-axis span { position: absolute; left: calc(var(--x) * 1%); bottom: 2px; translate: -50% 0; }
 .fl-axis span:first-child { translate: 0 0; }
 .fl-axis span:last-child { translate: -100% 0; }
 .fl-ruler { position: absolute; left: 0; right: 0; top: var(--R); height: var(--rh); }
-.fl-bar { position: absolute; inset: 0; }
+.fl-bar, .fl-segs { position: absolute; inset: 0; }
 .fl-bar::after { content: ""; position: absolute; inset: 0; border: 1px solid var(--ink); pointer-events: none; }
 .sg { position: absolute; top: 0; bottom: 0; left: calc(var(--x) * 1%); width: calc(var(--w) * 1%); transform-origin: 0 50%; }
 .sg > i { position: absolute; inset: 1px 1px; }
 .sg .f { background: var(--agent); }
 .sg .v { background: var(--ver-soft); }
 .sg.lead .v { background: var(--ver); }
+.sg .h { background: var(--ink); opacity: 0; }
 .sg .done { display: grid; place-items: center; inset: 2px; border: 1px dashed var(--ink); background: var(--paper); opacity: 0; font: 10px/1 var(--mono); color: var(--ink); overflow: hidden; white-space: nowrap; }
 .fl-scale { position: absolute; left: 0; right: 0; top: calc(100% + 2px); height: 7px;
   background: repeating-linear-gradient(to right, var(--ink-2) 0 1px, transparent 1px calc(100% / 8)) 0 0 / 100% 7px no-repeat,
               repeating-linear-gradient(to right, var(--ink-3) 0 1px, transparent 1px calc(100% / 64)) 0 0 / 100% 4px no-repeat; }
 .fl-scale::after { content: ""; position: absolute; right: 0; top: 0; width: 1px; height: 7px; background: var(--ink-2); }
+/* a dot sits where it lands (inside its segment, at mid-height) and is drawn back to its tick by --dx / --dy; at
+   rest it has been absorbed, so nothing is left on the ruler */
 .fl-dots { position: absolute; inset: 0; pointer-events: none; }
-.dt { --y0: calc(var(--HL) - (var(--HL) - var(--l) * var(--ls) - var(--lh) / 2) * var(--s)); --dy: calc(var(--y0) - var(--R) - var(--rh) / 2);
-  position: absolute; left: calc(var(--xa) * 1%); top: calc(var(--R) + var(--rh) / 2); transform: translateX(calc((var(--xb) - var(--xa)) * 1cqw)); }
-.dt.gone { --dy: calc(var(--y0) - var(--HL) - var(--ax) / 2 - var(--rg) / 2); top: calc(var(--HL) + var(--ax) / 2 + var(--rg) / 2); }
-.dt > i { display: block; transform: translateX(calc((var(--x0) - var(--xb)) * 1cqw)); }
-.dt b { position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%; background: var(--ink); opacity: 0; transform: translateY(var(--dy)); }
+.dt { --y0: calc(var(--HL) - (var(--HL) - var(--l) * var(--ls) - var(--lh) / 2) * var(--sd)); --yl: calc(var(--R) + var(--rh) / 2);
+  --dx: calc(var(--x0) - var(--xl)); --dy: calc(var(--y0) - var(--yl));
+  position: absolute; left: calc(var(--xl) * 1% - var(--dot) / 2); top: calc(var(--yl) - var(--dot) / 2); width: var(--dot); height: var(--dot);
+  border-radius: 50%; background: var(--ink); opacity: 0; }
+.dt.gone { --yl: calc(var(--R) - 5px); }
+/* a number that rolls with the yield: a strip of the values in between, clipped to one line */
+.roll { display: inline-block; height: var(--rl, 1.4em); overflow: hidden; vertical-align: top; line-height: var(--rl, 1.4em); }
+.rs { display: block; transform: translateY(calc(var(--steps) * -1 * var(--rl, 1.4em))); }
 
 /* ===== the first screen ===== */
-.fl-hero { max-width: calc(var(--maxw) + 2 * var(--m)); margin: 0 auto; padding: 22px var(--m) 0; }
-.fl-big { display: flex; align-items: flex-end; gap: 8px; margin: 0 0 6px -0.06em; }
-.fl-big .fl-num { font-size: clamp(112px, 20svh, 172px); }
-.fl-big small { margin-bottom: 0.9em; font: 600 20px/1 var(--sans); }
-.fl-hero-kick { margin: 0 0 6px; }
-.fl-hero h1 { font-size: 30px; line-height: 1.28; }
-.fl-sub { margin: 12px 0 0; color: var(--ink-2); font-size: 15px; line-height: 1.65; }
+.fl-hero { max-width: calc(var(--maxw) + 2 * var(--m)); margin: 0 auto; padding: 16px var(--m) 0; }
+.fl-big { display: flex; align-items: flex-end; gap: 8px; margin: 0 0 4px -0.06em; }
+.fl-big .fl-num { font-size: clamp(88px, 13svh, 116px); }
+.fl-big small { margin-bottom: 0.9em; font: 600 18px/1 var(--sans); }
+.fl-hero-kick { margin: 0 0 4px; }
+.fl-hero h1 { font-size: 27px; line-height: 1.28; }
+.fl-sub { display: none; margin: 12px 0 0; color: var(--ink-2); font-size: 15px; line-height: 1.65; }
+.fl-one { margin-top: 12px; color: var(--ink-2); font-size: 14px; line-height: 1.5; }
 .fl-ctas { display: none; }
-.fl-hero-stage { --lh: 44px; --ls: 0px; --ax: 0px; --rg: 12px; --rh: 20px; --tw: 1px; margin-top: 22px; }
-.fl-hero-stage .fl-gutter { visibility: hidden; }
-.fl-cue span { display: none; }
-.fl-hero-stage .fl-ln { display: none; }
-.fl-hero-stage .fl-ln:first-of-type { display: block; }
-.fl-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 14px; font: 12px/1.5 var(--mono); color: var(--ink-2); }
+/* on a phone the motion is the first screen: lanes ≥ 140px, a 28px ruler, the text above and one line below */
+.fl-hero-stage { --gut: 30px; --lh: 22px; --lg: 8px; --ax: 20px; --rg: 4px; --rh: 28px; --tw: 1.3px; margin-top: 18px; }
+.fl-hero-stage .fl-plot { height: calc(var(--R) + var(--rh) + 32px); }
+.fl-hero-stage .fl-gutter { height: calc(var(--R) + var(--rh) + 32px); }
+.fl-hero-stage .fl-lab { font-size: 10.5px; color: var(--ink-3); }
+.fl-hero-stage .fl-lab b { display: none; }
+.fl-cap { position: absolute; left: 0; right: 0; top: var(--HL); height: var(--ax); font: 10.5px/1 var(--mono); color: var(--ink-2); white-space: nowrap; }
+.fl-cap span { position: absolute; left: 0; bottom: 4px; }
+.fl-cap b { color: var(--ink); font-weight: 600; }
+.fl-cap .cb { opacity: 0; }
+.fl-tag { --rl: 16px; position: absolute; left: calc(var(--x) * 1%); top: calc(var(--R) + var(--rh) + 12px); font: 11px/16px var(--mono); color: var(--ink-2); white-space: nowrap; }
+.fl-tag b { color: var(--ver); font: 600 11.5px/16px var(--sans); }
+.fl-tag .roll { color: var(--ink); font-weight: 700; }
+.fl-legend { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 4px; font: 12px/1.5 var(--mono); color: var(--ink-2); }
 .fl-legend b { color: var(--ink); font-weight: 600; }
 .fl-legend .ver b { color: var(--ver); }
-.fl-cue { display: flex; justify-content: space-between; gap: 12px; margin-top: 22px; padding: 12px 0; border-top: 1px solid var(--rule); font: 12px/1.5 var(--mono); color: var(--ink-2); }
+.fl-cue { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; padding: 12px 0; border-top: 1px solid var(--rule); font: 12px/1.5 var(--mono); color: var(--ink-2); }
 .fl-cue a { color: var(--ink); }
-.fl-cue span { text-align: right; }
+.fl-cue span { display: none; text-align: right; }
 
-/* hero motion: ticks stand up by arrival time → the unadopted fold → 40 dots fall into their items → the ruler
-   yields as one → your items take colour, the urgent one last. 4.5 s, once, from first paint. */
-@keyframes fl-rise { from { transform: scaleY(0); opacity: 1; } to { transform: scaleY(1); opacity: 1; } }
-@keyframes fl-agent { from { transform: scaleY(1); } to { transform: scaleY(0.62); } }
-@keyframes fl-fold { from { transform: scaleY(1); opacity: 1; } to { transform: scaleY(0.17); opacity: 0.3; } }
+/* the motion, shared by the first screen and the beats */
+@keyframes fl-open { from { transform: translateX(-100%); } }
+@keyframes fl-hold { from { transform: translateX(100%); } }
+@keyframes fl-head { from, 94% { opacity: 1; } to { opacity: 0; } }
+@keyframes fl-agent { from { transform: none; } }
+@keyframes fl-fold { from { transform: none; opacity: 1; } }
 @keyframes fl-in { from { opacity: 0; } }
-@keyframes fl-out { to { opacity: 0; } }
-@keyframes fl-before { from, to { transform: translateX(calc((var(--bx) - var(--x)) * 1cqw)) scaleX(calc(var(--bw) / var(--w))); } }
-@keyframes fl-yield { from { transform: translateX(calc((var(--bx) - var(--x)) * 1cqw)) scaleX(calc(var(--bw) / var(--w))); } to { transform: none; } }
-@keyframes fl-ride { from { transform: translateX(calc((var(--xb) - var(--xa)) * 1cqw)); } to { transform: none; } }
-@keyframes fl-fallx { from { transform: translateX(calc((var(--x0) - var(--xb)) * 1cqw)); } to { transform: none; } }
-@keyframes fl-fally { 0% { transform: translateY(var(--dy)); opacity: 0; } 10% { opacity: 1; } 100% { transform: none; opacity: 1; } }
-@keyframes fl-gone { 0% { transform: translateY(var(--dy)); opacity: 0; } 10% { opacity: 1; } 60% { opacity: 0.8; } 100% { transform: none; opacity: 0; } }
+@keyframes fl-yield { from { transform: translateX(calc((var(--bx) - var(--x)) * 1cqw)) scaleX(calc(var(--bw) / var(--w))); } }
+@keyframes fl-flash { 0% { opacity: 0; } 14%, 76% { opacity: 0.16; } 100% { opacity: 0; } }
+@keyframes fl-cap-before { 0% { opacity: 0; } 9%, 96% { opacity: 1; } 100% { opacity: 0; } }
+/* a dot: an arc from its tick (sideways easing out, down easing in, sampled from landing.mjs's curves), then it
+   shrinks into its segment */
+@keyframes fl-drop {
+  0% { opacity: 0; transform: translate(calc(var(--dx) * 1cqw), var(--dy)) scale(1); }
+  7.4% { opacity: 1; transform: translate(calc(var(--dx) * 0.839cqw), calc(var(--dy) * 0.995)) scale(1); }
+  14.8% { transform: translate(calc(var(--dx) * 0.664cqw), calc(var(--dy) * 0.977)) scale(1); }
+  22.2% { transform: translate(calc(var(--dx) * 0.491cqw), calc(var(--dy) * 0.945)) scale(1); }
+  29.6% { transform: translate(calc(var(--dx) * 0.34cqw), calc(var(--dy) * 0.895)) scale(1); }
+  37% { transform: translate(calc(var(--dx) * 0.219cqw), calc(var(--dy) * 0.822)) scale(1); }
+  44.4% { transform: translate(calc(var(--dx) * 0.13cqw), calc(var(--dy) * 0.721)) scale(1); }
+  51.8% { transform: translate(calc(var(--dx) * 0.067cqw), calc(var(--dy) * 0.587)) scale(1); }
+  59.2% { transform: translate(calc(var(--dx) * 0.028cqw), calc(var(--dy) * 0.418)) scale(1); }
+  66.6% { transform: translate(calc(var(--dx) * 0.006cqw), calc(var(--dy) * 0.217)) scale(1); }
+  74% { opacity: 1; transform: translate(0, 0) scale(1); }
+  82% { opacity: 1; transform: translate(0, 0) scale(1.25, 0.7); }
+  100% { opacity: 0; transform: translate(0, 0) scale(0); }
+}
+
+/* first screen: the playhead runs the 12 hours → the unadopted fold → the 40 fall into their items, absorbed as
+   they land, while the ruler re-divides → your items take colour, the urgent one last. Once, from first paint;
+   the times are landing.mjs's TIMING.hero. */
 @media (prefers-reduced-motion: no-preference) {
-  .fl-hero-stage .tk { animation: fl-rise 220ms var(--e-out) calc(120ms + var(--t) * 1000ms) both; }
-  .fl-hero-stage .tk.a { animation: fl-rise 220ms var(--e-out) calc(120ms + var(--t) * 1000ms) both, fl-agent 240ms var(--e-fold) 1450ms forwards; }
-  .fl-hero-stage .tk.f { animation: fl-rise 220ms var(--e-out) calc(120ms + var(--t) * 1000ms) both, fl-fold 240ms var(--e-fold) 1450ms forwards; }
-  .fl-hero-stage .sg .f { animation: fl-in 300ms ease-out 600ms both; }
-  .fl-hero-stage .sg { animation: fl-yield 700ms var(--e-yield) 3050ms both; }
-  .fl-hero-stage .sg .v { animation: fl-in 300ms ease-out 3850ms both; }
-  .fl-hero-stage .sg.lead .v { animation: fl-in 300ms ease-out 4150ms both; }
-  .fl-hero-stage .dt { animation: fl-ride 700ms var(--e-yield) 3050ms both; }
-  .fl-hero-stage .dt > i { animation: fl-fallx 520ms var(--e-out) calc(1750ms + var(--k) * 18ms) both; }
-  .fl-hero-stage .dt b { animation: fl-fally 520ms cubic-bezier(0.5, 0, 0.75, 0.5) calc(1750ms + var(--k) * 18ms) both, fl-out 220ms ease-in 3780ms forwards; }
-  .fl-hero-stage .dt.gone b { animation: fl-gone 520ms cubic-bezier(0.5, 0, 0.75, 0.5) calc(1750ms + var(--k) * 18ms) both; }
-  .fl-legend .lg1 { animation: fl-in 260ms ease-out 1300ms both; }
-  .fl-legend .lg2 { animation: fl-in 260ms ease-out 1700ms both; }
-  .fl-legend .lg3 { animation: fl-in 260ms ease-out 4200ms both; }
+  .fl-hero-stage .fl-sweep { animation: fl-open 1400ms linear 120ms both; }
+  .fl-hero-stage .fl-sweep-in { animation: fl-hold 1400ms linear 120ms both; }
+  .fl-hero-stage .fl-head { animation: fl-head 1400ms linear 120ms both; }
+  .fl-hero-stage .fl-lane .a { animation: fl-agent 240ms var(--e-fold) 1600ms both; }
+  .fl-hero-stage .fl-lane .f { animation: fl-fold 240ms var(--e-fold) 1600ms both; }
+  .fl-hero-stage .fl-segs { animation: fl-in 300ms ease-out 300ms both; }
+  .fl-hero-stage .fl-cap .cb { animation: fl-cap-before 3440ms linear both; }
+  .fl-hero-stage .fl-cap .ca { animation: fl-in 140ms ease-out 3440ms both; }
+  .fl-hero-stage .dt { animation: fl-drop var(--dd) linear var(--d) both; }
+  .fl-hero-stage .sg { animation: fl-yield var(--yd) var(--e-yield) var(--yt) both; }
+  .fl-hero-stage .sg .h { animation: fl-flash var(--fd) linear var(--fa) both; }
+  .fl-hero-stage .fl-tag { animation: fl-in 200ms ease-out calc(var(--yt) - 120ms) both; }
+  .fl-hero-stage .fl-tag .rs { animation: var(--roll) var(--yd) linear var(--yt) both; }
+  .fl-hero-stage .sg .v { animation: fl-in 300ms ease-out 3420ms both; }
+  .fl-hero-stage .sg.lead .v { animation: fl-in 300ms ease-out 3680ms both; }
+  .fl-legend .lg1 { animation: fl-in 220ms ease-out 1540ms both; }
+  .fl-legend .lg2 { animation: fl-in 220ms ease-out 1850ms both; }
+  .fl-legend .lg3 { animation: fl-in 220ms ease-out 3800ms both; }
 }
 
 /* ===== one round: the pinned stage and the three beats ===== */
 .fl-round { position: relative; max-width: calc(var(--maxw) + 2 * var(--m)); margin: 40px auto 0; padding: 0 var(--m); }
 .fl-sticky { position: sticky; top: 0; z-index: 2; padding: 12px 0 10px; background: var(--paper); border-bottom: 1px solid var(--rule); }
 .fl-meta { position: relative; display: flex; align-items: center; height: 18px; }
-.fl-meta .fl-kick { position: absolute; left: 0; top: 2px; opacity: 0; transition: opacity 200ms; white-space: nowrap; }
+.fl-meta .fl-kick { position: absolute; left: 0; top: 2px; opacity: 0; transition: opacity 140ms ease-in; white-space: nowrap; }
 .fl-prog { display: flex; gap: 5px; margin-left: auto; width: 72px; }
 .fl-prog i { flex: 1; height: 2px; background: var(--rule); transition: background-color 200ms; }
 .fl-round.s1 .fl-prog i:nth-child(1), .fl-round.s2 .fl-prog i:nth-child(2), .fl-round.s3 .fl-prog i:nth-child(3) { background: var(--ink); }
-.fl-round:not(.s1) .k1, .fl-round.s1:not(.s2) .k1, .fl-round.s2:not(.s3) .k2, .fl-round.s3:not(.ans) .k3, .fl-round.s3.ans .k4 { opacity: 1; }
+/* text that changes in place goes out first and then comes in (140ms each), so no two are ever on top of each other */
+.fl-round:not(.s1) .k1, .fl-round.s1:not(.s2) .k1, .fl-round.s2:not(.s3) .k2, .fl-round.s3:not(.ans) .k3, .fl-round.s3.ans .k4 { opacity: 1; transition: opacity 140ms ease-out 140ms; }
 .fl-count { position: relative; height: 70px; margin: 8px 0 6px; }
-.fl-count .c { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 8px; opacity: 0; transition: opacity 200ms, translate 200ms; translate: 0 4px; }
+.fl-count .c { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 8px; opacity: 0; transition: opacity 140ms ease-in, translate 140ms ease-in; translate: 0 6px; }
 .fl-count .fl-num { font-size: 72px; }
 .fl-count .lbl { padding-bottom: 6px; font-size: 15px; font-weight: 600; white-space: nowrap; }
 .fl-count .alt { margin-left: auto; padding-bottom: 4px; text-align: right; font: 11.5px/1.5 var(--mono); color: var(--ink-2); }
 .fl-count .alt b { color: var(--ink); }
-.fl-round:not(.s2) .c1, .fl-round.s2:not(.s3) .c2, .fl-round.s3:not(.ans) .c3, .fl-round.s3.ans .c4 { opacity: 1; translate: 0 0; }
+.fl-round:not(.s2) .c1, .fl-round.s2:not(.s3) .c2, .fl-round.s3:not(.ans) .c3, .fl-round.s3.ans .c4 { opacity: 1; translate: 0 0; transition: opacity 140ms ease-out 140ms, translate 180ms var(--e-out) 140ms; }
 
-.fl-beat-stage { --gut: 42px; --cardH: 192px; --s: 0.45; --zw: 100%; display: block; }
+/* The beat stage keeps one height. In beats 1 and 2 the lanes fill the room the card will need (HL is sized so the
+   ruler sits at the bottom); in beat 3 they compress to --s3 and everything moves up by what they gave, and the
+   card opens under the ruler. Beat 2 compresses them to --s2 first, towards the ruler. */
+.fl-beat-stage { --gut: 42px; --cardH: 192px; --s2: 0.6; --s3: 0.2; --sd: var(--s2); --zw: 100%;
+  --HL: calc((var(--cardH) - 8px) / (1 - var(--s3))); --ls: calc(var(--HL) / 4.75); --lh: calc(var(--ls) * 0.75);
+  display: block; height: calc(var(--HL) * var(--s3) + var(--ax) + var(--rg) + var(--rh) + 26px + var(--cardH)); }
 .fl-stage-art { display: grid; grid-template-columns: var(--gut) minmax(0, 1fr); }
 .fl-beat-stage .fl-plot { height: calc(var(--R) + var(--rh) + 28px); }
-.fl-beat-stage { height: calc(var(--R) + var(--rh) + 26px + var(--cardH) - var(--HL) * 0.55); }
-.fl-deltas, .fl-prev { position: absolute; left: 0; right: 0; top: calc(var(--R) + var(--rh) + 11px); height: 30px; font: 10px/14px var(--mono); color: var(--ink-2); white-space: nowrap; }
+.fl-deltas, .fl-prev { --rl: 14px; position: absolute; left: 0; right: 0; top: calc(var(--R) + var(--rh) + 11px); height: 30px; font: 10px/14px var(--mono); color: var(--ink-2); white-space: nowrap; }
 .fl-prev { opacity: 0; }
-.dl { position: absolute; left: calc(var(--x) * 1%); top: 0; translate: -50% 0; color: var(--ink); }
-.dl.down { top: 15px; color: var(--ink-3); }
-.dl.blank { translate: -100% 0; }
-.dl[data-id="ture-pickup-0812"] { display: none; }
+.fl-deltas > div { display: flex; flex-wrap: wrap; gap: 0 12px; height: 15px; overflow: hidden; }
+.fl-deltas .up { color: var(--ink); }
+.fl-deltas .down { color: var(--ink-3); }
 .fl-lab-d { position: absolute; left: 0; top: calc(var(--R) + var(--rh) + 11px); font: 10px/14px var(--sans); color: var(--ink); opacity: 0; }
 .fl-lab-d.down { top: calc(var(--R) + var(--rh) + 26px); color: var(--ink-3); }
 .fl-deltas { opacity: 0; }
@@ -684,7 +735,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .fl-receipt .undo { flex: none; min-width: 44px; min-height: 44px; border: 0; border-radius: 10px; background: none; color: var(--ink-2); font: 600 13px/1 var(--sans); cursor: pointer; }
 /* the answer goes back in as an input of the next round: from the receipt up the right edge, into the first lane
    after 00:00 (y of the first lane's middle once the lanes are compressed: --y1; the receipt's middle: --yb) */
-.fl-ret { --y1: calc(var(--HL) - (var(--HL) - var(--lh) / 2) * var(--s)); --yb: calc(var(--R) + var(--rh) + 26px + 28px);
+.fl-ret { --y1: calc(var(--HL) - (var(--HL) - var(--lh) / 2) * var(--s3)); --yb: calc(var(--R) + var(--rh) + 26px + 28px);
   position: absolute; background: var(--ver); opacity: 0; visibility: hidden; }
 /* (hidden, not only transparent: it reaches 10px past the plot, and Chrome left a stale strip of the previous page
    there after a client-side navigation into the landing while it was only opacity 0) */
@@ -694,20 +745,18 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .fl-ret.t::before { content: ""; position: absolute; left: -2px; top: -3.25px; border-style: solid; border-width: 4px 6px 4px 0; border-color: transparent var(--ver) transparent transparent; }
 
 /* ---- static states ---- */
-.fl-round:not(.s2) .fl-beat-stage .tk { transform: scaleY(1); opacity: 1; }
-.fl-round:not(.s1) .fl-beat-stage .tk { transform: scaleY(0); }
+.fl-round:not(.s1) .fl-beat-stage .fl-sweep { transform: translateX(-100%); }
+.fl-round:not(.s1) .fl-beat-stage .fl-sweep-in { transform: translateX(100%); }
+.fl-round:not(.s2) .fl-beat-stage .fl-lane .g { transform: none; opacity: 1; }
 .fl-round:not(.s2) .fl-beat-stage .sg { transform: translateX(calc((var(--bx) - var(--x)) * 1cqw)) scaleX(calc(var(--bw) / var(--w))); }
 .fl-round:not(.s3) .fl-beat-stage .sg .v { opacity: 0; }
 .fl-round.s1:not(.s2) .fl-prev { opacity: 1; }
-.fl-round.s2 .fl-lanes { transform: scaleY(var(--s)); }
-.fl-round.s2 .fl-lab { translate: 0 calc(-50% + (var(--HL) - var(--l) * var(--ls) - var(--lh) / 2) * (1 - var(--s))); }
-.fl-round.s2 .fl-beat-stage .dt, .fl-round.s2 .fl-beat-stage .dt > i, .fl-round.s2 .fl-beat-stage .dt b { transform: none; }
-.fl-round.s2:not(.s3) .fl-beat-stage .dt b { opacity: 1; }
-.fl-round.s2:not(.s3) .fl-beat-stage .dt.gone b { opacity: 0; }
+.fl-round.s2 .fl-lanes { transform: scaleY(var(--s2)); }
+.fl-round.s2 .fl-lab { translate: 0 calc(-50% + (var(--HL) - var(--l) * var(--ls) - var(--lh) / 2) * (1 - var(--s2))); }
 .fl-round.s2:not(.s3) .fl-deltas, .fl-round.s2:not(.s3) .fl-lab-d { opacity: 1; }
-.fl-round.s3 .fl-lanes { opacity: 0.28; }
-.fl-round.s3 .fl-lab { opacity: 0.45; }
-.fl-round.s3 .fl-beat-stage .fl-stage-art, .fl-round.s3 .fl-card-zone { transform: translateY(calc(var(--HL) * (var(--s) - 1))); }
+.fl-round.s3 .fl-lanes { transform: scaleY(var(--s3)); opacity: 0.28; }
+.fl-round.s3 .fl-lab { translate: 0 calc(-50% + (var(--HL) - var(--l) * var(--ls) - var(--lh) / 2) * (1 - var(--s3))); opacity: 0; }
+.fl-round.s3 .fl-beat-stage .fl-stage-art, .fl-round.s3 .fl-card-zone { transform: translateY(calc(var(--HL) * (var(--s3) - 1))); }
 .fl-round.s3 .fl-lead { opacity: 1; }
 .fl-round.s3:not(.ans) .fl-card { opacity: 1; visibility: visible; transform: none; }
 .fl-round.s3.ans .fl-receipt { opacity: 1; visibility: visible; translate: 0 0; }
@@ -717,19 +766,26 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .fl-round.s3.ans .fl-lead.stem { background: var(--ink-3); }
 .fl-round.s3.ans .fl-lead.brace { border-color: var(--ink-3); }
 
-/* ---- transitions: only while one beat follows the previous (.tx); a jump has none ---- */
-.fl-round.tx.s1:not(.s2) .tk { transition: transform 200ms var(--e-out) calc(150ms + var(--t) * 1600ms); }
-.fl-round.tx.s1:not(.s2) .fl-prev { transition: opacity 300ms ease-out 1700ms; }
-.fl-round.tx.s2:not(.s3) .tk { transition: transform 240ms var(--e-fold), opacity 240ms var(--e-fold); }
-.fl-round.tx.s2:not(.s3) .fl-prev { transition: opacity 160ms; }
+/* ---- motion: only while one beat follows the previous (.tx); a jump has none and lands on the static state ---- */
+/* beat 1: the playhead runs the 12 hours */
+.fl-round.tx.s1:not(.s2) .fl-beat-stage .fl-sweep { animation: fl-open 1600ms linear 150ms both; }
+.fl-round.tx.s1:not(.s2) .fl-beat-stage .fl-sweep-in { animation: fl-hold 1600ms linear 150ms both; }
+.fl-round.tx.s1:not(.s2) .fl-beat-stage .fl-head { animation: fl-head 1600ms linear 150ms both; }
+/* (the note under the ruler comes first: the grey allocation is last round's, before anything lands in it) */
+.fl-round.tx.s1:not(.s2) .fl-prev { transition: opacity 200ms ease-out 150ms; }
+/* beat 2: fold, squeeze towards the ruler, the 40 fall and are absorbed while the ruler re-divides (TIMING.beats) */
+.fl-round.tx.s2:not(.s3) .fl-prev { transition: opacity 140ms ease-in; }
+.fl-round.tx.s2:not(.s3) .fl-beat-stage .fl-lane .a { animation: fl-agent 240ms var(--e-fold) both; }
+.fl-round.tx.s2:not(.s3) .fl-beat-stage .fl-lane .f { animation: fl-fold 240ms var(--e-fold) both; }
 .fl-round.tx.s2:not(.s3) .fl-lanes, .fl-round.tx.s2:not(.s3) .fl-lab { transition: transform 600ms var(--e-yield) 260ms, translate 600ms var(--e-yield) 260ms; }
-.fl-round.tx.s2:not(.s3) .dt > i { transition: transform 560ms var(--e-out) calc(950ms + var(--k) * 22ms); }
-.fl-round.tx.s2:not(.s3) .dt b { transition: transform 560ms cubic-bezier(0.5, 0, 0.75, 0.5) calc(950ms + var(--k) * 22ms), opacity 60ms linear calc(950ms + var(--k) * 22ms); }
-.fl-round.tx.s2:not(.s3) .dt.gone b { transition: transform 560ms cubic-bezier(0.5, 0, 0.75, 0.5) calc(950ms + var(--k) * 22ms), opacity 300ms ease-in calc(1350ms + var(--k) * 22ms); }
-.fl-round.tx.s2:not(.s3) .dt, .fl-round.tx.s2:not(.s3) .fl-beat-stage .sg { transition: transform 700ms var(--e-yield) 2450ms; }
-.fl-round.tx.s2:not(.s3) .fl-deltas, .fl-round.tx.s2:not(.s3) .fl-lab-d { transition: opacity 200ms ease-out 3150ms; }
-.fl-round.tx.s3 .dt b { transition: opacity 200ms; }
-.fl-round.tx.s3 .fl-lanes, .fl-round.tx.s3 .fl-lab { transition: opacity 300ms; }
+.fl-round.tx.s2:not(.s3) .fl-beat-stage .dt { animation: fl-drop var(--dd) linear var(--d) both; }
+.fl-round.tx.s2:not(.s3) .fl-beat-stage .sg { animation: fl-yield var(--yd) var(--e-yield) var(--yt) both; }
+.fl-round.tx.s2:not(.s3) .fl-beat-stage .sg .h { animation: fl-flash var(--fd) linear var(--fa) both; }
+.fl-round.tx.s2:not(.s3) .fl-deltas, .fl-round.tx.s2:not(.s3) .fl-lab-d { transition: opacity 160ms ease-out calc(var(--yt) - 80ms); }
+.fl-round.tx.s2:not(.s3) .fl-deltas .rs { animation: var(--roll) var(--yd) linear var(--yt) both; }
+/* beat 3: the lanes give their room to the card */
+.fl-round.tx.s3 .fl-lanes { transition: transform 450ms var(--e-yield) 200ms, opacity 300ms; }
+.fl-round.tx.s3 .fl-lab { transition: translate 450ms var(--e-yield) 200ms, opacity 160ms; }
 .fl-round.tx.s3 .fl-stage-art, .fl-round.tx.s3 .fl-card-zone { transition: transform 450ms var(--e-yield) 200ms; }
 .fl-round.tx.s3 .sg .v { transition: opacity 300ms ease-out 450ms; }
 .fl-round.tx.s3 .sg.lead .v { transition: opacity 300ms ease-out 850ms; }
@@ -739,7 +795,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .fl-round.tx.s3:not(.ans) .fl-receipt { transition: opacity 150ms, visibility 0s 150ms; }
 /* answering: the card folds into its receipt in place (折), the urgent segment empties, the line runs back up */
 .fl-round.tx.s3.ans .fl-card { transition: transform 240ms var(--e-fold), opacity 200ms var(--e-fold) 60ms, visibility 0s 260ms; transform: scaleY(0.3); }
-.fl-round.tx.s3.ans .fl-receipt { transition: opacity 200ms ease-out 220ms, translate 200ms ease-out 220ms, visibility 0s 220ms; }
+.fl-round.tx.s3.ans .fl-receipt { transition: opacity 200ms ease-out 270ms, translate 200ms ease-out 270ms, visibility 0s 270ms; }
 .fl-round.tx.s3.ans .sg.lead .v { transition: opacity 240ms 240ms; }
 .fl-round.tx.s3.ans .sg.lead .done { transition: opacity 240ms 300ms; }
 .fl-round.tx.s3.ans .fl-ret { transition: opacity 300ms ease-out 450ms, visibility 0s 450ms; }
@@ -846,13 +902,18 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 @media (min-width: 700px) {
   .fl { --m: 32px; }
   .fl-hero { padding-top: 40px; }
+  .fl-big .fl-num { font-size: clamp(112px, 15svh, 172px); }
   .fl-hero h1 { font-size: 40px; }
-  .fl-sub { font-size: 16px; max-width: 40em; }
-  .fl-hero-stage { --gut: 64px; --lh: 20px; --lg: 6px; --ls: calc(var(--lh) + var(--lg)); --ax: 18px; --rg: 10px; --rh: 24px; --tw: 1.3px; }
-  .fl-hero-stage .fl-gutter { visibility: visible; }
+  .fl-sub { display: block; font-size: 16px; max-width: 40em; }
+  .fl-one { display: none; }
+  .fl-hero-stage { --gut: 64px; --lh: 24px; --lg: 8px; --rh: 30px; --tw: 1.4px; margin-top: 26px; }
+  .fl-hero-stage .fl-lab { font-size: 11px; color: var(--ink-2); }
+  .fl-hero-stage .fl-lab b { display: inline; }
   .fl-cue span { display: inline; }
-  .fl-hero-stage .fl-ln { display: block; }
-  .fl-beat-stage { --gut: 60px; --lh: 24px; --lg: 8px; --rh: 32px; --cardH: 180px; }
+  .fl-beat-stage { --gut: 60px; --rh: 32px; --cardH: 180px; }
+  .fl-deltas > div { position: relative; display: block; }
+  .dl { position: absolute; left: calc(var(--x) * 1%); top: 0; translate: -50% 0; }
+  .dl.blank { translate: -100% 0; }
   .fl-count .fl-num { font-size: 88px; }
   .fl-count { height: 84px; }
   .fl-step h3 { font-size: 26px; }
@@ -876,7 +937,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
   .fl-hero h1 { font-size: clamp(40px, 3.6vw, 52px); line-height: 1.22; }
   .fl-sub { font-size: 17px; line-height: 1.7; }
   .fl-ctas { display: flex; gap: 12px; margin-top: 22px; }
-  .fl-hero-stage { --gut: 88px; --lh: 22px; --lg: 6px; --rh: 26px; margin-top: 30px; }
+  .fl-hero-stage { --gut: 88px; --lh: 22px; --lg: 7px; --rh: 28px; margin-top: 30px; }
   .fl-legend { margin-left: 88px; font-size: 12.5px; }
   .fl-cue { margin-left: 88px; }
 
@@ -891,8 +952,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
   .fl-count .fl-num { font-size: 112px; }
   .fl-count { height: 104px; }
   .fl-count .alt { font-size: 12.5px; }
-  .fl-beat-stage { --gut: 72px; --lh: 28px; --lg: 9px; --ax: 22px; --rg: 14px; --rh: 38px; --cardH: 196px; }
-  .dl[data-id="ture-pickup-0812"] { display: block; }
+  .fl-beat-stage { --gut: 72px; --ax: 22px; --rg: 14px; --rh: 38px; --cardH: 196px; }
   .fl-bridge { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .fl-glyph { padding: 12px 14px 14px; }
   .fl-show > h2 { margin-bottom: 8px; }
