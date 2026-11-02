@@ -8,14 +8,14 @@
  },
  "showcase": [
   "d",
-  "watch",
   "trays",
+  "watch",
   "duo",
   "multiples",
-  "original"
+  "b"
  ],
  "gallery": [
-  "b",
+  "original",
   "pulse",
   "a",
   "chain",
@@ -57,7 +57,7 @@
    },
    "evidence": "桌面与 iPad 横完整；iPad 竖三栏挤；手机版面 448 宽缩到 87%，纵向 8.9 屏，树图被压成一窄条",
    "place": {
-    "showcase": 6
+    "gallery": 1
    },
    "phoneTreatment": "hint",
    "measured": {
@@ -187,7 +187,7 @@
    },
    "evidence": "手机贴合但密，57 个目标里 18 个小于 24px、最小字 9.5px；Pad 横竖都完整",
    "place": {
-    "gallery": 1
+    "showcase": 6
    },
    "phoneTreatment": "open",
    "measured": {
@@ -447,7 +447,7 @@
    },
    "evidence": "手机上默认概念卡盖住表盘；带 card=0 打开时版面 520 宽缩到 75%，表盘与“1 件要紧”清楚；Pad 竖两只表、横三只表",
    "place": {
-    "showcase": 2
+    "showcase": 3
    },
    "phoneTreatment": "open",
    "measured": {
@@ -1316,7 +1316,7 @@
    },
    "evidence": "本身就是 390×844 的手机页，11 个点按目标全部 ≥24px；Pad 与桌面上是一列手机加概念卡",
    "place": {
-    "showcase": 3
+    "showcase": 2
    },
    "phoneTreatment": "open",
    "measured": {
@@ -2119,5 +2119,6 @@
     }
    ]
   }
- ]
+ ],
+ "decided": "2026-11-02 用户拍板：Top 6 顺序 D 手机首页 → 回应托盘 → 腕上一瞥 → E 折叠屏 → 两周小倍数 → B 时间展开；原版树图放画廊第一。实现以 site/.vitepress/theme/landing.mjs 的 TOP 与 GALLERY_ORDER 为准（画廊由 prototypes.mjs 现算，新原型自动排在末尾）。"
 }

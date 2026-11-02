@@ -17,7 +17,7 @@ const sourcePages = new Map([
   ['.gitignore', { page: 'source/gitignore.md', language: 'text' }],
 ]);
 const prototypeEntries = new Set(['index.html', 'all.html', 'app.mjs', 'engine.mjs', 'scenario.mjs', 'motion.mjs', 'explore.mjs', 'embed.mjs', 'styles.css', 'explore.css', 'respond.mjs', 'respond.css']);
-const mediaExtensions = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.avif', '.woff', '.woff2']);
+const mediaExtensions = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.avif', '.mp4', '.woff', '.woff2']);
 const pages = new Map([['README.md', 'overview.md'], ['AGENTS.md', 'agents.md'], ['site/index.md', 'index.md']]);
 const assets = new Map();
 // Repository files and folders the site does not publish link to GitHub instead.
@@ -39,6 +39,10 @@ async function walk(directory) {
 
 // Prototype preview images for the gallery cards (site/.vitepress/theme/prototypes.mjs), one per prototype.
 for (const file of await walk('site/previews')) if (mediaExtensions.has(path.extname(file).toLowerCase())) assets.set(file, file.slice('site/'.length));
+// The landing's recordings (scripts/record-landing.mjs) and the self-hosted font subsets with their licence
+// (scripts/landing-fonts.mjs); the subset manifest stays in the repository.
+if (existsSync(path.join(root, 'site/media'))) for (const file of await walk('site/media')) if (mediaExtensions.has(path.extname(file).toLowerCase())) assets.set(file, file.slice('site/'.length));
+for (const file of await walk('site/fonts')) if (mediaExtensions.has(path.extname(file).toLowerCase()) || file.endsWith('/OFL.txt')) assets.set(file, file.slice('site/'.length));
 
 for (const file of await walk('docs')) {
   if (file.endsWith('.md')) pages.set(file, file);
@@ -179,5 +183,10 @@ await write('conformance/cases/index.md', `# 一致性用例\n\n六组 YAML 是�
   const filename = path.basename(file);
   return `| [${filename}](/${file}) | ${descriptions[filename.replace(/\.ya?ml$/, '')] || filename} |`;
 }).join('\n')}\n`);
+
+// Which recordings exist, so the landing (theme/FoldLanding.vue) asks only for those: a prototype added without a
+// recording shows its preview image instead of a missing video.
+const media = [...assets.keys()].filter(file => file.startsWith('site/media/')).map(file => path.basename(file));
+await write('landing-media.json', `${JSON.stringify(media.sort())}\n`);
 
 console.log(`Prepared ${pages.size + sourcePages.size + 1} pages and ${assets.size} public files in site/.generated.`);

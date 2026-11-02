@@ -99,7 +99,7 @@ make prototype        # 本地原型，http://127.0.0.1:4173
 
 ## 文档与原型体验站
 
-在线体验：[fold.vibecoding.icu](https://fold.vibecoding.icu/)。首页与顶部菜单的“原型体验”都是全部原型（含第三轮的概念动画）的画册网格（顺序与[合页](prototype/all.html)相同），每张卡片是该原型默认时刻的真实截图；点卡片在当前页的弹框里载入那个原型，可直接逐帧回放与就地回应，也可另开新标签页。默认演示数据与小册子截图含化名改写的真实公开文本，2026-10-15 用户决定照现状公开，来源、许可与已知的署名缺口见 [SOURCES.md](prototype/data/composite/SOURCES.md#公开与许可)。
+在线体验：[fold.vibecoding.icu](https://fold.vibecoding.icu/)。首页是一页入口：首屏自己演一遍“158 条进来 → 64 份 → 1 件要紧”，往下滚是一轮整理的三拍（涌入、折、开口，最后一张能按的演示卡）、同一组 64 份的六种画法、六种处境的原型（各一段循环录像）与其余原型的轮播，所有数字都来自演示回放的第 26 轮；规格、选型与验收见 [site/landing/spec.md](site/landing/spec.md)。顶部菜单的“全部原型”是全部原型（含第三轮的概念动画）的画册网格（顺序与[合页](prototype/all.html)相同），点卡片在当前页的弹框里载入那个原型，可直接逐帧回放与就地回应，也可另开新标签页。默认演示数据与小册子截图含化名改写的真实公开文本，2026-10-15 用户决定照现状公开，来源、许可与已知的署名缺口见 [SOURCES.md](prototype/data/composite/SOURCES.md#公开与许可)。
 
 体验站使用 VitePress 构建文档导航、中文搜索、公式和流程图，在 `/prototype/` 提供完整原型，在 `/docs/brief/` 提供小册子。原始 Markdown 和原型代码仍是内容源；构建时生成站点文件。
 
@@ -110,6 +110,7 @@ npm ci
 npm run site:dev      # 本地文档与原型，http://127.0.0.1:4174
 npm run site:build    # 生成 dist/
 npm run site:preview  # 预览构建结果
+node scripts/check-landing.mjs  # 入口页自动检查（读 dist/）：数字对得上 data.json、七个尺寸无报错无横向滚动、减弱动态给终态、画廊块数等
 ```
 
 本机 Wrangler 登录后，`npm run deploy` 构建并发布到 Cloudflare Workers Static Assets；只在用户指示时运行。部署配置为 `wrangler.jsonc`，只上传 `dist/`；依赖、缓存和本地试验资料不发布。构建目录和依赖均不提交版本库。

@@ -115,7 +115,21 @@ npm run site:build
 npm run site:preview
 ```
 
-本地站点默认在 `http://127.0.0.1:4174`。`scripts/prepare-site.mjs` 从仓库文档和原型源码生成 `site/.generated/`，随后 VitePress 输出 `dist/`。修改原始文档后，重新运行上述开发或构建命令同步内容；不要直接编辑生成目录。`make prototype` 仍可单独在 4173 端口运行原型。
+本地站点默认在 `http://127.0.0.1:4174`。`scripts/prepare-site.mjs` 从仓库文档和原型源码生成 `site/.generated/`，随后 VitePress 输出 `dist/`。修改原始文档后，重新运行上述开发或构建命令同步内容；不要直接编辑生成目录。`make prototype` 仍可单独在 4173 端口运行原型。开发服务器不把 `/prototype/` 解析成 `index.html`（原版与 A–E 在开发服务器上是 404），要看完整原型用构建结果或 `make prototype`。
+
+站点首页是入口页（`site/index.md` 的 `layout: FoldLanding`，组件 `site/.vitepress/theme/FoldLanding.vue`，几何与选型表在同目录的 `landing.mjs`）；规格、故事与视觉在 [site/landing/](../site/landing/spec.md)，不随站点发布。入口页固定纸白浅色、藏起外观开关，文档页照旧可切换；整站换成同一套纸与墨的主题变量（`theme/style.css`），去掉 VitePress 自带的 Inter，标题与数字用自托管的字体子集。入口页相关的脚本：
+
+```sh
+node scripts/landing-data.mjs           # 从演示回放重算 site/landing/data.json（入口页上每个数与出处）；--check 只核对
+node scripts/landing-fonts.mjs          # 标题文案改了字后重取字体子集（联网，写 site/fonts/ 与 theme/fonts.css）；--check 只核对
+node scripts/record-landing.mjs         # 重录入口页的录像到 site/media/（本机 Chrome、ffmpeg、cwebp；约 8 分钟）
+node scripts/record-landing.mjs --only duo,glasses   # 只录这几个；新原型不用改脚本，默认按桌面 1440 × 900 录 12 秒
+npm run site:build && node scripts/check-landing.mjs # 入口页自动检查，自己起本地服务读 dist/；--base 指向在跑的站点，--shots <dir> 存七个尺寸的截图
+```
+
+`npm run site:prepare`（开发与构建都先跑它）先做 `landing-data.mjs --check` 与 `landing-fonts.mjs --check`：演示回放改了而 `data.json` 没重算、或标题改了字而字体子集没重取时，构建直接失败。
+
+`check-landing.mjs` 核对：页面上每个带 `data-k` 的数等于 `data.json` 的出处；375×667、390×844、430×932、820×1180、1180×820、1440×900、1920×1080 七个尺寸从头滚到底没有报错、没有失败的请求、没有横向滚动；减弱动态时首屏一打开就是播放结束后的终态；画廊块数等于原型总数减六、Top 6 与桥同序；三拍随阅读线切换、演示卡能作答与撤回；导航“全部原型”的面板与弹框照常可用；标题的字都在字体子集里、录像文件都在。原型清单（`prototypes.mjs`）加了新原型，画廊会自动把它排在末尾，录一段 `--only <id>` 的录像即可；没有录像时那一块显示预览图。
 
 `npm run deploy` 先重新构建，再通过已登录的 Wrangler 发布 `dist/`。`wrangler.jsonc` 只配置静态资源托管，不配置数据库、生产业务 API 或真实账户接入。原型默认数据集是化名改写的真实公开数据，判断来自一次真实模型的自由运行并经人工打磨；`?data=story` 的手写情境中，私人消息与 Agent 判断为演示编排。
 
@@ -132,7 +146,7 @@ node scripts/check-ix.mjs --data story                            # 悬停与展
 
 每种形式写 `<out>/<form>.png`，另写 `report.json`（URL、页面报错、检查结果）；有报错时退出码为 1。`--eval "<js>"` 在截图前执行一段脚本，`--base` 改原型地址，`CHROME` 环境变量指定浏览器。默认关掉显卡，页面里的 WebGL 会退回 Canvas 2D；要截 WebGL 画面（整理脉冲的粒子与余辉）时加 `--gpu`。
 
-体验站的“原型体验”面板与首页共用 `site/.vitepress/theme/prototypes.mjs` 列出的全部原型，顺序、默认帧与弹框里加的 `embed=1`、`card=0` 都照合页 `all.html`。卡片预览图是 `site/previews/<id>.webp`（640×400，共约 560 KB），原型界面明显变化后按同样的参数重截：原版与 A/B/C/D/E 隐藏方案切换栏，形式页收起概念卡，复盘图与回应组件页用各自的默认帧（批次记谱直接打开会先演开场，截图前跳到终态；回应时序直接打开会先讲一遍，所以带上它弹框里停的默认帧 f26），概念动画在弹框里不带帧（播各自的循环），预览图停在第三拍：份额拨盘取落定的 f26，整理脉冲加 `--gpu` 取 f20 朱红线打下的那一刻，再用 Homebrew 的 `cwebp` 缩到 640 像素宽：
+体验站导航的“全部原型”面板与入口页的画廊共用 `site/.vitepress/theme/prototypes.mjs` 列出的全部原型，面板顺序、默认帧与弹框里加的 `embed=1`、`card=0` 都照合页 `all.html`。卡片预览图是 `site/previews/<id>.webp`（640×400，共约 560 KB），原型界面明显变化后按同样的参数重截：原版与 A/B/C/D/E 隐藏方案切换栏，形式页收起概念卡，复盘图与回应组件页用各自的默认帧（批次记谱直接打开会先演开场，截图前跳到终态；回应时序直接打开会先讲一遍，所以带上它弹框里停的默认帧 f26），概念动画在弹框里不带帧（播各自的循环），预览图停在第三拍：份额拨盘取落定的 f26，整理脉冲加 `--gpu` 取 f20 朱红线打下的那一刻，再用 Homebrew 的 `cwebp` 缩到 640 像素宽：
 
 ```sh
 out=.local/previews

@@ -267,7 +267,8 @@
           "turn": "you",
           "before": 12,
           "share": 24,
-          "weight": "critical"
+          "weight": "critical",
+          "due": "2026-08-17T08:00:00.000Z"
         },
         {
           "id": "issue-13587",
@@ -275,7 +276,8 @@
           "turn": "you",
           "before": 1,
           "share": 6,
-          "weight": "normal"
+          "weight": "normal",
+          "due": null
         },
         {
           "id": "pr-reviews-0814",
@@ -283,7 +285,8 @@
           "turn": "you",
           "before": 6,
           "share": 6,
-          "weight": "normal"
+          "weight": "normal",
+          "due": null
         },
         {
           "id": "ci-urls-master",
@@ -291,7 +294,8 @@
           "turn": "agent",
           "before": 6,
           "share": 6,
-          "weight": "normal"
+          "weight": "normal",
+          "due": null
         },
         {
           "id": "smilla-vet",
@@ -299,7 +303,8 @@
           "turn": "agent",
           "before": 12,
           "share": 6,
-          "weight": "normal"
+          "weight": "normal",
+          "due": "2026-08-24T07:30:00.000Z"
         },
         {
           "id": "kajsa-bike-brake",
@@ -307,7 +312,8 @@
           "turn": "agent",
           "before": 1,
           "share": 3,
-          "weight": "low"
+          "weight": "low",
+          "due": null
         },
         {
           "id": "mamma-stambyte",
@@ -315,7 +321,8 @@
           "turn": "agent",
           "before": 3,
           "share": 3,
-          "weight": "low"
+          "weight": "low",
+          "due": null
         },
         {
           "id": "issue-13586",
@@ -323,7 +330,8 @@
           "turn": "agent",
           "before": 3,
           "share": 3,
-          "weight": "low"
+          "weight": "low",
+          "due": null
         },
         {
           "id": "ture-pickup-0812",
@@ -331,7 +339,8 @@
           "turn": "you",
           "before": 3,
           "share": 1,
-          "weight": "trace"
+          "weight": "trace",
+          "due": null
         },
         {
           "id": "signe-school-start",
@@ -339,7 +348,8 @@
           "turn": "you",
           "before": 1,
           "share": 1,
-          "weight": "trace"
+          "weight": "trace",
+          "due": "2026-08-18T21:59:00.000Z"
         },
         {
           "id": "signe-comic-talk",
@@ -347,7 +357,8 @@
           "turn": "agent",
           "before": 1,
           "share": 1,
-          "weight": "trace"
+          "weight": "trace",
+          "due": "2026-08-12T21:59:00.000Z"
         },
         {
           "id": "fan-delivery-0815",
@@ -355,7 +366,8 @@
           "turn": "agent",
           "before": 1,
           "share": 1,
-          "weight": "trace"
+          "weight": "trace",
+          "due": null
         },
         {
           "id": "issue-13466",
@@ -363,7 +375,8 @@
           "turn": "agent",
           "before": 1,
           "share": 1,
-          "weight": "trace"
+          "weight": "trace",
+          "due": null
         },
         {
           "id": "release-8-22-rc1",
@@ -371,10 +384,11 @@
           "turn": "agent",
           "before": 1,
           "share": 1,
-          "weight": "trace"
+          "weight": "trace",
+          "due": null
         }
       ],
-      "source": "records[26].state.root.items 按 rank；before 是 records[25] 的份额（新出现的为 0）；turn = 此刻是否有 currentAsk（variants/shared.mjs）"
+      "source": "records[26].state.root.items 按 rank；before 是 records[25] 的份额（新出现的为 0）；turn = 此刻是否有 currentAsk（variants/shared.mjs）；due 取问题的 due_at，没有时取条目的 due_at（forms/watch.mjs dueOf）"
     },
     "gone": {
       "value": [
@@ -400,10 +414,67 @@
         "agent": 25,
         "agentItems": 9,
         "you": 38,
-        "youItems": 5
+        "youItems": 5,
+        "used": 63,
+        "items": 14
       },
-      "source": "与 E 折叠屏份额带下的账同一算法（variants/duo.mjs shares）：空余 + Agent 那边 + 等你 = 64"
+      "source": "与 E 折叠屏份额带下的账同一算法（variants/duo.mjs shares）：空余 + Agent 那边 + 等你 = 64；used 是 state.root.used（原版树图“已用 63 / 64”）"
+    },
+    "yielded": {
+      "value": [
+        {
+          "id": "driveway-wet",
+          "before": 12,
+          "share": 24,
+          "delta": 12
+        },
+        {
+          "id": "issue-13587",
+          "before": 1,
+          "share": 6,
+          "delta": 5
+        },
+        {
+          "id": "smilla-vet",
+          "before": 12,
+          "share": 6,
+          "delta": -6
+        },
+        {
+          "id": "kajsa-bike-brake",
+          "before": 1,
+          "share": 3,
+          "delta": 2
+        },
+        {
+          "id": "ture-pickup-0812",
+          "before": 3,
+          "share": 1,
+          "delta": -2
+        }
+      ],
+      "source": "本轮份额变了的条目：f25 → f26 的份数与差"
     }
+  },
+  "dueAhead": {
+    "value": [
+      {
+        "id": "driveway-wet",
+        "you": true,
+        "hours": 34
+      },
+      {
+        "id": "signe-school-start",
+        "you": true,
+        "hours": 72
+      },
+      {
+        "id": "smilla-vet",
+        "you": false,
+        "hours": 202
+      }
+    ],
+    "source": "f26 此刻之后才到期的条目，按先后；hours 是距 frames[26].at 的小时数（B 时间展开的“此刻线之后”）"
   },
   "beat3": {
     "open": {

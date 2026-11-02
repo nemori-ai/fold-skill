@@ -26,7 +26,7 @@ function toggle(event) {
     aria-controls="fold-prototype-panel"
     @click="toggle"
   >
-    <span>原型体验</span>
+    <span>全部原型</span>
     <span class="vpi-chevron-down fold-menu-caret" aria-hidden="true" />
   </button>
 </template>

@@ -1,12 +1,26 @@
 import { defineConfig } from 'vitepress';
+import { DOC_GROUPS } from './theme/landing.mjs';
 
-const favicon = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#315b4a"/><path d="M9 7h15v4H13v5h9v4h-9v6H9z" fill="#f6f5ee"/></svg>');
+const favicon = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#26302b"/><path d="M9 7h15v4H13v5h9v4h-9v6H9z" fill="#f7f5ef"/></svg>');
+const preload = href => ['link', { rel: 'preload', href, as: 'font', type: 'font/woff2', crossorigin: '' }];
 
 export default defineConfig({
   lang: 'zh-CN',
   title: 'Fold',
   description: 'Fold 的产品设计、信息契约与交互原型：将多源信息整理成有注意力预算的结构化状态。',
-  head: [['link', { rel: 'icon', type: 'image/svg+xml', href: favicon }]],
+  // The wordmark's numeral serif is tiny and on every page; the landing also preloads its heading subset (transformHtml).
+  head: [['link', { rel: 'icon', type: 'image/svg+xml', href: favicon }], preload('/fonts/instrument-serif.woff2')],
+  // The landing is paper-white whatever the appearance setting: drop VitePress's pre-paint dark check there
+  // (theme/index.mjs keeps the class off after hydration) and preload the one Chinese subset it uses.
+  transformHtml(html, id, { page }) {
+    if (page !== 'index.md') return html;
+    const check = /<script id="check-dark-mode">[\s\S]*?<\/script>/;
+    if (!check.test(html)) throw new Error('VitePress no longer emits #check-dark-mode; update the landing appearance handling.');
+    return html
+      .replace(check, '')
+      .replace(/<html([^>]*)>/, (_, attrs) => `<html${attrs} class="fold-landing-page">`)
+      .replace('</head>', '<link rel="preload" href="/fonts/fold-serif-sc-landing.woff2" as="font" type="font/woff2" crossorigin></head>');
+  },
   srcDir: '.generated',
   // VitePress resolves outDir relative to the site root, not this config file.
   outDir: '../dist',
@@ -63,12 +77,16 @@ export default defineConfig({
   themeConfig: {
     siteTitle: 'Fold',
     nav: [
-      { text: '概览', link: '/overview' },
-      { text: '小册子', link: '/docs/brief/index.html', target: '_self' },
-      { text: '产品文档', link: '/docs/product', activeMatch: '^/docs/' },
-      // 原型体验：铺开全部原型的画册面板，点卡片在本页弹框里打开（theme/PrototypeMenu.vue、PrototypeLayer.vue）。
+      { text: '一轮整理', link: '/#round' },
+      { text: '六种处境', link: '/#forms' },
+      // 全部原型：铺开全部原型的画册面板，点卡片在本页弹框里打开（theme/PrototypeMenu.vue、PrototypeLayer.vue）。
       { component: 'PrototypeMenu' },
-      { text: '原型说明', link: '/prototype-notes/README', activeMatch: '^/prototype-notes/' },
+      { text: '小册子', link: '/docs/brief/index.html', target: '_self' },
+      // 文档：按读者分组，与入口页的文档区同一份清单（theme/landing.mjs DOC_GROUPS）。
+      { text: '文档', activeMatch: '^/(?:overview|agents|docs|skill|corpus|prototype-notes|conformance|source)(?:/|$)', items: DOC_GROUPS.map(group => ({
+        text: group.title,
+        items: group.items.map(([text, link]) => (link.endsWith('.html') ? { text, link, target: '_self' } : { text, link })),
+      })) },
     ],
     sidebar: [
       { text: '产品', items: [
