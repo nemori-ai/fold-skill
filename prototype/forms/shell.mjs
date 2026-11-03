@@ -65,7 +65,7 @@ export function boot(id) {
   // ?embed=show (the site's landing page plays the form as a picture): no bar, no card, only the stage.
   const hideCard = params.get('card') === '0' || showing;
   document.title = `Fold · ${form.name}`;
-  document.body.className = `fs-page fs-theme-${form.theme}${hideCard ? ' fs-no-card' : ''}${showing ? ' fs-show' : ''}`;
+  document.body.className = `fs-page fs-theme-${form.theme}${form.mobile ? ' fs-mobile' : ''}${hideCard ? ' fs-no-card' : ''}${showing ? ' fs-show' : ''}`;
   document.body.innerHTML = `<header class="fs-bar">
       <a class="fs-home" href="index.html" title="全部形式">← 形式</a>
       <span class="fs-name"><b>${String(form.no).padStart(2, '0')}</b> ${esc(form.name)}</span>
