@@ -14,18 +14,17 @@ import data from '../../landing/data.json'
 // Written by scripts/prepare-site.mjs: the recordings in site/media (a prototype without one shows its preview).
 import media from '../../.generated/landing-media.json'
 import { combinedPage, datasetNotice, openPrototype, prototypes } from './prototypes.mjs'
-import { CHANNEL_NAMES, DESK_ONLY, DOC_GROUPS, ONE_APP, SITUATIONS, TIMING, deskHTML, directHref, fieldSVG, galleryOf, ladderOf, momentCSS, reviewSVG, showcaseOf, stageHTML, stageModel } from './landing.mjs'
+import { DESK_ONLY, DOC_GROUPS, SITUATIONS, TIMING, deskHTML, directHref, fieldSVG, galleryOf, ladderOf, momentCSS, reviewSVG, showcaseOf, stageHTML, stageModel, whyModel } from './landing.mjs'
 
 const v = field => field.value
-const n = {
-  n: v(data.beat1.n), folded: v(data.beat2.folded), adopted: v(data.beat2.adopted), toYou: v(data.beat2.toYou),
-  toAgent: v(data.beat2.toAgent), cardsFed: v(data.beat2.cardsFed), foldedBy: v(data.beat2.foldedBy),
-  account: v(data.beat2.account), blank: v(data.beat2.blank), open: v(data.beat3.open), urgent: v(data.beat3.urgent).length,
-  fresh: v(data.beat3.fresh).length, lead: v(data.beat3.lead), loop: data.beat3.loop, ctx: data.beat1.context,
-}
+// Only the numbers the page still shows (2026-11-03: “不要到处写满数字”): the rest stay in data.json.
+const n = { n: v(data.beat1.n), folded: v(data.beat2.folded), open: v(data.beat3.open), urgent: v(data.beat3.urgent).length, lead: v(data.beat3.lead), loop: data.beat3.loop }
 const segs = v(data.beat2.segments)
 const seg = id => segs.find(s => s.id === id)
-const items = segs.length
+const rankOf = id => segs.findIndex(s => s.id === id)
+// Beat 2 in words: the item that grew most, and the ones that gave way to it (data.json beat2.yielded).
+const grew = v(data.beat2.yielded).reduce((a, b) => (b.delta > a.delta ? b : a))
+const gave = v(data.beat2.yielded).filter(y => y.delta < 0)
 const model = stageModel(data)
 // The generated markup goes in as static vnodes, not v-html: Vue 3.5 re-applies a dynamic innerHTML while
 // hydrating, which rebuilt the hero's elements a beat after first paint and restarted its animations (and parsed
@@ -40,38 +39,26 @@ const beatStage = halves(stageHTML(data, 'beats'))
 const field = `<div class="h2-field">${fieldSVG(data)}<i class="h2-cover"></i><style>${momentCSS()}</style></div>`
 const desk = deskHTML(data)
 const review = reviewSVG(data)
-const hero = { seen: v(data.hero.seen), sources: v(data.hero.sources), days: v(data.hero.days), rounds: v(data.hero.rounds), lit: v(data.hero.lit), dark: v(data.hero.dark), itemsEver: v(data.hero.itemsEver) }
-const urgentShort = v(data.beat3.urgent)[0]
-// The watch window sets the question as "subject / question" on two unbreakable lines, so no single character is left
-// alone at the end ("主水管：挖开换还是免挖？" → "主水管" + "挖开换还是免挖？"). Without a colon it stays one balanced block.
-const urgentLines = urgentShort.includes('：') ? [urgentShort.slice(0, urgentShort.indexOf('：')), urgentShort.slice(urgentShort.indexOf('：') + 1)] : [urgentShort]
-const firstDue = v(data.dueAhead)[0].hours
-// "8/3", "8/16 00:00": read off the replay's clock as written (Europe/Stockholm), not the reader's.
-const md = t => t.slice(5, 10).split('-').map(Number).join('/')
-const span = v(data.hero.span).map(t => ({ day: md(t), clock: t.slice(11, 16) }))
-// The second section: every channel read so far, against one app's own count.
-const sourceRows = v(data.sources.byChannel)
-const widest = sourceRows[0][1]
-const oneApp = sourceRows.findIndex(([name]) => name === ONE_APP)
-const ladder = ladderOf(data)
+const seen = v(data.hero.seen)
+// The page speaks in plain words (data.json `plain`): the urgent question as two short lines on the watch, its deadline
+// in words. The replay's own wording (Swedish names, #numbers, PR, CI) stays in the data, not on the page.
+const lead = n.lead.plain
+// The second section: a day of one person (an order of magnitude, not the replay), against one app.
+const why = whyModel(data)
 const showcase = showcaseOf(prototypes).map((t, i) => ({ ...t, no: String(i + 1).padStart(2, '0'), figure: t.fig(data), href: directHref(t.prototype) }))
+// The third section's rows link to their card when the showcase has one, else to the prototype itself.
+const cards = new Set(showcase.map(c => c.id))
+const ladder = ladderOf(data).map(l => {
+  const prototype = prototypes.find(p => p.id === l.id)
+  return { ...l, prototype, card: cards.has(l.id), href: cards.has(l.id) ? `#form-${l.id}` : directHref(prototype) }
+})
 const gallery = galleryOf(prototypes)
 // Three rows dealt round-robin, so every row mixes pages that open well on a phone with desk-only ones.
 const rows = [0, 1, 2].map(r => gallery.filter((_, i) => i % 3 === r))
 const recorded = new Set(media)
 const clip = id => recorded.has(`${id}.mp4`) ? `/media/${id}.mp4` : null
 const example = v(n.loop.example)
-const channels = v(n.loop.byChannel)
-
-// The lead question's tag line: its deadline, read off the replay clock (frames[26].at), not the reader's.
-const at = new Date(v(data.frame.at)), due = new Date(n.lead.due)
-const hoursLeft = Math.round((due - at) / 3600000)
-const dueText = (() => {
-  const [, mo, dd, hh, mi] = n.lead.due.match(/^\d{4}-(\d\d)-(\d\d)T(\d\d):(\d\d)/)
-  const wd = '日一二三四五六'[new Date(Date.UTC(2026, Number(mo) - 1, Number(dd), 12)).getUTCDay()]
-  return `周${wd} ${hh}:${mi} 前`
-})()
-const demoChoice = n.lead.actions.at(-1)
+const demoChoice = lead.actions.at(-1)
 
 // ---------- the demo answer: the card's buttons really work, and fold it into a receipt in place ----------
 
@@ -345,60 +332,64 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
         <p class="fl-ctas"><a class="fl-btn solid" href="#why">为什么是新问题 ↓</a><a class="fl-btn" href="#forms">直接看原型</a></p>
       </div>
       <div ref="moment" class="h2-stage" data-s="3">
-        <p class="h2-cap"><span>Agent 到此刻读过 <b data-k="hero.seen">{{ hero.seen }}</b> 条</span><span><b data-k="hero.sources">{{ hero.sources }}</b> 个来源 · <b data-k="hero.days">{{ hero.days }}</b> 天</span></p>
+        <p class="h2-cap"><span>Agent 这两周读过 <b data-k="hero.seen">{{ seen }}</b> 条</span><span>一个点是一条</span></p>
         <Raw :html="field" />
-        <p class="h2-axis" aria-hidden="true"><span>{{ span[0].day }}</span><span class="mid">一列 12 小时 · 一点一条</span><span>此刻 {{ span[1].day }} {{ span[1].clock }}</span></p>
+        <p class="h2-axis" aria-hidden="true"><span>两周前</span><span class="mid">一列是半天</span><span>此刻</span></p>
         <div class="h2-zone">
           <i class="h2-win" aria-hidden="true" />
           <div class="h2-c h2-c1">
             <span class="n fl-num" data-k="beat3.urgent.length">{{ n.urgent }}</span><span class="u">件要紧</span>
-            <span class="q"><span v-for="line in urgentLines" :key="line">{{ line }}</span></span><span class="t">还有 <span data-k="dueAhead.0.hours">{{ firstDue }}</span> 小时</span>
+            <span class="q"><span data-k="beat3.lead.plain.subject">{{ lead.subject }}</span><span data-k="beat3.lead.plain.question">{{ lead.question }}</span></span><span class="t"><span data-k="beat3.lead.plain.due">{{ lead.due }}</span>要定</span>
           </div>
           <div class="h2-c h2-c2" aria-hidden="true"><Raw :html="desk" /></div>
-          <div class="h2-c h2-c3" aria-hidden="true"><Raw :html="review" /><p class="ax"><span>{{ span[0].day }}</span><span>此刻</span></p></div>
+          <div class="h2-c h2-c3" aria-hidden="true"><Raw :html="review" /><p class="ax"><span>两周前</span><span>此刻</span></p></div>
         </div>
         <div class="h2-chips" role="group" aria-label="处境">
           <i class="h2-bar" aria-hidden="true" />
           <button v-for="sit in SITUATIONS" :key="sit.k" type="button" class="h2-chip" :class="`ch${sit.k}`" :data-sit="sit.k" :aria-pressed="String(sit.k === 3)" @click="pick(sit.k)"><b>{{ sit.name }}</b><span>{{ sit.time }}</span></button>
         </div>
         <p class="h2-ledger">
-          <span class="lg1">交出 <b data-k="beat3.urgent.length">{{ n.urgent }}</b> 件要紧，用到其中 <b class="ver" data-k="hero.lit.urgent">{{ hero.lit.urgent }}</b> 条；其余 <span data-k="hero.dark.urgent">{{ hero.dark.urgent }}</span> 条原地暗下。</span>
-          <span class="lg2">交出 <b data-k="beat2.account.items">{{ items }}</b> 件，<b class="ver" data-k="beat3.open">{{ n.open }}</b> 件等你，用到 <b data-k="hero.lit.now">{{ hero.lit.now }}</b> 条；其余 <span data-k="hero.dark.now">{{ hero.dark.now }}</span> 条原地暗下。</span>
-          <span class="lg3">交出两周的走向：<b data-k="hero.rounds">{{ hero.rounds }}</b> 次整理、<b data-k="hero.itemsEver">{{ hero.itemsEver }}</b> 件事，用到 <b data-k="hero.lit.used">{{ hero.lit.used }}</b> 条；其余 <span data-k="hero.dark.used">{{ hero.dark.used }}</span> 条没落进任何一件。</span>
+          <span class="lg1">只交出最要紧的一件。亮着的是它用到的那几条，其余的原地暗下。</span>
+          <span class="lg2">眼下的事按分量摊开，<b class="ver" data-k="beat3.open">{{ n.open }}</b> 件等你回话；没用上的原地暗下。</span>
+          <span class="lg3">交出这两周的走向，一根柱是一次整理；没用上的原地暗下。</span>
         </p>
       </div>
       <p class="fl-cue"><a href="#why">为什么是新问题 ↓</a></p>
     </section>
 
-    <!-- 为什么是新问题：一个软件的通知有尽头；Agent 读的是所有渠道的总和。 -->
+    <!-- 为什么是新问题：一个软件的通知有尽头；Agent 读的是所有来源加在一起。图是一个人一天的量级（示意），三幕：各自 → 加在一起 → 换比例。 -->
     <section id="why" class="fl-why" aria-labelledby="fl-why-title">
       <div class="hd">
         <p class="fl-kick">为什么是新问题</p>
         <h2 id="fl-why-title" class="fl-h">一个软件的通知有尽头，<br>Agent 看见的没有。</h2>
-        <p class="fl-lede">软件是为人做的，只管自己那一摊：{{ v(data.person).split(' ')[0] }} 的幼儿园 App {{ hero.days }} 天发了 <span :data-k="`sources.byChannel.${oneApp}.1`">{{ sourceRows[oneApp][1] }}</span> 条，平铺开也看得完。Agent 不一样，它同时替他看着 GitHub、论坛、银行、幼儿园、家里的群：<span data-k="hero.sources">{{ hero.sources }}</span> 个来源，{{ hero.days }} 天 <span data-k="hero.seen">{{ hero.seen }}</span> 条，来源只会更多。看见的必然超出人接得住的；总有一刻它得替你舍掉一些，而留下的，得是你此刻接得住、也最值得接的。</p>
+        <p class="fl-lede">一个软件只管自己那一摊：幼儿园 App 一天发几条，翻一翻就看完了。可要是让 Agent 替你看着所有的群、邮件、工作、股票和家里的琐事，它要读的是这些加在一起，光是几个几百人的大群，一天就上千条。首屏那片点是演示里的两周，平均一天两百来条，只是一个轻的样本。看见的必然超出你接得住的；总有一刻它得替你舍掉一些，而留下的，得是你此刻接得住、也最值得接的。</p>
       </div>
-      <div ref="whyEl" class="fl-src" role="img" :aria-label="`${hero.sources} 个来源各自的条数，与 Agent 读到的总数 ${hero.seen} 条`">
-        <p v-for="([name, count], i) in sourceRows" :key="name" class="row" :class="{ one: i === oneApp }" :style="{ '--i': i, '--w': count / widest }">
-          <span class="nm">{{ CHANNEL_NAMES[name] || name }}</span><span class="ct" :data-k="`sources.byChannel.${i}.1`">{{ count }}</span><span class="bar"><i /><em v-if="i === oneApp">← 一个软件</em></span>
+      <div ref="whyEl" class="fl-src" role="img" :aria-label="`一个人一天各个来源进来多少条（示意）：最多的是${why.day[0].name}，一天 ${why.widest} 条；全部加起来 ${why.total} 条`" :style="why.vars">
+        <p class="sc"><span class="s1">满格：一天 <b data-k="why.widest">{{ why.widest }}</b> 条</span><span class="s2">满格：一天 <b data-k="why.total">{{ why.total }}</b> 条</span></p>
+        <p v-for="(s, r) in why.day" :key="s.name" class="row" :class="{ one: r === why.oneApp }" :style="{ '--r': r, '--w': s.n / why.widest }">
+          <span class="nm" :data-k="`why.day.${r}.name`">{{ s.name }}</span>
+          <span class="bar"><i class="mk" /><span class="sk"><i class="b" /></span><em v-if="r === why.oneApp">← 一个软件</em></span>
         </p>
-        <p class="row all" :style="{ '--i': sourceRows.length, '--w': hero.seen / widest }">
-          <span class="nm">Agent</span><span class="ct" data-k="hero.seen">{{ hero.seen }}</span><span class="bar"><i /></span>
+        <p class="row all">
+          <span class="nm">全部加起来</span>
+          <span class="bar"><span class="sum"><i v-for="g in why.segments" :key="g.row" class="sg" :style="{ '--r': g.row, '--x': g.x, '--w': g.w }" /></span></span>
         </p>
+        <p class="end">一个软件一天几条；替你看着全部的 Agent，一天要读的是它的几百倍。</p>
       </div>
-      <p class="fl-note">到 {{ span[1].day }} {{ span[1].clock }} 为止各渠道的条数，同一比例。最后一行是它们的总和：这一屏放不下。</p>
+      <p class="fl-note">一个人一天的量级，示意，不是演示数据：工作邮件与工作消息按微软的统计取整，其余是保守的估计。<a href="https://github.com/nemori-ai/fold-skill/blob/main/site/landing/story.md#第-2-节--为什么是新问题why" target="_blank" rel="noreferrer">出处 ↗</a></p>
     </section>
 
     <!-- 带宽随处境变：六个原型按带宽从窄到宽，都读同一刻；点一个滚到它的卡。 -->
     <section id="bandwidth" class="fl-band" aria-labelledby="fl-band-title">
-      <p class="fl-kick">带宽随处境变 · 同一刻 {{ span[1].day }} {{ span[1].clock }}</p>
+      <p class="fl-kick">带宽随处境变 · 同一刻</p>
       <h2 id="fl-band-title" class="fl-h">处境定了带宽，带宽定了编码。</h2>
       <p class="fl-lede">能看多久、屏幕多大、能不能当场作答，决定了交出什么、按什么顺序、用什么形式。下面六个原型读的是同一刻，按带宽从窄到宽排；它们都是表现层上的尝试，点一个看它自己讲一遍。</p>
       <ol ref="ladderEl" class="fl-ladder">
         <li v-for="(l, i) in ladder" :key="l.id" :style="{ '--gi': i, '--size': l.size }">
-          <a :href="`#form-${l.id}`" :class="`g-${l.id}`">
+          <a :href="l.href" :class="`g-${l.id}`" :target="l.card ? null : '_self'" :rel="l.card ? null : 'noreferrer'" @click="l.card || open($event, l.prototype)">
             <span class="art"><Raw :html="l.svg" /></span>
             <span class="tx"><span class="when">{{ l.when }}</span><b>{{ l.name }}</b><span class="room">{{ l.room }}</span></span>
-            <span class="fig"><span class="fl-num" :class="{ ver: l.ver }" :data-k="l.figure[2]">{{ l.figure[0] }}</span>{{ l.figure[1] }}</span>
+            <span class="fig"><span v-if="l.figure[0] != null" class="fl-num" :class="{ ver: l.ver }" :data-k="l.figure[2]">{{ l.figure[0] }}</span>{{ l.figure[1] }}</span>
           </a>
         </li>
       </ol>
@@ -408,7 +399,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
     <header id="example" class="fl-ex" aria-labelledby="fl-ex-title">
       <p class="fl-kick">一种编码的例子</p>
       <h2 id="fl-ex-title" class="fl-h">把注意力切成固定的份数</h2>
-      <p class="fl-lede">原型里试的一种编码：每一层的注意力切成固定的份数，演示里是 <span data-k="budget">{{ v(data.budget) }}</span> 份（这个数可以配）。Agent 每一轮在这些份里取舍，份数就是面积。有了面积，同一份重要性就能在手表、手机、桌面上各画各的。下面是第 {{ v(data.frame.id).slice(1) }} 轮：{{ v(data.person).split(' ')[0] }} 离开的 12 小时。</p>
+      <p class="fl-lede">原型里试的一种编码：每一层的注意力切成固定的份数，演示里是 <span data-k="budget">{{ v(data.budget) }}</span> 份（这个数可以配）。Agent 每一轮在这些份里取舍，份数就是面积。有了面积，同一份重要性就能在手表、手机、桌面上各画各的。下面是演示里的一轮：你离开的 12 小时。</p>
     </header>
 
     <!-- 一轮整理：舞台钉住，文字滚过阅读线时演那一拍。 -->
@@ -416,26 +407,26 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
       <h2 id="fl-round-title" class="fl-sr">一轮整理</h2>
       <div class="fl-sticky">
         <div class="fl-meta">
-          <span class="fl-kick k1"><b>1 涌入</b> · 8/15 12:00 → 8/16 00:00</span>
+          <span class="fl-kick k1"><b>1 涌入</b> · 你离开的 12 小时</span>
           <span class="fl-kick k2"><b>2 折</b> · Agent 整理这一轮</span>
           <span class="fl-kick k3"><b>3 开口</b> · 要你回应的</span>
           <span class="fl-kick k4"><b>3 开口</b> · 回应回流</span>
           <span class="fl-prog" aria-hidden="true"><i /><i /><i /></span>
         </div>
         <div class="fl-count" aria-live="polite">
-          <span class="c c1"><span class="fl-num" data-k="beat1.n" data-count>{{ n.n }}</span><span class="lbl">条进来</span><span class="alt">两周 <span data-k="beat1.context.twoWeeks">{{ v(n.ctx.twoWeeks) }}</span> 条<br>一轮 <span data-k="beat1.context.perRound.min">{{ v(n.ctx.perRound).min }}</span>–<span data-k="beat1.context.perRound.max">{{ v(n.ctx.perRound).max }}</span> 条</span></span>
-          <span class="c c2"><span class="fl-num dim" data-k="beat2.folded">{{ n.folded }}</span><span class="lbl">条折掉</span><span class="alt">暂缓 <span data-k="beat2.foldedBy.deferred">{{ n.foldedBy.deferred }}</span> · 噪音 <span data-k="beat2.foldedBy.noise">{{ n.foldedBy.noise }}</span> · 重复 <span data-k="beat2.foldedBy.duplicate">{{ n.foldedBy.duplicate }}</span><br><b data-k="beat2.adopted">{{ n.adopted }}</b> 条采用 → <span data-k="beat2.account.items">{{ items }}</span> 件</span></span>
-          <span class="c c3"><span class="fl-num ver" data-k="beat3.urgent.length">{{ n.urgent }}</span><span class="lbl">件要紧</span><span class="alt"><span class="ver"><span data-k="beat3.open">{{ n.open }}</span> 件等你 · <span data-k="beat2.account.you">{{ n.account.you }}</span> 份</span><br>新问题 <span data-k="beat3.fresh.length">{{ n.fresh }}</span> 个</span></span>
-          <span class="c c4"><span class="fl-num">{{ n.urgent - 1 }}</span><span class="lbl">件要紧</span><span class="alt">你答过 1 件<br>它的 <span data-k="beat3.lead.share">{{ n.lead.share }}</span> 份等下一轮读到才让出</span></span>
+          <span class="c c1"><span class="fl-num" data-k="beat1.n" data-count>{{ n.n }}</span><span class="lbl">条进来</span><span class="alt">五条渠道<br>一条一道刻痕</span></span>
+          <span class="c c2"><span class="fl-num dim" data-k="beat2.folded">{{ n.folded }}</span><span class="lbl">条折掉</span><span class="alt">噪音、重复、可以缓一缓的<br>剩下的落进各自那件事</span></span>
+          <span class="c c3"><span class="fl-num ver" data-k="beat3.urgent.length">{{ n.urgent }}</span><span class="lbl">件要紧</span><span class="alt"><span class="ver">朱红的几件等你回话</span><br>其余的 Agent 自己办</span></span>
+          <span class="c c4"><span class="fl-num">{{ n.urgent - 1 }}</span><span class="lbl">件要紧</span><span class="alt">你答过了<br>它的地方等下一轮读到才让出</span></span>
         </div>
         <div class="fl-stage fl-beat-stage" data-mode="beats">
           <div class="fl-stage-art" aria-hidden="true"><Raw :html="beatStage[0]" /><Raw :html="beatStage[1]" /></div>
           <div class="fl-card-zone">
             <div class="fl-card" :inert="Boolean(answer)">
-              <p class="tag">要紧 · {{ dueText }} · 还有 {{ hoursLeft }} 小时 · <span data-k="beat3.lead.share">{{ n.lead.share }}</span> 份</p>
-              <p class="q">{{ n.lead.prompt }}</p>
-              <p class="btns"><button v-for="label in n.lead.actions" :key="label" type="button" @click="choose(label)">{{ label }}</button></p>
-              <p class="foot"><span>本轮 <span data-k="beat3.lead.inputs">{{ n.lead.inputs }}</span> 条输入落进这一件</span><span class="demo">演示 · 可以按</span></p>
+              <p class="tag">要紧 · <span data-k="beat3.lead.plain.due">{{ lead.due }}</span>要定</p>
+              <p class="q" data-k="beat3.lead.plain.prompt">{{ lead.prompt }}</p>
+              <p class="btns"><button v-for="(label, i) in lead.actions" :key="label" type="button" :data-k="`beat3.lead.plain.actions.${i}`" @click="choose(label)">{{ label }}</button></p>
+              <p class="foot"><span class="demo">演示 · 可以按</span></p>
             </div>
             <div class="fl-receipt" :inert="!answer">
               <span class="check" aria-hidden="true">✓</span>
@@ -455,23 +446,23 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
         <article class="fl-step" data-step-block="2">
           <p class="no">02 / 03 · 折</p>
           <h3 class="fl-h">折掉 <span data-k="beat2.folded">{{ n.folded }}</span> 条，剩下的挤进同一把尺。</h3>
-          <p><b data-k="beat2.adopted">{{ n.adopted }}</b> 条被采用，落进各自那件事。主水管 <span data-k="beat2.segments.0.before">{{ seg('driveway-wet').before }}</span> → <b data-k="beat2.segments.0.share">{{ seg('driveway-wet').share }}</b> 份，让出来的是猫看病、Ture 和空余。</p>
+          <p>剩下的落进各自那件事。<b :data-k="`beat2.segments.${rankOf(grew.id)}.plain`">{{ seg(grew.id).plain }}</b>那件{{ grew.share === grew.before * 2 ? '一下宽了一倍' : '一下变宽了' }}，让出地方的是<template v-for="(y, i) in gave" :key="y.id">{{ i ? '、' : '' }}<span :data-k="`beat2.segments.${rankOf(y.id)}.plain`">{{ seg(y.id).plain }}</span></template>和空余。</p>
         </article>
         <article class="fl-step" data-step-block="3">
           <p class="no">03 / 03 · 开口</p>
           <h3 class="fl-h"><span data-k="beat1.n">{{ n.n }}</span> 条里，真正要紧的只有 <span data-k="beat3.urgent.length">{{ n.urgent }}</span> 件。</h3>
-          <p>等你的 <span data-k="beat3.open">{{ n.open }}</span> 件共 <span data-k="beat2.account.you">{{ n.account.you }}</span> 份，另外 {{ n.open - n.urgent }} 件可以晚点；Agent 那边 <span data-k="beat2.account.agentItems">{{ n.account.agentItems }}</span> 件不用你动。</p>
+          <p>等你的几件是朱红，颜色最深的那件<span data-k="beat3.lead.plain.due">{{ lead.due }}</span>要定，其余的可以晚点；灰的那些 Agent 自己办，不用你动。</p>
         </article>
         <article class="fl-step" data-step-block="4">
           <p class="no">回流 · 演示</p>
           <h3 class="fl-h">答一下，回答回到下一轮的输入里。</h3>
-          <p>按钮只记下回答；那 <span data-k="beat3.lead.share">{{ n.lead.share }}</span> 份要等 Agent 下一轮整理读到，才让出来。</p>
+          <p>按钮只记下回答；它占的那块地方，要等 Agent 下一轮整理时读到回答，才让出来。</p>
         </article>
         <article class="fl-step fl-real">
-          <p class="no">真实的一次 · {{ example.frame }}</p>
-          <h3 class="fl-h">8/14 早上 08:02，一通电话。</h3>
-          <p>Jonas 没点任何按钮，直接打给诊所；下一轮 Agent 读到通话记录，猫那件从 <span data-k="beat3.loop.example.share.0">{{ example.share[0] }}</span> 份让到 <span data-k="beat3.loop.example.share.1">{{ example.share[1] }}</span> 份。</p>
-          <p class="fl-note">两周回应 <span data-k="beat3.loop.responses">{{ v(n.loop.responses) }}</span> 次，全在原处 · GitHub <span data-k="beat3.loop.byChannel.GitHub">{{ channels.GitHub }}</span> · iMessage <span data-k="beat3.loop.byChannel.iMessage">{{ channels.iMessage }}</span> · 问答站 <span data-k="beat3.loop.byChannel.问答">{{ channels['问答'] }}</span> · 电话 <span data-k="beat3.loop.byChannel.Telefon">{{ channels.Telefon }}</span></p>
+          <p class="no">真实的一次</p>
+          <h3 class="fl-h">一通电话，回到下一轮。</h3>
+          <p>Agent 问：「<span data-k="beat3.loop.example.plain.ask">{{ example.plain.ask }}</span>」没人点按钮，主人直接打了过去。下一轮 Agent 读到通话记录「<span data-k="beat3.loop.example.plain.response">{{ example.plain.response }}</span>」，猫那件就让出了一半的地方。</p>
+          <p class="fl-note">两周里的回答都发生在原来的地方：GitHub、短信、问答站、电话；Agent 下一轮自己读到。</p>
         </article>
       </div>
     </section>
@@ -620,7 +611,6 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 }
 .fl-gutter { grid-column: 1; grid-row: 1; position: relative; height: calc(var(--R) + var(--rh)); }
 .fl-lab { position: absolute; left: 0; top: calc(var(--l) * var(--ls) + var(--lh) / 2); transform-origin: 0 50%; display: flex; gap: 5px; align-items: baseline; translate: 0 -50%; font: 11px/1 var(--sans); color: var(--ink-2); white-space: nowrap; }
-.fl-lab b { font: 10px/1 var(--mono); color: var(--ink-3); font-weight: 400; }
 .fl-lab-r { position: absolute; left: 0; top: calc(var(--R) + var(--rh) / 2); translate: 0 -50%; font: 600 11px/1 var(--sans); color: var(--ink); }
 .fl-plot { grid-column: 2; grid-row: 1; position: relative; container-type: inline-size; height: calc(var(--R) + var(--rh) + 10px); }
 .fl-lanes { position: absolute; inset: 0 0 auto; height: var(--HL); transform-origin: 50% 100%; }
@@ -661,9 +651,6 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
   position: absolute; left: calc(var(--xl) * 1% - var(--dot) / 2); top: calc(var(--yl) - var(--dot) / 2); width: var(--dot); height: var(--dot);
   border-radius: 50%; background: var(--ink); opacity: 0; }
 .dt.gone { --yl: calc(var(--R) - 5px); }
-/* a number that rolls with the yield: a strip of the values in between, clipped to one line */
-.roll { display: inline-block; height: var(--rl, 1.4em); overflow: hidden; vertical-align: top; line-height: var(--rl, 1.4em); }
-.rs { display: block; transform: translateY(calc(var(--steps) * -1 * var(--rl, 1.4em))); }
 
 /* ===== the first screen: one field of everything read, a window that takes the situation's shape ===== */
 .fl-hero { max-width: calc(var(--maxw) + 2 * var(--m)); margin: 0 auto; padding: 14px var(--m) 0; }
@@ -750,24 +737,62 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 /* ===== why it is new, the situations' ladder, the example's heading ===== */
 .fl-why, .fl-band, .fl-ex { max-width: calc(var(--maxw) + 2 * var(--m)); margin: 0 auto; padding: 64px var(--m) 0; }
 .fl-why h2, .fl-band h2, .fl-ex h2 { margin: 8px 0 8px; font-size: 24px; line-height: 1.34; }
-/* the figure runs to the screen's right edge, so the last row (the sum, same scale) visibly runs off it */
-.fl-src { margin: 20px calc(-1 * var(--m)) 0 0; overflow: hidden; }
-.fl-src .row { display: grid; grid-template-columns: 72px 38px minmax(0, 1fr); align-items: center; gap: 0 8px; height: 13px; font: 10.5px/13px var(--mono); color: var(--ink-3); white-space: nowrap; }
+/* The figure: a day of one person, in three acts (times: landing.mjs WHY, set on the figure by whyModel). 1 each source
+   on its own, at the scale of the largest; 2 every bar poured end to end into the last row, far past the edge; 3 the
+   scale shrinks until that sum just fills the row, and every source shrinks with it to a sliver. The rows keep the
+   content width, so a bar's container (100cqw) is one full scale; the figure bleeds to the screen's right edge and is
+   clipped there. The static styles are the end of act 3 (reduced motion, no script); `.in` plays the acts once. */
+.fl-src { --bleed: var(--m); --rh: 13px; --ag: 12px; --ah: 22px; --bh: 5px; --sh: 12px; --sy: 0.4167; --mk: 1.5px;
+  position: relative; margin: 18px calc(-1 * var(--bleed)) 0 0; padding-right: var(--bleed); overflow: hidden; }
+.fl-src .sc { position: relative; height: 18px; margin-bottom: 4px; font: 10.5px/18px var(--mono); color: var(--ink-2); }
+.fl-src .sc > span { position: absolute; right: 0; top: 0; }
+.fl-src .sc b { color: var(--ink); font-weight: 600; }
+.fl-src .s1 { opacity: 0; }
+.fl-src .row { display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: center; gap: 0 8px; height: var(--rh); font: 10.5px/var(--rh) var(--mono); color: var(--ink-3); white-space: nowrap; }
 .fl-src .nm { overflow: hidden; text-overflow: ellipsis; }
-.fl-src .ct { text-align: right; }
-.fl-src .bar { position: relative; display: flex; align-items: center; gap: 6px; height: 100%; container-type: inline-size; }
-.fl-src .bar i { flex: none; width: max(1px, calc(var(--w) * (100cqw - var(--m)))); height: 5px; background: var(--ink-3); transform-origin: 0 50%; }
-.fl-src .bar em { font-style: normal; color: var(--ink); }
+.fl-src .bar { position: relative; height: 100%; container-type: inline-size; }
+.fl-src .mk { position: absolute; left: 0; top: 50%; width: var(--mk); height: var(--bh); translate: 0 -50%; background: var(--ink-3); }
+.fl-src .sk, .fl-src .sum { position: absolute; left: 0; width: 100%; transform: scaleX(var(--k)); transform-origin: 0 50%; }
+.fl-src .sk { top: calc(50% - var(--bh) / 2); height: var(--bh); }
+.fl-src .b { position: absolute; left: 0; top: 0; width: calc(var(--w) * 100%); height: 100%; background: var(--ink-3); transform-origin: 0 50%; }
+.fl-src em { position: absolute; left: calc(var(--w) * 100% + 6px); top: 0; font-style: normal; color: var(--ink); }
 .fl-src .row.one { color: var(--ink); font-weight: 600; }
-.fl-src .row.one .bar i { background: var(--ink); }
-.fl-src .row.all { height: 24px; margin-top: 10px; color: var(--ink); font: 600 12px/24px var(--mono); }
-.fl-src .row.all .bar i { height: 12px; background: var(--ink); }
-.fl[data-js] .fl-src:not(.in) .bar i { transform: scaleX(0); }
-.fl[data-js] .fl-src:not(.in) .bar em { opacity: 0; }
-.fl-src.in .bar i { transition: transform 420ms var(--e-out) calc(var(--i) * 28ms); }
-.fl-src.in .bar em { transition: opacity 240ms ease-out 900ms; }
-.fl-src.in .row.all .bar i { transition: transform 1100ms var(--e-yield) 900ms; }
+.fl-src .row.one .b, .fl-src .row.one .mk { background: var(--ink); }
+.fl-src .row.all { height: var(--ah); margin-top: var(--ag); color: var(--ink); font: 600 12px/var(--ah) var(--sans); }
+.fl-src .sum { top: calc(50% - var(--sh) / 2); height: var(--sh); }
+/* a segment of the sum: --x and --w in full scales; it comes from its own row (--r), --dy above, at the bar's height */
+.fl-src .sg { --dy: calc((var(--r) - var(--n)) * var(--rh) + var(--rh) / 2 - var(--ag) - var(--ah) / 2);
+  position: absolute; top: 0; bottom: 0; left: calc(var(--x) * 100%); width: calc(var(--w) * 100%); background: var(--ink); box-shadow: inset -1px 0 0 var(--paper); transform-origin: 0 50%; }
+.fl-src .sg:nth-child(even) { background: var(--ink-2); }
+.fl-src .end { margin-top: 12px; font-size: 13.5px; line-height: 1.6; color: var(--ink); white-space: normal; }
 .fl-why .fl-note { margin-top: 10px; font: 11.5px/1.6 var(--mono); color: var(--ink-3); }
+.fl-why .fl-note a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
+/* act 0, before it comes into view (with a script): bars at nothing, the sum not there yet, the scale at the largest */
+.fl[data-js] .fl-src:not(.in) .b { transform: scaleX(0); }
+.fl[data-js] .fl-src:not(.in) :is(.mk, em, .sg, .end, .s2, .row.all .nm) { opacity: 0; }
+.fl[data-js] .fl-src:not(.in) :is(.sk, .sum) { transform: none; }
+.fl[data-js] .fl-src:not(.in) .s1 { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .fl-src.in .b { animation: why-grow var(--gd) var(--e-out) calc(var(--g0) + var(--r) * var(--gg)) both,
+    why-dim 240ms ease-out calc(var(--p0) + (var(--n) - 1 - var(--r)) * var(--pg)) both, why-lit 400ms ease-out var(--s0) forwards; }
+  .fl-src.in .mk { animation: why-hide 1ms linear calc(var(--g0) + var(--r) * var(--gg)) backwards; }
+  .fl-src.in em { animation: why-in 240ms ease-out calc(var(--g0) + var(--r) * var(--gg) + var(--gd)) both; }
+  .fl-src.in .row.all .nm { animation: why-in 240ms ease-out calc(var(--p0) - 200ms) both; }
+  .fl-src.in .sg { animation: why-pour var(--pd) var(--e-yield) calc(var(--p0) + (var(--n) - 1 - var(--r)) * var(--pg)) both,
+    why-hide 1ms linear calc(var(--p0) + (var(--n) - 1 - var(--r)) * var(--pg)) backwards; }
+  .fl-src.in :is(.sk, .sum) { animation: why-shrink var(--sd) var(--e-yield) var(--s0) both; }
+  .fl-src.in .s1 { animation: why-out 160ms ease-in var(--s0) both; }
+  .fl-src.in .s2 { animation: why-in 260ms ease-out calc(var(--s0) + var(--sd) * 0.35) both; }
+  .fl-src.in .end { animation: why-in 320ms ease-out var(--e0) both; }
+}
+@keyframes why-grow { from { transform: scaleX(0); } }
+@keyframes why-dim { to { opacity: 0.3; } }
+@keyframes why-lit { from { opacity: 0.3; } to { opacity: 1; } }
+@keyframes why-hide { from, to { opacity: 0; } }
+@keyframes why-in { from { opacity: 0; } }
+@keyframes why-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes why-pour { from { transform: translate(calc(var(--x) * -100cqw), var(--dy)) scaleY(var(--sy)); } }
+@keyframes why-shrink { from { transform: none; } }
 
 .fl-ladder { margin: 18px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); }
 .fl-ladder a { display: grid; grid-template-columns: 112px minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; gap: 4px 14px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
@@ -849,7 +874,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
   display: block; height: calc(var(--HL) * var(--s3) + var(--ax) + var(--rg) + var(--rh) + 26px + var(--cardH)); }
 .fl-stage-art { display: grid; grid-template-columns: var(--gut) minmax(0, 1fr); }
 .fl-beat-stage .fl-plot { height: calc(var(--R) + var(--rh) + 28px); }
-.fl-deltas, .fl-prev { --rl: 14px; position: absolute; left: 0; right: 0; top: calc(var(--R) + var(--rh) + 11px); height: 30px; font: 10px/14px var(--mono); color: var(--ink-2); white-space: nowrap; }
+.fl-deltas, .fl-prev { position: absolute; left: 0; right: 0; top: calc(var(--R) + var(--rh) + 11px); height: 30px; font: 10px/14px var(--mono); color: var(--ink-2); white-space: nowrap; }
 .fl-prev { opacity: 0; }
 .fl-deltas > div { display: flex; flex-wrap: wrap; gap: 0 12px; height: 15px; overflow: hidden; }
 .fl-deltas .up { color: var(--ink); }
@@ -927,7 +952,6 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .fl-round.tx.s2:not(.s3) .fl-beat-stage .sg { animation: fl-yield var(--yd) var(--e-yield) var(--yt) both; }
 .fl-round.tx.s2:not(.s3) .fl-beat-stage .sg .h { animation: fl-flash var(--fd) linear var(--fa) both; }
 .fl-round.tx.s2:not(.s3) .fl-deltas, .fl-round.tx.s2:not(.s3) .fl-lab-d { transition: opacity 160ms ease-out calc(var(--yt) - 80ms); }
-.fl-round.tx.s2:not(.s3) .fl-deltas .rs { animation: var(--roll) var(--yd) linear var(--yt) both; }
 /* beat 3: the lanes give their room to the card */
 .fl-round.tx.s3 .fl-lanes { transition: transform 450ms var(--e-yield) 200ms, opacity 300ms; }
 .fl-round.tx.s3 .fl-lab { transition: translate 450ms var(--e-yield) 200ms, opacity 160ms; }
@@ -1044,7 +1068,10 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
   .h2-ledger { min-height: 48px; font-size: 14.5px; }
   .fl-why h2, .fl-band h2, .fl-ex h2 { font-size: 32px; }
   .fl-why .fl-lede, .fl-band .fl-lede { font-size: 15.5px; max-width: 40em; }
-  .fl-src .row { grid-template-columns: 96px 44px minmax(0, 1fr); height: 15px; font-size: 11.5px; line-height: 15px; }
+  .fl-src { --rh: 16px; --ag: 14px; --ah: 26px; --bh: 6px; --sh: 14px; --sy: 0.4286; --mk: 2px; }
+  .fl-src .row { grid-template-columns: 100px minmax(0, 1fr); font-size: 11.5px; }
+  .fl-src .sc { font-size: 11.5px; }
+  .fl-src .row.all { font-size: 13px; }
   .fl-ladder a { grid-template-columns: 160px minmax(0, 1fr); padding: 16px 0; }
   .fl-ladder .art svg { width: calc(var(--size) * 1.3px); }
   .fl-beat-stage { --gut: 60px; --rh: 32px; --cardH: 180px; }
@@ -1076,7 +1103,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 
   .fl-why { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); column-gap: 32px; padding-top: 112px; }
   .fl-why .hd { grid-column: 1 / 4; }
-  .fl-why .fl-src { grid-column: 4 / 9; margin-top: 6px; }
+  .fl-why .fl-src { grid-column: 4 / 9; margin-top: 6px; --bleed: calc(var(--m) + max(0px, (100vw - var(--maxw) - 2 * var(--m)) / 2)); }
   .fl-why .fl-note { grid-column: 4 / 9; }
   .fl-why h2, .fl-band h2, .fl-ex h2 { font-size: 34px; }
   .fl-band { padding-top: 112px; }

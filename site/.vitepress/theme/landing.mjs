@@ -128,7 +128,7 @@ export const DOC_GROUPS = [
 // arrival order from the bottom. Each situation's window is encoded from part of it; the rest dims where it is.
 
 export const SITUATIONS = [
-  { k: 1, name: '骑车', time: '抬腕 2 秒' },
+  { k: 1, name: '骑车', time: '抬腕两秒' },
   { k: 2, name: '桌前', time: '坐下几分钟' },
   { k: 3, name: '复盘', time: '停下来半小时' },
 ]
@@ -138,13 +138,6 @@ export const SITUATIONS = [
 export const MOMENT = { sweep: [100, 900], s: [1200, 3900, 6900], open: 420, morph: 650, fade: 140, dim: 450, lit: 300, rise: [450, 24] }
 const PER = 5          // dots per row in a column
 const STRIDE = PER + 1 // a column and its gap, in dots
-
-// Short names for the tiles of the desk window (the replay's titles are a sentence each).
-export const NAMES = {
-  'driveway-wet': '主水管', 'issue-13587': '#13596', 'pr-reviews-0814': '三个旧 PR', 'ci-urls-master': 'master CI', 'smilla-vet': '猫看病',
-  'kajsa-bike-brake': '车刹', 'mamma-stambyte': '妈妈换水管', 'issue-13586': '#13586', 'ture-pickup-0812': 'Ture', 'signe-school-start': 'Signe 开学',
-  'signe-comic-talk': '漫画', 'fan-delivery-0815': '台扇', 'issue-13466': '#13466', 'release-8-22-rc1': 'rc1',
-}
 
 /** The field: dashed rows for every input (dimmed as one), and one layer per level for the inputs that stay lit. */
 export function fieldSVG(d) {
@@ -191,12 +184,13 @@ export function deskHTML(d) {
   const blank = v(d.beat2.blank).now
   const W = 170, H = 100   // the window's aspect (1.7), in the same units on every screen
   const tiles = squarify([...segs.map((s, i) => ({ v: s.share, s, i })), ...(blank ? [{ v: blank, blank: true }] : [])], W, H)
+  // Each tile's name is the item's plain-words name (data.json beat2.segments[].plain), never the replay's title.
   return `<div class="h2-desk">${tiles.map((t, n) => {
     const cls = t.blank ? 'blank' : t.s.turn === 'you' ? (t.s.id === leadId ? 'you lead' : 'you') : 'agent'
     // A name only where it fits on the narrowest desk window (330 px for the 170 units): 11.5 px a character.
-    const name = t.blank ? '' : NAMES[t.s.id] || ''
+    const name = t.blank ? '' : t.s.plain
     const fits = t.w * 330 / W >= [...name].reduce((a, c) => a + (c.charCodeAt(0) > 255 ? 11.5 : 6.6), 14) && t.h * 194 / H >= 22
-    const label = name && fits ? `<b>${name}</b>` : ''
+    const label = name && fits ? `<b data-k="beat2.segments.${t.i}.plain">${name}</b>` : ''
     return `<i class="tl ${cls}" style="--x:${r(t.x / W * 100, 2)};--y:${r(t.y / H * 100, 2)};--w:${r(t.w / W * 100, 2)};--h:${r(t.h / H * 100, 2)};--i:${n}">${label}</i>`
   }).join('')}</div>`
 }
@@ -258,26 +252,48 @@ export function momentCSS() {
   ].join('\n')
 }
 
-// ---------- why it is a new problem: one app's notifications against everything the Agent reads ----------
+// ---------- why it is a new problem: one app against everything the Agent reads in a day ----------
+// The figure is a day of one person (data.json why.day, an order of magnitude, not the replay). It plays once when it
+// comes into view, in three acts (ms from then):
+//   grow     each source on its own, at the scale of the largest one: the bars grow from the left, top row first
+//            [start, gap, duration]
+//   pour     all of them added up: each bar's copy drops into the last row, end to end, the bottom row first, and the
+//            sum runs far past the right edge [start, gap, duration]
+//   rescale  the scale shrinks until the sum just fills the row; every source shrinks with it, to a sliver (never
+//            under a 1.5 px mark) [start, duration]
+//   end      the closing line comes in
+// Only transform and opacity move; the CSS reads these as custom properties on the figure (whyModel().vars).
+export const WHY = { grow: [0, 45, 420], pour: [1550, 55, 560], rescale: [3500, 1400], end: 5050 }
 
-// The channels' own names, in Chinese where the replay keeps the Swedish app name.
-export const CHANNEL_NAMES = {
-  Bankappen: '银行 App', Förskoleappen: '幼儿园 App', Inköpslistan: '购物清单', Telefon: '电话', 'E-post': '邮件', Kalender: '日历',
-  Skärmtid: '屏幕时间', Röstbrevlåda: '语音信箱', Skolappen: '学校 App', 'Digital brevlåda': '数字信箱', 'Trygghem Försäkring': '保险公司',
+/** The second section's figure: its rows, the sum's segments (end to end, bottom row first) and the timing variables. */
+export function whyModel(d) {
+  const day = v(d.why.day)
+  const widest = v(d.why.widest), total = v(d.why.total)
+  let at = 0
+  const segments = day.map((s, row) => ({ row, n: s.n })).reverse().map(s => { const seg = { ...s, x: r(at / widest, 5), w: r(s.n / widest, 5) }; at += s.n; return seg })
+  const { grow, pour, rescale, end } = WHY
+  const vars = {
+    '--n': day.length, '--k': r(widest / total, 5),
+    '--g0': `${grow[0]}ms`, '--gg': `${grow[1]}ms`, '--gd': `${grow[2]}ms`,
+    '--p0': `${pour[0]}ms`, '--pg': `${pour[1]}ms`, '--pd': `${pour[2]}ms`,
+    '--s0': `${rescale[0]}ms`, '--sd': `${rescale[1]}ms`, '--e0': `${end}ms`,
+  }
+  return { day, widest, total, oneApp: v(d.why.oneApp), segments, vars }
 }
-export const ONE_APP = 'Förskoleappen'
 
 // ---------- the situations, by how much room each one gives (the third section) ----------
 
 // Narrowest first: how long a look, how big a screen, whether you can answer there. `size` is the glyph's width
-// in the ladder (px on a phone), so the windows visibly widen down the list.
+// in the ladder (px on a phone), so the windows visibly widen down the list. The six are listed here, with their names,
+// rather than read off the showcase (its make-up and order are its own): a row links to its card when the showcase has
+// one, else to the prototype itself. `fig` is at most one number, in plain words: [number | null, words, data-k | null].
 export const LADDER = [
-  { id: 'watch', size: 56, when: '抬腕 2 秒', room: '只读得了一个数', fig: d => [v(d.beat3.urgent).length, '件要紧', 'beat3.urgent.length'], ver: true },
-  { id: 'd', size: 64, when: '掏手机 1 分钟', room: '一屏三张卡，一按就答', fig: d => [v(d.beat3.open), '件等你，最急的在上', 'beat3.open'], ver: true },
-  { id: 'trays', size: 68, when: '通勤几分钟', room: '一只拇指，一口气答完', fig: d => [v(d.beat3.taps), `下答完 ${v(d.beat3.open)} 个问题`, 'beat3.taps'] },
-  { id: 'b', size: 84, when: 'iPad 前几分钟', room: '看谁的期限先到', fig: d => [v(d.dueAhead)[0].hours, '小时后，最近的期限', 'dueAhead.0.hours'] },
-  { id: 'duo', size: 96, when: '翻开折叠屏 5 分钟', room: '屏幕大一倍，摊开原料', fig: d => [v(d.beat1.n), `条原料摊开 → ${v(d.beat2.cardsFed)} 张卡`, 'beat1.n'] },
-  { id: 'multiples', size: 108, when: '周末复盘 10 分钟', room: '不作答，只看走向', fig: d => [v(d.hero.itemsEver), `件事，${v(d.hero.rounds)} 次整理的走向`, 'hero.itemsEver'] },
+  { id: 'watch', name: '腕上一瞥', size: 56, when: '抬腕两秒', room: '只读得了一个数', fig: d => [v(d.beat3.urgent).length, '件要紧', 'beat3.urgent.length'], ver: true },
+  { id: 'trays', name: '回应托盘', size: 64, when: '通勤几分钟', room: '只有一只拇指', fig: d => [v(d.beat3.taps), '下答完全部问题', 'beat3.taps'] },
+  { id: 'b', name: '时间展开', size: 76, when: 'iPad 前几分钟', room: '看谁的期限先到', fig: d => [v(d.dueAhead)[0].hours, '小时后，最近的期限到', 'dueAhead.0.hours'] },
+  { id: 'duo', name: '折叠屏', size: 88, when: '翻开折叠屏', room: '屏幕大了一倍，摊开原话', fig: d => [v(d.beat1.n), '条原话摊在左页', 'beat1.n'] },
+  { id: 'a', name: '空间排布', size: 100, when: '坐在电脑前', room: '整块屏幕，事情按分量占地方', fig: d => [v(d.beat2.account).items, '件事铺成一块块纸片', 'beat2.account.items'] },
+  { id: 'multiples', name: '两周小倍数', size: 108, when: '周末复盘', room: '不作答，只看走向', fig: () => [null, '一轮一张小方阵，看两周怎么走过来', null] },
 ]
 
 // ---------- the stage: five lanes of real ticks over a 64-cell ruler, sharing one x-span ----------
@@ -294,7 +310,6 @@ export function stageModel(d) {
   const order = [...segs.filter(s => s.turn === 'you'), ...segs.filter(s => s.turn === 'agent')]
   const lay = key => { let c = 0; return new Map(order.map(s => { const at = { x: c / 64 * 100, w: s[key] / 64 * 100 }; c += s[key]; return [s.id, at] })) }
   const before = lay('before'), after = lay('share')
-  const used = { before: 64 - blank.before, after: 64 - blank.now }
   const segments = order.map(s => ({
     id: s.id, title: s.title, turn: s.turn, lead: s.id === leadId, weight: s.weight, share: s.share, before: s.before,
     x: after.get(s.id).x, w: after.get(s.id).w, bx: before.get(s.id).x, bw: before.get(s.id).w,
@@ -320,12 +335,9 @@ export function stageModel(d) {
     // inputs read as going into that one item rather than lining up along the ruler
     return { k, x0: t.x, lane: t.lane, f: n > 1 ? 0.5 + (j / (n - 1) - 0.5) * 0.36 : 0.5, id, you: t.to === 'you' }
   })
-  const deltas = v(d.beat2.yielded).map(y => ({ ...y, ...after.get(y.id), title: segs.find(s => s.id === y.id)?.title }))
-  return { segments, ticks, dots, deltas, used, blank, leadId, count: { n: ticks.length, adopted: adopted.length } }
+  const deltas = v(d.beat2.yielded).map(y => ({ ...y, ...after.get(y.id), title: segs.find(s => s.id === y.id)?.title, plain: segs.find(s => s.id === y.id)?.plain }))
+  return { segments, ticks, dots, deltas, blank, leadId, count: { n: ticks.length, adopted: adopted.length } }
 }
-
-// Short names for the few segments the stage labels.
-export const SHORT = { 'driveway-wet': '主水管', 'smilla-vet': '猫看病', 'issue-13587': '#13596', 'kajsa-bike-brake': '车刹', 'ture-pickup-0812': 'Ture' }
 
 /**
  * When things happen on the beat stage (the fourth section), in ms from the moment a beat starts.
@@ -353,35 +365,6 @@ export function bezier([x1, y1, x2, y2], x) {
 // The share of a dot's animation spent falling; the rest is it being absorbed into its segment (the CSS fl-drop).
 export const FALL_SHARE = 0.74
 
-// A number that counts from `from` to `to` in step with the yield: a strip of every value in between, clipped to one
-// line, that moves on one value each time the segment's width passes the next whole share on the yield's curve
-// (keyframes fl-roll-<steps>, from rollKeyframes). The final value is also in a visually hidden twin (for data-k).
-function roll(from, to, key) {
-  const step = to >= from ? 1 : -1
-  const values = []
-  for (let n = from; ; n += step) { values.push(n); if (n === to) break }
-  const twin = key ? `<span class="fl-sr" data-k="${key}">${to}</span>` : ''
-  return `${twin}<span class="roll" aria-hidden="true" style="--steps:${values.length - 1};--roll:fl-roll-${values.length - 1}"><span class="rs">${values.join('<br>')}</span></span>`
-}
-// The inverse of the yield's curve: when (as a share of its duration) it reaches progress y.
-function curveTime(y) {
-  let lo = 0, hi = 1
-  for (let i = 0; i < 40; i += 1) { const m = (lo + hi) / 2; if (bezier(YIELD_CURVE, m) < y) lo = m; else hi = m }
-  return (lo + hi) / 2
-}
-// One @keyframes per strip length: hold each value until the curve passes halfway to the next, then step.
-export function rollKeyframes(counts) {
-  return [...new Set(counts)].sort((a, b) => a - b).map(n => {
-    const frames = ['0% { transform: translateY(0); }']
-    for (let i = 0; i < n; i += 1) {
-      const at = curveTime((i + 0.5) / n) * 100
-      frames.push(`${at.toFixed(2)}% { transform: translateY(calc(${-i} * var(--rl))); }`, `${(at + 0.01).toFixed(2)}% { transform: translateY(calc(${-(i + 1)} * var(--rl))); }`)
-    }
-    frames.push(`100% { transform: translateY(calc(${-n} * var(--rl))); }`)
-    return `@keyframes fl-roll-${n} { ${frames.join(' ')} }`
-  }).join('\n')
-}
-
 /**
  * The beat stage's inner HTML (scroll-triggered: FoldLanding.vue sets the state classes); `mode` is 'beats'. Every position is a share of the plot's width
  * (x, in % / cqw) or a CSS variable (y), so the server-rendered page needs no viewport.
@@ -393,8 +376,7 @@ export function rollKeyframes(counts) {
 export function stageHTML(d, mode) {
   const m = stageModel(d)
   const T = TIMING[mode]
-  const streams = v(d.beat1.streams)
-  const lab = LANES.map(([id, name], l) => `<span class="fl-lab" style="--l:${l}">${name}<b data-k="beat1.streams.${id}">${streams[id]}</b></span>`).join('')
+  const lab = LANES.map(([, name], l) => `<span class="fl-lab" style="--l:${l}">${name}</span>`).join('')
   const lanes = LANES.map((_, l) => `<i class="fl-ln" style="--l:${l}"></i>`).join('')
   const groups = LANES.map((_, l) => {
     const of = to => m.ticks.filter(t => t.lane === l && t.to === to).map(t => `<i style="--x:${r(t.x)}"></i>`).join('')
@@ -434,18 +416,17 @@ export function stageHTML(d, mode) {
   const ruler = `<div class="fl-ruler"><div class="fl-bar"><div class="fl-segs">${segs}</div></div><i class="fl-scale"></i></div>`
   const times = `--yt:${y0}ms;--yd:${yd}ms;--dd:${dur}ms`
 
-  // Who gave to whom: the items that grew on one row, the ones that gave way (and the blank) on the row below. On a
-  // desk each sits under its segment; on a phone each row flows (CSS), so the labels never run into each other.
-  const delta = x => `<span class="dl" data-id="${x.id}" style="--x:${r(x.x + x.w / 2)}">${SHORT[x.id] || ''} ${x.before}→${roll(x.before, x.share)}</span>`
+  // Who gave to whom, by name only (the widths show how much): the items that grew on one row, the ones that gave
+  // way (and the blank) on the row below. On a desk each sits under its segment; on a phone each row flows (CSS).
+  const rank = id => v(d.beat2.segments).findIndex(s => s.id === id)
+  const delta = x => `<span class="dl" data-id="${x.id}" style="--x:${r(x.x + x.w / 2)}" data-k="beat2.segments.${rank(x.id)}.plain">${x.plain}</span>`
   const deltas = `<div class="up">${m.deltas.filter(x => x.delta > 0).map(delta).join('')}</div>`
-    + `<div class="down">${m.deltas.filter(x => x.delta < 0).map(delta).join('')}`
-    + `<span class="dl blank" style="--x:100">空余 <span data-k="beat2.blank.before">${m.blank.before}</span>→${roll(m.blank.before, m.blank.now, 'beat2.blank.now')}</span></div>`
-  const rolls = [...m.deltas.map(x => Math.abs(x.share - x.before)), Math.abs(m.blank.now - m.blank.before)]
+    + `<div class="down">${m.deltas.filter(x => x.delta < 0).map(delta).join('')}<span class="dl blank" style="--x:100">空余</span></div>`
   const lead = m.segments.find(s => s.lead)
   return `<div class="fl-gutter" aria-hidden="true" style="${times}">${lab}<span class="fl-lab-r">64 份</span><span class="fl-lab-d up">涨</span><span class="fl-lab-d down">让</span></div>`
-    + `<div class="fl-plot" style="${times};--lx:${r(lead.x)};--lw:${r(lead.w)}"><style>${rollKeyframes(rolls)}</style><div class="fl-lanes">${lanes}${sweep}</div><div class="fl-axis" aria-hidden="true">${axis}</div>${ruler}<div class="fl-dots">${dots}</div>`
+    + `<div class="fl-plot" style="${times};--lx:${r(lead.x)};--lw:${r(lead.w)}"><div class="fl-lanes">${lanes}${sweep}</div><div class="fl-axis" aria-hidden="true">${axis}</div>${ruler}<div class="fl-dots">${dots}</div>`
     + `<div class="fl-deltas" aria-hidden="true">${deltas}</div>`
-    + `<div class="fl-prev" aria-hidden="true">上一轮 · 已用 ${m.used.before} 份 · 空余 ${m.blank.before}</div>`
+    + '<div class="fl-prev" aria-hidden="true">上一轮的分法</div>'
     + '<i class="fl-lead brace"></i><i class="fl-lead stem"></i><i class="fl-ret b"></i><i class="fl-ret v"></i><i class="fl-ret t"></i>'
     + '</div>'
 }
@@ -461,19 +442,20 @@ export function glyphs(d) {
   const W = 120
   const svg = body => `<svg viewBox="0 0 ${W} ${W}" aria-hidden="true">${body}</svg>`
 
-  // D: a phone outline, three cards stacked, the first in vermilion with its two buttons; “+2” more below.
-  const home = (() => {
-    let s = `<rect class="g-frame" x="${W / 2 - 31}" y="4" width="62" height="${W - 8}" rx="11"/>`
-    let y = 16
-    asks.slice(0, 3).forEach((a, i) => {
-      const h = i === 0 ? 34 : 19
-      s += `<g class="g-a" style="--i:${i}"><rect x="${W / 2 - 25}" y="${y}" width="50" height="${h}" rx="4" fill="none" stroke="${i === 0 ? 'var(--ver)' : 'var(--ink-3)'}" stroke-width="${i === 0 ? 1.4 : 1}"/>`
-      s += `<rect x="${W / 2 - 20}" y="${y + 6}" width="${i === 0 ? 40 : 30}" height="3" rx="1.5" fill="var(--ink)"/>`
-      if (i === 0) s += `<rect x="${W / 2 - 20}" y="${y + h - 11}" width="18" height="6" rx="2.5" fill="none" stroke="var(--ver)" stroke-width="1.2"/><rect x="${W / 2 + 2}" y="${y + h - 11}" width="18" height="6" rx="2.5" fill="none" stroke="var(--ver)" stroke-width="1.2"/>`
-      s += '</g>'
-      y += h + 5
+  // A 空间排布: a desk screen; on the left the two questions to settle now (the urgent one in vermilion, with its two
+  // buttons), on the right this round's items laid out as papers whose area is their share.
+  const spatial = (() => {
+    const X = 6, Y = 18, SW = W - 12, SH = 74
+    let s = `<rect class="g-frame" x="${X}" y="${Y}" width="${SW}" height="${SH}" rx="5"/><line x1="${W / 2}" x2="${W / 2}" y1="${Y + SH}" y2="${Y + SH + 9}" stroke="var(--ink)" stroke-width="1.2"/><line x1="${W / 2 - 14}" x2="${W / 2 + 14}" y1="${Y + SH + 9}" y2="${Y + SH + 9}" stroke="var(--ink)" stroke-width="1.2"/>`
+    const cx = X + 5, cw = 26
+    s += `<g class="g-a" style="--i:0"><rect x="${cx}" y="${Y + 6}" width="${cw}" height="24" rx="3" fill="none" stroke="var(--ver)" stroke-width="1.3"/><rect x="${cx + 4}" y="${Y + 11}" width="17" height="2.5" rx="1" fill="var(--ink)"/>`
+      + `<rect x="${cx + 3}" y="${Y + 21}" width="9" height="5" rx="2" fill="none" stroke="var(--ver)"/><rect x="${cx + 14}" y="${Y + 21}" width="9" height="5" rx="2" fill="none" stroke="var(--ver)"/></g>`
+    s += `<g class="g-a" style="--i:1"><rect x="${cx}" y="${Y + 34}" width="${cw}" height="15" rx="3" fill="none" stroke="var(--ink-3)"/><rect x="${cx + 4}" y="${Y + 39}" width="14" height="2.5" rx="1" fill="var(--ink)"/></g>`
+    const bx = cx + cw + 5, by = Y + 5, bw = X + SW - 5 - bx, bh = SH - 10
+    squarify(segs.map((it, i) => ({ v: it.share, it, i })), bw, bh).forEach(t => {
+      s += `<rect class="g-a" style="--i:${2 + Math.min(t.i, 6)}" x="${r(bx + t.x + 0.6, 2)}" y="${r(by + t.y + 0.6, 2)}" width="${r(Math.max(0.6, t.w - 1.2), 2)}" height="${r(Math.max(0.6, t.h - 1.2), 2)}" rx="1.5" fill="${tone(t.it)}"/>`
     })
-    return svg(`${s}<text class="g-a" style="--i:3" x="${W / 2}" y="${y + 12}" text-anchor="middle">+${asks.length - 3}</text>`)
+    return svg(s)
   })()
 
   // 回应托盘: one tray per question, as tall as the taps it takes; the tap count as ticks on the right.
@@ -542,13 +524,12 @@ export function glyphs(d) {
     return svg(s)
   })()
 
-  return { d: home, trays, watch, duo, multiples: grid, b: timeline }
+  return { a: spatial, trays, watch, duo, multiples: grid, b: timeline }
 }
 
-// The third section's ladder: the six situations from the narrowest to the widest, each with its glyph and the one
-// number its prototype shows for f26. Each row links to its card below.
+// The third section's ladder: the six situations from the narrowest to the widest, each with its glyph and at most one
+// number its prototype shows for f26.
 export function ladderOf(d) {
   const g = glyphs(d)
-  const name = id => TOP.find(t => t.id === id)?.name
-  return LADDER.map(l => ({ ...l, name: name(l.id), svg: g[l.id], figure: l.fig(d) }))
+  return LADDER.map(l => ({ ...l, svg: g[l.id], figure: l.fig(d) }))
 }

@@ -4,10 +4,14 @@
 //    没有横向滚动；
 // 3. 减弱动态时首屏直接是终态：与正常播放结束后的样子逐项相同，且没有动画在跑；首屏演完后前两扇窗的内容、
 //    铺点的盖板都不留残渣，三个处境按钮切得动；
-// 4. 画廊块数等于原型总数减六，Top 6 不在其中，其余一个不少；第 3 节六个处境从窄到宽、各链到一张卡；
+// 4. 画廊块数等于原型总数减六，Top 6 不在其中，其余一个不少；第 3 节六个处境按 LADDER 从窄到宽，各链到它的卡（没有卡的链到原型本身）；
 // 5. 三拍按阅读线切换（1 → 2 → 3 → 回流），演示卡的按钮真的作答、撤回；第 2 拍演完后尺上没有残留的点；
 // 6. 导航“全部原型”的画册面板与查看弹框照常可用；
-// 7. 首屏标题的字都在字体子集里，六张卡与画廊的录像文件都在。
+// 7. 首屏标题的字都在字体子集里，六张卡与画廊的录像文件都在；
+// 8. 第 2 节的三幕：第 1 幕按最大的单个来源定比例、消息类的大群那行最长；第 3 幕终态“全部加起来”那根正好顶满整宽，
+//    每个单独来源只剩一点点（> 0、远小于整宽），减弱动态时一打开就是这个终态；三幕演的整个过程页面不横向溢出；
+// 9. 白话：入口页正文（不含六张原型卡、画廊、弹框）只用白话，不出现 #数字、PR、CI、master、演示里的人名与瑞典语，
+//    也不出现演示原文的标题、问题与选项（白话与 data.json 的 plain 字段由第 1 项逐个核对）。
 //
 //   npm run site:build && node scripts/check-landing.mjs            # 自己起服务读 dist/
 //   node scripts/check-landing.mjs --base http://127.0.0.1:4174      # 或检查已在跑的站点
@@ -21,7 +25,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { prototypes } from '../site/.vitepress/theme/prototypes.mjs';
-import { LADDER, TOP, galleryOf } from '../site/.vitepress/theme/landing.mjs';
+import { LADDER, TOP, WHY, galleryOf } from '../site/.vitepress/theme/landing.mjs';
 import { serve } from './serve-static.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -163,8 +167,11 @@ try {
     && [...tiles].sort().join() === [...expected].sort().join() && !TOP.some(t => tiles.includes(t.id)), { tiles: tiles.length, heading, missing: expected.filter(id => !tiles.includes(id)) });
   const cards = await page.evaluate(`[...document.querySelectorAll('.fl-form')].map(e => e.id.replace('form-', ''))`);
   check(`六张卡按定下的顺序：${TOP.map(t => t.id).join(' → ')}`, cards.join() === TOP.map(t => t.id).join(), cards);
-  const rungs = await page.evaluate(`[...document.querySelectorAll('.fl-ladder a')].map(e => e.getAttribute('href').replace('#form-', ''))`);
-  check(`第 3 节六个处境从窄到宽（${LADDER.map(l => l.id).join(' → ')}），各链到一张卡`, rungs.join() === LADDER.map(l => l.id).join() && [...rungs].sort().join() === [...cards].sort().join(), rungs);
+  // Each row of the third section links to its card when the showcase has one, else to the prototype page itself.
+  const rungs = await page.evaluate(`[...document.querySelectorAll('.fl-ladder a')].map(e => ({ id: e.className.replace('g-', ''), href: e.getAttribute('href'),
+    card: e.getAttribute('href').startsWith('#form-') ? Boolean(document.querySelector(e.getAttribute('href'))) : null }))`);
+  const rungOk = r => (r.href === `#form-${r.id}` && r.card) || (r.card === null && r.href.startsWith('/prototype/') && (r.href.includes(`variant=${r.id}`) || r.href.includes(`/${r.id}.html`)));
+  check(`第 3 节六个处境从窄到宽（${LADDER.map(l => l.id).join(' → ')}），各链到它的卡或原型本身`, rungs.map(r => r.id).join() === LADDER.map(l => l.id).join() && rungs.every(rungOk), rungs.filter(r => !rungOk(r)));
   const headings = await page.evaluate(`[...document.querySelectorAll('.fl .fl-h, .fl-form .hd h3')].map(e => e.textContent).join('')`);
   const subset = JSON.parse(await readFile(path.join(root, 'site/fonts/subset.json'), 'utf8'));
   const uncovered = [...new Set([...headings])].filter(c => /[　-鿿＀-￯]/.test(c) && !subset.landing.includes(c));
@@ -196,7 +203,7 @@ try {
   await page.evaluate(`document.querySelector('.fl-receipt .undo').click()`);
   await wait(300);
   const undone = await page.evaluate(`!document.querySelector('.fl-round').classList.contains('ans')`);
-  check('演示卡：按钮真的作答（原地收成回执），撤回后卡回来', answered.ans && answered.receipt === 'visible' && answered.text.includes(data.beat3.lead.value.actions[0]) && undone, { answered, undone });
+  check('演示卡：按钮真的作答（原地收成回执），撤回后卡回来', answered.ans && answered.receipt === 'visible' && answered.text.includes(data.beat3.lead.value.plain.actions[0]) && undone, { answered, undone });
   await goTo(4); await wait(1200);
   const looped = await page.evaluate(`({ step: document.querySelector('.fl-round').dataset.step, ans: document.querySelector('.fl-round').classList.contains('ans') })`);
   await goTo(3); await wait(400);
@@ -236,6 +243,71 @@ try {
   check('减弱动态：首屏一打开就是终态（与播放结束后逐项相同），没有动画在跑，三拍从第一拍的终态起', !differing.length && running === 0 && roundStep === '1', { differing: differing.map(k => [k, after[k], immediate[k]]), running, roundStep });
   if (shots) { await mkdir(shots, { recursive: true }); await still.shot(path.join(shots, 'reduced-390x844-full.png'), true); }
   await still.close();
+
+  // ---- 8. the second section's three acts (a day of one person: each on its own, added up, rescaled) ----
+  const day = data.why.day.value, widest = data.why.widest.value, total = data.why.total.value;
+  for (const size of [[390, 844], [1440, 900]]) {
+    const p = await open(size);
+    await wait(400);
+    // Bring the figure into view (its observer adds .in), then hold every animation of it at the end of act 1.
+    await p.evaluate(`(() => { const f = document.querySelector('#why .fl-src'); window.scrollTo(0, f.getBoundingClientRect().top + scrollY - 80); return 1; })()`);
+    for (let i = 0; i < 40 && !(await p.evaluate(`document.querySelector('#why .fl-src').classList.contains('in')`)); i += 1) await wait(50);
+    const act1At = WHY.pour[0] - 60;
+    const act1 = await p.evaluate(`(() => { const f = document.querySelector('#why .fl-src');
+      const anims = document.getAnimations().filter(a => f.contains(a.effect?.target));
+      for (const a of anims) { a.pause(); a.currentTime = ${act1At}; }
+      const W = f.querySelector('.row .bar').getBoundingClientRect().width;
+      const rows = [...f.querySelectorAll('.row:not(.all)')].map(r => r.querySelector('.b').getBoundingClientRect().width);
+      for (const a of anims) a.play();
+      return { in: f.classList.contains('in'), anims: anims.length, W, rows }; })()`);
+    const longest = act1.rows.indexOf(Math.max(...act1.rows));
+    const scaled = act1.rows.every((w, r) => Math.abs(w - day[r].n / widest * act1.W) <= 1.5);
+    check(`${size.join(' × ')} 第 2 节第 1 幕：按最大的单个来源定比例（同一比例），最长的是消息类的大群“${day[0].name}”，占满一行`,
+      act1.in && act1.anims > 40 && longest === 0 && day[0].kind === '消息' && Math.abs(act1.rows[0] - act1.W) <= 1.5 && scaled, { ...act1, longest, scaled });
+    // Let the acts play out for real, watching the page's horizontal overflow all the way through.
+    let overflow = -Infinity;
+    const until = Date.now() + WHY.end + 900;
+    while (Date.now() < until) { overflow = Math.max(overflow, await p.evaluate('document.documentElement.scrollWidth - innerWidth')); await wait(90); }
+    const end = await p.evaluate(`(() => { const f = document.querySelector('#why .fl-src'), b = f.querySelector('.row.all .bar').getBoundingClientRect();
+      const segs = [...f.querySelectorAll('.sg')].map(e => e.getBoundingClientRect());
+      const rows = [...f.querySelectorAll('.row:not(.all)')].map(r => { const bar = r.querySelector('.b'), mk = r.querySelector('.mk');
+        const visible = Math.max(bar.getBoundingClientRect().width, Number(getComputedStyle(mk).opacity) > 0.5 ? mk.getBoundingClientRect().width : 0);
+        return { b: Math.round(bar.getBoundingClientRect().width * 100) / 100, w: Math.round(visible * 100) / 100, o: Number(getComputedStyle(bar).opacity) }; });
+      return { W: b.width, left: Math.min(...segs.map(r => r.left)) - b.left, right: Math.max(...segs.map(r => r.right)) - b.left, rows,
+        running: document.getAnimations().filter(a => f.contains(a.effect?.target) && a.playState === 'running').length }; })()`);
+    const sumOk = Math.abs(end.left) <= 1 && Math.abs(end.right - end.W) <= Math.max(2, end.W * 0.01);
+    const rowsOk = end.rows.every(r => r.w >= 1 && r.w <= end.W * 0.35 && r.o > 0.9);
+    check(`${size.join(' × ')} 第 2 节第 3 幕终态：“全部加起来”那根正好顶满整宽（${Math.round(end.W)}px），每个单独来源只剩一点点（≥ 1px、≤ 整宽的 35%）`,
+      sumOk && rowsOk && !end.running, { W: end.W, left: end.left, right: end.right, running: end.running, rows: end.rows.filter(r => !(r.w >= 1 && r.w <= end.W * 0.35 && r.o > 0.9)) });
+    check(`${size.join(' × ')} 第 2 节三幕演的整个过程中页面不横向溢出`, overflow <= 0, overflow);
+    await p.close();
+    if (size[0] === 390) {
+      // Reduced motion: the figure is at the end of act 3 at once.
+      const r = await open(size, { reduced: true });
+      await r.evaluate(`(() => { const f = document.querySelector('#why .fl-src'); window.scrollTo(0, f.getBoundingClientRect().top + scrollY - 80); return 1; })()`);
+      await wait(200);
+      const still = await r.evaluate(`(() => { const f = document.querySelector('#why .fl-src'), b = f.querySelector('.row.all .bar').getBoundingClientRect();
+        const segs = [...f.querySelectorAll('.sg')].map(e => e.getBoundingClientRect());
+        return { right: Math.max(...segs.map(x => x.right)) - b.left, W: b.width, rows: [...f.querySelectorAll('.row:not(.all) .b')].map(e => Math.round(e.getBoundingClientRect().width * 100) / 100),
+          running: document.getAnimations().filter(a => f.contains(a.effect?.target)).length }; })()`);
+      check('减弱动态：第 2 节一打开就是第 3 幕的终态（与演完后逐行相同），没有动画', !still.running && Math.abs(still.right - still.W) <= 2
+        && still.rows.every((w, i) => Math.abs(w - end.rows[i].b) <= 0.5), { still, end: end.rows.map(x => x.b) });
+      await r.close();
+    }
+  }
+
+  // ---- 9. plain words: the body speaks plainly; the replay's own wording stays in the data ----
+  const plain = await open([390, 844]);
+  await wait(300);
+  const body = await plain.evaluate(`(() => { const c = document.querySelector('.fl').cloneNode(true);
+    c.querySelectorAll('.fl-show, .fl-gal, .fl-sheet-back, dialog, style, script').forEach(e => e.remove());
+    return c.textContent.replace(/\s+/g, ' '); })()`);
+  const banned = [/#\d/, /\bPR\b/, /\bCI\b/, /master/i, /\b(?:Jonas|Berglund|Smilla|Kajsa|Mamma|Ture|Signe|Ulrika|VAB|vab)\b/, /[åäöÅÄÖ]/];
+  const hits = banned.map(re => body.match(re)?.[0]).filter(Boolean);
+  const originals = [...data.beat2.segments.value.map(x => x.title), ...data.beat3.asks.value.map(x => x.short), data.beat3.lead.value.prompt, ...data.beat3.lead.value.actions,
+    data.beat3.loop.example.value.ask, data.beat3.loop.example.value.response.text].filter(t => body.includes(t));
+  check('白话：入口页正文（不含原型卡、画廊、弹框）没有 #数字、PR、CI、master、演示里的人名与瑞典语，也没有演示原文的标题、问题与选项', !hits.length && !originals.length, { hits, originals });
+  await plain.close();
 
   // ---- 2. seven sizes: scroll top to bottom; no errors, no failed requests, no horizontal scroll ----
   for (const size of SIZES) {

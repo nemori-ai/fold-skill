@@ -141,34 +141,160 @@
       "source": "复盘那扇窗：f01…f26 每轮一项 [帧号, 已用份数, 根层各件的份额（按 rank）]，records[k].state.root"
     }
   },
-  "sources": {
-    "byChannel": {
+  "why": {
+    "day": {
       "value": [
-        ["GitHub",1019],
-        ["论坛",681],
-        ["Mastodon",460],
-        ["问答",297],
-        ["CI",151],
-        ["iMessage",141],
-        ["WhatsApp",117],
-        ["订阅邮件",49],
-        ["SMS",43],
-        ["天气",17],
-        ["邮件列表",15],
-        ["Bankappen",10],
-        ["Förskoleappen",10],
-        ["Inköpslistan",7],
-        ["Telefon",7],
-        ["E-post",6],
-        ["Kalender",5],
-        ["Skärmtid",5],
-        ["博客评论",4],
-        ["Röstbrevlåda",3],
-        ["Skolappen",2],
-        ["Digital brevlåda",1],
-        ["Trygghem Försäkring",1]
+        {
+          "name": "Discord 社区",
+          "kind": "消息",
+          "n": 500,
+          "basis": "估计",
+          "note": "一个几千人的活跃社区服务器。参照：3,167 个公开服务器 2015–2024 年共 20.5 亿条消息，平均每个约 65 万条（Discord Unveiled，https://arxiv.org/abs/2502.00627）；一个约千名活跃成员的开发者服务器平均每天约 100 条（Raglianti 等 2021，https://discordance.si.usi.ch/files/Raglianti2021a.pdf）"
+        },
+        {
+          "name": "业主群",
+          "kind": "消息",
+          "n": 300,
+          "basis": "估计",
+          "note": "几百人的小区业主微信群（微信群上限 500 人）：报修、团购、闲聊"
+        },
+        {
+          "name": "行业群",
+          "kind": "消息",
+          "n": 200,
+          "basis": "估计",
+          "note": "一两个几百人的同行交流群"
+        },
+        {
+          "name": "工作消息",
+          "kind": "消息",
+          "n": 150,
+          "basis": "https://www.microsoft.com/en-us/worklab/work-trend-index/breaking-down-infinite-workday",
+          "note": "微软 Work Trend Index 2025：平均每个工作日收到 153 条 Teams 消息，取整"
+        },
+        {
+          "name": "工作邮件",
+          "kind": "邮件",
+          "n": 120,
+          "basis": "https://www.microsoft.com/en-us/worklab/work-trend-index/breaking-down-infinite-workday",
+          "note": "同上：平均每天收到 117 封邮件，取整"
+        },
+        {
+          "name": "家长群",
+          "kind": "消息",
+          "n": 100,
+          "basis": "估计",
+          "note": "班级家长群：通知、接龙、一串“收到”"
+        },
+        {
+          "name": "新闻订阅",
+          "kind": "新闻",
+          "n": 100,
+          "basis": "估计",
+          "note": "几个新闻 App 与 RSS 订阅一天的新文章"
+        },
+        {
+          "name": "自选股",
+          "kind": "行情",
+          "n": 100,
+          "basis": "估计",
+          "note": "二三十只自选股的异动、公告与到价提醒"
+        },
+        {
+          "name": "智能家居",
+          "kind": "家里",
+          "n": 60,
+          "basis": "估计",
+          "note": "门锁、摄像头的移动侦测、温湿度与漏水传感器"
+        },
+        {
+          "name": "私聊",
+          "kind": "消息",
+          "n": 50,
+          "basis": "估计",
+          "note": "朋友与家人的一对一消息。参照：微信每天发出 450 亿次信息、月活 10 亿多，人均每天发出四十来条（2018 微信数据报告，https://www.ifanr.com/app/1159885）"
+        },
+        {
+          "name": "GitHub 通知",
+          "kind": "工作",
+          "n": 40,
+          "basis": "估计",
+          "note": "参与几个项目时的评审请求、评论与构建结果"
+        },
+        {
+          "name": "社交媒体",
+          "kind": "社交",
+          "n": 40,
+          "basis": "估计",
+          "note": "点赞、评论、关注的人发帖的提醒"
+        },
+        {
+          "name": "个人邮箱",
+          "kind": "邮件",
+          "n": 30,
+          "basis": "估计",
+          "note": "账单、订阅、促销"
+        },
+        {
+          "name": "购物外卖",
+          "kind": "生活",
+          "n": 25,
+          "basis": "估计",
+          "note": "购物、外卖、打车 App 的订单状态与推送"
+        },
+        {
+          "name": "银行支付",
+          "kind": "生活",
+          "n": 10,
+          "basis": "估计",
+          "note": "每笔消费、转账一条"
+        },
+        {
+          "name": "短信",
+          "kind": "生活",
+          "n": 10,
+          "basis": "估计",
+          "note": "验证码与各类通知"
+        },
+        {
+          "name": "快递",
+          "kind": "家里",
+          "n": 5,
+          "basis": "估计",
+          "note": "参照：2024 年全国快递 1745 亿件（国家邮政局，https://www.news.cn/fortune/20250108/6f53ea991eaf49928307e1c7ac20301d/c.html），人均每天约 0.34 件，一件有几条物流消息；一家人一天几条"
+        },
+        {
+          "name": "日历",
+          "kind": "生活",
+          "n": 5,
+          "basis": "估计",
+          "note": "会议与日程提醒"
+        },
+        {
+          "name": "幼儿园 App",
+          "kind": "家里",
+          "n": 5,
+          "basis": "估计",
+          "note": "班级通知、照片、入园离园签到"
+        }
       ],
-      "source": "到 f26 为止各渠道的条数：frames[0..26].events[].channel 第一段，按条数从多到少"
+      "source": "第 2 节：一个人一天各个来源进来的条数，示意的量级，不是演示数据；basis 是出处链接或“估计”，note 写怎么得来（scripts/landing-data.mjs DAY_SOURCES）"
+    },
+    "total": {
+      "value": 1850,
+      "source": "Σ why.day[].n：Agent 替这个人看着全部来源，一天要读的条数"
+    },
+    "widest": {
+      "value": 500,
+      "source": "why.day 里最多的一项：第 1 幕的比例按它定（它占满一行）"
+    },
+    "oneApp": {
+      "value": 18,
+      "source": "标“← 一个软件”的那一行在 why.day 里的下标（幼儿园 App）"
+    },
+    "demoPerDay": {
+      "value": 235,
+      "source": "演示里平均一天的条数：hero.seen / hero.days（第 2 节导语“演示里一天两百来条”）"
     }
   },
   "beat1": {
@@ -402,6 +528,7 @@
         {
           "id": "driveway-wet",
           "title": "车道下铜管裂，周一前定修法",
+          "plain": "水管裂了",
           "turn": "you",
           "before": 12,
           "share": 24,
@@ -411,6 +538,7 @@
         {
           "id": "issue-13587",
           "title": "#13587重开，修复#13596待你审",
+          "plain": "审同事的修复",
           "turn": "you",
           "before": 1,
           "share": 6,
@@ -420,6 +548,7 @@
         {
           "id": "pr-reviews-0814",
           "title": "3个旧PR待审，15日合#13591",
+          "plain": "三份旧改动",
           "turn": "you",
           "before": 6,
           "share": 6,
@@ -429,6 +558,7 @@
         {
           "id": "ci-urls-master",
           "title": "master仍红：Windows持续失败",
+          "plain": "测试没通过",
           "turn": "agent",
           "before": 6,
           "share": 6,
@@ -438,6 +568,7 @@
         {
           "id": "smilla-vet",
           "title": "Smilla已减量，24日9:30复诊",
+          "plain": "猫看病",
           "turn": "agent",
           "before": 12,
           "share": 6,
@@ -447,6 +578,7 @@
         {
           "id": "kajsa-bike-brake",
           "title": "Kajsa提醒修旧车刹车，新车18日到",
+          "plain": "自行车刹车",
           "turn": "agent",
           "before": 1,
           "share": 3,
@@ -456,6 +588,7 @@
         {
           "id": "mamma-stambyte",
           "title": "Mamma选疏散公寓，Ulrika问进展",
+          "plain": "妈妈家换水管",
           "turn": "agent",
           "before": 3,
           "share": 3,
@@ -465,6 +598,7 @@
         {
           "id": "issue-13586",
           "title": "#13586上传卡在65KB，未能复现",
+          "plain": "上传卡住",
           "turn": "agent",
           "before": 3,
           "share": 3,
@@ -474,6 +608,7 @@
         {
           "id": "ture-pickup-0812",
           "title": "Ture已退烧再休一天，记得报vab",
+          "plain": "儿子病假",
           "turn": "you",
           "before": 3,
           "share": 1,
@@ -483,6 +618,7 @@
         {
           "id": "signe-school-start",
           "title": "Signe 19日开学：签同意书、查头虱",
+          "plain": "女儿开学",
           "turn": "you",
           "before": 1,
           "share": 1,
@@ -492,6 +628,7 @@
         {
           "id": "signe-comic-talk",
           "title": "Signe看的漫画有裸露图，12日谈",
+          "plain": "女儿的漫画",
           "turn": "agent",
           "before": 1,
           "share": 1,
@@ -501,6 +638,7 @@
         {
           "id": "fan-delivery-0815",
           "title": "台扇应已送到信箱",
+          "plain": "台扇到了",
           "turn": "agent",
           "before": 1,
           "share": 1,
@@ -510,6 +648,7 @@
         {
           "id": "issue-13466",
           "title": "#13466另一问题已确认，待另开issue",
+          "plain": "另一个毛病",
           "turn": "agent",
           "before": 1,
           "share": 1,
@@ -519,6 +658,7 @@
         {
           "id": "release-8-22-rc1",
           "title": "8.22.0-rc1已发，9月2日发布",
+          "plain": "新版快发布",
           "turn": "agent",
           "before": 1,
           "share": 1,
@@ -526,7 +666,7 @@
           "due": null
         }
       ],
-      "source": "records[26].state.root.items 按 rank；before 是 records[25] 的份额（新出现的为 0）；turn = 此刻是否有 currentAsk（variants/shared.mjs）；due 取问题的 due_at，没有时取条目的 due_at（forms/watch.mjs dueOf）"
+      "source": "records[26].state.root.items 按 rank；plain 是入口页上的白话短名（PLAIN.items）；before 是 records[25] 的份额（新出现的为 0）；turn = 此刻是否有 currentAsk（variants/shared.mjs）；due 取问题的 due_at，没有时取条目的 due_at（forms/watch.mjs dueOf）"
     },
     "gone": {
       "value": [
@@ -644,15 +784,26 @@
         ],
         "share": 24,
         "weight": "critical",
-        "inputs": 16
+        "inputs": 16,
+        "plain": {
+          "subject": "水管裂了",
+          "question": "挖开换还是不挖？",
+          "prompt": "车道下的水管裂了：挖开整根换（约 6.8 万），还是不挖开、从旧管里穿一根新管（约 4.1 万）？",
+          "actions": [
+            "挖开换 · 6.8 万",
+            "不挖开 · 4.1 万"
+          ],
+          "due": "明天上午前"
+        }
       },
-      "source": "frames[26].asks 里这一件的 short / prompt / due_at / actions；share 与 weight 取 state；inputs 是本轮落进它的条数"
+      "source": "frames[26].asks 里这一件的 short / prompt / due_at / actions；share 与 weight 取 state；inputs 是本轮落进它的条数；plain 是入口页的白话（PLAIN.lead，选项与 actions 同序；due 是 due_at 距 frames[26].at 的说法）"
     },
     "asks": {
       "value": [
         {
           "item": "driveway-wet",
           "short": "主水管：挖开换还是免挖？",
+          "plain": "水管裂了：挖开换还是不挖？",
           "expects": "choose",
           "share": 24,
           "taps": 1
@@ -660,6 +811,7 @@
         {
           "item": "issue-13587",
           "short": "#13596 计时修复：批准？",
+          "plain": "同事的修复，批准吗？",
           "expects": "approve",
           "share": 6,
           "taps": 1
@@ -667,6 +819,7 @@
         {
           "item": "pr-reviews-0814",
           "short": "三个旧 PR 推到哪天？",
+          "plain": "三份旧改动，推到哪天看？",
           "expects": "defer",
           "share": 6,
           "taps": 2
@@ -674,6 +827,7 @@
         {
           "item": "ture-pickup-0812",
           "short": "VAB 报了吗？",
+          "plain": "照顾儿子的假，报了吗？",
           "expects": "confirm",
           "share": 1,
           "taps": 1
@@ -681,12 +835,13 @@
         {
           "item": "signe-school-start",
           "short": "Signe 的同意书签了吗？",
+          "plain": "女儿的同意书签了吗？",
           "expects": "confirm",
           "share": 1,
           "taps": 1
         }
       ],
-      "source": "f26 开着的问题，按 rank；taps 按 forms/trays.mjs 的规则"
+      "source": "f26 开着的问题，按 rank；plain 是白话（PLAIN.asks）；taps 按 forms/trays.mjs 的规则"
     },
     "taps": {
       "value": 6,
@@ -734,9 +889,13 @@
             "stream": "family",
             "channel": "Telefon",
             "text": "Utgående samtal till Djurkliniken Kvarnbacken · 6 min"
+          },
+          "plain": {
+            "ask": "猫多吃了药，要打给兽医吗？",
+            "response": "打给宠物诊所，6 分钟"
           }
         },
-        "source": "让出份额最多的一次关闭：share 是关闭前后两帧这件的份额"
+        "source": "让出份额最多的一次关闭：share 是关闭前后两帧这件的份额；plain 是入口页的白话（PLAIN.loop）"
       }
     }
   },
