@@ -23,7 +23,7 @@
 //    静帧和预览图一致）；滚过第五节的每一帧里，屏幕上的块要么静帧已载入、要么有占位，原型页面只在发来 shown 之后才叠上去；
 // 12. 手机上缩得看不清的块（实际缩放 < landing.mjs LEGIBLE.scale）才写“在电脑上看更清楚”，平板与桌面不写；查看弹框在手机上
 //    打开按桌面排版的原型时也写这一句，窄的不写；手机上点画廊里的“桌面”块，说明卡里也有这一句；
-// 13. 旧版入口：整站只有入口页首屏一个链接（同一标签页打开 /legacy/，那里的内容另外构建，本地没有时是 404），375 / 390 / 768 /
+// 13. 旧版入口：整站只有入口页首屏一个链接（同一标签页打开 /legacy/，那里是 scripts/legacy-site.mjs 另外构建的旧站），375 / 390 / 768 /
 //    1440 下不滚动就看得见、不压导航、标题、表盘与小字，绝对定位不挤动首屏；构建出的页面里没有写死 fold-v2 的地址。
 //
 //   npm run site:build && node scripts/check-landing.mjs            # 自己起服务读 dist/
@@ -516,7 +516,7 @@ try {
     if (shots) { await mkdir(shots, { recursive: true }); await wait(9000); await p.shot(path.join(shots, `legacy-${size.join('x')}.png`)); }
     await p.close();
   }
-  // a click goes to /legacy/ as a page of its own (a full load, not VitePress's router; locally there is nothing there yet)
+  // a click goes to /legacy/ as a page of its own (a full load of the old site, not VitePress's router)
   const away = await open([390, 844]);
   await away.evaluate(`(window.__landing = 1, document.querySelector('a.fl-legacy').click(), 1)`);
   await wait(1500);
@@ -549,8 +549,9 @@ try {
     const linking = [], v2 = [];
     for (const f of pages) {
       const html = await readFile(path.join(root, 'dist', f), 'utf8');
-      // links and meta only (href / src / content): the deployment notes may name both hosts in prose
-      const n = html.split(`href="${LEGACY}"`).length - 1;
+      // links and meta only (href / src / content): the deployment notes may name both hosts in prose. The old site
+      // itself (dist/legacy/, built by scripts/legacy-site.mjs) links to its own home there; only this site's pages count.
+      const n = f.startsWith(LEGACY.slice(1)) ? 0 : html.split(`href="${LEGACY}"`).length - 1;
       if (n) linking.push(`${f} × ${n}`);
       if (/(?:href|src|content)="[^"]*fold-v2/.test(html)) v2.push(f);
     }
