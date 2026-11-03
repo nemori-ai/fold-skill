@@ -153,26 +153,31 @@ export function feedbackTrail(s, id) {
   return trail;
 }
 
-// The person's own moves in the family stream (authored, Swedish): the channel reads “app · who”,
-// and call logs, reactions and payments carry `kind`. Returns the action without the subject
-// (“用 iMessage 回复 Kajsa”“给诊所打了电话”), or null for other streams.
+// The person's own moves in the family stream: the channel reads “app · who”, and call logs, reactions
+// and payments carry `kind`. Returns the action without the subject (“用 iMessage 回复 Kajsa”“给诊所打了电话”),
+// or null for other streams. Call logs and transfers that carry the structured `call` / `transfer`
+// ({direction, peer, …}, corpus/founder) are read from there; composite's Swedish ones are parsed from the text.
 const FAMILY_APPS = { iMessage: ' iMessage ', SMS: '短信', WhatsApp: ' WhatsApp ', 'E-post': '邮件' };
 const FAMILY_GROUPS = { Familjen: '家庭群', Syskon: '兄妹群', 'Föräldrar 6B': '6B 家长群', 'Kräftskiva 22/8 🦞': '派对群', 'Grannar Tallstigen': '街坊群' };
 const FAMILY_NAMES = { Mamma: '母亲', 'Gunnel granne': '邻居 Gunnel', 'Djurkliniken Kvarnbacken': '诊所', 'Rörfixarna Söder': '水管工', Ekorren: '幼儿园老师' };
-const familyName = who => FAMILY_NAMES[who] || ` ${who} `;
+// Latin names and app names get spaces around them inside a Chinese sentence; Chinese ones do not.
+const spaced = value => (/^[㐀-鿿]/.test(value) ? value : ` ${value} `);
+const familyName = who => FAMILY_NAMES[who] || spaced(who);
 export function familyMove(event) {
   if (event?.stream !== 'family') return null;
   const [app, who = ''] = String(event.channel || '').split(' · ');
   const text = String(event.text || ''), group = FAMILY_GROUPS[who];
   const say = value => value.replace(/\s{2,}/g, ' ').trim();
+  if (event.kind === 'call_log' && event.call) return say(event.call.direction === 'in' ? `接了${familyName(event.call.peer || who)}的电话` : `给${familyName(event.call.peer || who)}打了电话`);
   if (event.kind === 'call_log') return say(`给${familyName(text.match(/till (.+?) ·/)?.[1] || who)}打了电话`);
+  if (event.kind === 'transfer' && event.transfer) return say(event.transfer.direction === 'in' ? `收了${familyName(event.transfer.peer || who)}的转账` : `给${familyName(event.transfer.peer || who)}转了账`);
   if (event.kind === 'reaction') return say(group ? `在${group}里点了赞` : `给${familyName(who)}的消息点了赞`);
   if (event.kind === 'swish_sent') return '用 Swish 转了账';
   if (event.kind === 'screen_time_approved') return '批准了 Signe 的屏幕时间申请';
   if (event.kind === 'list_update') return '在购物清单上勾掉了几样';
   if (group) return `在${group}里回复`;
   if (app === 'Förskoleappen') return '在幼儿园 App 里回复老师';
-  return say(`用${FAMILY_APPS[app] || ` ${app} `}回复${familyName(who)}`);
+  return say(`用${FAMILY_APPS[app] || spaced(app)}回复${familyName(who)}`);
 }
 /** Who wrote a family-stream input and where, worded as above: {who: '母亲', where: '短信'}, {who: 'Ulrika', where: '兄妹群'}. */
 export function familyPlace(event) {
