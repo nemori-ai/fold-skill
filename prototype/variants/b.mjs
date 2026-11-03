@@ -2,7 +2,7 @@ import {
   escapeHTML as esc, formatDate, formatTime, kindLabel,
   getItem, getLayer, colorFor, currentAsk, notice, scenario, records,
 } from './shared.mjs?v=feedback-loop-1';
-import { SMALL, GROUP, stableOrder, layoutSection, bandPath, centerPath, labelPositions, futureFraction, FUTURE_GRID, placeCaptions } from './b-layout.mjs?v=b-temporal-2';
+import { SMALL, GROUP, stableOrder, layoutSection, bandPath, centerPath, labelPositions, futureFraction, FUTURE_GRID, placeCaptions, captionSpan } from './b-layout.mjs?v=b-temporal-3';
 import { createTimeMotion, BEATS } from './b-motion.mjs?v=b-temporal-3';
 import {
   stamp, relative, actionHTML, frameActions, itemActions, versionsOf, versionsHTML, sourcesHTML, originHTML,
@@ -320,8 +320,9 @@ export function mount(host, model) {
       tick.meta.line1 = fit(tick.meta.line1); tick.meta.line2 = fit(tick.meta.line2);
       tick.meta.width = Math.max(textWidth(tick.meta.line1), textWidth(tick.meta.line2) * .95);
     }
-    placeCaptions(ticks.filter(tick => tick.meta.kind !== 'check'), { lineHeight: 27, width: 110, height });
-    for (const tick of ticks) { scene.ticks.set(tick.key, { x: tick.x, y: tick.y, h: tick.h, ty: tick.ty ?? tick.y, o: tick.o }); meta.ticks.set(tick.key, tick.meta); }
+    // Captions that cannot sit near their tick without covering another are left out; the tick stays and hovers as usual.
+    placeCaptions(ticks.filter(tick => tick.meta.kind !== 'check'), { lineHeight: 27, width: 110, height, room: d.futureW + d.leaderW - 2 });
+    for (const tick of ticks) { tick.meta.quiet = Boolean(tick.quiet); scene.ticks.set(tick.key, { x: tick.x, y: tick.y, h: tick.h, ty: tick.ty ?? tick.y, o: tick.o }); meta.ticks.set(tick.key, tick.meta); }
     // The next 整理: keyed by its moment, so the one the walk reaches is consumed at the cut and the next one fades in.
     const next = s.frames[s.index + 1];
     if (next) { const at = Date.parse(next.at), key = `n:${at}`; scene.nexts.set(key, { x: futureFraction(at - cursor) * d.futureW, o: 1 }); meta.nexts.set(key, { at }); }
@@ -604,10 +605,10 @@ export function mount(host, model) {
       const s = 5;
       group.head.setAttribute('d', info.kind === 'snooze' ? `M ${x} ${tick.y} m -${s} 0 a ${s} ${s} 0 1 0 ${2 * s} 0 a ${s} ${s} 0 1 0 -${2 * s} 0` : info.kind === 'scheduled' ? `M ${x - s} ${tick.y} L ${x} ${tick.y - s} L ${x + s} ${tick.y} L ${x} ${tick.y + s} Z` : `M ${x - s} ${tick.y - s - 1} L ${x + s} ${tick.y - s - 1} L ${x} ${tick.y + 1} Z`);
       // Caption beside the tick: right if it fits before the labels, else left, else pinned inside the strip.
-      const w = info.width || 0, room = futureW + scene.leaderW - 2;
-      const right = tick.x + 8 + w <= room || tick.x < 8 + w;
-      const tx = right ? Math.max(barW + 4, Math.min(x + 8, barW + room - w)) : Math.max(x - 8, barW + 4 + w);
-      set(group.text, { x: tx, y: tick.ty - 2, 'text-anchor': right ? 'start' : 'end' });
+      const span = captionSpan(tick.x, info.width || 0, futureW + scene.leaderW - 2);
+      const tx = barW + (span.right ? span.start : span.end);
+      group.text.style.display = info.quiet ? 'none' : '';
+      set(group.text, { x: tx, y: tick.ty - 2, 'text-anchor': span.right ? 'start' : 'end' });
       set(group.t1, { x: tx, dy: 0 }); set(group.t2, { x: tx, dy: 13 });
     }
     // The walk: a deadline that reaches now is “到了” on the spot (its own beat); the hero turns to 0 if it was the hero.

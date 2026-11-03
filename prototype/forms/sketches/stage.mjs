@@ -7,7 +7,7 @@
 // so links to other forms carry the same moment. Records are the replay's precomputed snapshots:
 // stepping does not re-project state, which keeps a frame change inside one animation frame.
 import {
-  scenario, records, escapeHTML as esc, formatDate, formatTime, getItem, currentAsk, findEvent, notice, kindLabel, familyMove,
+  scenario, records, escapeHTML as esc, formatDate, formatTime, getItem, currentAsk, findEvent, notice, kindLabel, ownMove,
 } from '../../variants/shared.mjs?v=feedback-loop-1';
 import { withDataset } from '../../data/select.mjs';
 import { followFrames } from '../../embed.mjs';
@@ -59,8 +59,8 @@ function objectOf(event, link) {
   const number = String(event.url || '').match(/\/(?:pull|issues)\/(\d+)/)?.[1];
   return number ? `#${number}` : shortOf(link.target);
 }
-/** The person's move in the family stream, worded as the other forms word it (shared.mjs `familyMove`: D 首页, 回应时序, A, B). */
-const familyOf = (event, link) => (link.via === 'source' && familyMove(event)) || null;
+/** The person's move in the family stream or a founder app, worded as the other forms word it (shared.mjs `ownMove`: D 首页, 回应时序, A, B). */
+const familyOf = (event, link) => (link.via === 'source' && ownMove(event)) || null;
 /**
  * One feedback link as an action sentence: what the person did and where, never the original text.
  * “你在 GitHub 上批准了 #13572”“你在问答站回复了 Gerda Moberg”“你在 Fold 里选了「锁定周六上午」”.
@@ -81,6 +81,8 @@ export function responseSentence(event, link) {
       const to = m && (m[2] && senders().has(`${m[1]} ${m[2]}`) ? `${m[1]} ${m[2]}` : m[1]);
       return `你${place}回复了 ${to || `${objectOf(event, link)} 的讨论`}`;
     }
+    // An answer given at the source with no verb of its own (“推迟一天” said in a GitHub comment) reads as the choice.
+    if (!sourceAction(link.action) && label) return `你${place}回复了 ${objectOf(event, link)}，选了「${label}」`;
     return `你${place}${verb}了 ${objectOf(event, link)}`;
   }
   if (link.via === 'button') return `你在 Fold 里选了「${label || link.action}」`;

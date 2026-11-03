@@ -5,7 +5,7 @@
 //   3. history   the versions of one item across the replay
 //   4. answers   a page-local answer book over respond.mjs (saved → acknowledged after the next 整理)
 //   5. motion    a keyed board whose tiles keep their DOM node across frames and move with FLIP
-import { scenario, records, getItem, currentAsk, personName, formatDate, formatTime, escapeHTML as esc, familyMove } from './shared.mjs?v=feedback-loop-1';
+import { scenario, records, getItem, currentAsk, personName, formatDate, formatTime, escapeHTML as esc, familyMove, appMove, FOUNDER_APPS } from './shared.mjs?v=feedback-loop-1';
 import { normalizeAsk, createResponseStore, responseStatus, setTimeZone } from '../respond.mjs?v=respond-1';
 
 setTimeZone(scenario.timeZone || 'Asia/Shanghai');
@@ -95,42 +95,8 @@ export function eventRef(event) {
   if (channel === 'Mastodon') return { platform: 'Mastodon', site: '', kind, type: 'post', title: subject, label: '' };
   // founder: “应用 · 会话” (飞书 · 郑婉, 微信 · 白鹭口腔×铃语, Discord · saydone #help); a bare “电话” is the call log.
   const app = channel.split(' · ')[0];
-  if (APPS[app]) return { platform: app, site, kind, type: null, title: subject, label: '' };
+  if (FOUNDER_APPS[app]) return { platform: app, site, kind, type: null, title: subject, label: '' };
   return { platform: channel || '来源', site, kind, type: null, title: subject, label: '' };
-}
-
-// The founder dataset's apps. A conversation is a direct chat when only one other sender ever writes in it
-// (飞书 · 郑婉, 微信 · 孟洁); otherwise it is a group (飞书 · 白鹭上线, 微信 · 三(2)班家长群).
-const APPS = { 飞书: 1, 微信: 1, 短信: 1, 邮件: 1, 电话: 1, 电话手表: 1, Discord: 1, X: 1, 携程: 1, '招聘 App': 1 };
-let senders = null;
-const isDirect = channel => {
-  if (!senders) {
-    senders = new Map();
-    for (const frame of scenario.frames) for (const e of frame.events) {
-      if (e.self) continue;
-      if (!senders.has(e.channel)) senders.set(e.channel, new Set());
-      senders.get(e.channel).add(e.from);
-    }
-  }
-  return (senders.get(channel)?.size || 0) <= 1;
-};
-/** “在飞书上回复郑婉”“在飞书群「白鹭上线」里回复”“在三(2)班家长群里回复”“给可可的电话手表回了消息”. */
-function appMove(event) {
-  const [app, chat = ''] = String(event.channel || '').split(' · ');
-  if (!APPS[app]) return null;
-  const peer = event.call?.peer || event.transfer?.peer || chat;
-  if ((event.kind === 'call_log' || event.kind === 'missed_call') && event.call) return event.call.direction === 'in' ? `接了${peer}的电话` : `给${peer}打了电话`;
-  if (event.kind === 'transfer' && event.transfer) return event.transfer.direction === 'in' ? `收了${peer}的转账` : `给${peer}转了账`;
-  if (app === '电话') return '打了电话';
-  if (app === '电话手表') return `给${chat}的电话手表回了消息`;
-  if (app === '短信') return `给${chat}回了短信`;
-  if (app === '邮件') return /^Re:/i.test(event.subject || '') ? '回了邮件' : '发了邮件';
-  if (app === 'Discord') return `在 Discord ${chat.replace(/^saydone\s*/, '')} 里回复`.replace(/\s+里/, '里');
-  if (app === 'X') return '在 X 上回复';
-  if (app === '携程' || app === '招聘 App') return `在${app.replace(' App', '')}上回复${chat}`;
-  const shown = event.kind === 'image' ? '发了张图' : event.kind === 'file' ? '发了文件' : event.kind === 'forward' ? '转了一条' : event.kind === 'voice' ? '回了语音' : '回复';
-  if (isDirect(event.channel)) return shown === '回复' ? `在${app}上回复${chat}` : `在${app}上给${chat}${shown}`;
-  return /群$/.test(chat) ? `在${chat}里${shown}` : `在${app}群「${chat}」里${shown}`;
 }
 
 const mentionOf = text => String(text || '').match(/^\s*@([\w.-]+?)(?:@[\w.-]+)?[\s:,]/)?.[1] || null;

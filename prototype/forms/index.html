@@ -26,7 +26,7 @@
   <p class="fg-note" id="fg-note"></p>
 </main>
 <script type="module">
-  import { forms, withdrawn, sketches, motions, notesHref } from './catalog.mjs';
+  import { forms, withdrawn, sketches, motions, notesHref, frameOf } from './catalog.mjs';
   import { withDataset, keepDataset, datasetNotice } from '../data/select.mjs';
   import { scenario } from '../scenario.mjs';
   keepDataset();
@@ -35,7 +35,7 @@
   document.querySelectorAll('[data-notes]').forEach(a => { a.href = notesHref(a.dataset.notes); });
   const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   // Each card shows the live page at its default frame, scaled down; the whole card links to it.
-  const card = (f, href = `${f.id}.html?frame=${f.frame}`, thumb = `${href}&card=0`) => `<article class="fg-card">
+  const card = (f, href = `${f.id}.html?frame=${frameOf(f)}`, thumb = `${href}&card=0`) => `<article class="fg-card">
     <div class="fg-thumb fs-theme-${f.theme}"><iframe src="${go(thumb)}" title="${esc(f.name)}缩略" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></div>
     <div class="fg-text"><header><b>${String(f.no).padStart(2, '0')}</b><h2><a class="fg-link" href="${go(href)}">${esc(f.name)}</a></h2></header>
     <p>${esc(f.tagline)}</p>

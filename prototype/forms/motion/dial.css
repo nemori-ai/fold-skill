@@ -96,3 +96,9 @@
   .dl-panels { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .dl-p:nth-child(1), .dl-p:nth-child(5) { display: none; }
 }
+/* A phone: the bar's two rows come from forms.css; the mode buttons drop their key hint so the date and title keep room. */
+@media (max-width: 640px) {
+  .dl-bar { gap: 6px 8px; }
+  .dl-modes kbd { display: none; }
+  .dl-modes button { padding: 0 8px; }
+}

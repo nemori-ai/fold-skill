@@ -2,7 +2,7 @@
 // 最急的三件怎么排（compose / urgencyKey）、卡与行的标记、页头与说明行、详情的内容。只产生 HTML 与数据，不碰 DOM、不管动画。
 // 从 d.mjs 原样搬出（2026-10-28），行为不变；createHomeView 拿到同一组本页状态（作答记录、折叠开关、金额草稿、屏幕用途），
 // 每次换轮由调用方 sync(s) 交给它最新的回放快照。
-import { escapeHTML as esc, formatDate, formatTime, kindLabel, getItem, colorFor, findEvent, currentAsk, feedbackTrail, scenario, personName, familyMove } from './shared.mjs?v=feedback-loop-1';
+import { escapeHTML as esc, formatDate, formatTime, kindLabel, getItem, colorFor, findEvent, currentAsk, feedbackTrail, scenario, personName, ownMove } from './shared.mjs?v=feedback-loop-1';
 import { responseHTML, composerHTML, setTimeZone, normalizeAsk, responseStatus } from '../respond.mjs?v=respond-1';
 import { detailHTML as ixDetailHTML } from '../forms/motion/ix.mjs';
 import { itemFacts, orderOf } from '../forms/motion/dial-model.mjs';
@@ -53,16 +53,18 @@ function threadRef(event) {
 }
 const SOURCE_VERB = { approve: '批准了', 'request-changes': '要求修改了', merge: '合并了', close: '关闭了' };
 function actionWords(event, link, ask) {
-  if (link.via === 'source' && familyMove(event)) {
+  // The family stream and founder's apps are worded by app and person (“你在飞书上回复了郑婉”“你给可可的电话手表回了消息”).
+  const own = link.via === 'source' && ownMove(event);
+  if (own) {
     const label = link.meaning === 'decide' && ask?.actions?.find(a => a.id === link.action)?.label;
-    return `你${familyMove(event)}${label ? `，选了「${label}」` : ''}`;
+    return `你${own}${label ? `，选了「${label}」` : ''}`;
   }
   if (link.via === 'source') {
     const ref = threadRef(event);
     let what;
     if (SOURCE_VERB[link.action]) what = `${SOURCE_VERB[link.action]}${ref ? ` ${ref}` : ''}`;
-    else if (link.action === 'comment') { const to = addressee(event); what = to ? `回复了 ${to}` : ref ? `评论了 ${ref}` : '发了一条回复'; }
-    else { const label = ask?.actions?.find(a => a.id === link.action)?.label; what = label ? `表态「${label}」` : '做了处理'; }
+    else if (link.action === 'comment') { const to = addressee(event); what = to ? `回复了 ${to}` : ref ? `${/^review/.test(event.kind || '') ? '评审了' : '评论了'} ${ref}` : '发了一条回复'; }
+    else { const label = ask?.actions?.find(a => a.id === link.action)?.label; what = label ? `${ref ? `回复了 ${ref}，` : ''}选了「${label}」` : '做了处理'; }
     return `你在${placeOf(event.channel)}${what}`;
   }
   if (link.via === 'button') {
