@@ -13,7 +13,7 @@
 // 8. 第 2 节的三幕：第 1 幕按最大的单个来源定比例、占满一行的都是群，一个群一行，没写名字的行由括号数清；第 2 幕每段先竖直落、
 //    再水平滑，任何时刻在路上的不超过两批，第 1 幕 ≤ 1.5 秒、第 2 幕 ≤ 2 秒；第 3 幕终态“全部加起来”那根正好顶满整宽，
 //    每个单独来源都缩成一点点（≤ 整宽的 8%、≥ 1px），减弱动态时一打开就是这个终态；三幕演的整个过程页面不横向溢出；
-// 9. 白话：入口页正文（含第五节六块的文字，不含画廊、弹框；原型本身在 iframe 里）只用白话，不出现 #数字、PR、CI、master、演示里的人名与瑞典语，
+// 9. 白话：入口页正文（含第五节六块的文字，不含画廊、弹框；原型本身在 iframe 里）只用白话，不出现 #数字、PR、CI、master、演示里的人名、店名与项目名，
 //    也不出现演示原文的标题、问题与选项（白话与 data.json 的 plain 字段由第 1 项逐个核对）；正文与页面描述是平常的书面语，
 //    不出现改掉的别扭说法（接得住、交出、落进、暗下、舍掉、让位、一摊……）；
 // 10. 第五节六块是实时嵌入的原型（site/.vitepress/theme/live.mjs）：组成与顺序是定下的六个；首屏载入后还没有任何 iframe；
@@ -424,13 +424,18 @@ try {
     // the fifth section's own words count too (its prototypes play inside iframes, whose text is not part of this page)
     c.querySelectorAll('.fl-gal, .fl-sheet-back, dialog, style, script').forEach(e => e.remove());
     return c.textContent.replace(/\s+/g, ' '); })()`);
-  const banned = [/#\d/, /\bPR\b/, /\bCI\b/, /master/i, /\b(?:Jonas|Berglund|Smilla|Kajsa|Mamma|Ture|Signe|Ulrika|VAB|vab)\b/, /[åäöÅÄÖ]/];
+  // the replay's cast (founder, corpus/founder/OUTLINE.md §2: people, the pets, the companies and the open-source project are
+  // said by role on the page), plus the older corpus's (composite) Swedish names
+  const banned = [/#\d/, /\bPR\b/, /\bCI\b/, /master/i,
+    /陆晨|韩敏|可可|豆豆|土豆|郑婉|孟洁|何嘉|高翔|宋悦|罗晓雯|邓一凡|范志强|老范|姚佳|杨帆|王姐|小金|曹店长|沈律师|白鹭|铃语|听澜|云阶|声通云|曲声|剪约|燃力|禾木/,
+    /\b(?:saydone|Harborline|Mateo|Priya|Lucas|Cici)\b/i,
+    /\b(?:Jonas|Berglund|Smilla|Kajsa|Mamma|Ture|Signe|Ulrika|VAB|vab)\b/, /[åäöÅÄÖ]/];
   const hits = banned.map(re => body.match(re)?.[0]).filter(Boolean);
   const originals = [...data.beat2.segments.value.map(x => x.title), ...data.beat3.asks.value.map(x => x.short), data.beat3.lead.value.prompt, ...data.beat3.lead.value.actions,
     data.beat3.loop.example.value.ask, data.beat3.loop.example.value.response.text]
-    // an original that is already plain (“先观察”) is its own plain words
+    // an original that is already plain (“不答应”) is its own plain words
     .filter(t => body.includes(t) && !data.beat3.lead.value.plain.actions.includes(t));
-  check('白话：入口页正文（含第五节的文字，不含画廊、弹框）没有 #数字、PR、CI、master、演示里的人名与瑞典语，也没有演示原文的标题、问题与选项', !hits.length && !originals.length, { hits, originals });
+  check('白话：入口页正文（含第五节的文字，不含画廊、弹框）没有 #数字、PR、CI、master、演示里的人名、店名、公司名与开源项目名，也没有演示原文的标题、问题与选项', !hits.length && !originals.length, { hits, originals });
   // Plain written Chinese (the user, 2026-11-03): the contrived phrasings that were rewritten stay out of the body and the description.
   const description = await plain.evaluate(`document.querySelector('meta[name="description"]')?.content || ''`);
   const stiff = ['接得住', '交出', '落进', '暗下', '舍掉', '让位', '让出', '一摊', '开口', '涌入', '摊开', '回话', '刻痕', '回流', '折掉']

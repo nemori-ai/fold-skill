@@ -1,7 +1,8 @@
 <script setup>
 // The landing page (site/index.md, layout: FoldLanding). Story, numbers and look: site/landing/{story,style,spec}.md.
 // Every number comes from site/landing/data.json: the first screen and the second section are one illustrative day of a
-// programmer (hero, why; basis 示意), the third and fourth sections are the replay at f22 (real, rewritten data).
+// programmer (hero, why; basis 示意), the third and fourth sections are the replay at f22 (founder: 陆晨的两周, people and
+// messages written by the author, the Agent's judgment from a real model's free run).
 // Elements that show one carry data-k="<path>" so scripts/check-landing.mjs can hold them to it.
 //
 // Motion: the first screen plays once with CSS only (it starts on first paint, before any script; the times are
@@ -36,9 +37,11 @@ const grew = v(data.beat2.yielded).reduce((a, b) => (b.delta > a.delta ? b : a))
 const gave = v(data.beat2.yielded).filter(y => y.delta < 0)
 const nameOf = id => (id === 'withdrawn' ? v(data.beat2.withdrawn).plain : seg(id).plain)
 const keyOf = id => (id === 'withdrawn' ? 'beat2.withdrawn.plain' : `beat2.segments.${rankOf(id)}.plain`)
-// Beat 3: the urgent ones by name and deadline, the card's one first.
+// Beat 2 names the blank only when it gave way too.
+const blankGave = v(data.beat2.blank).before > v(data.beat2.blank).now
+// Beat 3: the urgent ones in the order their deadlines come, each as “几点前做什么” (beat3.asks[].due and .todo).
 const asks = v(data.beat3.asks).map((a, i) => ({ ...a, i }))
-const urgentAsks = [...asks.filter(a => a.urgent && a.item === n.lead.item), ...asks.filter(a => a.urgent && a.item !== n.lead.item)]
+const urgentAsks = asks.filter(a => a.urgent).sort((a, b) => Date.parse(a.at) - Date.parse(b.at))
 const model = stageModel(data)
 // The generated markup goes in as static vnodes, not v-html: Vue 3.5 re-applies a dynamic innerHTML while
 // hydrating, which rebuilt the hero's elements a beat after first paint and restarted its animations (and parsed
@@ -54,8 +57,8 @@ const field = `<div class="h2-field" style="aspect-ratio: ${fieldBox(data).join(
 const desk = deskHTML(data)
 const review = reviewSVG(data)
 const seen = v(data.hero.seen)
-// The demo card speaks in plain words (data.json beat3.lead.plain): the question, its two choices, its deadline in
-// words. The replay's own wording (Swedish names, #numbers, PR, CI) stays in the data, not on the page.
+// The demo card speaks in plain words (data.json beat3.lead.plain): the question, its choices, its deadline in
+// words. The replay's own wording (names, shop and company names, #numbers, PR, CI) stays in the data, not on the page.
 const lead = n.lead.plain
 // The second section: a day of one person (an order of magnitude, not the replay), against one app.
 const why = whyModel(data)
@@ -77,7 +80,12 @@ const recorded = new Set(media)
 const clip = id => recorded.has(`${id}.mp4`) ? `/media/${id}.mp4` : null
 const thumb = (thumbs, id) => (thumbs[id] ? { '--ph': `url(${thumbs[id]})` } : null)
 const example = v(n.loop.example)
-// Scrolled past unanswered, the card folds as if you had picked what really happened next: the call (beat3.loop).
+// The rest of that morning's urgent answers, each given where it came from, and the apps the two weeks' answers were given in.
+const morning = v(n.loop.morning).map((m, i) => ({ ...m, i }))
+const answeredIn = Object.entries(v(n.loop.byChannel)).sort((a, b) => b[1] - a[1]).map(([k]) => k)
+const halved = example.share[1] * 2 === example.share[0]
+// Scrolled past unanswered, the card folds as if you had picked what happened next in the story: his reply on 微信
+// (beat3.loop; landing-data.mjs checks that it is the first button).
 const demoChoice = lead.actions[0]
 
 // ---------- the demo answer: the card's buttons really work, and fold it into a receipt in place ----------
@@ -444,7 +452,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
     <header id="example" class="fl-ex" aria-labelledby="fl-ex-title">
       <p class="fl-kick">一种编码的例子</p>
       <h2 id="fl-ex-title" class="fl-h">把注意力切成固定的份数</h2>
-      <p class="fl-lede">原型里试的一种编码：把每一层的注意力切成固定的份数，演示里是 <span data-k="budget">{{ v(data.budget) }}</span> 份（份数可以配置）。Agent 每一轮把这些份数分给各件事，份数就是面积。有了面积，同样的轻重就能在手表、手机和桌面上分别画出来。下面是演示回放里真实的一轮：8 月 13 日中午到半夜，你离开的 12 小时。</p>
+      <p class="fl-lede">原型里试的一种编码：把每一层的注意力切成固定的份数，演示里是 <span data-k="budget">{{ v(data.budget) }}</span> 份（份数可以配置）。Agent 每一轮把这些份数分给各件事，份数就是面积。有了面积，同样的轻重就能在手表、手机和桌面上分别画出来。下面是演示里的一轮。演示里的人物和消息都是编写的，Agent 的整理来自一次真实模型的运行，又经过人工修改。这一轮是 9 月 17 日周四中午到半夜；第二天上午，工作和家里的几件事挤在了一起。</p>
     </header>
 
     <!-- 一轮整理：舞台钉住，文字滚过阅读线时演那一拍。 -->
@@ -452,7 +460,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
       <h2 id="fl-round-title" class="fl-sr">一轮整理</h2>
       <div class="fl-sticky">
         <div class="fl-meta">
-          <span class="fl-kick k1"><b>1 收到</b> · 你离开的 12 小时</span>
+          <span class="fl-kick k1"><b>1 收到</b> · 周四中午到半夜</span>
           <span class="fl-kick k2"><b>2 折叠</b> · Agent 整理这一轮</span>
           <span class="fl-kick k3"><b>3 提问</b> · 需要你回复的</span>
           <span class="fl-kick k4"><b>3 提问</b> · 你回复之后</span>
@@ -485,18 +493,18 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
       <div class="fl-steps">
         <article class="fl-step" data-step-block="1">
           <p class="no">01 / 03 · 收到</p>
-          <h3 class="fl-h">你离开的 12 小时里，五个渠道进来 <span data-k="beat1.n">{{ n.n }}</span> 条。</h3>
+          <h3 class="fl-h">周四中午到半夜，五个渠道进来 <span data-k="beat1.n">{{ n.n }}</span> 条。</h3>
           <p>一条消息一道竖线，按到达时间排在各自的渠道上。下面这把尺代表你的注意力，在这种编码里是 <b data-k="budget">64</b> 份，一轮里不会增加。</p>
         </article>
         <article class="fl-step" data-step-block="2">
           <p class="no">02 / 03 · 折叠</p>
           <h3 class="fl-h">折叠 <span data-k="beat2.folded">{{ n.folded }}</span> 条，其余的按轻重分配份数。</h3>
-          <p>其余的消息归到各自所属的事。<b :data-k="keyOf(grew.id)">{{ nameOf(grew.id) }}</b>这件事{{ grew.share === grew.before * 2 ? '占的份数翻了一倍' : '占的份数变多了' }}，份数变少的是<template v-for="(y, i) in gave" :key="y.id">{{ i ? '、' : '' }}<span :data-k="keyOf(y.id)">{{ nameOf(y.id) }}</span></template>和空余部分。</p>
+          <p>其余的消息归到各自所属的事。<b :data-k="keyOf(grew.id)">{{ nameOf(grew.id) }}</b>这件事{{ grew.share === grew.before * 2 ? '占的份数翻了一倍' : grew.share >= grew.before * 3 ? '占的份数多了好几倍' : '占的份数变多了' }}，份数变少的是<template v-for="(y, i) in gave" :key="y.id">{{ i ? (i === gave.length - 1 && !blankGave ? '和' : '、') : '' }}<span :data-k="keyOf(y.id)">{{ nameOf(y.id) }}</span></template>{{ blankGave ? '和空余部分' : '' }}。</p>
         </article>
         <article class="fl-step" data-step-block="3">
           <p class="no">03 / 03 · 提问</p>
           <h3 class="fl-h"><span data-k="beat1.n">{{ n.n }}</span> 条里，真正要紧的只有 <span data-k="beat3.urgent.length">{{ n.urgent }}</span> 件。</h3>
-          <p>等你回复的几件标成红色。最要紧的是<template v-for="(a, i) in urgentAsks" :key="a.item">{{ i ? '；' : '' }}<b :data-k="`beat3.asks.${a.i}.name`">{{ a.name }}</b>，<span :data-k="`beat3.asks.${a.i}.due`">{{ a.due }}</span>要定</template>。其余的可以晚一点；灰色的由 Agent 自己处理，不需要你做什么。</p>
+          <p>等你回复的几件标成红色，工作和家里的事挤在了一起：<template v-for="(a, k) in urgentAsks" :key="a.item">{{ k ? '，' : '' }}<span :data-k="`beat3.asks.${a.i}.due`">{{ a.due }}</span><b :data-k="`beat3.asks.${a.i}.todo`">{{ a.todo }}</b></template>。其余的可以晚一点；灰色的由 Agent 自己处理，不需要你做什么。</p>
         </article>
         <article class="fl-step" data-step-block="4">
           <p class="no">你回复之后 · 演示</p>
@@ -504,10 +512,10 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
           <p>点按钮只是记下你的回答；这件事占的份数，要等 Agent 下一轮整理时读到回答，才会减少。</p>
         </article>
         <article class="fl-step fl-real">
-          <p class="no">真实的一次</p>
-          <h3 class="fl-h">一通电话，下一轮就读到了。</h3>
-          <p>Agent 问的就是上面那张卡：「<span data-k="beat3.loop.example.plain.ask">{{ example.plain.ask }}</span>」真实的情况是，主人没有点按钮，早上直接打给了宠物诊所。下一轮 Agent 读到通话记录「<span data-k="beat3.loop.example.plain.response">{{ example.plain.response }}</span>」，猫这件事占的份数就减少了一半。</p>
-          <p class="fl-note">两周里的回复都发生在原来的地方：GitHub、短信、问答网站、电话；Agent 在下一轮整理时自己读到。</p>
+          <p class="no">故事里他是怎么答的</p>
+          <h3 class="fl-h">一条微信，下一轮就读到了。</h3>
+          <p>Agent 问的就是上面那张卡：「<span data-k="beat3.loop.example.plain.ask">{{ example.plain.ask }}</span>」故事里，他没有点按钮。上午见完客户，他在微信上回了对方：「<span data-k="beat3.loop.example.plain.response">{{ example.plain.response }}</span>」。下一轮 Agent 读到这条微信，这件事占的份数就{{ halved ? '减少了一半' : '减少了' }}。</p>
+          <p class="fl-note">那天上午另外几件也是这样答的：<template v-for="(m, k) in morning" :key="m.item">{{ k ? '，' : '' }}<span :data-k="`beat3.loop.morning.${m.i}.plain`">{{ m.plain }}</span></template>。两周里的回答都发生在原来的地方（{{ answeredIn.join('、') }}），Agent 在下一轮整理时自己读到。</p>
         </article>
       </div>
     </section>

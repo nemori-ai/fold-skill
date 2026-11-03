@@ -1,7 +1,9 @@
 // 入口页（site/landing/）上会出现的每个数，由演示回放现算，写成 site/landing/data.json。
 // 只读原型的模块（variants/shared.mjs、variants/inflow.mjs 与它们引用的 scenario / engine），规则与原型同名函数一致，
-// 不改原型、不改演示数据。数据集固定为 composite，帧固定为 f22（8/14 周五 00:00；2026-11-03 起从 f26 换来：这一刻开着的问题
-// 都是日常的事，猫、母亲住哪、儿子的病假、女儿的同意书；/docs/why 用的也是 f22）。页面只读 data.json，不加载 2 MB 的回放。
+// 不改原型、不改演示数据。数据集是原型的默认数据集 founder（陆晨的两周，人物与每一条消息都是作者编写的），帧固定为 f22
+// （9/18 周五 00:00，“明早几件事撞在一起”）。2026-11-04 起从 composite 的 f22 换来：这一刻工作和家里的期限挤在同一个上午，
+// 7:50 女儿的秋游回执要交、9:30 狗要打疫苗、10 点见客户之前要定能不能答应对方，一眼就懂；原型各页的讲法也停在这一轮。
+// 页面只读 data.json，不加载回放。
 //
 //   node scripts/landing-data.mjs            # 重写 site/landing/data.json
 //   node scripts/landing-data.mjs --check    # 只核对：现算结果与已提交的 data.json 不同就退出 1
@@ -72,15 +74,17 @@ const closures = [];
 frames.forEach((f, i) => { for (const a of life[i].answered) {
   const event = askEvents.find(e => e.feedback.some(l => l.ask === a.id));
   closures.push({ frame: f.id, ask: a.short, item: a.item, share: [getItem(records[i - 1].state, a.item)?.share ?? null, getItem(records[i].state, a.item)?.share ?? null],
-    response: { at: event.at, stream: event.stream, channel: event.channel, text: String(event.text || '').slice(0, 60) } });
+    response: { at: event.at, stream: event.stream, channel: event.channel, text: String(event.text || '').slice(0, 60), action: event.feedback.find(l => l.ask === a.id).action ?? null } });
 } });
-const biggest = closures.reduce((best, c) => ((c.share[0] - (c.share[1] ?? 0)) > (best.share[0] - (best.share[1] ?? 0)) ? c : best));
-// The urgent one the first screen's watch and the demo card show: of this moment's urgent asks, the one you really
-// answered next (the loop's example), so the card and the real call that follows are one story; else the first by rank.
-// At f22 that is the cat (Kajsa, 21:30: “Ring imorgon kl 8 prick”; the call went out 08:02). The watch prototype's own
-// order puts the mother's (due today 23:59) first; both count in “2 件要紧”.
-const leadItem = urgent.find(it => it.id === biggest.item) ?? urgent[0];
+// The urgent one the demo card shows: of this moment's urgent asks, the first by rank that you answered at the source
+// before the next round (so the card and what really followed are one story); else the first by rank. At f22 that is the
+// customer's question (国庆前能不能答应转接, due 10:00; at 11:31 he wrote to 孟洁 on 微信 “9/28前上线”, read in f23).
+// The loop's example is that answer; `morning` is the other urgent asks answered the same way before the next round.
+const nextClosures = closures.filter(c => c.frame === frames[FRAME + 1]?.id);
+const leadItem = urgent.find(it => nextClosures.some(c => c.item === it.id)) ?? urgent[0];
 const lead = leadItem && currentAsk(s, leadItem.id);
+const example = nextClosures.find(c => c.item === leadItem?.id) ?? null;
+const morning = nextClosures.filter(c => c.item !== leadItem?.id && urgent.some(it => it.id === c.item)).sort((a, b) => Date.parse(a.response.at) - Date.parse(b.response.at));
 
 // Items gone from the root this round. Merged into one still there: their share counts as that one's before (the
 // ruler shows the merged item shrinking or growing, not a new one appearing). Withdrawn (done, past, no longer
@@ -261,45 +265,60 @@ const review = Array.from({ length: REVIEW_DAYS }, (_, k) => {
 const ill = (value, source) => ({ value, source, basis: '示意' });
 
 // ---------- 入口页的白话说法 ----------
-// 用户 2026-11-03：“你要举例，举一点不拗口的，一眼就知道什么意思的。”入口页不直接搬演示原文（瑞典人名、#编号、PR、
-// CI、瑞典语），每一件事、每个问题与选项、回流的例子都配一份白话，写进 data.json 的 plain 字段；原文留在旁边，页面只显示
-// plain。人名换成角色：Jonas 是“你”，伴侣 Kajsa、女儿 Signe（11 岁）、儿子 Ture（4 岁）、母亲 Mamma、猫 Smilla。
+// 用户 2026-11-03：“你要举例，举一点不拗口的，一眼就知道什么意思的。”入口页不直接搬演示原文（人名、店名、#编号、PR、
+// CI），每一件事、每个问题与选项、回流的例子都配一份白话，写进 data.json 的 plain 字段；原文留在旁边，页面只显示 plain。
+// 人名换成角色：陆晨是“你”，妻子韩敏、女儿可可（9 岁）、儿子豆豆（5 岁）、狗土豆、合伙人郑婉、客户白鹭口腔与它的
+// 运营总监孟洁、开源库 saydone 说成“开源项目”、语音AI小聚说成“聚会”。
 // 白话要忠实于原件：是把原话翻成大白话，不是另编一件事。对照表见 site/landing/story.md「白话对照」。
 const PLAIN = {
-  // 每件事的短名：桌前那扇窗的格子、第 4 节尺下的“增 / 减”。6 个字以内。只写 f22 根层上的事。
+  // 每件事的短名：第 4 节尺下的“增 / 减”与第 3 拍的事名。6 个字以内。只写 f22 根层上的事。
   items: {
-    'mamma-stambyte': '妈妈住哪',          // Mamma回执今天截止，昨晚已通话（楼里换水管那六周住哪）
-    'smilla-vet': '猫的药',                // Smilla剂量疑超失明线，8点打诊所
-    'pr-reviews-0814': '审同事的改动',     // #13572等你评审，另3个PR待审
-    'ture-pickup-0812': '儿子请假',        // Ture好转37.6度，记得报vab
-    'signe-school-start': '女儿签字',      // Signe 19日开学：签同意书、查头虱
-    'signe-comic-talk': '女儿的漫画',      // Signe看的漫画有裸露图，12日谈
-    'driveway-wet': '车道边潮湿',          // 邻居说车道信箱旁地面潮湿
-    'ci-urls-master': '测试没通过',        // master仍红，13日合入后仍多平台失败
-    'issue-13466': '一个补丁见效',         // #13466补丁有效，401疑为IIS冷启动
-    'kajsa-bike-brake': '自行车刹车',      // Kajsa新车18日送到，你说后刹已修好
-    'release-8-22-rc1': '新版快发布',      // 8.22.0-rc1已发，9月2日发布
+    'tinglan-outage': '见客户',             // 9点与郑婉对方案，10点见孟洁（周三晚的故障与客户年单）
+    'kk-autumn-trip': '秋游回执',           // 可可秋游回执还没签，早读前要交
+    'meetup-signup': '聚会赞助',            // 小聚赞助要讲15分钟，明天中午前回
+    'saydone-pypi-token': '开源项目发版',   // saydone 短回答的问题查清了，发不发还没定
+    'tudou-ear': '狗打疫苗',                // 土豆9:30打疫苗，和10点的会撞了
+    'saydone-harborline': '企业来询价',     // Harborline 下周定预算，等我们报价
+    'bailu-cutover': '九家店上线',          // 白鹭两天 412 通电话，接起 401 通
+    'doudou-open-day': '幼儿园开放日',      // 豆豆开放日接龙，明天中午截止
+    'jianyue-answer-rate': '小店接通率',    // 剪约晚间接通率又跌，已恢复
+    'parcel-today': '快递',                 // 快递3号柜明晚21点前取
+    'aug-expense': '报销',                  // 6笔报销还没批，8月截止已过
+    'property-fee': '物业费',               // 四季度物业费9月30日前缴
+    'devconf-talk': '演讲邀请',             // 湾区开发者大会邀你演讲
+    'yunjie-price': '模型涨价',             // 云阶10月涨价，备选模型开始测了
+    'ranli-invoice': '小店发票',            // 燃力的发票罗晓雯说马上开，还没开出来
+    'api-cert': '证书续期',                 // 接口证书剩6天，高翔说周五续
+    'dad-paycode': '爸的付款码',            // 爸微信付款码打不开
   },
-  // 每个开着的问题。
+  // 每个开着的问题：ask 是问题本身，todo 是第 3 拍里“几点前做什么”的那半句（只写要紧的几件）。
   asks: {
-    'mamma-stambyte': '妈妈九月住哪？',            // 母亲九月住哪？
-    'smilla-vet': '猫多吃了药，要打给兽医吗？',    // Smilla 多吃了药：打诊所？
-    'pr-reviews-0814': '同事的修复，批准吗？',     // #13572 堵复用绕过：批准？
-    'ture-pickup-0812': '照顾儿子的假，报了吗？',  // VAB 报了吗？（VAB：瑞典照顾生病孩子的带薪假）
-    'signe-school-start': '女儿的同意书签了吗？',  // Signe 的同意书签了吗？
+    'tinglan-outage': { ask: '国庆前能答应客户加电话转接吗？', todo: '定下能不能答应客户的要求' },   // 周五见白鹭：国庆前能不能答应“AI 接不了的电话转到店里手机”？
+    'kk-autumn-trip': { ask: '女儿的秋游回执签了吗？', todo: '签好女儿的秋游回执' },              // 可可的秋游回执还没签，明早要交
+    'meetup-signup': { ask: '赞助商想上台讲 15 分钟，答应吗？', todo: '回复聚会的赞助商' },       // 声通云想赞助茶歇，条件是上台讲 15 分钟产品：答应吗？
+    'saydone-pypi-token': { ask: '开源项目的新版周五照发吗？', todo: '定下开源项目的新版发不发' }, // 有人报第二个测试版把葡语短回答截掉：0.9 周五照发，还是推迟？
+    'tudou-ear': { ask: '明早狗打疫苗，谁带去？', todo: '定下谁带狗去打疫苗' },                  // 明早 9:30 土豆打疫苗：你带去，还是改约？
+    'devconf-talk': { ask: '深圳的大会请你去演讲，去吗？' },                                      // 深圳 11 月的大会请你演讲，9 月 20 日前回复：去吗？
+    'yunjie-price': { ask: '用的模型涨价两成，换不换？' },                                        // 云阶 10 月起涨价两成：换不换默认模型？
   },
-  // 演示卡上的那一问：卡上的整句与两个选项（与原文的选项同序）。期限取条目的 due_at（8/14 08:00，标题“8点打诊所”；
-  // Kajsa 21:30 “Ring imorgon kl 8 prick”）。
+  // 演示卡上的那一问：卡上的整句与选项（与原文的选项同序）。期限取问题的 due_at（9/18 10:00，会从下午两点改到了上午十点）。
   lead: {
-    item: 'smilla-vet',
-    prompt: '怀疑给猫多喂了半片药，药量可能伤眼睛：早上 8 点打给兽医，还是先观察？', // 怀疑给 Smilla 多喂了半片恩诺沙星：打给诊所，还是先观察？
-    actions: ['打给兽医', '先观察'], // 打给诊所 / 先观察
+    item: 'tinglan-outage',
+    // 原文：周五见白鹭：国庆前能不能答应“AI 接不了的电话转到店里手机”？（条目标题：9点与郑婉对方案，10点见孟洁）
+    prompt: '9 点和合伙人对方案，10 点见客户：对方要 AI 接不了的电话转到店里的手机，国庆前能答应吗？',
+    actions: ['28 号前上线', '国庆后上线', '不答应'], // 28日前上线 / 国庆后上线 / 不答应
   },
   // 第 4 节尺下“减”那一行：本轮撤下的几件（办完、过期、不用再管）合成一组的名字。
   withdrawn: '不用再管的几件',
-  // 回流里真实的那一次，接着演示卡那一问：Smilla 多吃了药：打诊所？→ 8/14 08:02 一通打给宠物诊所的电话
-  // （Utgående samtal till Djurkliniken Kvarnbacken · 6 min），f23 读到。
-  loop: { item: 'smilla-vet', ask: '猫多吃了药，要打给兽医吗？', response: '打给宠物诊所，6 分钟' },
+  // 回流里故事接着发生的那一次，接着演示卡那一问：9/18 11:31 他在微信上回孟洁“好的孟总 9/28前上线 条款我马上发沈律师”，f23 读到。
+  loop: { item: 'tinglan-outage', ask: '国庆前能答应客户加电话转接吗？', response: '9 月 28 号前上线，条款马上发律师' },
+  // 同一个上午另外几件要紧的，也在原来的地方答了（f23 读到），按时间先后：说成“做了什么”，不贴原文。
+  morning: {
+    'kk-autumn-trip': '秋游回执签好拍了照',       // 07:20 微信 · 韩敏：[图片] 秋游回执，家长签名一栏签好了
+    'tudou-ear': '狗请爸带去打针',                 // 07:42 微信 · 韩敏：我让爸带土豆去打针 我十点要见客户
+    'saydone-pypi-token': '开源项目的新版推迟一天', // 08:30 GitHub：Pushing 0.9 by a day.
+    'meetup-signup': '聚会的赞助商只给 5 分钟',     // 09:05 微信 · 语音AI小聚·筹备：可以 只给 5 分钟
+  },
 };
 const plainItem = id => { if (!PLAIN.items[id]) throw new Error(`白话缺 ${id}：在 PLAIN.items 里补一条`); return PLAIN.items[id]; };
 const plainAsk = id => { if (!PLAIN.asks[id]) throw new Error(`白话缺问题 ${id}：在 PLAIN.asks 里补一条`); return PLAIN.asks[id]; };
@@ -307,17 +326,28 @@ const plainAsk = id => { if (!PLAIN.asks[id]) throw new Error(`白话缺问题 $
 if (PLAIN.lead.item !== leadItem?.id || PLAIN.lead.actions.length !== (lead.actions || []).length) throw new Error(`白话的要紧一问写的是 ${PLAIN.lead.item}，回放里是 ${leadItem?.id}（${(lead.actions || []).map(a => a.label).join(' / ')}）`);
 const leadDue = dueOf(leadItem, lead);
 if (leadDue == null) throw new Error(`演示卡那一问（${leadItem.id}）没有期限，卡上的“要定”写不出来`);
-if (PLAIN.loop.item !== biggest.item) throw new Error(`白话的回流例子写的是 ${PLAIN.loop.item}，回放里是 ${biggest.item}`);
-// A deadline in words, read off the replay clock (both times carry the same offset): 早上 8 点前, 明天下午 3 点前,
-// 今天之内 (23:59), 明天晚上前 (not on the hour).
+if (!example || PLAIN.loop.item !== example.item) throw new Error(`白话的回流例子写的是 ${PLAIN.loop.item}，回放里下一轮答掉的是 ${example?.item ?? '没有'}`);
+// The page says “一条微信” and the demo picks the first button for you (“选的是故事里真的发生的那一个”).
+if (!example.response.channel.startsWith('微信')) throw new Error(`入口页写的是“一条微信”，回放里这次回答在 ${example.response.channel}`);
+if ((lead.actions || [])[0]?.id !== example.response.action) throw new Error(`演示替你选的是第一个按钮（${lead.actions?.[0]?.label}），故事里选的是 ${example.response.action}`);
+{
+  const want = morning.map(c => c.item).sort().join(','), have = Object.keys(PLAIN.morning).sort().join(',');
+  if (want !== have) throw new Error(`白话的“同一个上午”写的是 ${have}，回放里下一轮答掉的另外几件要紧的是 ${want}`);
+}
+for (const it of urgent) if (!plainAsk(it.id).todo) throw new Error(`白话缺 ${it.id} 的 todo：它是要紧的，第 3 拍要说几点前做什么`);
+// A deadline in words, read off the replay clock (both times carry the same offset): 早上 7:50 前, 上午 10 点前,
+// 中午 12 点前, 明天下午 3 点前, 今天之内 (23:59).
 const dueWords = (due, now) => {
   const days = Math.round((Date.parse(due.slice(0, 10)) - Date.parse(now.slice(0, 10))) / DAY);
   const hour = Number(due.slice(11, 13)), minute = Number(due.slice(14, 16));
-  const day = ['', '明天', '后天'][days] ?? `${days} 天后`, part = hour < 12 ? '早上' : hour < 18 ? '下午' : '晚上';
+  const day = ['', '明天', '后天'][days] ?? `${days} 天后`;
+  const part = hour < 9 ? '早上' : hour < 12 ? '上午' : hour === 12 ? '中午' : hour < 18 ? '下午' : '晚上';
   if (days >= 3) return `${days} 天内`;
   if (hour === 23 && minute === 59) return `${day || '今天'}之内`;
-  return minute ? `${day || '今天'}${part}前` : `${day}${part} ${hour > 12 ? hour - 12 : hour} 点前`;
+  const h = hour > 12 ? hour - 12 : hour;
+  return `${day}${part} ${minute ? `${h}:${String(minute).padStart(2, '0')} ` : `${h} 点`}前`;
 };
+const clockOf = iso => iso.slice(11, 16).replace(/^0/, '');  // 7:20, 11:31
 
 // A time on the replay clock, as the replay writes it (frames[].at carries the offset).
 const localISO = t => new Date(t + Date.parse(frame.at.slice(0, 19) + 'Z') - Date.parse(frame.at)).toISOString().slice(0, 19) + frame.at.slice(19);
@@ -326,10 +356,10 @@ const minutes = t => Math.round((t - from) / 60000);
 const segmentOf = target => { if (!target) return -1; const i = items.findIndex(it => it.id === target); return i >= 0 ? i : target; };
 const data = {
   about: '入口页上出现的每个数。由 scripts/landing-data.mjs 从演示回放现算（只读原型模块，规则与原型同名函数一致）；页面只读本文件，不加载回放。--check 核对本文件与回放一致。',
-  dataset: v('composite', 'prototype/data/select.mjs defaultDataset；人物化名、输入为化名改写的真实公开数据，家庭流由作者编写（datasets.composite.notice）'),
+  dataset: v('founder', 'prototype/data/select.mjs defaultDataset：陆晨的两周。人物和每一条消息都是作者编写的，不来自真实的人；Agent 的判断来自一次真实模型的自由运行，再经人工打磨（datasets.founder.notice）'),
   person: v(scenario.persona.name, 'scenario.persona.name'),
   frame: { id: v(frame.id, `scenario.frames[${FRAME}].id`), at: v(frame.at, 'frames[22].at'), title: v(frame.title, 'frames[22].title'),
-    window: v([frame.signal?.window?.from || before.at, frame.signal?.window?.to || frame.at], 'frames[22].signal.window（缺省时取上一帧 at 到本帧 at），即“你离开的 12 小时”（8/13 中午到半夜）') },
+    window: v([frame.signal?.window?.from || before.at, frame.signal?.window?.to || frame.at], 'frames[22].signal.window（缺省时取上一帧 at 到本帧 at），即“这 12 个小时”（9/17 周四中午到半夜）') },
   budget: v(state.root.budget, 'records[22].state.root.budget（prototype/engine.mjs BUDGET；每层 64 份，从不变）'),
   hero: {
     seen: ill(inputs.length, '首屏那片点的条数：第 2 节那一天（why.day）的全部输入，等于 why.total；示意，scripts/landing-data.mjs「首屏」'),
@@ -355,7 +385,7 @@ const data = {
     n: v(frame.events.length, 'frames[22].events.length；signal.received 同为 ' + frame.signal?.received),
     streams: v(streams, '按 frames[22].events[].stream 计数；车道顺序 work / community / life / family / subscription'),
     context: {
-      twoWeeks: v(sum(frames.map(f => f.events.length)), 'Σ frames[].events.length（corpus 的 3217 条是 Σ signal.received，含未收进演示的条目）'),
+      twoWeeks: v(sum(frames.map(f => f.events.length)), 'Σ frames[].events.length（founder 语料的全部条目都收进了演示）'),
       rounds: v(rounds.length, 'phase 不是 initial 的帧数'),
       perRound: v({ min: Math.min(...nPerRound), median: median(nPerRound), max: Math.max(...nPerRound) }, '各轮 events.length 的最小、中位、最大'),
     },
@@ -392,17 +422,20 @@ const data = {
       inputs: plan.list.filter(g => g.target === leadItem.id).length,
       plain: { prompt: PLAIN.lead.prompt, actions: PLAIN.lead.actions, due: dueWords(localISO(leadDue), frame.at) } },
       '表盘与演示卡上的那一问：要紧的几件里，下一轮真的被回应的那一件（与 loop.example 同一件），没有时取 rank 最前的；frames[22].asks 里这一件的 short / prompt / due_at / actions；share 与 weight 取 state；inputs 是本轮归到它的条数；plain 是入口页的白话（PLAIN.lead，选项与 actions 同序；due 取问题的 due_at，没有时取条目的 due_at（forms/watch.mjs dueOf），plain.due 是它距 frames[22].at 的说法）'),
-    asks: v(asks.map(it => { const a = currentAsk(s, it.id), due = dueOf(it, a); return { item: it.id, short: a.short, plain: plainAsk(it.id), name: plainItem(it.id), expects: a.expects, share: it.share, taps: taps(a), urgent: urgent.includes(it), due: due == null ? null : dueWords(localISO(due), frame.at) }; }),
-      'f22 开着的问题，按 rank；plain 是白话（PLAIN.asks），name 是那件事的短名；taps 按 forms/trays.mjs 的规则；urgent 同 beat3.urgent；due 是期限的说法（问题的 due_at，没有时取条目的）'),
+    asks: v(asks.map(it => { const a = currentAsk(s, it.id), due = dueOf(it, a); return { item: it.id, short: a.short, plain: plainAsk(it.id).ask, todo: plainAsk(it.id).todo ?? null, name: plainItem(it.id), expects: a.expects, share: it.share, taps: taps(a), urgent: urgent.includes(it), at: due == null ? null : new Date(due).toISOString(), due: due == null ? null : dueWords(localISO(due), frame.at) }; }),
+      'f22 开着的问题，按 rank；plain 是白话（PLAIN.asks[].ask），todo 是第 3 拍里“几点前做什么”的半句（只有要紧的几件有），name 是那件事的短名；taps 按 forms/trays.mjs 的规则；urgent 同 beat3.urgent；at 与 due 是期限和它的说法（问题的 due_at，没有时取条目的）'),
     taps: v(sum(asks.map(it => taps(currentAsk(s, it.id)))), '回应托盘“几下答完几个问题”'),
     loop: {
       responses: v(askEvents.length, '两周里带 feedback[].ask 的输入条数：你回应了一个登记的问题'),
       via: v(via, 'feedback[].via 的取值：全部是 source，即在原处回应，Agent 下一轮读到'),
       byChannel: v(askEvents.reduce((n, e) => { const k = String(e.channel || e.stream).split(' · ')[0]; return { ...n, [k]: (n[k] || 0) + 1 }; }, {}),
-        '这些回应发生在哪里：event.channel 第一段（Telefon 是电话）'),
+        '这些回应发生在哪里：event.channel 第一段（应用名）'),
       asksRegistered: v(new Set(frames.flatMap(f => Object.values(f.asks || {}).map(a => a.id))).size, '两周登记过的不同问题数'),
       closedAfterResponse: v(closures.length, 'askLife.answered 累计：你回应后、下一次整理时关上的问题'),
-      example: v({ ...biggest, plain: { ask: PLAIN.loop.ask, response: PLAIN.loop.response } }, '份额减少最多的一次关闭：share 是关闭前后两帧这件的份额；plain 是入口页的白话（PLAIN.loop）'),
+      example: v({ ...example, plain: { ask: PLAIN.loop.ask, response: PLAIN.loop.response, at: clockOf(localISO(Date.parse(example.response.at))) } },
+        '演示卡那一问在下一轮关上的那一次：你在原处的回答（response）与关闭前后两帧这件的份额（share）；plain 是入口页的白话（PLAIN.loop），at 是回答的钟点'),
+      morning: v(morning.map(c => ({ item: c.item, frame: c.frame, at: c.response.at, channel: c.response.channel, plain: PLAIN.morning[c.item], clock: clockOf(localISO(Date.parse(c.response.at))) })),
+        '同一个上午、下一轮之前，另外几件要紧的也在原处答了（askLife.answered 里 f23 关上的、beat3.urgent 里的，不含演示卡那一件），按时间先后；plain 是白话（PLAIN.morning）'),
     },
   },
   twoWeeks: {
