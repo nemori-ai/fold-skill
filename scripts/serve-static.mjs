@@ -1,6 +1,9 @@
 // A small local static server for the landing scripts (check-landing.mjs serves dist/, record-landing.mjs serves the
 // repository so /prototype/ resolves). Directory → index.html; clean URLs (/docs/product → /docs/product.html) like
 // the deployed site; text responses gzip-compressed when asked, so transfer sizes are close to production.
+// `revalidate: true` caches like the deployed site (Cloudflare's static assets: `max-age=0, must-revalidate` with an
+// ETag, a 304 when unchanged), so a file several pages load (the replay every live prototype imports) crosses once;
+// by default nothing is cached, so every run sees the files as they are on disk.
 // Only Node built-ins; binds to 127.0.0.1 on a free port unless one is given.
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -15,7 +18,7 @@ const TYPES = {
 };
 const TEXT = /^(?:text\/|application\/json|image\/svg)/;
 
-export function serve(dir, { port = 0, notFound = '404.html' } = {}) {
+export function serve(dir, { port = 0, notFound = '404.html', revalidate = false } = {}) {
   const root = path.resolve(dir);
   const resolve = pathname => {
     const target = path.join(root, decodeURIComponent(pathname));
@@ -32,8 +35,13 @@ export function serve(dir, { port = 0, notFound = '404.html' } = {}) {
     if (!file) { file = resolve(`/${notFound}`); status = 404; }
     if (!file) { response.writeHead(404).end('not found'); return; }
     const type = TYPES[path.extname(file).toLowerCase()] || 'application/octet-stream';
-    const size = statSync(file).size;
+    const { size, mtimeMs } = statSync(file);
     const headers = { 'Content-Type': type, 'Cache-Control': 'no-store' };
+    if (revalidate && status === 200) {
+      const etag = `"${size.toString(36)}-${Math.round(mtimeMs).toString(36)}"`;
+      Object.assign(headers, { 'Cache-Control': 'public, max-age=0, must-revalidate', ETag: etag });
+      if (request.headers['if-none-match'] === etag) { response.writeHead(304, headers).end(); return; }
+    }
     const range = request.headers.range?.match(/^bytes=(\d*)-(\d*)$/);
     if (range && type === 'video/mp4') {
       // Videos are fetched in ranges by browsers.

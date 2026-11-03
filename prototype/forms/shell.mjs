@@ -3,7 +3,7 @@ import {
   kindLabel, getItem, allItems, currentAsk, feedbackTrail, findEvent, notice, personName,
 } from '../variants/shared.mjs?v=feedback-loop-1';
 import { formById, notesHref } from './catalog.mjs';
-import { followFrames } from '../embed.mjs';
+import { followFrames, showing, shown } from '../embed.mjs';
 
 // One page frame for every form: frame stepper, concept card, data inspector.
 // Forms receive the shared replay model and only change the encoding.
@@ -62,9 +62,10 @@ export function boot(id) {
   const form = formById(id);
   const params = new URLSearchParams(location.search);
   if (!params.has('frame')) { params.set('frame', form.frame); history.replaceState(null, '', `?${params}`); }
-  const hideCard = params.get('card') === '0';
+  // ?embed=show (the site's landing page plays the form as a picture): no bar, no card, only the stage.
+  const hideCard = params.get('card') === '0' || showing;
   document.title = `Fold · ${form.name}`;
-  document.body.className = `fs-page fs-theme-${form.theme}${hideCard ? ' fs-no-card' : ''}`;
+  document.body.className = `fs-page fs-theme-${form.theme}${hideCard ? ' fs-no-card' : ''}${showing ? ' fs-show' : ''}`;
   document.body.innerHTML = `<header class="fs-bar">
       <a class="fs-home" href="index.html" title="全部形式">← 形式</a>
       <span class="fs-name"><b>${String(form.no).padStart(2, '0')}</b> ${esc(form.name)}</span>
@@ -123,6 +124,7 @@ export function boot(id) {
   return import(`./${id}.mjs`).then(module => {
     module.mount(document.getElementById('fs-stage'), model, { ...kit, side: document.getElementById('fs-side') });
     window.foldForm = { model, id };
+    shown();
   }).catch(error => {
     document.getElementById('fs-stage').innerHTML = `<p class="fs-error">形式加载失败：${esc(error.message)}</p>`;
     console.error(error);

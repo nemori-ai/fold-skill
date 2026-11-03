@@ -36,6 +36,9 @@ a { color: var(--green); }
 .fs-body { display: grid; grid-template-columns: minmax(0, 1fr) 340px; height: calc(100vh - 52px); }
 .fs-no-card .fs-body { grid-template-columns: minmax(0, 1fr); }
 .fs-no-card .fs-card { display: none; }
+/* ?embed=show: played as a picture on the site's landing page; only the stage, at the frame's full height */
+.fs-show .fs-bar { display: none; }
+.fs-show .fs-body { height: 100vh; }
 .fs-stage { position: relative; overflow: auto; outline: none; }
 .fs-theme-dark .fs-stage { background: #15171a; color: #e9e6dc; }
 .fs-card { overflow: auto; padding: 22px 22px 40px; background: var(--surface); border-left: 1px solid var(--line); font-size: 13px; }
