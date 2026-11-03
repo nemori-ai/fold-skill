@@ -544,7 +544,7 @@ const shots = [
   { name: 'time-f22', url: '/index.html?variant=b&frame=22', size: [430, 932], mobile: true, scale: 3, clip: [0, 146, 430, 636], resize: 860 },
   { name: 'defer-f23', url: '/index.html?variant=c&frame=22', size: [430, 932], mobile: true, scale: 3, clip: [0, 145, 430, 690], resize: 860, eval: deferThenNext, settle: 5000 },
   { name: 'review-week2-f22', url: '/forms/multiples.html?frame=22', size: [1180, 900], scale: 3, clip: [266, 386, 204, 362], before: 4000 },
-  { name: 'review-trend-f22', url: '/forms/multiples.html?frame=22', size: [1180, 900], scale: 3, clip: [516, 389, 302, 498], resize: 700, before: 4000 },
+  { name: 'review-trend-f22', url: '/forms/multiples.html?frame=22', size: [1180, 900], scale: 3, clip: [516, 389, 302, 480], resize: 700, before: 4000 },
   { name: 'try-f22', url: '/index.html?variant=d&frame=22', size: [1180, 820], scale: 3, clip: [604, 24, 329, 702], resize: 700, eval: reply, before: 3000, settle: 1200 },
 ];
 

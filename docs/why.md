@@ -26,7 +26,7 @@ pageClass: fold-why
 </div>
 
 <figure class="fw-fig is-cover" style="--max: 360px">
-<a class="fw-shot" href="../prototype/index.html?variant=d&amp;frame=22" target="_self" data-vp-ignore><img src="assets/why/phone-f22.webp" width="640" height="684" loading="lazy" decoding="async" alt="原型的手机首页，9 月 18 日零点：大字写 7 件等你回应，下面一行说上次看过之后收到 169 条；第一张卡问明早见客户，国庆前能不能答应把 AI 接不了的电话转到店里手机，三个按钮。"></a>
+<a class="fw-shot" href="../prototype/index.html?variant=d&amp;frame=22" target="_self" data-vp-ignore><img src="assets/why/phone-f22.webp" width="640" height="685" loading="lazy" decoding="async" alt="原型的手机首页，9 月 18 日零点：大字写 7 件等你回应，下面一行说上次看过之后收到 169 条；第一张卡问明早见客户，国庆前能不能答应把 AI 接不了的电话转到店里手机；卡下一行写着 22:42 你在飞书上回复了郑婉，这个问题还开着；再下面是三个按钮。"></a>
 <figcaption>9 月 18 日零点。陆晨忙了一下午加一晚上，这半天进来 169 条。他掏出手机，第一屏只说：7 件等你回应，排在最前的是明早十点见客户。</figcaption>
 </figure>
 
@@ -360,7 +360,7 @@ Fold 的第二个判断：同一刻的头版，按此刻的带宽重新编排。
 <figcaption>零点：期限画在此刻之后。女儿的回执 8 小时后到期，最近。</figcaption>
 </figure>
 <figure class="fw-fig" style="--a: 0.6232">
-<a class="fw-shot" href="../prototype/index.html?variant=c&amp;frame=22" target="_self" data-vp-ignore><img src="assets/why/defer-f23.webp" width="860" height="1380" loading="lazy" decoding="async" alt="流动形态，9 月 18 日中午：几件等你回应，你推后的 1 件沉在水面以下。上面几滴大小不同的水珠，客户那一滴缩成 12；底部水面以下一排小珠，右下角一颗推后的珠子标着 18:00，到点浮起。"></a>
+<a class="fw-shot" href="../prototype/index.html?variant=c&amp;frame=22" target="_self" data-vp-ignore><img src="assets/why/defer-f23.webp" width="860" height="1380" loading="lazy" decoding="async" alt="流动形态，9 月 18 日中午：2 件等你回应，你推后的 1 件沉在水面以下。上面几滴大小不同的水珠，客户那一滴缩成 12；底部水面以下一排小珠，右下角一颗推后的珠子标着 18:00，到点浮起。"></a>
 <figcaption>中午：推后的那件沉在水下，标着 18:00；客户的会开完了，那一滴缩小了一半。</figcaption>
 </figure>
 </div>
@@ -381,17 +381,17 @@ Fold 的第二个判断：同一刻的头版，按此刻的带宽重新编排。
 
 复盘不收作答，只回答一件事：这两周是怎么过的。
 
-每半天一张小方阵，按日排开。哪件事什么时候变大、什么时候消失，一眼就看得出：9 月 17、18 日，故障与年单（绿）占了大半；18 日中午会开完，它缩小一半；到了周末，开源库的新版本（黄）升到最上面。
+每半天一张小方阵，按日排开。哪件事什么时候变大、什么时候消失，一眼就看得出：9 月 17、18 日，故障与年单（绿）是最大的一块；18 日中午会开完，它缩小一半；到了周末，开源库的新版本（黄）升到最上面。
 
 旁边记着每件事的起落，也记着每个问题怎样关上：有的是他答了，有的换成了新问题，有的是事情变了，问题跟着撤下。
 
 <div class="fw-pair" style="--max: 660px">
 <figure class="fw-fig" style="--a: 0.5635">
-<a class="fw-shot" href="../prototype/forms/multiples.html?frame=22" target="_self" data-vp-ignore><img src="assets/why/review-week2-f22.webp" width="612" height="1086" loading="lazy" decoding="async" alt="两周小倍数的一段：9 月 17 日到 20 日，每天两张八乘八的小方阵。17、18 日绿色占了大半，18 日零点那一张被框出；18 日中午绿色缩小，19、20 日黄色升到最上面。"></a>
+<a class="fw-shot" href="../prototype/forms/multiples.html?frame=22" target="_self" data-vp-ignore><img src="assets/why/review-week2-f22.webp" width="612" height="1086" loading="lazy" decoding="async" alt="两周小倍数的一段：9 月 17 日到 20 日，每天两张八乘八的小方阵。17、18 日绿色是最大的一块，18 日零点那一张被框出；18 日中午绿色缩小，19、20 日黄色升到最上面。"></a>
 <figcaption>9 月 17 日到 20 日，每半天一张方阵；框出的是 18 日零点。</figcaption>
 </figure>
-<figure class="fw-fig" style="--a: 0.6061">
-<a class="fw-shot" href="../prototype/forms/multiples.html?frame=22" target="_self" data-vp-ignore><img src="assets/why/review-trend-f22.webp" width="700" height="1155" loading="lazy" decoding="async" alt="两周累计份额最多的八件事的走势线：九店上线、开发者聚会、故障与年单、开源发版等，右边是此刻的份额；下面列出此刻开着的 7 个问题里的 5 个，和 1 个刚换成新问题的。"></a>
+<figure class="fw-fig" style="--a: 0.6289">
+<a class="fw-shot" href="../prototype/forms/multiples.html?frame=22" target="_self" data-vp-ignore><img src="assets/why/review-trend-f22.webp" width="700" height="1113" loading="lazy" decoding="async" alt="两周累计份额最多的八件事的走势线：九店上线、开发者聚会、故障与年单、开源发版等，右边是此刻的份额；下面列出此刻开着的 7 个问题里的 5 个，和 1 个刚换成新问题的。"></a>
 <figcaption>两周分量最多的几件事怎样起落，和此刻开着、刚关上的问题。</figcaption>
 </figure>
 </div>
