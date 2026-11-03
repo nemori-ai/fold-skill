@@ -158,7 +158,9 @@ export function feedbackTrail(s, id) {
 // or null for other streams. Call logs and transfers that carry the structured `call` / `transfer`
 // ({direction, peer, …}, corpus/founder) are read from there; composite's Swedish ones are parsed from the text.
 const FAMILY_APPS = { iMessage: ' iMessage ', SMS: '短信', WhatsApp: ' WhatsApp ', 'E-post': '邮件' };
-const FAMILY_GROUPS = { Familjen: '家庭群', Syskon: '兄妹群', 'Föräldrar 6B': '6B 家长群', 'Kräftskiva 22/8 🦞': '派对群', 'Grannar Tallstigen': '街坊群' };
+const FAMILY_GROUPS = { Familjen: '家庭群', Syskon: '兄妹群', 'Föräldrar 6B': '6B 家长群', 'Kräftskiva 22/8 🦞': '派对群', 'Grannar Tallstigen': '街坊群',
+  // founder (微信): groups whose names do not end in 群.
+  一家人: '一家人群', 豆豆游泳课: '游泳课群' };
 const FAMILY_NAMES = { Mamma: '母亲', 'Gunnel granne': '邻居 Gunnel', 'Djurkliniken Kvarnbacken': '诊所', 'Rörfixarna Söder': '水管工', Ekorren: '幼儿园老师' };
 // Latin names and app names get spaces around them inside a Chinese sentence; Chinese ones do not.
 const spaced = value => (/^[㐀-鿿]/.test(value) ? value : ` ${value} `);
@@ -177,11 +179,16 @@ export function familyMove(event) {
   if (event.kind === 'list_update') return '在购物清单上勾掉了几样';
   if (group) return `在${group}里回复`;
   if (app === 'Förskoleappen') return '在幼儿园 App 里回复老师';
+  // founder: 微信 · 一家人 / 三(2)班家长群 are groups, 电话手表 · 可可 is her watch, 短信 · 禾木宠物医院 a text.
+  if (/群$/.test(who)) return `在${who}里回复`;
+  if (app === '电话手表') return `给${who}的电话手表回了消息`;
+  if (app === '短信') return `给${who}回了短信`;
   return say(`用${FAMILY_APPS[app] || spaced(app)}回复${familyName(who)}`);
 }
 /** Who wrote a family-stream input and where, worded as above: {who: '母亲', where: '短信'}, {who: 'Ulrika', where: '兄妹群'}. */
 export function familyPlace(event) {
   if (event?.stream !== 'family') return null;
   const [app, chat = ''] = String(event.channel || '').split(' · ');
-  return { who: FAMILY_NAMES[event.from] || event.from || '', where: FAMILY_GROUPS[chat] || String(FAMILY_APPS[app] || app).trim() };
+  const group = FAMILY_GROUPS[chat] || (/群$/.test(chat) ? chat : '');
+  return { who: FAMILY_NAMES[event.from] || event.from || '', where: group || String(FAMILY_APPS[app] || app).trim() };
 }
