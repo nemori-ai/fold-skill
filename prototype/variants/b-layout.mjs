@@ -111,23 +111,45 @@ export function futureFraction(span) {
 }
 
 /**
- * Stack tick captions so two deadlines never print over each other. A caption spans from its tick to
- * the right by its measured width (`meta.width`, else `width`); a clash moves it one line down, or up
- * when that would leave the strip (`height`), e.g. two small items with deadlines in the 小事 band.
+ * Where a caption of width `w` beside a tick at `x` is drawn, in strip coordinates (0 = now): to the right when it
+ * fits before the labels (`room`) or there is no room on the left, else to the left; never outside [4, room].
  */
-export function placeCaptions(ticks, { lineHeight = 26, width = 120, height = Infinity } = {}) {
+export function captionSpan(x, w, room) {
+  const right = x + 8 + w <= room || x < 8 + w;
+  if (right) { const start = Math.max(4, Math.min(x + 8, room - w)); return { right, start, end: start + w }; }
+  const end = Math.max(x - 8, 4 + w);
+  return { right, start: end - w, end };
+}
+
+/**
+ * Keep tick captions from printing over each other. Each caption spans its drawn width (captionSpan with
+ * `meta.width`, else `width`, inside `room`) and one `lineHeight` (two lines of text). Captions are placed by
+ * priority: an item of its own before one inside the 小事 band, a registered question's deadline before an item's
+ * own, then the earliest. Each goes to the free height nearest its tick, at most one line away (or anywhere along its
+ * band when the band is taller), clear of the other captions and of the other ticks' heads; a caption with no such
+ * room is left out (`quiet`), and its tick stays.
+ */
+export function placeCaptions(ticks, { lineHeight = 26, width = 120, height = Infinity, room = Infinity } = {}) {
+  const KIND = { due: 0, 'item-due': 1, scheduled: 2, snooze: 2 };
+  const rank = tick => [tick.meta?.grouped ? 1 : 0, KIND[tick.meta?.kind] ?? 3, tick.meta?.at ?? Infinity, tick.y];
+  const before = (a, b) => { const x = rank(a), y = rank(b); for (let i = 0; i < x.length; i += 1) if (x[i] !== y[i]) return x[i] - y[i]; return 0; };
+  const top = lineHeight / 2, bottom = Number.isFinite(height) ? height - lineHeight / 2 : Infinity;
   const placed = [];
-  const span = tick => [tick.x - 8, tick.x + 8 + (tick.meta?.width ?? width)];
-  const clash = (tick, y) => placed.find(other => {
-    const [a0, a1] = span(tick), [b0, b1] = span(other);
-    return a0 < b1 && b0 < a1 && Math.abs(other.ty - y) < lineHeight;
-  });
-  for (const tick of [...ticks].sort((a, b) => a.y - b.y)) {
-    let y = tick.y;
-    for (let guard = 0, other; guard < 12 && (other = clash(tick, y)); guard += 1) {
-      y = other.ty + lineHeight + lineHeight / 2 <= height ? other.ty + lineHeight : other.ty - lineHeight;
+  // A caption's two lines run from about half a line above its centre to half a line below; a head is the 10 px triangle.
+  const covers = (start, end, y, tick) => ticks.some(other => other !== tick && other.x + 6 > start && other.x - 6 < end && other.y + 4 > y - lineHeight / 2 && other.y - 7 < y + lineHeight / 2);
+  for (const tick of [...ticks].sort(before)) {
+    const { start, end } = captionSpan(tick.x, tick.meta?.width ?? width, room);
+    const free = y => y >= top && y <= bottom && !covers(start, end, y, tick)
+      && !placed.some(other => other.start < end + 6 && start < other.end + 6 && Math.abs(other.ty - y) < lineHeight);
+    const reach = Math.max(lineHeight, (tick.h || 0) / 2);
+    let ty = null;
+    for (let offset = 0; offset <= reach && ty == null; offset += 3) {
+      if (free(tick.y + offset)) ty = tick.y + offset;
+      else if (offset && free(tick.y - offset)) ty = tick.y - offset;
     }
-    tick.ty = y; placed.push(tick);
+    if (ty == null) { tick.ty = tick.y; tick.quiet = true; continue; }
+    tick.ty = ty; tick.quiet = false;
+    placed.push({ start, end, ty });
   }
   return ticks;
 }

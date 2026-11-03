@@ -9,7 +9,7 @@
 //   之后从切点起按节拍表（BEATS）分组：离场 → 移位 → 进场，每组一个时间窗、各走一段；cue 在固定时刻触发一次
 //     （切点换字、回执填实、英雄数字、标签落定、新问题描红），由宿主执行。
 // 往回、拖动、展开小事等用 uniform：所有元素在同一个窗里走，与第二轮的过渡相同。
-import { futureFraction } from './b-layout.mjs?v=b-temporal-2';
+import { futureFraction } from './b-layout.mjs?v=b-temporal-3';
 
 const clamp = value => Math.max(0, Math.min(1, value));
 const mix = (a, b, t) => a + (b - a) * t;

@@ -17,9 +17,9 @@ const frames = scenario.frames;
 
 /** “20 小时后”“3 天后”“已过 1 天 7 小时”. */
 export function relative(ms) {
-  const past = ms < 0, h = Math.abs(ms) / HOUR;
-  const text = h < 1 ? `${Math.max(1, Math.round(h * 60))} 分钟` : h < 48 ? `${Math.round(h)} 小时`
-    : `${Math.floor(h / 24)} 天${Math.round(h % 24) ? ` ${Math.round(h % 24)} 小时` : ''}`;
+  const past = ms < 0, h = Math.abs(ms) / HOUR, whole = Math.round(h);
+  const text = h < 1 ? `${Math.max(1, Math.round(h * 60))} 分钟` : h < 48 ? `${whole} 小时`
+    : `${Math.floor(whole / 24)} 天${whole % 24 ? ` ${whole % 24} 小时` : ''}`;
   return past ? `已过 ${text}` : `${text}后`;
 }
 
