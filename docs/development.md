@@ -132,7 +132,9 @@ npm run site:build && node scripts/check-landing.mjs # 入口页自动检查，�
 
 `check-landing.mjs` 核对：页面上每个带 `data-k` 的数等于 `data.json` 的出处；375×667、390×844、430×932、820×1180、1180×820、1440×900、1920×1080 七个尺寸从头滚到底没有报错、没有失败的请求、没有横向滚动；减弱动态时首屏一打开就是播放结束后的终态；画廊块数等于原型总数减六、第 3 节六个处境从窄到宽并各链到一张卡；首屏演完不留残渣、三个处境按钮按得动；三拍随阅读线切换、演示卡能作答与撤回；导航“全部原型”的面板与弹框照常可用；标题的字都在字体子集里、录像文件都在；第五节与画廊每块底下有与源文件一致的占位缩略图、滚动中屏幕上的块都有静帧或占位垫底、原型页面只在发来 shown 后叠上去；手机上缩放低于 0.5 的块与查看弹框才写“在电脑上看更清楚”；整站只有首屏一个“旧版”链接（指向 `/legacy/`），构建出的页面没有写死 fold-v2 的地址。原型清单（`prototypes.mjs`）加了新原型，画廊会自动把它排在末尾，录一段 `--only <id>` 的录像即可；没有录像时那一块显示预览图。
 
-`npm run deploy` 先重新构建，再通过已登录的 Wrangler 发布 `dist/`。`npm run deploy:v2` 用 `wrangler.jsonc` 的 `env.v2` 把同一份 `dist/` 发布到另一个 Worker（`fold-experience-v2`，自定义域名 fold-v2.vibecoding.icu），第三轮入口页先在那里给人看；两者都只在用户指示时运行。`wrangler.jsonc` 只配置静态资源托管，不配置数据库、生产业务 API 或真实账户接入。原型默认数据集是化名改写的真实公开数据，判断来自一次真实模型的自由运行并经人工打磨；`?data=story` 的手写情境中，私人消息与 Agent 判断为演示编排。
+`npm run deploy` 先重新构建，再通过已登录的 Wrangler 发布 `dist/`。`npm run deploy:v2` 用 `wrangler.jsonc` 的 `env.v2` 把同一份 `dist/` 发布到另一个 Worker（`fold-experience-v2`，自定义域名 fold-v2.vibecoding.icu），第三轮入口页先在那里给人看；两者都只在用户指示时运行。
+
+两者发布的 `dist/` 都带着 `/legacy/`：2026-11-03 换版前的旧站，由提交 `fa99395`（#46，换版前主域最后一次部署的内容）构建。`npm run site:build` 在新站构建之后运行 [scripts/legacy-site.mjs](../scripts/legacy-site.mjs)：`git archive` 把这次提交解到 `.local/legacy-site/`，软链根目录的 `node_modules`，只在解出来的副本里修正写死的根路径、给普通页面加 noindex 与右上角的“新版”链接（规则写在脚本注释里，原型页不加东西），再以 `--base /legacy/` 构建并扫一遍产物；结果按提交、脚本与 `package-lock.json` 缓存在 `.local/legacy-site/build-<哈希>/`，再次构建只复制（`--rebuild` 重来）。`site:dev` 不带旧站。`node scripts/check-legacy.mjs` 用 `wrangler dev --local` 服务 `dist/`，逐页打开 `/legacy/` 核对请求、链接、noindex 与客户端路由、画册弹框、搜索都留在 `/legacy/` 里；`--compare <站点> --shots <目录>` 再与另一个站点逐页截图对比。`wrangler.jsonc` 只配置静态资源托管，不配置数据库、生产业务 API 或真实账户接入。原型默认数据集是化名改写的真实公开数据，判断来自一次真实模型的自由运行并经人工打磨；`?data=story` 的手写情境中，私人消息与 Agent 判断为演示编排。
 
 原型的每种形式可以用本机 Chrome 无头截图并检查页面报错，只用 Node 22 内置能力，不装依赖：
 
@@ -240,6 +242,8 @@ node scripts/export-all.mjs --out .local/export/all.html && node scripts/shoot-f
 | [scripts/export-scenario.mjs](../scripts/export-scenario.mjs) | 把原型的手写演示情境导出为 JSON |
 | [scripts/shoot-forms.mjs](../scripts/shoot-forms.mjs) | 用本机 Chrome 无头截取原型各形式并检查页面报错 |
 | [scripts/check-why.mjs](../scripts/check-why.mjs) | 用本机 Chrome 无头检查 `/docs/why`：七个尺寸、图片与旧地址跳转 |
+| [scripts/legacy-site.mjs](../scripts/legacy-site.mjs) | 把换版前的旧站（提交 `fa99395`）构建进 `dist/legacy/`，按提交缓存 |
+| [scripts/check-legacy.mjs](../scripts/check-legacy.mjs) | 用 `wrangler dev` 与本机 Chrome 无头逐页检查 `/legacy/`，可与线上逐页截图对比 |
 | [scripts/export-all.mjs](../scripts/export-all.mjs) | 把全部原型合页导出为可双击打开的单个 HTML 文件 |
 | [scripts/build_demo_data.py](../scripts/build_demo_data.py) | 把自由运行的批次按 edits.json 修正、重放成原型演示数据 |
 | [scripts/eval_judgment.py](../scripts/eval_judgment.py) | 用真实模型逐帧评测判断：手写情境与作者批次对比；真实语料自由运行，与弱标注对照 |
