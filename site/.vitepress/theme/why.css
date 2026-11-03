@@ -1,7 +1,8 @@
 /* 为什么要做 Fold（docs/why.md，layout: page，pageClass: fold-why）：入口页那张纸上的一篇长文。
    颜色取 style.css 映射好的主题变量，深浅跟文档页走；字与栅格照 site/landing/style.md：标题与引句是
    Fold Serif SC 子集（scripts/landing-fonts.mjs 从这一篇的标题与引句收字），小字是系统等宽，正文是系统字。
-   手机一栏；iPad 竖屏一栏放宽；960 起 8 列，左两列是钉住的节名，右六列是正文与图。 */
+   手机一栏；iPad 竖屏一栏放宽；960 起 8 列，左两列是钉住的节名，右六列是正文与图。
+   每一段至少一张图：每张图是一个 .fw-fig，一个框、一句图注；手机上一张图占满宽，iPad 起 .fw-pair 里的两张并排、一样高。 */
 
 .fold-why {
   --fw-ink: var(--vp-c-text-1);
@@ -93,6 +94,9 @@
 }
 
 .fw-toc ol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
   margin-top: 28px;
   padding: 0;
   list-style: none;
@@ -103,23 +107,23 @@
 .fw-toc li {
   position: relative;
   display: grid;
-  grid-template-columns: 2.2em minmax(0, 1fr);
-  padding: 10px 0;
+  grid-template-columns: 2em minmax(0, 1fr);
+  align-items: baseline;
+  min-height: 44px;
+  padding: 11px 0 9px;
   border-bottom: 1px solid var(--fw-rule);
   counter-increment: fw-toc;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .fw-toc li::before {
-  content: "0" counter(fw-toc);
-  grid-row: 1 / 3;
-  padding-top: 3px;
+  content: counter(fw-toc, decimal-leading-zero);
   font: 11px/1.4 var(--vp-font-family-mono);
   color: var(--fw-ink-3);
 }
 
 .fw-toc a {
-  font: 700 16px/1.45 var(--fold-font-display);
+  font: 700 15px/1.4 var(--fold-font-display);
   text-decoration: none;
 }
 
@@ -128,12 +132,6 @@
   content: "";
   position: absolute;
   inset: 0;
-}
-
-.fw-toc span {
-  grid-column: 2;
-  font-size: 13px;
-  color: var(--fw-ink-2);
 }
 
 @media (hover: hover) {
@@ -245,39 +243,37 @@
   color: var(--fw-ink);
 }
 
-/* ---------- the four readings of one moment ----------
-   Two rows, each a justified row: a pane's basis and growth follow its picture's aspect, so the pictures in a row
-   end up the same height. The first row (the narrow situations) is held narrower than the second. */
-.fw-quad {
-  margin: 1.6em 0 1.8em;
+/* ---------- pictures ----------
+   Every picture is a figure with one frame and one caption. On a phone each takes the full width, one under the
+   other. From iPad up a drawing is as wide as the text (36em); a screenshot is held to --max, its own width at 1×,
+   so the prototype's text stays its size; the two figures of a .fw-pair stand side by side, each as wide as its
+   aspect (--a) asks, so both pictures come out the same height. */
+.fw-fig,
+.fw-pair {
+  margin: 1.5em 0 1.8em;
 }
 
-.fw-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px 12px;
+.fw-pair {
+  display: grid;
+  gap: 1.4em;
 }
 
-.fw-row:first-child {
-  max-width: 640px;
+.fw-pair > .fw-fig {
+  margin: 0;
+  min-width: 0;
 }
 
-.fw-row + .fw-row {
-  margin-top: 18px;
+.fw-head .fw-fig {
+  margin: 28px 0 0;
 }
 
-.fw-pane {
-  flex: var(--a) 1 calc(var(--a) * var(--fw-h, 170px));
+.fw-shot {
+  display: block;
   min-width: 0;
   text-decoration: none !important;
 }
 
-.fw-pane.is-watch { --a: 0.841; }
-.fw-pane.is-phone { --a: 0.936; }
-.fw-pane.is-desk { --a: 1.326; }
-.fw-pane.is-review { --a: 1.449; }
-
-.fw-pane img {
+.fw-shot img {
   display: block;
   width: 100%;
   height: auto;
@@ -286,37 +282,19 @@
   background: var(--fw-card);
 }
 
-.fw-pane b {
-  display: block;
-  margin-top: 8px;
-  font-size: 13.5px;
-  font-weight: 650;
-  line-height: 1.4;
-}
-
-.fw-pane span {
-  display: block;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--fw-ink-2);
-}
-
 @media (hover: hover) {
-  .fw-pane:hover img {
+  a.fw-shot:hover img {
     border-color: var(--fw-ink-3);
   }
-
-  .fw-pane:hover b {
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
 }
 
-.fw-quad figcaption {
-  margin-top: 14px;
-  font-size: 12.5px;
-  line-height: 1.6;
-  color: var(--fw-ink-3);
+.fw-fig figcaption {
+  max-width: 36em;
+  margin-top: 10px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--fw-ink-2);
+  text-wrap: pretty;
 }
 
 /* ---------- try it, read on, the foot ---------- */
@@ -420,10 +398,32 @@
   }
 
   .fw-toc ol {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 32px;
     margin-top: 36px;
+  }
+
+  .fw-toc a {
+    font-size: 16px;
+  }
+
+  .fw-fig,
+  .fw-pair {
+    max-width: var(--max, 36em);
+  }
+
+  .fw-pair {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .fw-pair > .fw-fig {
+    flex: var(--a, 1) 1 0;
+    max-width: none;
+  }
+
+  .fw-fig figcaption {
+    font-size: 14px;
   }
 
   .fw-sec {
@@ -441,14 +441,6 @@
   .fw table {
     font-size: 15px;
   }
-
-  .fw-pane b {
-    font-size: 14px;
-  }
-
-  .fw-pane span {
-    font-size: 13px;
-  }
 }
 
 /* ---------- desk: 8 columns, the section's name pinned on the left ---------- */
@@ -458,7 +450,6 @@
   }
 
   .fw-head,
-  .fw-toc,
   .fw-sec,
   .fw-foot {
     display: grid;
@@ -470,8 +461,23 @@
     padding-top: 72px;
   }
 
-  .fw-head > * {
-    grid-column: 1 / 7;
+  /* Title and the list of sections on the left, the cover picture on the right. */
+  .fw-title {
+    grid-column: 1 / 6;
+    grid-row: 1;
+  }
+
+  .fw-head > .fw-toc {
+    grid-column: 1 / 6;
+    grid-row: 2;
+  }
+
+  .fw-head > .fw-fig {
+    grid-column: 6 / 9;
+    grid-row: 1 / span 2;
+    justify-self: end;
+    width: 100%;
+    margin-top: 6px;
   }
 
   .fw h1 {
@@ -479,8 +485,7 @@
   }
 
   .fw-toc ol {
-    grid-column: 3 / 9;
-    margin-top: 48px;
+    margin-top: 40px;
   }
 
   .fw-sec {

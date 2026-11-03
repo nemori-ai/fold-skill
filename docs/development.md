@@ -187,19 +187,21 @@ node scripts/export-all.mjs --out .local/export/all.html && node scripts/shoot-f
 
 ## 为什么要做 Fold
 
-[why.md](why.md) 是给第一次了解的人从头读到尾的一篇：问题从哪来、为什么难、Fold 的两个判断、模型会错在哪、现在做到了哪。它讲道理，不是规范出处，也不是原型导览；原型只在能证明论点时出现。它取代了原来 16 页的小册子。
+[why.md](why.md) 是给第一次了解的人从头读到尾的一篇，也是原来 16 页小册子的接替：十四段沿用小册子的故事线（有尽头的通知、一百多条里的两件、头版、Jonas 的两周、判得怎样、错在哪、同一场比赛、四种处境、按下之后、试一下、做到了哪），每段一到三段文字，至少一张图，只看图和图注也能顺下来。它讲道理，不是规范出处；入口页偏宣传、概念多一些，这一篇只讲为什么。
 
-- 站点：它是站点里的一页（frontmatter 里 `layout: page`、`pageClass: fold-why`），导航“从头读起”、侧栏与入口页文档区都链到 `/docs/why`。版式在 `site/.vitepress/theme/why.css`，与入口页同一张纸（[style.md](../site/landing/style.md)）；颜色取文档页的主题变量，所以深色外观下也能读。旧地址 `/docs/brief/` 由 `scripts/prepare-site.mjs` 生成一页跳转，旧的 `#page-N` 落到对应的节。
+- 站点：它是站点里的一页（frontmatter 里 `layout: page`、`pageClass: fold-why`），导航“从头读起”、侧栏与入口页文档区都链到 `/docs/why`。版式在 `site/.vitepress/theme/why.css`，与入口页同一张纸（[style.md](../site/landing/style.md)）；颜色取文档页的主题变量，所以深色外观下也能读。旧地址 `/docs/brief/` 由 `scripts/prepare-site.mjs` 生成一页跳转，旧的 `#page-N` 落到对应的段（第 14、15 页都落到“做到了哪”）。
 - 字体：节名、引句（`>` 开头的行）和标题用 Fold Serif SC 子集。`scripts/landing-fonts.mjs` 从这一篇的 `#`、`##` 与 `>` 行收字放进文档子集；改了这些字要重跑它，`--check` 漏字即失败。
-- 截图：全篇只有一张图，8 月 14 日零点（composite 的 f22）的四种读法，存在 `assets/why/`（webp）。手机首页与腕上一瞥按手机宽度截，原版树图与两周小倍数按桌面截，再裁出所需区域、用 `cwebp -q 82 -m 6 -sharp_yuv -resize <宽> 0` 转成 webp：
+- 图：19 张，都在 `assets/why/`（webp，懒加载）。`d-*.webp` 是示意图，按入口页“印着刻度的纸”画（纸白、墨黑、灰，朱红只给等他回应的），数据由演示回放现算；其余是原型截图，停在 8 月 14 日零点（composite 的 f22），按手机宽度能读的大小裁切。每张图一个 `figure`、一句图注；手机上一张占满宽，iPad 起 `.fw-pair` 里的两张并排，`--a` 是图的宽高比、`--max` 是截图的 1 倍宽。重画与重拍：
 
   ```sh
-  node scripts/shoot-forms.mjs --out .local/why/phone --only d,watch --frame 22 --width 390 --height 844 --scale 3 --eval "document.querySelector('[data-card]')?.click()"
-  node scripts/shoot-forms.mjs --out .local/why/desk --only original,multiples --frame 22 --scale 2 --eval "document.documentElement.classList.add('is-embedded'); document.querySelector('[data-card]')?.click()"
+  make prototype                                   # 截图要原型服务；示意图不要
+  node scripts/why-figures.mjs                     # 全部重做，写进 docs/assets/why/
+  node scripts/why-figures.mjs --drawings          # 只画示意图
+  node scripts/why-figures.mjs --only desk-f22 --out .local/why   # 单张，写到别处先比对
   ```
 
-  四张图的宽高比写在 `why.css` 的 `--a` 里，换图时一起改。原型或演示数据改动后，正文里的例子（六条输入、两处判错）与截图要一起核对。
-- 检查：`npm run site:build && node scripts/check-why.mjs`，七个尺寸无报错、无横向滚动、图片都加载、旧地址能跳过来；`--shots <目录>` 顺带存每个尺寸的整页截图。
+  开头那张 `phone-f22.webp` 沿用上一版，不在脚本里。换图后核对 `why.md` 里 `<img>` 的宽高与 `--a`；原型或演示数据改动后，正文、图注与示意图里的例子（表里的几条输入、两处判错、诊所的回执）要一起核对。
+- 检查：`npm run site:build && node scripts/check-why.mjs`，七个尺寸无报错、无横向滚动，十四段与目录对得上，每张图都加载、是 webp、懒加载、有图注，并排的两张一样高，`assets/why/` 里没有用不到的文件，旧地址能跳过来；还会打印手机宽度下从头滚到底的传输体积。`--shots <目录>` 顺带存每个尺寸的整页截图。
 
 ## 实现时使用哪份规范
 
