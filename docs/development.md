@@ -124,12 +124,13 @@ node scripts/landing-data.mjs           # 从演示回放重算 site/landing/dat
 node scripts/landing-fonts.mjs          # 标题文案改了字后重取字体子集（联网，写 site/fonts/ 与 theme/fonts.css）；--check 只核对
 node scripts/record-landing.mjs         # 重录入口页的录像到 site/media/（本机 Chrome、ffmpeg、cwebp；约 8 分钟）
 node scripts/record-landing.mjs --only duo,glasses   # 只录这几个；新原型不用改脚本，默认按桌面 1440 × 900 录 12 秒
+node scripts/record-landing.mjs --placeholders       # 重截预览图或静帧后，重写内联在块底下的占位缩略图（site/landing/placeholders.json，只要 cwebp）
 npm run site:build && node scripts/check-landing.mjs # 入口页自动检查，自己起本地服务读 dist/；--base 指向在跑的站点，--shots <dir> 存七个尺寸的截图
 ```
 
 `npm run site:prepare`（开发与构建都先跑它）先做 `landing-data.mjs --check` 与 `landing-fonts.mjs --check`：演示回放改了而 `data.json` 没重算、或标题改了字而字体子集没重取时，构建直接失败。
 
-`check-landing.mjs` 核对：页面上每个带 `data-k` 的数等于 `data.json` 的出处；375×667、390×844、430×932、820×1180、1180×820、1440×900、1920×1080 七个尺寸从头滚到底没有报错、没有失败的请求、没有横向滚动；减弱动态时首屏一打开就是播放结束后的终态；画廊块数等于原型总数减六、第 3 节六个处境从窄到宽并各链到一张卡；首屏演完不留残渣、三个处境按钮按得动；三拍随阅读线切换、演示卡能作答与撤回；导航“全部原型”的面板与弹框照常可用；标题的字都在字体子集里、录像文件都在。原型清单（`prototypes.mjs`）加了新原型，画廊会自动把它排在末尾，录一段 `--only <id>` 的录像即可；没有录像时那一块显示预览图。
+`check-landing.mjs` 核对：页面上每个带 `data-k` 的数等于 `data.json` 的出处；375×667、390×844、430×932、820×1180、1180×820、1440×900、1920×1080 七个尺寸从头滚到底没有报错、没有失败的请求、没有横向滚动；减弱动态时首屏一打开就是播放结束后的终态；画廊块数等于原型总数减六、第 3 节六个处境从窄到宽并各链到一张卡；首屏演完不留残渣、三个处境按钮按得动；三拍随阅读线切换、演示卡能作答与撤回；导航“全部原型”的面板与弹框照常可用；标题的字都在字体子集里、录像文件都在；第五节与画廊每块底下有与源文件一致的占位缩略图、滚动中屏幕上的块都有静帧或占位垫底、原型页面只在发来 shown 后叠上去；手机上缩放低于 0.5 的块与查看弹框才写“在电脑上看更清楚”；整站只有首屏一个“旧版”链接（指向 `/legacy/`），构建出的页面没有写死 fold-v2 的地址。原型清单（`prototypes.mjs`）加了新原型，画廊会自动把它排在末尾，录一段 `--only <id>` 的录像即可；没有录像时那一块显示预览图。
 
 `npm run deploy` 先重新构建，再通过已登录的 Wrangler 发布 `dist/`。`npm run deploy:v2` 用 `wrangler.jsonc` 的 `env.v2` 把同一份 `dist/` 发布到另一个 Worker（`fold-experience-v2`，自定义域名 fold-v2.vibecoding.icu），第三轮入口页先在那里给人看；两者都只在用户指示时运行。`wrangler.jsonc` 只配置静态资源托管，不配置数据库、生产业务 API 或真实账户接入。原型默认数据集是化名改写的真实公开数据，判断来自一次真实模型的自由运行并经人工打磨；`?data=story` 的手写情境中，私人消息与 Agent 判断为演示编排。
 
