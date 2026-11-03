@@ -3,7 +3,8 @@
 // 2. 七个尺寸（375×667、390×844、430×932、820×1180、1180×820、1440×900、1920×1080）从头滚到底：没有报错、没有失败的请求、
 //    没有横向滚动；
 // 3. 减弱动态时首屏直接是终态：与正常播放结束后的样子逐项相同，且没有动画在跑；首屏演完后前两扇窗的内容、
-//    铺点的盖板都不留残渣，三个处境按钮切得动；
+//    铺点的盖板都不留残渣，三个处境按钮切得动；首屏是示意的一天（data.json hero）：场里亮着的点正好是窗里那几件的输入，
+//    桌前朱红的是等你的几件，表盘只给 1 件，而且是桌前最大的那块；
 // 4. 画廊块数等于原型总数减六，Top 6 不在其中，其余一个不少；第 3 节六个处境按 LADDER 从窄到宽，各链到它的卡（没有卡的链到原型本身）；
 // 5. 三拍按阅读线切换（1 → 2 → 3 → 回流），演示卡的按钮真的作答、撤回；第 2 拍演完后尺上没有残留的点；
 // 6. 导航是“处境 · 全部原型 · 从头读起 · 文档”（没有“为什么”，#why 锚点与首屏按钮仍在），“全部原型”的画册面板与查看弹框照常可用；
@@ -243,6 +244,20 @@ try {
   const roundStep = await still.evaluate(`document.querySelector('.fl-round').dataset.step`);
   const differing = Object.keys(after).filter(k => after[k] !== immediate[k]);
   check('减弱动态：首屏一打开就是终态（与播放结束后逐项相同），没有动画在跑，三拍从第一拍的终态起', !differing.length && running === 0 && roundStep === '1', { differing: differing.map(k => [k, after[k], immediate[k]]), running, roundStep });
+  // The first screen is an illustrative day (data.json hero): the dots lit in each window are exactly the inputs of the
+  // items in it, the desk's vermilion tiles are the ones waiting for you, and the watch gets one item, the biggest tile.
+  const heroDay = await still.evaluate(`(() => { const marks = lv => (document.querySelector('.h2-l' + lv + ' path')?.getAttribute('d').match(/h/g) || []).length;
+    const tiles = [...document.querySelectorAll('.h2-desk .tl')].map(t => ({ cls: t.className, a: parseFloat(t.style.getPropertyValue('--w')) * parseFloat(t.style.getPropertyValue('--h')) }));
+    return { lit: [1, 2, 3, 4].map(marks), tiles, watch: document.querySelector('.h2-c1 .n').textContent.trim() }; })()`);
+  const dayItems = data.hero.items.value, inputsOf = list => list.reduce((a, it) => a + it.inputs, 0);
+  const litWant = [inputsOf(data.hero.done.value), inputsOf(dayItems.filter(it => it.turn === 'agent')), inputsOf(dayItems.filter(it => it.turn === 'you' && !it.urgent)), inputsOf(dayItems.filter(it => it.urgent))];
+  const leadTiles = heroDay.tiles.filter(t => /\blead\b/.test(t.cls)), biggest = Math.max(...heroDay.tiles.map(t => t.a));
+  const watchItem = dayItems.find(it => it.id === data.hero.lead.value.item);
+  check(`首屏（示意的一天）：场里亮着的点正好是窗里那几件的输入（表盘 ${litWant[3]}、等你 ${litWant[2]}、Agent ${litWant[1]}、今天办完的 ${litWant[0]}），桌前 ${dayItems.length} 件里朱红的是等你的 ${data.hero.open.value} 件，表盘只给 1 件，是最大的那块“${watchItem?.name}”`,
+    heroDay.lit.join() === litWant.join() && heroDay.tiles.length === dayItems.length + (data.hero.blank.value ? 1 : 0)
+      && heroDay.tiles.filter(t => /\byou\b/.test(t.cls)).length === data.hero.open.value && data.hero.urgent.value === 1 && dayItems.filter(it => it.urgent).length === 1
+      && watchItem?.urgent && watchItem.turn === 'you' && heroDay.watch === '1' && leadTiles.length === 1 && leadTiles[0].a === biggest,
+    { lit: heroDay.lit, litWant, tiles: heroDay.tiles.length, lead: leadTiles, biggest, watch: heroDay.watch });
   if (shots) { await mkdir(shots, { recursive: true }); await still.shot(path.join(shots, 'reduced-390x844-full.png'), true); }
   await still.close();
 
@@ -329,7 +344,9 @@ try {
   const banned = [/#\d/, /\bPR\b/, /\bCI\b/, /master/i, /\b(?:Jonas|Berglund|Smilla|Kajsa|Mamma|Ture|Signe|Ulrika|VAB|vab)\b/, /[åäöÅÄÖ]/];
   const hits = banned.map(re => body.match(re)?.[0]).filter(Boolean);
   const originals = [...data.beat2.segments.value.map(x => x.title), ...data.beat3.asks.value.map(x => x.short), data.beat3.lead.value.prompt, ...data.beat3.lead.value.actions,
-    data.beat3.loop.example.value.ask, data.beat3.loop.example.value.response.text].filter(t => body.includes(t));
+    data.beat3.loop.example.value.ask, data.beat3.loop.example.value.response.text]
+    // an original that is already plain (“先观察”) is its own plain words
+    .filter(t => body.includes(t) && !data.beat3.lead.value.plain.actions.includes(t));
   check('白话：入口页正文（不含原型卡、画廊、弹框）没有 #数字、PR、CI、master、演示里的人名与瑞典语，也没有演示原文的标题、问题与选项', !hits.length && !originals.length, { hits, originals });
   // Plain written Chinese (the user, 2026-11-03): the contrived phrasings that were rewritten stay out of the body and the description.
   const description = await plain.evaluate(`document.querySelector('meta[name="description"]')?.content || ''`);

@@ -1,6 +1,7 @@
 // 入口页（site/landing/）上会出现的每个数，由演示回放现算，写成 site/landing/data.json。
 // 只读原型的模块（variants/shared.mjs、variants/inflow.mjs 与它们引用的 scenario / engine），规则与原型同名函数一致，
-// 不改原型、不改演示数据。数据集固定为 composite，帧默认 f26；第二段实现时页面只读 data.json，不加载 2 MB 的回放。
+// 不改原型、不改演示数据。数据集固定为 composite，帧固定为 f22（8/14 周五 00:00；2026-11-03 起从 f26 换来：这一刻开着的问题
+// 都是日常的事，猫、母亲住哪、儿子的病假、女儿的同意书；/docs/why 用的也是 f22）。页面只读 data.json，不加载 2 MB 的回放。
 //
 //   node scripts/landing-data.mjs            # 重写 site/landing/data.json
 //   node scripts/landing-data.mjs --check    # 只核对：现算结果与已提交的 data.json 不同就退出 1
@@ -9,7 +10,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const FRAME = 26;
+const FRAME = 22;
 // The same module URLs the prototype pages use, query included, so the replay is the pages' replay.
 const load = rel => { const [file, query] = rel.split('?'); return import(pathToFileURL(path.join(root, 'prototype', file)).href + (query ? `?${query}` : '')); };
 const { scenario, records, currentAsk, getItem } = await load('variants/shared.mjs?v=feedback-loop-1');
@@ -60,7 +61,6 @@ const urgent = asks.filter(it => { const due = dueOf(it, currentAsk(s, it.id)); 
 // forms/trays.mjs: confirm / approve / choose one tap; defer / schedule two; reply one with a suggested line, else two.
 const taps = ask => (['defer', 'schedule'].includes(ask.expects) ? 2 : ask.expects === 'reply' ? (ask.suggest ? 1 : 2) : 1);
 const prevShare = new Map(prevState.root.items.map(it => [it.id, it.share]));
-const lead = urgent[0] && currentAsk(s, urgent[0].id);
 
 // Two weeks.
 const rounds = frames.map((f, i) => ({ i, id: f.id, n: f.events.length, initial: f.phase === 'initial' })).filter(r => !r.initial);
@@ -75,22 +75,22 @@ frames.forEach((f, i) => { for (const a of life[i].answered) {
     response: { at: event.at, stream: event.stream, channel: event.channel, text: String(event.text || '').slice(0, 60) } });
 } });
 const biggest = closures.reduce((best, c) => ((c.share[0] - (c.share[1] ?? 0)) > (best.share[0] - (best.share[1] ?? 0)) ? c : best));
+// The urgent one the first screen's watch and the demo card show: of this moment's urgent asks, the one you really
+// answered next (the loop's example), so the card and the real call that follows are one story; else the first by rank.
+// At f22 that is the cat (Kajsa, 21:30: “Ring imorgon kl 8 prick”; the call went out 08:02). The watch prototype's own
+// order puts the mother's (due today 23:59) first; both count in “2 件要紧”.
+const leadItem = urgent.find(it => it.id === biggest.item) ?? urgent[0];
+const lead = leadItem && currentAsk(s, leadItem.id);
 
-// The moment the first screen stands on: everything the Agent has read by f26, one dot per input, and which of them
-// each situation's window is made from. An input "feeds" an item when inputsOf(k) sends it there in its round; an item
-// merged since is followed to the one it merged into (records[26].snapshot.items[].merged_into).
+// Items gone from the root this round. Merged into one still there: their share counts as that one's before (the
+// ruler shows the merged item shrinking or growing, not a new one appearing). Withdrawn (done, past, no longer
+// anyone's business): one group on the ruler that shrinks to nothing.
 const snapItems = records[FRAME].snapshot.items;
 const settle = id => { let at = id; for (let n = 0; snapItems[at]?.merged_into && n < 20; n += 1) at = snapItems[at].merged_into; return at; };
-const urgentIds = new Set(urgent.map(it => it.id));
 const nowIds = new Set(items.map(it => it.id));
-// 0 never fed an item (noise, duplicate, deferred) · 1 fed an item no longer on the root · 2 fed one the Agent holds
-// now · 3 fed one waiting for you now · 4 fed the urgent one.
-const levelOf = target => { if (!target) return 0; const id = settle(target); return urgentIds.has(id) ? 4 : askIds.has(id) ? 3 : nowIds.has(id) ? 2 : 1; };
-const field = frames.slice(1, FRAME + 1).map((f, j) => inputsOf(j + 1, null).list.map(g => levelOf(g.target)).join(''));
-const level = k => sum(field.map(col => [...col].filter(c => Number(c) >= k).length));
-const seenEvents = frames.slice(0, FRAME + 1).flatMap(f => f.events);
-const channelOf = e => String(e.channel || e.stream).split(' · ')[0];
-const byChannel = Object.entries(seenEvents.reduce((n, e) => ({ ...n, [channelOf(e)]: (n[channelOf(e)] || 0) + 1 }), {})).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
+const left = prevState.root.items.filter(it => !nowIds.has(it.id)).map(it => ({ id: it.id, share: it.share, status: snapItems[it.id]?.status ?? null, into: nowIds.has(settle(it.id)) ? settle(it.id) : null }));
+const beforeOf = it => (prevShare.get(it.id) ?? 0) + sum(left.filter(l => l.into === it.id).map(l => l.share));
+const withdrawn = left.filter(l => !l.into);
 
 // ---------- 第 2 节：一个人一天的量级（示意，不是演示数据） ----------
 // 第 2 节讲的是一般的问题，不用演示回放：一个普通人一天各个来源进来的条数。能找到公开统计的按统计取整（basis 写链接），
@@ -171,59 +171,156 @@ const dayTotal = sum(DAY_SOURCES.map(s => s.n));
   if (problems.length) throw new Error(problems.join('；'));
 }
 
+// ---------- 首屏：一个程序员的一天（示意，和第 2 节同一天） ----------
+// 用户 2026-11-03：“换成审批发版吧。。更程序员的例子，其他例子可以混合一点家常”。演示回放里没有“批准发版”这样的要紧
+// 问题，所以首屏不再读回放，改成示意：第 2 节那一天的全部输入（同一份 DAY_SOURCES、同样的条数），按来源与时刻铺成
+// 一片点；此刻是傍晚 6 点，场是此前 24 小时，一列一小时。每条输入在生成时就归到某一件事或哪件都不归，三扇窗亮的点
+// 就是归到窗里那几件的。全部由固定的种子生成（mulberry32），没有随机抖动，每次构建结果一致；每项都带 basis “示意”。
+// 第 4 节与原型展示仍是演示回放（f22），是真实数据。
+const NOW_HOUR = 18;                       // 此刻：傍晚 6 点
+const col = hour => (hour - NOW_HOUR + 24) % 24; // 第几列：0 是 24 小时前那一小时，23 是此刻之前那一小时
+const H = (...spans) => { const w = Array(24).fill(0); for (const [from, to, x] of spans) for (let h = from; h < to; h += 1) w[h] += x; return w; };
+// 一天里各类来源在每个钟点的相对多少（钟点 0–23）。
+const PROFILES = {
+  chat: H([0, 1, 2], [7, 9, 3], [9, 12, 4], [12, 14, 7], [14, 18, 4], [18, 20, 6], [20, 23, 9], [23, 24, 4]), // 群聊与私聊：午饭和晚上最热闹
+  world: H([0, 24, 3], [9, 12, 2], [20, 24, 3]),                                       // Discord：各时区的人都在，半夜也有
+  work: H([8, 9, 3], [9, 12, 10], [12, 14, 5], [14, 19, 10], [19, 22, 3], [22, 24, 1]), // 工作群、邮件、GitHub
+  market: H([9, 12, 10], [13, 15, 10], [15, 16, 2]),                                   // 炒股群与自选股：开盘时间
+  school: H([7, 9, 6], [11, 12, 2], [15, 18, 5], [20, 22, 3]),                         // 家长群、幼儿园 App
+  news: H([6, 24, 2], [7, 9, 3], [12, 13, 3]),                                         // 新闻
+  home: H([0, 24, 1], [7, 9, 4], [17, 23, 3]),                                         // 智能家居
+  errand: H([9, 22, 2], [11, 13, 3], [17, 20, 3]),                                     // 购物外卖、快递、银行、短信、个人邮箱
+  calendar: H([8, 10, 3], [13, 14, 2]),                                                // 日历
+};
+const PROFILE_OF = {
+  'Discord 社区': 'world', '游戏 Discord': 'world', 'AI 工具 Discord': 'world',
+  '公司大群': 'work', '部门群': 'work', '项目群': 'work', '另一个项目群': 'work', '工作邮件': 'work', 'GitHub 通知': 'work',
+  '炒股群': 'market', '自选股': 'market', '家长群': 'school', '兴趣班家长群': 'school', '幼儿园 App': 'school',
+  '新闻订阅': 'news', '智能家居': 'home', '购物外卖': 'errand', '快递': 'errand', '银行支付': 'errand', '短信': 'errand', '个人邮箱': 'errand',
+  '日历': 'calendar',
+};
+for (const name of Object.keys(PROFILE_OF)) if (!DAY_SOURCES.some(x => x.name === name)) throw new Error(`首屏的钟点表里有 ${name}，DAY_SOURCES 里没有`);
+const mulberry32 = seed => () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+const rng = mulberry32(20261103);
+// n spread over 24 slots by weight, whole numbers that add up to n (largest remainder).
+const spread = (n, w) => { const tot = sum(w), raw = w.map(x => n * x / tot), out = raw.map(Math.floor); const order = raw.map((x, i) => [x - Math.floor(x), i]).sort((a, b) => b[0] - a[0] || a[1] - b[1]); const need = n - sum(out); for (let k = 0; k < need; k += 1) out[order[k][1]] += 1; return out; };
+const inputs = DAY_SOURCES.flatMap((src, si) => spread(src.n, PROFILES[PROFILE_OF[src.name] || 'chat']).flatMap((k, hour) =>
+  Array.from({ length: k }, () => ({ src: src.name, si, hour, c: col(hour), minute: Math.floor(rng() * 60), item: null }))));
+inputs.sort((a, b) => a.c - b.c || a.minute - b.minute || a.si - b.si);
+// 桌前那扇窗的十件事（份额加起来不到 64，余下是空余）：工作与家常混着，朱红只给等你回应的。一个连贯的傍晚：下午
+// 上线的新版本让接口报错突增，要不要回滚得你来定（表盘上那一件，最大）；今晚的发版等你批准，但得等告警处理完。
+// feed 是归到它的输入：[来源, 条数, 从几点, 到几点]（钟点；不写就是这 24 小时里任何时候），在符合的输入里均匀地挑。
+const DESK = [
+  { id: 'alert', name: '线上告警', turn: 'you', share: 16, urgent: true, ask: '下午上线的版本让接口报错突增，要不要回滚？', due: '半小时内',
+    feed: [['工作邮件', 20, 15, 18], ['部门群', 6, 15, 18], ['项目群', 6, 15, 18], ['短信', 2, 15, 18]] },
+  { id: 'release', name: '发版审批', turn: 'you', share: 10, ask: '今晚发版，等你批准（告警处理完再发）',
+    feed: [['GitHub 通知', 12, 12, 18], ['项目群', 8], ['工作邮件', 6], ['另一个项目群', 4]] },
+  { id: 'review-pay', name: '支付评审', turn: 'you', share: 7, ask: '支付那份改动，批准吗？', feed: [['GitHub 通知', 8], ['工作邮件', 3]] },
+  { id: 'tests', name: '测试没过', turn: 'agent', share: 6, feed: [['GitHub 通知', 10], ['项目群', 4]] },
+  { id: 'kid-leave', name: '孩子请假', turn: 'you', share: 5, ask: '孩子明天请假，回老师一句？', feed: [['幼儿园 App', 3], ['家长群', 6], ['私聊', 3]] },
+  { id: 'review-login', name: '登录评审', turn: 'you', share: 4, ask: '登录那份改动，今天看还是明天？', feed: [['GitHub 通知', 5], ['工作邮件', 2]] },
+  { id: 'cat', name: '猫的药', turn: 'agent', share: 4, feed: [['私聊', 3], ['养猫群', 3], ['购物外卖', 2]] },
+  { id: 'dinner', name: '周末聚餐', turn: 'agent', share: 3, feed: [['大学同学群', 10], ['私聊', 3]] },
+  { id: 'rent', name: '房租', turn: 'agent', share: 3, feed: [['银行支付', 2], ['短信', 2], ['私聊', 1]] },
+  { id: 'parcel', name: '快递', turn: 'agent', share: 2, feed: [['快递', 5], ['短信', 2], ['购物外卖', 2]] },
+];
+// 今天早些时候办完的事：归到它们的输入只在复盘那扇窗里亮。
+const DONE = [
+  { id: 'standup', name: '站会改期', feed: [['日历', 2], ['部门群', 5], ['工作邮件', 3]] },
+  { id: 'water', name: '小区停水', feed: [['业主群', 8], ['楼栋群', 5], ['智能家居', 2]] },
+  { id: 'lunch', name: '午饭拼单', feed: [['店铺福利群', 4], ['购物外卖', 3]] },
+];
+for (const it of [...DESK, ...DONE]) for (const [src, k, from = NOW_HOUR, to = NOW_HOUR + 24] of it.feed) {
+  const inHours = x => { const h = x.hour < NOW_HOUR ? x.hour + 24 : x.hour; return h >= (from < NOW_HOUR ? from + 24 : from) && h < (to <= NOW_HOUR ? to + 24 : to); };
+  const pool = inputs.filter(x => x.src === src && !x.item && inHours(x));
+  if (pool.length < k) throw new Error(`首屏：${it.name} 要从 ${src} 挑 ${k} 条，${from}–${to} 点只有 ${pool.length} 条`);
+  for (let j = 0; j < k; j += 1) pool[Math.floor((j + 0.5) * pool.length / k)].item = it.id;
+}
+const WORK_ITEMS = new Set(['release', 'alert', 'review-pay', 'tests', 'review-login']);
+const urgentDesk = DESK.filter(it => it.urgent);
+const deskBlank = 64 - sum(DESK.map(it => it.share));
+if (urgentDesk.length !== 1 || urgentDesk[0].turn !== 'you') throw new Error('首屏的表盘只给 1 件要紧，而且它等你回应');
+if (deskBlank < 0) throw new Error('首屏桌前十件的份额超过了 64');
+// 每条输入的档：0 哪件都不归 · 1 归到今天办完的事 · 2 归到 Agent 在办的 · 3 归到等你回应的 · 4 归到表盘上那一件。
+const heroLevel = x => { const it = DESK.find(d => d.id === x.item); return !x.item ? 0 : !it ? 1 : it.urgent ? 4 : it.turn === 'you' ? 3 : 2; };
+const heroField = Array.from({ length: 24 }, (_, c) => inputs.filter(x => x.c === c).map(heroLevel).join(''));
+const heroLit = k => inputs.filter(x => heroLevel(x) >= k).length;
+if (inputs.length !== dayTotal) throw new Error(`首屏的点（${inputs.length}）与第 2 节那一天（${dayTotal}）对不上`);
+// 复盘那扇窗：这两周每天一根柱，当天收尾时注意力怎么分（64 份里工作、家常各占几份）。周末家常多；发版前三天
+// 工作明显占大头；最后一根是今天，就是桌前那十件，告警那一大块朱红一眼看得出。小幅起伏也由同一个种子定。
+const REVIEW_DAYS = 14;
+const reviewRng = mulberry32(14);
+const review = Array.from({ length: REVIEW_DAYS }, (_, k) => {
+  const ago = REVIEW_DAYS - 1 - k, weekday = (5 - ago % 7 + 7) % 7; // 今天是周五（5）；0 周日、6 周六
+  const ORDER = ['lead', 'you', 'work', 'home'];
+  if (ago === 0) return [k, DESK.map(it => [it.share, it.turn === 'you' ? (it.urgent ? 'lead' : 'you') : WORK_ITEMS.has(it.id) ? 'work' : 'home']).sort((a, b) => ORDER.indexOf(a[1]) - ORDER.indexOf(b[1]))];
+  const jig = () => Math.round((reviewRng() - 0.5) * 6);
+  const [work, home] = weekday === 0 || weekday === 6 ? [10 + jig(), 30 + jig()] : ago <= 2 ? [46 + jig(), 10 + jig()] : [30 + jig(), 20 + jig()];
+  return [k, [[work, 'work'], [home, 'home']]];
+});
+const ill = (value, source) => ({ value, source, basis: '示意' });
+
 // ---------- 入口页的白话说法 ----------
 // 用户 2026-11-03：“你要举例，举一点不拗口的，一眼就知道什么意思的。”入口页不直接搬演示原文（瑞典人名、#编号、PR、
 // CI、瑞典语），每一件事、每个问题与选项、回流的例子都配一份白话，写进 data.json 的 plain 字段；原文留在旁边，页面只显示
 // plain。人名换成角色：Jonas 是“你”，伴侣 Kajsa、女儿 Signe（11 岁）、儿子 Ture（4 岁）、母亲 Mamma、猫 Smilla。
 // 白话要忠实于原件：是把原话翻成大白话，不是另编一件事。对照表见 site/landing/story.md「白话对照」。
 const PLAIN = {
-  // 每件事的短名：桌前那扇窗的格子、第 4 节尺下的“涨 / 让”。6 个字以内。
+  // 每件事的短名：桌前那扇窗的格子、第 4 节尺下的“增 / 减”。6 个字以内。只写 f22 根层上的事。
   items: {
-    'driveway-wet': '水管裂了',           // 车道下铜管裂，周一前定修法
-    'issue-13587': '审同事的修复',         // #13587重开，修复#13596待你审
-    'pr-reviews-0814': '三份旧改动',       // 3个旧PR待审，15日合#13591
-    'ci-urls-master': '测试没通过',        // master仍红：Windows持续失败
-    'smilla-vet': '猫看病',                // Smilla已减量，24日9:30复诊
-    'kajsa-bike-brake': '自行车刹车',      // Kajsa提醒修旧车刹车，新车18日到
-    'mamma-stambyte': '妈妈家换水管',      // Mamma选疏散公寓，Ulrika问进展
-    'issue-13586': '上传卡住',             // #13586上传卡在65KB，未能复现
-    'ture-pickup-0812': '儿子病假',        // Ture已退烧再休一天，记得报vab
-    'signe-school-start': '女儿开学',      // Signe 19日开学：签同意书、查头虱
+    'mamma-stambyte': '妈妈住哪',          // Mamma回执今天截止，昨晚已通话（楼里换水管那六周住哪）
+    'smilla-vet': '猫的药',                // Smilla剂量疑超失明线，8点打诊所
+    'pr-reviews-0814': '审同事的改动',     // #13572等你评审，另3个PR待审
+    'ture-pickup-0812': '儿子请假',        // Ture好转37.6度，记得报vab
+    'signe-school-start': '女儿签字',      // Signe 19日开学：签同意书、查头虱
     'signe-comic-talk': '女儿的漫画',      // Signe看的漫画有裸露图，12日谈
-    'fan-delivery-0815': '台扇到了',       // 台扇应已送到信箱
-    'issue-13466': '另一个毛病',           // #13466另一问题已确认，待另开issue
+    'driveway-wet': '车道边潮湿',          // 邻居说车道信箱旁地面潮湿
+    'ci-urls-master': '测试没通过',        // master仍红，13日合入后仍多平台失败
+    'issue-13466': '一个补丁见效',         // #13466补丁有效，401疑为IIS冷启动
+    'kajsa-bike-brake': '自行车刹车',      // Kajsa新车18日送到，你说后刹已修好
     'release-8-22-rc1': '新版快发布',      // 8.22.0-rc1已发，9月2日发布
   },
   // 每个开着的问题。
   asks: {
-    'driveway-wet': '水管裂了：挖开换还是不挖？', // 主水管：挖开换还是免挖？
-    'issue-13587': '同事的修复，批准吗？',       // #13596 计时修复：批准？
-    'pr-reviews-0814': '三份旧改动，推到哪天看？', // 三个旧 PR 推到哪天？
+    'mamma-stambyte': '妈妈九月住哪？',            // 母亲九月住哪？
+    'smilla-vet': '猫多吃了药，要打给兽医吗？',    // Smilla 多吃了药：打诊所？
+    'pr-reviews-0814': '同事的修复，批准吗？',     // #13572 堵复用绕过：批准？
     'ture-pickup-0812': '照顾儿子的假，报了吗？',  // VAB 报了吗？（VAB：瑞典照顾生病孩子的带薪假）
     'signe-school-start': '女儿的同意书签了吗？',  // Signe 的同意书签了吗？
   },
-  // 要紧的那一问：表盘上两行（各 8 个字以内），卡上的整句与两个选项（与原文的选项同序）。
+  // 演示卡上的那一问：卡上的整句与两个选项（与原文的选项同序）。期限取条目的 due_at（8/14 08:00，标题“8点打诊所”；
+  // Kajsa 21:30 “Ring imorgon kl 8 prick”）。
   lead: {
-    item: 'driveway-wet',
-    subject: '水管裂了', question: '挖开换还是不挖？',
-    prompt: '车道下的水管裂了：挖开整根换（约 6.8 万），还是不挖开、从旧管里穿一根新管（约 4.1 万）？',
-    actions: ['挖开换 · 6.8 万', '不挖开 · 4.1 万'], // 整根挖开换 / 免挖穿新管
+    item: 'smilla-vet',
+    prompt: '怀疑给猫多喂了半片药，药量可能伤眼睛：早上 8 点打给兽医，还是先观察？', // 怀疑给 Smilla 多喂了半片恩诺沙星：打给诊所，还是先观察？
+    actions: ['打给兽医', '先观察'], // 打给诊所 / 先观察
   },
-  // 回流里真实的那一次：Smilla 多吃了药：打诊所？→ 一通打给宠物诊所的电话（Utgående samtal till Djurkliniken Kvarnbacken · 6 min）。
+  // 第 4 节尺下“减”那一行：本轮撤下的几件（办完、过期、不用再管）合成一组的名字。
+  withdrawn: '不用再管的几件',
+  // 回流里真实的那一次，接着演示卡那一问：Smilla 多吃了药：打诊所？→ 8/14 08:02 一通打给宠物诊所的电话
+  // （Utgående samtal till Djurkliniken Kvarnbacken · 6 min），f23 读到。
   loop: { item: 'smilla-vet', ask: '猫多吃了药，要打给兽医吗？', response: '打给宠物诊所，6 分钟' },
 };
 const plainItem = id => { if (!PLAIN.items[id]) throw new Error(`白话缺 ${id}：在 PLAIN.items 里补一条`); return PLAIN.items[id]; };
 const plainAsk = id => { if (!PLAIN.asks[id]) throw new Error(`白话缺问题 ${id}：在 PLAIN.asks 里补一条`); return PLAIN.asks[id]; };
 // The lead question and the loop's example are written for one item each: a replay that changes them needs new words.
-if (PLAIN.lead.item !== urgent[0]?.id || PLAIN.lead.actions.length !== (lead.actions || []).length) throw new Error(`白话的要紧一问写的是 ${PLAIN.lead.item}，回放里是 ${urgent[0]?.id}（${(lead.actions || []).map(a => a.label).join(' / ')}）`);
+if (PLAIN.lead.item !== leadItem?.id || PLAIN.lead.actions.length !== (lead.actions || []).length) throw new Error(`白话的要紧一问写的是 ${PLAIN.lead.item}，回放里是 ${leadItem?.id}（${(lead.actions || []).map(a => a.label).join(' / ')}）`);
+const leadDue = dueOf(leadItem, lead);
+if (leadDue == null) throw new Error(`演示卡那一问（${leadItem.id}）没有期限，卡上的“要定”写不出来`);
 if (PLAIN.loop.item !== biggest.item) throw new Error(`白话的回流例子写的是 ${PLAIN.loop.item}，回放里是 ${biggest.item}`);
-// A deadline in words, read off the replay clock (both times carry the same offset): 明天上午前.
+// A deadline in words, read off the replay clock (both times carry the same offset): 早上 8 点前, 明天下午 3 点前,
+// 今天之内 (23:59), 明天晚上前 (not on the hour).
 const dueWords = (due, now) => {
   const days = Math.round((Date.parse(due.slice(0, 10)) - Date.parse(now.slice(0, 10))) / DAY);
-  const hour = Number(due.slice(11, 13));
-  return `${['今天', '明天', '后天'][days] ?? `${days} 天后`}${hour < 12 ? '上午' : hour < 18 ? '下午' : '晚上'}前`;
+  const hour = Number(due.slice(11, 13)), minute = Number(due.slice(14, 16));
+  const day = ['', '明天', '后天'][days] ?? `${days} 天后`, part = hour < 12 ? '早上' : hour < 18 ? '下午' : '晚上';
+  if (days >= 3) return `${days} 天内`;
+  if (hour === 23 && minute === 59) return `${day || '今天'}之内`;
+  return minute ? `${day || '今天'}${part}前` : `${day}${part} ${hour > 12 ? hour - 12 : hour} 点前`;
 };
 
+// A time on the replay clock, as the replay writes it (frames[].at carries the offset).
+const localISO = t => new Date(t + Date.parse(frame.at.slice(0, 19) + 'Z') - Date.parse(frame.at)).toISOString().slice(0, 19) + frame.at.slice(19);
 const minutes = t => Math.round((t - from) / 60000);
 /** Where a tick lands: its item's index in beat2.segments, the item's id when it left the root this round, -1 when folded. */
 const segmentOf = target => { if (!target) return -1; const i = items.findIndex(it => it.id === target); return i >= 0 ? i : target; };
@@ -231,34 +328,32 @@ const data = {
   about: '入口页上出现的每个数。由 scripts/landing-data.mjs 从演示回放现算（只读原型模块，规则与原型同名函数一致）；页面只读本文件，不加载回放。--check 核对本文件与回放一致。',
   dataset: v('composite', 'prototype/data/select.mjs defaultDataset；人物化名、输入为化名改写的真实公开数据，家庭流由作者编写（datasets.composite.notice）'),
   person: v(scenario.persona.name, 'scenario.persona.name'),
-  frame: { id: v(frame.id, `scenario.frames[${FRAME}].id`), at: v(frame.at, 'frames[26].at'), title: v(frame.title, 'frames[26].title'),
-    window: v([frame.signal?.window?.from || before.at, frame.signal?.window?.to || frame.at], 'frames[26].signal.window（缺省时取上一帧 at 到本帧 at），即“你离开的 12 小时”') },
-  budget: v(state.root.budget, 'records[26].state.root.budget（prototype/engine.mjs BUDGET；每层 64 份，从不变）'),
+  frame: { id: v(frame.id, `scenario.frames[${FRAME}].id`), at: v(frame.at, 'frames[22].at'), title: v(frame.title, 'frames[22].title'),
+    window: v([frame.signal?.window?.from || before.at, frame.signal?.window?.to || frame.at], 'frames[22].signal.window（缺省时取上一帧 at 到本帧 at），即“你离开的 12 小时”（8/13 中午到半夜）') },
+  budget: v(state.root.budget, 'records[22].state.root.budget（prototype/engine.mjs BUDGET；每层 64 份，从不变）'),
   hero: {
-    seen: v(seenEvents.length, 'Σ frames[0..26].events.length：到 f26 为止 Agent 读过的输入；D 手机首页底栏“累计 3051 条输入 → 现在 14 件”'),
-    sources: v(byChannel.length, 'frames[0..26].events[].channel 第一段（“GitHub · skarv/skarv”记为 GitHub）的不同取值数'),
-    span: v([frames[0].at, frame.at], '首屏那片点从哪一刻到哪一刻：frames[0].at（空状态）到 frames[26].at'),
-    days: v(Math.round((Date.parse(frame.at) - Date.parse(frames[0].at)) / DAY), '(frames[26].at − frames[0].at) / 1 天'),
-    rounds: v(FRAME, 'f01 到 f26 的整理次数（f00 是空状态）'),
-    field: v(field, '首屏那片点：f01…f26 每轮一列，列里每条输入一位数字，按到达先后（inputsOf(k).list 的顺序）；0 = 没落进任何一件（噪音、重复、暂缓）、1 = 落进的那件此刻已不在根层、2 = 落进 Agent 此刻在办的一件、3 = 落进此刻等你回应的一件、4 = 落进要紧的那一件；落进的那件后来并入别处时，跟到它并入的那件（records[26].snapshot.items[].merged_into）'),
-    lit: v({ used: level(1), now: level(2), you: level(3), urgent: level(4) },
-      'field 里各档及以上的条数：used = 两周落进过任何一件（等于 disposition used 的条数），now = 落进此刻根层的 14 件，you = 落进此刻等你的 5 件，urgent = 落进要紧的那一件'),
-    dark: v({ urgent: seenEvents.length - level(4), now: seenEvents.length - level(2), used: seenEvents.length - level(1) },
-      'seen − lit：各扇窗没用到、原地暗下的条数（骑车 / 桌前 / 复盘）'),
-    itemsEver: v(Object.keys(snapItems).length, 'records[26].snapshot.items 的条目数：到 f26 为止到过根层的事（两周小倍数“60 件事到过根层”）'),
-    review: v(records.slice(1, FRAME + 1).map((r, j) => [frames[j + 1].id, r.state.root.used, [...r.state.root.items].sort((a, b) => a.rank - b.rank).map(it => it.share)]),
-      '复盘那扇窗：f01…f26 每轮一项 [帧号, 已用份数, 根层各件的份额（按 rank）]，records[k].state.root'),
+    seen: ill(inputs.length, '首屏那片点的条数：第 2 节那一天（why.day）的全部输入，等于 why.total；示意，scripts/landing-data.mjs「首屏」'),
+    now: ill(`${NOW_HOUR}:00`, '此刻：傍晚 6 点；场是此前 24 小时'),
+    field: ill(heroField, '首屏那片点：此前 24 小时一小时一列（0 是 24 小时前那一小时），列里每条输入一位数字，按到达先后；每个来源按 why.day 的条数、按它那一类的钟点表铺开（PROFILES，最大余数取整），分钟由固定种子定；0 = 哪件都不归，1 = 归到今天办完的事，2 = 归到 Agent 在办的，3 = 归到等你回应的，4 = 归到表盘上那一件'),
+    lit: ill({ used: heroLit(1), now: heroLit(2), you: heroLit(3), urgent: heroLit(4) }, 'field 里各档及以上的条数：复盘 / 桌前 / 等你 / 表盘亮着的点'),
+    items: ill(DESK.map(it => ({ id: it.id, name: it.name, turn: it.turn, share: it.share, urgent: Boolean(it.urgent), ask: it.ask ?? null, inputs: inputs.filter(x => x.item === it.id).length })),
+      '桌前那扇窗的十件事，按份额从大到小；name 是格子里的名字，turn 是等你（you）还是 Agent 在办（agent），inputs 是归到它的条数'),
+    done: ill(DONE.map(it => ({ id: it.id, name: it.name, inputs: inputs.filter(x => x.item === it.id).length })), '今天早些时候办完的事：归到它们的输入只在复盘那扇窗里亮'),
+    blank: ill(deskBlank, '64 − 十件的份额：桌前那扇窗里虚线的空余'),
+    open: ill(DESK.filter(it => it.turn === 'you').length, '十件里等你回应的件数（朱红）'),
+    urgent: ill(urgentDesk.length, '要紧的件数：表盘只给 1 件'),
+    lead: ill({ item: urgentDesk[0].id, subject: '线上报错突增', question: '要不要回滚？', due: urgentDesk[0].due }, '表盘上那一件：线上告警（下午上线的版本让接口报错突增）；表盘上的两行字与期限'),
+    review: ill(review, `复盘那扇窗：这两周每天一根柱 [第几天, [[份数, 类别]…]]，类别 work 工作 / home 家常；最后一根是今天，就是桌前那十件（you 等你、lead 表盘上那一件）；周末家常多，发版前三天工作占大头，起伏由固定种子定`),
   },
   why: {
     day: v(DAY_SOURCES, '第 2 节：一个人一天各个来源进来的条数，示意的量级，不是演示数据；先是群（kind 群聊，一个群一行），再是其余来源，各自从多到少，这也是图里行的顺序；basis 是出处链接或“估计”，note 写怎么得来（scripts/landing-data.mjs DAY_SOURCES）'),
     total: v(dayTotal, 'Σ why.day[].n：Agent 替这个人看着全部来源，一天要读的条数'),
     widest: v(DAY_SOURCES[0].n, 'why.day 里最多的一项：第 1 幕的比例按它定（它占满一行）'),
     oneApp: v(DAY_SOURCES.findIndex(s => s.name === ONE_APP), `标“← 一个软件”的那一行在 why.day 里的下标（${ONE_APP}）`),
-    demoPerDay: v(Math.round(seenEvents.length / Math.round((Date.parse(frame.at) - Date.parse(frames[0].at)) / DAY)), '演示里平均一天的条数：hero.seen / hero.days（第 2 节导语“演示里一天两百来条”）'),
   },
   beat1: {
-    n: v(frame.events.length, 'frames[26].events.length；signal.received 同为 ' + frame.signal?.received),
-    streams: v(streams, '按 frames[26].events[].stream 计数；车道顺序 work / community / life / family / subscription'),
+    n: v(frame.events.length, 'frames[22].events.length；signal.received 同为 ' + frame.signal?.received),
+    streams: v(streams, '按 frames[22].events[].stream 计数；车道顺序 work / community / life / family / subscription'),
     context: {
       twoWeeks: v(sum(frames.map(f => f.events.length)), 'Σ frames[].events.length（corpus 的 3217 条是 Σ signal.received，含未收进演示的条目）'),
       rounds: v(rounds.length, 'phase 不是 initial 的帧数'),
@@ -268,34 +363,38 @@ const data = {
       '每条输入一项 [距窗口起点的分钟, stream, 去向 you|agent|fold, 落进的条目在 beat2.segments 里的下标；-1 = 没落进任何一件；字符串 = 落进了本轮离开根层的条目（见 beat2.gone）]；按时间排序；去向的规则同 variants/inflow.mjs inputsOf 与 variants/duo.mjs census'),
   },
   beat2: {
-    adopted: v(census.you + census.agent, 'inputsOf(26).list 里 target 不为空的条数 = disposition used 的条数 ' + plan.counts.used),
-    toYou: v(census.you, '落进等你回应那几件的输入；E 折叠屏左页“34 条成了右页的 3 件”'),
+    adopted: v(census.you + census.agent, 'inputsOf(22).list 里 target 不为空的条数 = disposition used 的条数 ' + plan.counts.used),
+    toYou: v(census.you, '落进等你回应那几件的输入；E 折叠屏左页“几条成了右页的几件”'),
     cardsFed: v(cardsFed, '本轮有输入落进的等你回应的件数'),
-    toAgent: v(census.agent, '落进 Agent 那边条目的输入；E 折叠屏“6 条进了 Agent 那边”'),
-    folded: v(census.fold, '没落进任何一件的输入；E 折叠屏“118 条折掉”'),
+    toAgent: v(census.agent, '落进 Agent 那边条目的输入；E 折叠屏“进了 Agent 那边”的条数'),
+    folded: v(census.fold, '没落进任何一件的输入；E 折叠屏折掉的条数'),
     foldedBy: v(foldedBy, 'folded 按 disposition 拆分（deferred 暂缓 / noise 噪音 / duplicate 重复）'),
-    segments: v(items.map(it => { const due = dueOf(it, currentAsk(s, it.id)); return { id: it.id, title: it.title, plain: plainItem(it.id), turn: askIds.has(it.id) ? 'you' : 'agent', before: prevShare.get(it.id) ?? 0, share: it.share, weight: it.weight, due: due == null ? null : new Date(due).toISOString() }; }),
-      'records[26].state.root.items 按 rank；plain 是入口页上的白话短名（PLAIN.items）；before 是 records[25] 的份额（新出现的为 0）；turn = 此刻是否有 currentAsk（variants/shared.mjs）；due 取问题的 due_at，没有时取条目的 due_at（forms/watch.mjs dueOf）'),
+    segments: v(items.map(it => { const due = dueOf(it, currentAsk(s, it.id)); return { id: it.id, title: it.title, plain: plainItem(it.id), turn: askIds.has(it.id) ? 'you' : 'agent', before: beforeOf(it), merged: left.filter(l => l.into === it.id).map(l => l.id), share: it.share, weight: it.weight, due: due == null ? null : new Date(due).toISOString() }; }),
+      'records[22].state.root.items 按 rank；plain 是入口页上的白话短名（PLAIN.items）；before 是 records[21] 的份额（新出现的为 0）加上本轮并进它的条目在 records[21] 的份额（merged）；turn = 此刻是否有 currentAsk（variants/shared.mjs）；due 取问题的 due_at，没有时取条目的 due_at（forms/watch.mjs dueOf）'),
     gone: v(plan.list.filter(g => g.target && !items.some(it => it.id === g.target)).map(g => { const it = records[FRAME].snapshot.items[g.target]; return { id: g.target, title: it?.title ?? null, status: it?.status ?? null, mergedInto: it?.merged_into ?? null }; }),
-      '本轮有输入落进、但在 f26 已不在根层的条目（records[26].snapshot.items）；E 折叠屏把这类输入也算进“Agent 那边”'),
-    blank: v({ before: 64 - prevState.root.used, now: blank }, '64 − state.root.used，f25 与 f26'),
+      '本轮有输入归到、但在 f22 已不在根层的条目（records[22].snapshot.items）；E 折叠屏把这类输入也算进“Agent 那边”'),
+    blank: v({ before: 64 - prevState.root.used, now: blank }, '64 − state.root.used，f21 与 f22'),
+    withdrawn: v({ items: withdrawn.map(l => l.id), before: sum(withdrawn.map(l => l.share)), plain: PLAIN.withdrawn },
+      '本轮从根层撤下（不是并进别处）的条目与它们在 f21 的份额之和：尺上合成一组，缩到没有；plain 是尺下的名字（PLAIN.withdrawn）'),
     account: v({ blank, agent: sum(agent.map(it => it.share)), agentItems: agent.length, you: sum(asks.map(it => it.share)), youItems: asks.length, used: state.root.used, items: items.length },
-      '与 E 折叠屏份额带下的账同一算法（variants/duo.mjs shares）：空余 + Agent 那边 + 等你 = 64；used 是 state.root.used（原版树图“已用 63 / 64”）'),
-    yielded: v(items.filter(it => (prevShare.get(it.id) ?? 0) !== it.share).map(it => ({ id: it.id, before: prevShare.get(it.id) ?? 0, share: it.share, delta: it.share - (prevShare.get(it.id) ?? 0) })),
-      '本轮份额变了的条目：f25 → f26 的份数与差'),
+      '与 E 折叠屏份额带下的账同一算法（variants/duo.mjs shares）：空余 + Agent 那边 + 等你 = 64；used 是 state.root.used（原版树图的“已用”）'),
+    yielded: v([...items.filter(it => beforeOf(it) !== it.share).map(it => ({ id: it.id, before: beforeOf(it), share: it.share, delta: it.share - beforeOf(it) })),
+      ...(withdrawn.length ? [{ id: 'withdrawn', before: sum(withdrawn.map(l => l.share)), share: 0, delta: -sum(withdrawn.map(l => l.share)) }] : [])],
+      '本轮份额变了的条目：f21 → f22 的份数与差（before 含并进来的条目）；id withdrawn 是撤下的那一组（beat2.withdrawn）'),
   },
   dueAhead: v(items.map(it => ({ id: it.id, due: dueOf(it, currentAsk(s, it.id)), you: askIds.has(it.id) })).filter(x => x.due != null && x.due > cursor).sort((a, b) => a.due - b.due)
-    .map(x => ({ id: x.id, you: x.you, hours: Math.round((x.due - cursor) / 3600000) })), 'f26 此刻之后才到期的条目，按先后；hours 是距 frames[26].at 的小时数（B 时间展开的“此刻线之后”）'),
+    .map(x => ({ id: x.id, you: x.you, hours: Math.round((x.due - cursor) / 3600000) })), 'f22 此刻之后才到期的条目，按先后；hours 是距 frames[22].at 的小时数（B 时间展开的“此刻线之后”）'),
   beat3: {
-    open: v(asks.length, 'f26 有 currentAsk 的根层条目数；D 手机首页“5 件等你回应”'),
-    fresh: v(life[FRAME].fresh.map(a => a.short), 'askLife：f26 开着而 f25 没开的问题；D“新问题 2 个”'),
-    urgent: v(urgent.map(it => currentAsk(s, it.id).short), 'forms/watch.mjs isUrgent：24 小时内到期或档位 critical/high；腕上一瞥“1 件要紧”'),
-    lead: v(lead && { item: urgent[0].id, short: lead.short, prompt: lead.prompt, due: lead.due_at, actions: (lead.actions || []).map(a => a.label), share: urgent[0].share, weight: urgent[0].weight,
-      inputs: plan.list.filter(g => g.target === urgent[0].id).length,
-      plain: { subject: PLAIN.lead.subject, question: PLAIN.lead.question, prompt: PLAIN.lead.prompt, actions: PLAIN.lead.actions, due: dueWords(lead.due_at, frame.at) } },
-      'frames[26].asks 里这一件的 short / prompt / due_at / actions；share 与 weight 取 state；inputs 是本轮落进它的条数；plain 是入口页的白话（PLAIN.lead，选项与 actions 同序；due 是 due_at 距 frames[26].at 的说法）'),
-    asks: v(asks.map(it => { const a = currentAsk(s, it.id); return { item: it.id, short: a.short, plain: plainAsk(it.id), expects: a.expects, share: it.share, taps: taps(a) }; }), 'f26 开着的问题，按 rank；plain 是白话（PLAIN.asks）；taps 按 forms/trays.mjs 的规则'),
-    taps: v(sum(asks.map(it => taps(currentAsk(s, it.id)))), '回应托盘“6 下答完 5 个问题”'),
+    open: v(asks.length, 'f22 有 currentAsk 的根层条目数；D 手机首页“几件等你回应”'),
+    fresh: v(life[FRAME].fresh.map(a => a.short), 'askLife：f22 开着而 f21 没开的问题；D 的“新问题”'),
+    urgent: v(urgent.map(it => currentAsk(s, it.id).short), 'forms/watch.mjs isUrgent：24 小时内到期或档位 critical/high；腕上一瞥中间的数'),
+    lead: v(lead && { item: leadItem.id, short: lead.short, prompt: lead.prompt, due: new Date(leadDue).toISOString(), actions: (lead.actions || []).map(a => a.label), share: leadItem.share, weight: leadItem.weight,
+      inputs: plan.list.filter(g => g.target === leadItem.id).length,
+      plain: { prompt: PLAIN.lead.prompt, actions: PLAIN.lead.actions, due: dueWords(localISO(leadDue), frame.at) } },
+      '表盘与演示卡上的那一问：要紧的几件里，下一轮真的被回应的那一件（与 loop.example 同一件），没有时取 rank 最前的；frames[22].asks 里这一件的 short / prompt / due_at / actions；share 与 weight 取 state；inputs 是本轮归到它的条数；plain 是入口页的白话（PLAIN.lead，选项与 actions 同序；due 取问题的 due_at，没有时取条目的 due_at（forms/watch.mjs dueOf），plain.due 是它距 frames[22].at 的说法）'),
+    asks: v(asks.map(it => { const a = currentAsk(s, it.id), due = dueOf(it, a); return { item: it.id, short: a.short, plain: plainAsk(it.id), name: plainItem(it.id), expects: a.expects, share: it.share, taps: taps(a), urgent: urgent.includes(it), due: due == null ? null : dueWords(localISO(due), frame.at) }; }),
+      'f22 开着的问题，按 rank；plain 是白话（PLAIN.asks），name 是那件事的短名；taps 按 forms/trays.mjs 的规则；urgent 同 beat3.urgent；due 是期限的说法（问题的 due_at，没有时取条目的）'),
+    taps: v(sum(asks.map(it => taps(currentAsk(s, it.id)))), '回应托盘“几下答完几个问题”'),
     loop: {
       responses: v(askEvents.length, '两周里带 feedback[].ask 的输入条数：你回应了一个登记的问题'),
       via: v(via, 'feedback[].via 的取值：全部是 source，即在原处回应，Agent 下一轮读到'),
@@ -303,14 +402,14 @@ const data = {
         '这些回应发生在哪里：event.channel 第一段（Telefon 是电话）'),
       asksRegistered: v(new Set(frames.flatMap(f => Object.values(f.asks || {}).map(a => a.id))).size, '两周登记过的不同问题数'),
       closedAfterResponse: v(closures.length, 'askLife.answered 累计：你回应后、下一次整理时关上的问题'),
-      example: v({ ...biggest, plain: { ask: PLAIN.loop.ask, response: PLAIN.loop.response } }, '让出份额最多的一次关闭：share 是关闭前后两帧这件的份额；plain 是入口页的白话（PLAIN.loop）'),
+      example: v({ ...biggest, plain: { ask: PLAIN.loop.ask, response: PLAIN.loop.response } }, '份额减少最多的一次关闭：share 是关闭前后两帧这件的份额；plain 是入口页的白话（PLAIN.loop）'),
     },
   },
   twoWeeks: {
     total: v(sum(frames.map(f => f.events.length)), 'Σ frames[].events.length'),
     used: v(disp.used, 'disposition === used 的条数'),
     byDisposition: v(disp, '按 event.disposition 计数'),
-    roundsAtFull: v(records.filter((r, i) => i > 0 && r.state.root.used === r.state.root.budget).length, 'state.root.used === 64 的轮数；两周小倍数“13 次用满 64 份”'),
+    roundsAtFull: v(records.filter((r, i) => i > 0 && r.state.root.used === r.state.root.budget).length, 'state.root.used === 64 的轮数；两周小倍数“几次用满 64 份”'),
     maxItems: v(Math.max(...records.map(r => r.state.root.items.length)), '同一时刻根层最多的件数'),
   },
 };

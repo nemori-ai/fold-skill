@@ -124,8 +124,10 @@ export const DOC_GROUPS = [
 ]
 
 // ---------- the first screen: one moment, a window that changes with where you are ----------
-// The field is everything the Agent has read by f26 (data.hero.field): one column a round, one dot an input, in
-// arrival order from the bottom. Each situation's window is encoded from part of it; the rest dims where it is.
+// The first screen is an illustrative day, the same day as the second section (data.json hero, basis 示意; the
+// replay is the fourth section's): the field is everything the Agent read in the 24 hours up to now, one column an
+// hour, one dot an input, in arrival order from the bottom. Each situation's window is encoded from part of it; the
+// rest dims where it is.
 
 export const SITUATIONS = [
   { k: 1, name: '骑车', time: '抬腕两秒' },
@@ -133,17 +135,22 @@ export const SITUATIONS = [
   { k: 3, name: '复盘', time: '停下来半小时' },
 ]
 // When things happen on the first screen, in ms from first paint (it plays once and stops on 复盘):
-//   sweep  the two weeks are laid in, a round a column, left to right
+//   sweep  the day is laid in, an hour a column, left to right
 //   s1–s3  the window takes the situation's shape; what it was not made from dims; its content re-encodes
 export const MOMENT = { sweep: [100, 900], s: [1200, 3900, 6900], open: 420, morph: 650, fade: 140, dim: 450, lit: 300, rise: [450, 24] }
 const PER = 5          // dots per row in a column
 const STRIDE = PER + 1 // a column and its gap, in dots
 
+/** The field's size in dots, [width, height]: its container takes the same aspect ratio, so no dot is stretched. */
+export function fieldBox(d) {
+  const cols = v(d.hero.field)
+  return [cols.length * STRIDE - 1, Math.max(...cols.map(c => Math.ceil(c.length / PER)))]
+}
+
 /** The field: dashed rows for every input (dimmed as one), and one layer per level for the inputs that stay lit. */
 export function fieldSVG(d) {
   const cols = v(d.hero.field)
-  const rows = Math.max(...cols.map(c => Math.ceil(c.length / PER)))
-  const W = cols.length * STRIDE - 1
+  const [W, rows] = fieldBox(d)
   // Paths in relative moves (each mark is a horizontal stroke `len` long starting at x, y): a quarter the size.
   const pen = () => { let px = 0, py = 0, out = ''; return { mark(x, y, len) { out += `${out ? 'm' : 'M'}${r(x - px, 2)} ${r(y - py, 2)}h${r(len, 2)}`; px = x + len; py = y }, get d() { return out } } }
   const base = pen(), lit = [null, pen(), pen(), pen(), pen()]
@@ -177,42 +184,39 @@ export function squarify(items, w, h) {
   return out
 }
 
-/** The desk window: this round's items as areas (the 原版树图's reading), the ones waiting for you in vermilion. */
+/** The desk window: the day's ten items as areas (the 原版树图's reading), the ones waiting for you in vermilion. */
 export function deskHTML(d) {
-  const segs = v(d.beat2.segments)
-  const leadId = v(d.beat3.lead).item
-  const blank = v(d.beat2.blank).now
+  const segs = v(d.hero.items)
+  const leadId = v(d.hero.lead).item
+  const blank = v(d.hero.blank)
   const W = 170, H = 100   // the window's aspect (1.7), in the same units on every screen
   const tiles = squarify([...segs.map((s, i) => ({ v: s.share, s, i })), ...(blank ? [{ v: blank, blank: true }] : [])], W, H)
-  // Each tile's name is the item's plain-words name (data.json beat2.segments[].plain), never the replay's title.
+  // Each tile's name is the item's short name (data.json hero.items[].name).
   return `<div class="h2-desk">${tiles.map((t, n) => {
     const cls = t.blank ? 'blank' : t.s.turn === 'you' ? (t.s.id === leadId ? 'you lead' : 'you') : 'agent'
     // A name only where it fits on the narrowest desk window (330 px for the 170 units): 11.5 px a character.
-    const name = t.blank ? '' : t.s.plain
+    const name = t.blank ? '' : t.s.name
     const fits = t.w * 330 / W >= [...name].reduce((a, c) => a + (c.charCodeAt(0) > 255 ? 11.5 : 6.6), 14) && t.h * 194 / H >= 22
-    const label = name && fits ? `<b data-k="beat2.segments.${t.i}.plain">${name}</b>` : ''
+    const label = name && fits ? `<b data-k="hero.items.${t.i}.name">${name}</b>` : ''
     return `<i class="tl ${cls}" style="--x:${r(t.x / W * 100, 2)};--y:${r(t.y / H * 100, 2)};--w:${r(t.w / W * 100, 2)};--h:${r(t.h / H * 100, 2)};--i:${n}">${label}</i>`
   }).join('')}</div>`
 }
 
-/** The review window: each round's items stacked by share, under the field's own columns. */
+/** The review window: the last two weeks, a day a column, each day's attention stacked by share: work dark, home
+ * light; the last column is today (the desk's ten), the ones waiting for you in vermilion. */
 export function reviewSVG(d) {
-  const rounds = v(d.hero.review)
-  const segs = v(d.beat2.segments)
-  const leadId = v(d.beat3.lead).item
-  const W = rounds.length * STRIDE - 1, H = 64
-  const tone = rank => (rank === 0 ? 'oklch(0.56 0.012 150)' : rank < 3 ? 'oklch(0.7 0.01 145)' : 'var(--agent)')
-  // One path per colour per round (a round is one group, so it can rise as one).
-  const cols = rounds.map(([, , shares], c) => {
+  const days = v(d.hero.review)
+  const W = days.length * STRIDE - 1, H = 64
+  const fill = { work: 'oklch(0.56 0.012 150)', home: 'oklch(0.76 0.008 140)', you: 'var(--ver-soft)', lead: 'var(--ver)' }
+  // One path per colour per day (a day is one group, so it can rise as one).
+  const cols = days.map(([, parts], c) => {
     const by = new Map()
     let y = H
-    shares.forEach((share, rank) => {
-      const seg = c === rounds.length - 1 ? segs[rank] : null
-      const fill = seg ? (seg.turn === 'you' ? (seg.id === leadId ? 'var(--ver)' : 'var(--ver-soft)') : 'var(--agent)') : tone(rank)
+    for (const [share, kind] of parts) {
       y -= share
-      by.set(fill, (by.get(fill) || '') + `M${c * STRIDE} ${r(y + 0.25, 2)}h${PER}v${r(share - 0.5, 2)}h-${PER}z`)
-    })
-    return `<g class="col" style="--c:${c}">${[...by].map(([fill, path]) => `<path fill="${fill}" d="${path}"/>`).join('')}</g>`
+      by.set(fill[kind], (by.get(fill[kind]) || '') + `M${c * STRIDE} ${r(y + 0.25, 2)}h${PER}v${r(share - 0.5, 2)}h-${PER}z`)
+    }
+    return `<g class="col" style="--c:${c}">${[...by].map(([f, path]) => `<path fill="${f}" d="${path}"/>`).join('')}</g>`
   }).join('')
   return `<svg class="h2-stack" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${cols}</svg>`
 }
@@ -342,10 +346,14 @@ const WINDOW_MINUTES = 720
 const r = (n, d = 3) => Number(n.toFixed(d))
 
 export function stageModel(d) {
-  const segs = v(d.beat2.segments).map((s, rank) => ({ ...s, rank }))
+  const withdrawn = v(d.beat2.withdrawn)
+  // The items taken off the root this round (done, past, no one's business any more) are one group that shrinks to
+  // nothing; it has no rank, and its name is beat2.withdrawn.plain.
+  const segs = [...v(d.beat2.segments).map((s, rank) => ({ ...s, rank })),
+    ...(withdrawn.before ? [{ id: 'withdrawn', title: withdrawn.items.join(' · '), plain: withdrawn.plain, turn: 'agent', before: withdrawn.before, share: 0, weight: 'trace', rank: -1 }] : [])]
   const blank = v(d.beat2.blank)
   const leadId = v(d.beat3.lead).item
-  // Ruler order: your turn first (by rank), then the Agent's, then the blank: the account 38 + 25 + 1 = 64.
+  // Ruler order: your turn first (by rank), then the Agent's, then what was withdrawn, then the blank: 64 in all.
   const order = [...segs.filter(s => s.turn === 'you'), ...segs.filter(s => s.turn === 'agent')]
   const lay = key => { let c = 0; return new Map(order.map(s => { const at = { x: c / 64 * 100, w: s[key] / 64 * 100 }; c += s[key]; return [s.id, at] })) }
   const before = lay('before'), after = lay('share')
@@ -374,7 +382,7 @@ export function stageModel(d) {
     // inputs read as going into that one item rather than lining up along the ruler
     return { k, x0: t.x, lane: t.lane, f: n > 1 ? 0.5 + (j / (n - 1) - 0.5) * 0.36 : 0.5, id, you: t.to === 'you' }
   })
-  const deltas = v(d.beat2.yielded).map(y => ({ ...y, ...after.get(y.id), title: segs.find(s => s.id === y.id)?.title, plain: segs.find(s => s.id === y.id)?.plain }))
+  const deltas = v(d.beat2.yielded).map(y => ({ ...y, ...after.get(y.id), bx: before.get(y.id).x, bw: before.get(y.id).w, title: segs.find(s => s.id === y.id)?.title, plain: segs.find(s => s.id === y.id)?.plain }))
   return { segments, ticks, dots, deltas, blank, leadId, count: { n: ticks.length, adopted: adopted.length } }
 }
 
@@ -458,7 +466,9 @@ export function stageHTML(d, mode) {
   // Who gave to whom, by name only (the widths show how much): the items that grew on one row, the ones that gave
   // way (and the blank) on the row below. On a desk each sits under its segment; on a phone each row flows (CSS).
   const rank = id => v(d.beat2.segments).findIndex(s => s.id === id)
-  const delta = x => `<span class="dl" data-id="${x.id}" style="--x:${r(x.x + x.w / 2)}" data-k="beat2.segments.${rank(x.id)}.plain">${x.plain}</span>`
+  const key = id => (id === 'withdrawn' ? 'beat2.withdrawn.plain' : `beat2.segments.${rank(id)}.plain`)
+  // Under where it is now when it grew, under where it was when it gave way (a withdrawn group is no longer anywhere).
+  const delta = x => `<span class="dl" data-id="${x.id}" style="--x:${r(x.delta < 0 ? x.bx + x.bw / 2 : x.x + x.w / 2)}" data-k="${key(x.id)}">${x.plain}</span>`
   const deltas = `<div class="up">${m.deltas.filter(x => x.delta > 0).map(delta).join('')}</div>`
     + `<div class="down">${m.deltas.filter(x => x.delta < 0).map(delta).join('')}<span class="dl blank" style="--x:100">空余</span></div>`
   const lead = m.segments.find(s => s.lead)

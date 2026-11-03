@@ -1,7 +1,8 @@
 <script setup>
 // The landing page (site/index.md, layout: FoldLanding). Story, numbers and look: site/landing/{story,style,spec}.md.
-// Every number comes from site/landing/data.json (the f26 replay); elements that show one carry data-k="<path>"
-// so scripts/check-landing.mjs can hold them to it.
+// Every number comes from site/landing/data.json: the first screen and the second section are one illustrative day of a
+// programmer (hero, why; basis 示意), the third and fourth sections are the replay at f22 (real, rewritten data).
+// Elements that show one carry data-k="<path>" so scripts/check-landing.mjs can hold them to it.
 //
 // Motion: the first screen plays once with CSS only (it starts on first paint, before any script; the times are
 // landing.mjs's MOMENT) and stops on its last situation; a tap on a situation switches it with transitions. The
@@ -14,17 +15,25 @@ import data from '../../landing/data.json'
 // Written by scripts/prepare-site.mjs: the recordings in site/media (a prototype without one shows its preview).
 import media from '../../.generated/landing-media.json'
 import { combinedPage, datasetNotice, openPrototype, prototypes } from './prototypes.mjs'
-import { DESK_ONLY, DOC_GROUPS, SITUATIONS, TIMING, deskHTML, directHref, fieldSVG, galleryOf, ladderOf, momentCSS, reviewSVG, showcaseOf, stageHTML, stageModel, whyModel } from './landing.mjs'
+import { DESK_ONLY, DOC_GROUPS, SITUATIONS, TIMING, deskHTML, directHref, fieldBox, fieldSVG, galleryOf, ladderOf, momentCSS, reviewSVG, showcaseOf, stageHTML, stageModel, whyModel } from './landing.mjs'
 
 const v = field => field.value
 // Only the numbers the page still shows (2026-11-03: “不要到处写满数字”): the rest stay in data.json.
-const n = { n: v(data.beat1.n), folded: v(data.beat2.folded), open: v(data.beat3.open), urgent: v(data.beat3.urgent).length, lead: v(data.beat3.lead), loop: data.beat3.loop }
+const n = { n: v(data.beat1.n), folded: v(data.beat2.folded), urgent: v(data.beat3.urgent).length, lead: v(data.beat3.lead), loop: data.beat3.loop }
+// The first screen's illustrative day: how many wait for you, how many are urgent (one), and the one on the watch.
+const day = { open: v(data.hero.open), urgent: v(data.hero.urgent), lead: v(data.hero.lead) }
 const segs = v(data.beat2.segments)
 const seg = id => segs.find(s => s.id === id)
 const rankOf = id => segs.findIndex(s => s.id === id)
-// Beat 2 in words: the item that grew most, and the ones that gave way to it (data.json beat2.yielded).
+// Beat 2 in words: the item that grew most, and the ones that gave way to it (data.json beat2.yielded); the items
+// withdrawn this round are one group with its own name (beat2.withdrawn.plain).
 const grew = v(data.beat2.yielded).reduce((a, b) => (b.delta > a.delta ? b : a))
 const gave = v(data.beat2.yielded).filter(y => y.delta < 0)
+const nameOf = id => (id === 'withdrawn' ? v(data.beat2.withdrawn).plain : seg(id).plain)
+const keyOf = id => (id === 'withdrawn' ? 'beat2.withdrawn.plain' : `beat2.segments.${rankOf(id)}.plain`)
+// Beat 3: the urgent ones by name and deadline, the card's one first.
+const asks = v(data.beat3.asks).map((a, i) => ({ ...a, i }))
+const urgentAsks = [...asks.filter(a => a.urgent && a.item === n.lead.item), ...asks.filter(a => a.urgent && a.item !== n.lead.item)]
 const model = stageModel(data)
 // The generated markup goes in as static vnodes, not v-html: Vue 3.5 re-applies a dynamic innerHTML while
 // hydrating, which rebuilt the hero's elements a beat after first paint and restarted its animations (and parsed
@@ -36,12 +45,12 @@ const halves = html => { const at = html.indexOf('<div class="fl-plot"'); return
 const beatStage = halves(stageHTML(data, 'beats'))
 // The first screen: the field of everything read so far (with the screen's motion, generated from MOMENT), and the
 // two windows that are drawn rather than written.
-const field = `<div class="h2-field">${fieldSVG(data)}<i class="h2-cover"></i><style>${momentCSS()}</style></div>`
+const field = `<div class="h2-field" style="aspect-ratio: ${fieldBox(data).join(' / ')}">${fieldSVG(data)}<i class="h2-cover"></i><style>${momentCSS()}</style></div>`
 const desk = deskHTML(data)
 const review = reviewSVG(data)
 const seen = v(data.hero.seen)
-// The page speaks in plain words (data.json `plain`): the urgent question as two short lines on the watch, its deadline
-// in words. The replay's own wording (Swedish names, #numbers, PR, CI) stays in the data, not on the page.
+// The demo card speaks in plain words (data.json beat3.lead.plain): the question, its two choices, its deadline in
+// words. The replay's own wording (Swedish names, #numbers, PR, CI) stays in the data, not on the page.
 const lead = n.lead.plain
 // The second section: a day of one person (an order of magnitude, not the replay), against one app.
 const why = whyModel(data)
@@ -58,7 +67,8 @@ const rows = [0, 1, 2].map(r => gallery.filter((_, i) => i % 3 === r))
 const recorded = new Set(media)
 const clip = id => recorded.has(`${id}.mp4`) ? `/media/${id}.mp4` : null
 const example = v(n.loop.example)
-const demoChoice = lead.actions.at(-1)
+// Scrolled past unanswered, the card folds as if you had picked what really happened next: the call (beat3.loop).
+const demoChoice = lead.actions[0]
 
 // ---------- the demo answer: the card's buttons really work, and fold it into a receipt in place ----------
 
@@ -322,7 +332,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 
 <template>
   <div class="fl">
-    <!-- 首屏：同一刻的全部输入铺成一片点；一扇窗随处境改形，窗里重新编码，没用到的点变暗。CSS 首绘即演一次，停在“复盘”。 -->
+    <!-- 首屏：一个程序员的一天（示意，与第 2 节同一天），全部输入铺成一片点；一扇窗随处境改形，窗里重新编码，没用到的点变暗。CSS 首绘即演一次，停在“复盘”。 -->
     <section class="fl-hero" aria-labelledby="fl-title">
       <div class="h2-text">
         <p class="fl-kick">Fold · 按处境给 Agent 的汇报编码</p>
@@ -332,17 +342,17 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
         <p class="fl-ctas"><a class="fl-btn solid" href="#why">为什么是新问题 ↓</a><a class="fl-btn" href="#forms">直接看原型</a></p>
       </div>
       <div ref="moment" class="h2-stage" data-s="3">
-        <p class="h2-cap"><span>Agent 这两周读过 <b data-k="hero.seen">{{ seen }}</b> 条</span><span>一个点是一条</span></p>
+        <p class="h2-cap"><span>Agent 这一天读过 <b data-k="hero.seen">{{ seen }}</b> 条</span><span>示意 · 一个点是一条</span></p>
         <Raw :html="field" />
-        <p class="h2-axis" aria-hidden="true"><span>两周前</span><span class="mid">一列是半天</span><span>此刻</span></p>
+        <p class="h2-axis" aria-hidden="true"><span>24 小时前</span><span class="mid">一列是一小时</span><span>此刻</span></p>
         <div class="h2-zone">
           <i class="h2-win" aria-hidden="true" />
           <div class="h2-c h2-c1">
-            <span class="n fl-num" data-k="beat3.urgent.length">{{ n.urgent }}</span><span class="u">件要紧</span>
-            <span class="q"><span data-k="beat3.lead.plain.subject">{{ lead.subject }}</span><span data-k="beat3.lead.plain.question">{{ lead.question }}</span></span><span class="t"><span data-k="beat3.lead.plain.due">{{ lead.due }}</span>要定</span>
+            <span class="n fl-num" data-k="hero.urgent">{{ day.urgent }}</span><span class="u">件要紧</span>
+            <span class="q"><span data-k="hero.lead.subject">{{ day.lead.subject }}</span><span data-k="hero.lead.question">{{ day.lead.question }}</span></span><span class="t"><span data-k="hero.lead.due">{{ day.lead.due }}</span>要定</span>
           </div>
           <div class="h2-c h2-c2" aria-hidden="true"><Raw :html="desk" /></div>
-          <div class="h2-c h2-c3" aria-hidden="true"><Raw :html="review" /><p class="ax"><span>两周前</span><span>此刻</span></p></div>
+          <div class="h2-c h2-c3" aria-hidden="true"><Raw :html="review" /><p class="ax"><span>两周前</span><span>今天</span></p></div>
         </div>
         <div class="h2-chips" role="group" aria-label="处境">
           <i class="h2-bar" aria-hidden="true" />
@@ -350,8 +360,8 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
         </div>
         <p class="h2-ledger">
           <span class="lg1">手表上只显示最要紧的一件事。亮着的点是它用到的几条消息，其余的变暗。</span>
-          <span class="lg2">眼下的事按轻重排开，其中 <b class="ver" data-k="beat3.open">{{ n.open }}</b> 件等你回复；没用到的点变暗。</span>
-          <span class="lg3">复盘时看这两周的变化，一根柱子是一次整理；没用到的点变暗。</span>
+          <span class="lg2">眼下的事按轻重排开，其中 <b class="ver" data-k="hero.open">{{ day.open }}</b> 件等你回复；没用到的点变暗。</span>
+          <span class="lg3">复盘时看两周的变化：一根柱子是一天，深色是工作，浅色是家里的事。</span>
         </p>
       </div>
       <p class="fl-cue"><a href="#why">为什么是新问题 ↓</a></p>
@@ -362,7 +372,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
       <div class="hd">
         <p class="fl-kick">为什么是新问题</p>
         <h2 id="fl-why-title" class="fl-h">一个软件的通知有尽头，<br>Agent 看见的没有。</h2>
-        <p class="fl-lede">一个软件只管自己的通知：幼儿园 App 一天发几条，翻一翻就看完了。可要是让 Agent 替你看着所有的群、邮件、工作、股票和家里的琐事，它要读的是这些加在一起。一个人往往加了几十个群，每个群一天几十到上百条，光是群消息一天就上千条。首屏那片点是演示里的两周，平均一天两百来条，只是一个很小的样本。Agent 看到的一定比你能处理的多，所以它得替你取舍：留下的，应该是你此刻能处理、也最值得处理的那部分。</p>
+        <p class="fl-lede">一个软件只管自己的通知：幼儿园 App 一天发几条，翻一翻就看完了。可要是让 Agent 替你看着所有的群、邮件、工作、股票和家里的琐事，它要读的是这些加在一起。一个人往往加了几十个群，每个群一天几十到上百条，光是群消息一天就上千条。首屏那片点就是这样的一天，一个点是一条。Agent 看到的一定比你能处理的多，所以它得替你取舍：留下的，应该是你此刻能处理、也最值得处理的那部分。</p>
       </div>
       <div ref="whyEl" class="fl-src" role="img" :aria-label="`一个人一天各个来源进来多少条（示意）：${why.groups} 个群和 ${why.others} 个其他来源，最多的一个群一天 ${why.widest} 条，全部加起来 ${why.total} 条`" :style="why.vars">
         <p class="sc"><span class="s1">满格：一天 <b data-k="why.widest">{{ why.widest }}</b> 条</span><span class="s2">满格：一天 <b data-k="why.total">{{ why.total }}</b> 条</span></p>
@@ -400,7 +410,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
     <header id="example" class="fl-ex" aria-labelledby="fl-ex-title">
       <p class="fl-kick">一种编码的例子</p>
       <h2 id="fl-ex-title" class="fl-h">把注意力切成固定的份数</h2>
-      <p class="fl-lede">原型里试的一种编码：把每一层的注意力切成固定的份数，演示里是 <span data-k="budget">{{ v(data.budget) }}</span> 份（份数可以配置）。Agent 每一轮把这些份数分给各件事，份数就是面积。有了面积，同样的轻重就能在手表、手机和桌面上分别画出来。下面是演示里的一轮：你离开的 12 小时。</p>
+      <p class="fl-lede">原型里试的一种编码：把每一层的注意力切成固定的份数，演示里是 <span data-k="budget">{{ v(data.budget) }}</span> 份（份数可以配置）。Agent 每一轮把这些份数分给各件事，份数就是面积。有了面积，同样的轻重就能在手表、手机和桌面上分别画出来。下面是演示回放里真实的一轮：8 月 13 日中午到半夜，你离开的 12 小时。</p>
     </header>
 
     <!-- 一轮整理：舞台钉住，文字滚过阅读线时演那一拍。 -->
@@ -447,12 +457,12 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
         <article class="fl-step" data-step-block="2">
           <p class="no">02 / 03 · 折叠</p>
           <h3 class="fl-h">折叠 <span data-k="beat2.folded">{{ n.folded }}</span> 条，其余的按轻重分配份数。</h3>
-          <p>其余的消息归到各自所属的事。<b :data-k="`beat2.segments.${rankOf(grew.id)}.plain`">{{ seg(grew.id).plain }}</b>这件事{{ grew.share === grew.before * 2 ? '占的份数翻了一倍' : '占的份数变多了' }}，份数变少的是<template v-for="(y, i) in gave" :key="y.id">{{ i ? '、' : '' }}<span :data-k="`beat2.segments.${rankOf(y.id)}.plain`">{{ seg(y.id).plain }}</span></template>和空余部分。</p>
+          <p>其余的消息归到各自所属的事。<b :data-k="keyOf(grew.id)">{{ nameOf(grew.id) }}</b>这件事{{ grew.share === grew.before * 2 ? '占的份数翻了一倍' : '占的份数变多了' }}，份数变少的是<template v-for="(y, i) in gave" :key="y.id">{{ i ? '、' : '' }}<span :data-k="keyOf(y.id)">{{ nameOf(y.id) }}</span></template>和空余部分。</p>
         </article>
         <article class="fl-step" data-step-block="3">
           <p class="no">03 / 03 · 提问</p>
           <h3 class="fl-h"><span data-k="beat1.n">{{ n.n }}</span> 条里，真正要紧的只有 <span data-k="beat3.urgent.length">{{ n.urgent }}</span> 件。</h3>
-          <p>等你回复的几件标成红色，颜色最深的那件<span data-k="beat3.lead.plain.due">{{ lead.due }}</span>要定，其余的可以晚一点；灰色的由 Agent 自己处理，不需要你做什么。</p>
+          <p>等你回复的几件标成红色。最要紧的是<template v-for="(a, i) in urgentAsks" :key="a.item">{{ i ? '；' : '' }}<b :data-k="`beat3.asks.${a.i}.name`">{{ a.name }}</b>，<span :data-k="`beat3.asks.${a.i}.due`">{{ a.due }}</span>要定</template>。其余的可以晚一点；灰色的由 Agent 自己处理，不需要你做什么。</p>
         </article>
         <article class="fl-step" data-step-block="4">
           <p class="no">你回复之后 · 演示</p>
@@ -462,7 +472,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
         <article class="fl-step fl-real">
           <p class="no">真实的一次</p>
           <h3 class="fl-h">一通电话，下一轮就读到了。</h3>
-          <p>Agent 问：「<span data-k="beat3.loop.example.plain.ask">{{ example.plain.ask }}</span>」主人没有点按钮，而是直接打了电话。下一轮 Agent 读到通话记录「<span data-k="beat3.loop.example.plain.response">{{ example.plain.response }}</span>」，猫这件事占的份数就减少了一半。</p>
+          <p>Agent 问的就是上面那张卡：「<span data-k="beat3.loop.example.plain.ask">{{ example.plain.ask }}</span>」真实的情况是，主人没有点按钮，早上直接打给了宠物诊所。下一轮 Agent 读到通话记录「<span data-k="beat3.loop.example.plain.response">{{ example.plain.response }}</span>」，猫这件事占的份数就减少了一半。</p>
           <p class="fl-note">两周里的回复都发生在原来的地方：GitHub、短信、问答网站、电话；Agent 在下一轮整理时自己读到。</p>
         </article>
       </div>
@@ -665,7 +675,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
   position: relative; margin-top: 16px; }
 .h2-cap { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; font: 11px/1.4 var(--mono); color: var(--ink-2); }
 .h2-cap b { color: var(--ink); font-weight: 600; }
-.h2-field { position: relative; overflow: hidden; aspect-ratio: 155 / 47; }
+.h2-field { position: relative; overflow: hidden; } /* aspect-ratio inline: the field's own size in dots (fieldBox) */
 .h2-dots { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 .h2-dots path { fill: none; stroke-width: 0.72; }
 .h2-base { opacity: 0.14; }
