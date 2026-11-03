@@ -44,7 +44,7 @@ git diff --check
 阶段 1 的内存内核（`fold/`）已经实现。两类验证分开运行：
 
 ```sh
-make test                                                    # 用内存内核运行 conformance/cases
+make test                                                    # 用内存内核运行 conformance/cases，再用小样例自测 founder 语料的流水线
 node scripts/export-scenario.mjs > .local/scenario.json      # 导出原型演示情境（只读，不改原型）
 python3 scripts/eval_judgment.py --dry-run --frames f01      # 只生成提示，不调用模型
 python3 scripts/eval_judgment.py --frames f01,f05 --report   # 用真实模型逐帧评测，产生调用费用
@@ -53,7 +53,7 @@ python3 scripts/eval_judgment.py --skill <SKILL.md 路径> ...               # �
 python3 scripts/eval_judgment.py --rescore .local/eval/<run-id> --report   # 用已保存响应重新计分
 ```
 
-`make test` 运行 `scripts/run_cases.py`，即 `.venv/bin/python -B scripts/run_cases.py`。它只验证内存层：故障注入、重启恢复与概览渲染的断言标为 skipped，通过不代表文件存储或 CLI 已完成。
+`make test` 运行 `scripts/run_cases.py`，即 `.venv/bin/python -B scripts/run_cases.py`。它只验证内存层：故障注入、重启恢复与概览渲染的断言标为 skipped，通过不代表文件存储或 CLI 已完成。之后运行 `scripts/founder_corpus.py selftest`：在临时目录里用小样例跑完 founder 语料的各步，再逐条注入错误，确认检查的每条规则都会报出；不读写仓库里的语料。
 
 `scripts/eval_judgment.py` 以 teacher-forced 方式逐帧评测 [skill/SKILL.md](../skill/SKILL.md)：第 n 帧的起始状态是内核回放作者前 n−1 帧批次的结果，被测模型看不到作者的处置与批次。它调用 `claude -p`，默认模型 `claude-opus-5-5`（`--model` 可覆盖），`--jobs` 控制并行帧数。设置了 `ANTHROPIC_API_KEY` 时加 `--bare`；`--bare` 不读登录态，没有 API key 时改用登录态，并以 `--setting-sources ''`、`--strict-mcp-config`、`--disable-slash-commands`、`--tools ''` 和空工作目录隔离用户设置、hooks、MCP 与项目说明。每帧结果、`summary.json` 与 `report.md` 写到 `.local/eval/<run-id>/`，该目录不提交。真实调用有费用，全量 36 帧按 Opus 约数美元；先用 `--dry-run` 和少量帧确认提示。
 
@@ -73,6 +73,7 @@ python3 scripts/eval_judgment.py --rescore .local/eval/<run-id> --report   # 用
 .venv/bin/python scripts/fetch_corpus.py composite         # 混合人物的社区、生活问答、newsletter 与天气
 .venv/bin/python scripts/compose_corpus.py build           # 拼出化名人物的两周；还有 labels、noise、audit
 .venv/bin/python scripts/compose_corpus.py family          # 追加作者编写的家庭流（节拍表入库，见 corpus/composite/family/）
+.venv/bin/python scripts/founder_corpus.py all             # 作者编写的 founder 语料：节拍表 → 成品、帧、标注、噪音与检查（见 corpus/founder/README.md）
 ```
 
 `scripts/fetch_corpus.py` 只用标准库与 `gh api` 子进程，顺序请求并限速、遵守 robots.txt，输出 `corpus/<source>/raw/`。主来源约需一千余次 GitHub 请求与数百次网页请求，二三十分钟；`--only` 只重抓部分流，`--start/--end` 改变窗口。抓取不调用任何模型，也不清洗或去重；唯一的改动是把电话号码样式替换为 `[phone]`。
@@ -87,11 +88,11 @@ python3 scripts/eval_judgment.py --free-run --corpus <frames.json> --rescore .lo
 python3 scripts/eval_judgment.py --free-run --corpus corpus/composite/frames.json --persona-context "<人物设定>" --text-cap 1000 --dry-run
 ```
 
-每帧把 SKILL.md、用户背景（附输出语言与“本人事件”的说明）、上一帧提交后的状态、本帧输入与宿主信号交给模型。输入只交 `id / channel / from / at / subject / url / text`、`self`（是否本人）与语料带有时的 `stream`（work / community / life / family / subscription，用户背景里附一句说明；语料含家庭流时，输出语言的说明另加一句瑞典语往来也用中文整理），不交由公开资料推断的作者类别与 `origin`；每帧超过 60 条或 2 万字符时把单条正文截到 1500 字符并记原长，不删条目，`--text-cap` 把这个长度收紧（估算超出预算时用）。`--persona-context` 换掉语料自带的人物背景。批次经内存内核提交，被拒绝时带回执重试，最多 3 次，仍被拒绝则该帧记 skipped、沿用上一帧状态。因为状态逐帧前传，帧只能顺序运行；`--frames` 只决定跑到哪一帧为止，`--resume` 先按记录重放已接受的批次再继续。每帧落盘提示、原始响应、回执、提交后的 state、token 与费用；累计费用达到 `--max-cost`（默认 40 美元）后不再开始新的一帧。`--dry-run` 按上次全量运行拟合的单价估算费用，状态增长用写明的假设。
+每帧把 SKILL.md、用户背景（附输出语言与“本人事件”的说明）、上一帧提交后的状态、本帧输入与宿主信号交给模型。输入只交 `id / channel / from / at / subject / url / text`、`self`（是否本人）与语料带有时的 `stream`（work / community / life / family / subscription，用户背景里附一句说明）。输出语言的说明取语料的 `persona.language`，`stream` 的说明取语料顶层的 `streams`，没有时用默认的英文工作语言与五条流；语料声明家庭流是瑞典语时（`source.stream_languages`，或 composite 的 `source.family`），另加一句瑞典语往来也用中文整理。不交由公开资料推断的作者类别、`origin` 与结构化的通话、转账字段；每帧超过 60 条或 2 万字符时把单条正文截到 1500 字符并记原长，不删条目，`--text-cap` 把这个长度收紧（估算超出预算时用）。`--persona-context` 换掉语料自带的人物背景。批次经内存内核提交，被拒绝时带回执重试，最多 3 次，仍被拒绝则该帧记 skipped、沿用上一帧状态。因为状态逐帧前传，帧只能顺序运行；`--frames` 只决定跑到哪一帧为止，`--resume` 先按记录重放已接受的批次再继续。每帧落盘提示、原始响应、回执、提交后的 state、token 与费用；累计费用达到 `--max-cost`（默认 40 美元）后不再开始新的一帧。`--dry-run` 按上次全量运行拟合的单价估算费用，状态增长用写明的假设。
 
 自由运行不做作者对比，改与语料旁的 `labels.json` 做三项对照：被处置为 noise / duplicate 的输入相对强依据忽略列表的召回与精确率（弱依据单列）；同组输入被引用进同一条目、同一根层事项的比例（跨线程组单列）；同帧事项按弱档位的成对排序与 Agent 根层份额的一致率。衔接方式的取舍见[决策记录](decisions.md#推迟到后续切片)。语料带 `stream` 时，报告另列各流的处置分布，以及根层 64 份平均有多少来自每条流（按事项引用的输入分摊，`summary.json` 另记逐帧的值）。
 
-`labels.json` 有 `family` 一节（作者编写的家庭流，依据 `authored`）时，它单独计分，不与前四条流由真实行为推出的指标混算：前四条流的三项对照只看前四条流的输入，口径与加入家庭流之前相同；家庭流另列忽略的召回与精确率、作者事项与并入关系的同组一致、按作者档（critical > high > normal > low > trace > none）的成对排序与作者档 × 份额表，分流召回表加 family 几行。家庭流只在这一帧确实交给了模型时计分，用不含家庭流的语料跑出的旧记录复算结果不变。作者登记的问题（`family.asks`）在契约的状态里没有可对照的字段，脚本不计分，报告里人工对照。
+`labels.json` 有 `family` 一节（作者编写的家庭流，依据 `authored`）时，它单独计分，不与前四条流由真实行为推出的指标混算：前四条流的三项对照只看前四条流的输入，口径与加入家庭流之前相同；家庭流另列忽略的召回与精确率、作者事项与并入关系的同组一致、按作者档（critical > high > normal > low > trace > none）的成对排序与作者档 × 份额表，分流召回表加 family 几行。家庭流只在这一帧确实交给了模型时计分，用不含家庭流的语料跑出的旧记录复算结果不变。作者登记的问题（`family.asks`）在契约的状态里没有可对照的字段，脚本不计分，报告里人工对照。整份由作者编写的语料（[corpus/founder](../corpus/founder/README.md)）没有弱标注，`labels.json` 只有同形的 `authored` 一节，范围是全部五条流（`scope.streams`）：报告省去弱标注那几项，只列作者标注的对照，分流召回按输入所在的流。
 
 自由运行的结果可以打磨成原型的演示数据：
 
@@ -100,7 +101,7 @@ python3 scripts/eval_judgment.py --free-run --corpus corpus/composite/frames.jso
 .venv/bin/python scripts/build_demo_data.py composite --report                        # 按 edits.json 修正、重放并写 scenario.mjs
 ```
 
-修正只写在 `prototype/data/<name>/edits.json`：对 Agent 批次的增删改、处置更正、旁白、回应路径与手写反馈。脚本从空状态用内存内核逐帧重放，任何一帧被拒绝就停下；写出后再用原型引擎回放核对。演示数据的正文截到 500 字符并保留链接，不收 Enron 营销邮件；本人在来源处的回复、评审、合并与关闭按线程挂到当时的事项与回应路径上。每处修正与理由记在同目录的 POLISH.md。
+修正只写在 `prototype/data/<name>/edits.json`：对 Agent 批次的增删改、处置更正、旁白、回应路径与手写反馈。脚本从空状态用内存内核逐帧重放，任何一帧被拒绝就停下；写出后再用原型引擎回放核对。演示数据的正文截到 500 字符并保留链接，不收 Enron 营销邮件；本人在来源处的回复、评审、合并与关闭按线程挂到当时的事项与回应路径上。每处修正与理由记在同目录的 POLISH.md。数据集也可以写成 `--dataset composite|founder`；两者不同的设置（不进演示的输入、不推导反馈的线程、哪些流保留 `kind`、来源处的动作、时区的退路）写在脚本的 `DATASETS` 里。founder 还没有可导入的运行，直接构建会提示先导入。
 
 ## 体验站构建与发布
 
@@ -254,6 +255,7 @@ node scripts/export-all.mjs --out .local/export/all.html && node scripts/shoot-f
 | [scripts/label_corpus.py](../scripts/label_corpus.py) | 从真实后续行为推出弱标注 |
 | [scripts/compose_corpus.py](../scripts/compose_corpus.py) | 把几个真实来源拼成化名人物的两周，并生成弱标注与噪音统计 |
 | [scripts/family_stream.py](../scripts/family_stream.py) | 家庭流：由节拍表渲染成品、生成作者标注，并做不可回溯检查 |
+| [scripts/founder_corpus.py](../scripts/founder_corpus.py) | founder 语料：由节拍表生成成品、帧、作者标注与噪音画像并检查；[小样例](../scripts/fixtures/founder-mini/beats.json)供自测 |
 | [.editorconfig](../.editorconfig) | 编码、换行和缩进约定 |
 | [.gitattributes](../.gitattributes) | 文本文件统一使用 LF 换行 |
 | [.gitignore](../.gitignore) | 忽略环境、缓存和本地临时文件 |
@@ -277,7 +279,7 @@ node scripts/export-all.mjs --out .local/export/all.html && node scripts/shoot-f
 
 概览验收需要检查实际生成的 PNG 和 DOM：布局是否对应所选层级与份额，字体是否可读，长文本是否溢出，版本、范围和省略提示是否清楚，并与对应 JSON 核对。仅有 JSON 断言通过不足以证明视觉呈现正确；缺少浏览器或渲染失败时也不能把旧图片当成成功产物。
 
-`make check` 只检查材料；`make test` 运行内存层断言。本地存储、产品 CLI 与概览渲染器尚未实现，对应命令随实现补入。
+`make check` 只检查材料；`make test` 运行内存层断言与 founder 语料流水线的自测。本地存储、产品 CLI 与概览渲染器尚未实现，对应命令随实现补入。
 
 ## 提交署名
 

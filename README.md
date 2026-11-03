@@ -89,7 +89,7 @@ flowchart LR
 ```sh
 make setup            # 系统 python3 低于 3.11 时：make setup PYTHON=python3.12
 make check
-make test             # 用内存内核运行一致性用例
+make test             # 用内存内核运行一致性用例，并自测 founder 语料流水线
 make prototype        # 本地原型，http://127.0.0.1:4173
 ```
 

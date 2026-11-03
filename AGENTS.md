@@ -55,7 +55,7 @@
 ```sh
 make setup  # 创建本地 Python 虚拟环境，不安装第三方依赖；需要 3.11+，系统 python3 较旧时加 PYTHON=python3.12
 make check  # 检查启动文件、用例文件、文档链接与基础格式
-make test   # 用内存内核运行 conformance/cases
+make test   # 用内存内核运行 conformance/cases，并用小样例自测 founder 语料流水线
 make prototype  # 本地原型，http://127.0.0.1:4173
 npm run site:build  # 文档与原型体验站构建到 dist/，换版前的旧站（fa99395）一并放进 dist/legacy/；npm run deploy 发布到 fold.vibecoding.icu、npm run deploy:v2 发布到 fold-v2.vibecoding.icu，都只在用户指示时运行
 node scripts/export-all.mjs --out ~/Downloads/fold-prototypes.html  # 全部原型合页导出为单个 HTML，双击以 file:// 打开即用；默认写到 .local/export/
