@@ -1121,6 +1121,8 @@ function nearOf(id,px=9) {
 // Only when this page is the top window, was opened directly (no referrer) and its address had no ?frame= (syncURL
 // writes one at once, so read the address the page was loaded with). Any key or press skips to the end state.
 const TELLS={
+  // f21 → f22 (the evening before the meeting); in the card, promise the customer the transfer by 9/28; f23 (four asks closed).
+  founder:{from:'f21',to:'f22',next:'f23',item:'tinglan-outage',action:'yes928',via:'card'},
   // f21 → f22; approve #13572 in its tile; f23 (the two weeks' largest yield).
   composite:{from:'f21',to:'f22',next:'f23',item:'pr-reviews-0814',action:'approve',via:'tile'},
   // f03 → f04 (two bill leads merge into one tile); choose 固定模板 in the export tile's card; f05.

@@ -2,6 +2,7 @@ import { createResponseStore, responseStatus, normalizeAsk, setTimeZone, bindRes
 import { itemFacts, shortOf } from './motion/dial-model.mjs';
 import { IX, peekHTML, detailHTML as ixDetailHTML } from './motion/ix.mjs';
 import { responseSentence } from './sketches/stage.mjs';
+import { currentDataset, defaultDataset } from '../data/select.mjs';
 import { EASE, EASE_IN, EASE_IN_OUT, BEATS as D_BEATS, STAGGER, STAGGER_MAX, GROW, SHRINK, PRESS, popKeys, play, stepAt, makeBox,
   measureEl, ghostOf, morph, reveal, roll } from '../variants/d-motion.mjs';
 
@@ -1206,10 +1207,12 @@ export function mount(stage, model, kit) {
   // Only when this page is the top window, was opened directly (no referrer) and its address had no ?frame= (the shell
   // fills one in before this module runs, so read the address the page was loaded with).
   const TELL = {
+    // founder：f22 明早 9:30 土豆打疫苗，请爸带去；换到 f23，回答落在那一轮的输入里（真实回答，留着）。
+    founder: { from: 'f21', at: 'f22', demo: false, end: 'f23', steps: [[0.9, 'go', 'f22'], [2.8, 'press', 'tudou-ear', 'dad'], [4.4, 'go', 'f23'], [6.4, 'end']] },
     composite: { from: 'f25', at: 'f26', demo: true, end: 'f26', steps: [[0.9, 'go', 'f26'], [2.8, 'press', 'issue-13587', 'approve'], [4.4, 'step', 'pr-reviews-0814'], [5.2, 'pick', 'pr-reviews-0814', 1], [6.8, 'withdraw'], [7.8, 'end']] },
     story: { from: 'f19', at: 'f20', demo: false, end: 'f21', steps: [[0.9, 'go', 'f20'], [2.8, 'press', 'home-photo', 'photo'], [4.4, 'go', 'f21'], [6.4, 'end']] },
   };
-  const plan = TELL[new URLSearchParams(location.search).get('data') === 'story' ? 'story' : 'composite'];
+  const plan = TELL[currentDataset()] || TELL[defaultDataset];
   const frameOf = id => s.frames.findIndex(f => f.id === id);
   const topLevel = (() => { try { return window.top === window; } catch { return false; } })();
   const loadedWith = new URL(performance.getEntriesByType?.('navigation')?.[0]?.name || location.href);

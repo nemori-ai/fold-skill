@@ -18,7 +18,7 @@ import {
 } from './stage.mjs';
 import { createIx, IX } from '../motion/ix.mjs';
 import { dueText } from '../motion/dial-model.mjs';
-import { withDataset, currentDataset } from '../../data/select.mjs';
+import { withDataset, currentDataset, defaultDataset, datasets } from '../../data/select.mjs';
 
 const LAST = frames.length - 1;
 const DATA = currentDataset();
@@ -38,9 +38,11 @@ const MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 
 // ---------- the story: frame ids are page constants (polish/khipu-motion.md 第 3 节) ----------
 // 手写情境：从 f24 起，f25 发布 6 → 24（根层四倍，再走一遍折合），f26 换轮后长出发布的子层画框，停 1.5 秒。
+// 陆晨的两周（founder）：Agent 只给白鹭上线这一件分了子层。从 f04 起，f05 价目表 12 份，f06 店长说 AI 报错了种植牙的价，
+//   价目表在白鹭的 64 份里占到 24（折合根层 9 份）；换轮后长出白鹭的子层画框，停 1.5 秒。
 // composite 两周没有子层：不讲，停在 f26。
-const PLAN = { story: { from: 'f24', steps: [['post', 'f25', 0.8], ['post', 'f26', 0.3], ['drill', 'launch'], ['hold', 1.5]] } };
-const DEFAULT_FRAME = { composite: 'f26', story: 'f26' };
+const PLAN = { founder: { from: 'f04', steps: [['post', 'f05', 0.8], ['post', 'f06', 0.3], ['drill', 'bailu-cutover'], ['hold', 1.5]] }, story: { from: 'f24', steps: [['post', 'f25', 0.8], ['post', 'f26', 0.3], ['drill', 'launch'], ['hold', 1.5]] } };
+const DEFAULT_FRAME = { founder: 'f06', composite: 'f26', story: 'f26' };
 const plan = (() => {
   const p = PLAN[DATA];
   if (!p) return null;
@@ -65,11 +67,13 @@ const key = `
   <span><i class="k-key-ask"></i>此刻开着的问题</span>
   <span><i class="k-key-grey"></i>换轮时打结、折合，落定后不留</span>
   <span class="note"><kbd>←</kbd><kbd>→</kbd> 逐帧 <kbd>空格</kbd> 连播 <kbd>Enter</kbd> 展开 <kbd>Esc</kbd> 收回</span>`;
-const dataHref = DATA === 'story' ? 'khipu.html?data=composite' : 'khipu.html?data=story';
+// From the story the link goes back to the default dataset; from any other dataset to the story's layers.
+const dataHref = DATA === 'story' ? `khipu.html?data=${defaultDataset}` : 'khipu.html?data=story';
+const dataLabel = DATA === 'story' ? `${datasets[defaultDataset].label.split(' · ').pop()} →` : DATA === 'composite' ? '看手写情境的子层 →' : '看手写情境 →';
 const stage = createStage({
   id: 'khipu', no: 11, name: '结绳', storyIndex: Math.max(0, indexOfId(DEFAULT_FRAME.story)), key,
   relation: '层级份额与分组合计：一件事里还有自己的 64 份，子层里的一份要乘着上面每一层才折合成根层；合计绳是一组事的和。',
-  tools: `${plan ? '<button type="button" class="k-tell" data-k="tell" title="从头讲一遍（任意键跳过）">▶ 讲一遍</button>' : ''}<a class="k-data" data-k="data" href="${esc(dataHref)}" title="换一个数据集">${DATA === 'story' ? '真实语料（没有子层）→' : '看手写情境的子层 →'}</a>`,
+  tools: `${plan ? '<button type="button" class="k-tell" data-k="tell" title="从头讲一遍（任意键跳过）">▶ 讲一遍</button>' : ''}<a class="k-data" data-k="data" href="${esc(dataHref)}" title="换一个数据集">${esc(dataLabel)}</a>`,
 });
 document.querySelector('.st-kicker').textContent = 'FOLD · 第四轮 · 关系的画法';
 const figure = stage.figure;

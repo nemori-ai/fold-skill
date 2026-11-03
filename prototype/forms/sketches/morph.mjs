@@ -34,7 +34,8 @@ const pctText = x => (x === 0 ? '0%' : x < 0.95 ? `${x.toFixed(1)}%` : `${Math.r
 // ---------- the story (frame ids are page constants, not data) ----------
 // composite：f26 收到最多的 master CI 141 条 → 6 份，份额最多的主水管 29 条 → 24 份。
 // story：f15 发布 11 条 → 3 份，妈妈 10 条 → 24 份（与让位图手写情境的第一拍同一轮）。
-const PLAN = { composite: 'f26', story: 'f15' };
+// founder：f21 收到最多的白鹭上线 295 条 → 3 份，份额最多的周三晚故障 145 条 → 24 份。
+const PLAN = { founder: 'f21', composite: 'f26', story: 'f15' };
 const TELL = { open: 0.4, grow: 1.0, hold1: 1.0, morph: 1.4, hold2: 0.6, markFade: 0.2, end: 7.0 };
 const T_GROW = TELL.open, T_MORPH = T_GROW + TELL.grow + TELL.hold1, T_MARK = T_MORPH + TELL.morph + TELL.hold2;
 const plan = (() => {

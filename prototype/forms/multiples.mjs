@@ -40,7 +40,8 @@ const T = {
 };
 // The three beats, by frame id per dataset (as the dial does it). Beat 1 ends on a hold, beat 2 ends on a hold, beat 3 is
 // the one round played at full length.
-const BEATS = { composite: { b1: 'f03', b2: 'f22', b3: 'f23' }, story: { b1: 'f05', b2: 'f14', b3: 'f15' } };
+// founder：第三拍是周三晚的故障那一轮（f20），一块 24 格整块换手。
+const BEATS = { founder: { b1: 'f03', b2: 'f19', b3: 'f20' }, composite: { b1: 'f03', b2: 'f22', b3: 'f23' }, story: { b1: 'f05', b2: 'f14', b3: 'f15' } };
 const STREAM_ORDER = ['work', 'family', 'life', 'community', 'subscription', null];
 
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));

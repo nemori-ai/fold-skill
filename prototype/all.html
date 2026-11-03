@@ -121,12 +121,13 @@
 
   // Sections in reading order. `see` is what the form lets you see and `answers` the responses it carries, both
   // taken from the README「十二种形式」table and catalog.mjs, not written here. `frame` is the entry frame per
-  // dataset: composite follows the README entries, the story uses the concept cards' default; pages without one
+  // dataset: founder opens on f22 (the evening before the customer meeting), composite follows the README entries,
+  // the story uses the concept cards' default; pages without one
   // (the round-two review pages, the response kit) open at their own default.
   const card = id => forms.find(f => f.id === id) || withdrawn.find(f => f.id === id);
   const sketch = id => sketches.find(f => f.id === id);
   const motion = id => motions.find(f => f.id === id);
-  const at = (composite, story = 14) => ({ composite, story });
+  const at = (founder, composite, story = 14) => ({ founder, composite, story });
   const README = {
     original: ['在电脑前掌握两周局面，顺手处理工作评审', 'approve（格子里直接批准或要求修改）；其余在详情里作答', 'spatial'],
     a: ['桌前，生活急事要当场二选一', 'choose、稍后；也能批准、定时间、回一句', 'spatial'],
@@ -151,28 +152,28 @@
   const desk = (id, name, href, frame) => ({ id, name, href, embed: { embed: 1 }, frame, see: README[id][0], answers: README[id][1], notes: README[id][2] });
   const groups = [
     { title: '原版与五个方案', note: '原版树图与 A/B/C/D/E 共用一套回放与底栏；这里隐藏了它们之间的方案切换栏，其余与单独打开一致。', sections: [
-      desk('original', '原版树图', 'index.html', at(26)),
-      desk('a', 'A 空间排布', 'index.html?variant=a', at(26)),
-      desk('b', 'B 时间展开', 'index.html?variant=b', at(26)),
-      desk('c', 'C 流动形态', 'index.html?variant=c', at(25)),
-      { ...desk('d', 'D 手机首页', 'index.html?variant=d', at(26)), size: 'is-phone' },
-      desk('duo', 'E 折叠屏', 'index.html?variant=duo', at(26, 4)),
+      desk('original', '原版树图', 'index.html', at(22, 26)),
+      desk('a', 'A 空间排布', 'index.html?variant=a', at(22, 26)),
+      desk('b', 'B 时间展开', 'index.html?variant=b', at(22, 26)),
+      desk('c', 'C 流动形态', 'index.html?variant=c', at(22, 25)),
+      { ...desk('d', 'D 手机首页', 'index.html?variant=d', at(22, 26)), size: 'is-phone' },
+      desk('duo', 'E 折叠屏', 'index.html?variant=duo', at(22, 26, 4)),
     ] },
     { title: '第一轮留下的形式', note: '概念卡收起（card=0），页头的帧导航与“状态”仍可用。', sections: [
-      { id: 'watch', name: card('watch').name, href: 'forms/watch.html', embed: { card: 0 }, frame: at(26), see: card('watch').tagline, answers: README.watch[1], notes: README.watch[2], size: 'is-watch' },
-      { id: 'multiples', name: card('multiples').name, href: 'forms/multiples.html', embed: { card: 0 }, frame: at(26), see: card('multiples').tagline, answers: README.multiples[1], notes: README.multiples[2] },
+      { id: 'watch', name: card('watch').name, href: 'forms/watch.html', embed: { card: 0 }, frame: at(22, 26), see: card('watch').tagline, answers: README.watch[1], notes: README.watch[2], size: 'is-watch' },
+      { id: 'multiples', name: card('multiples').name, href: 'forms/multiples.html', embed: { card: 0 }, frame: at(22, 26), see: card('multiples').tagline, answers: README.multiples[1], notes: README.multiples[2] },
     ] },
     { title: '第二轮：复盘图', note: '五张图各自回答一种别处看不见的关系；未选帧时停在各自的默认帧。', sections: ['lineage', 'timing', 'provenance', 'yield', 'notation'].map(id => (
       { id, name: sketch(id).name, href: `forms/sketches/${id}.html`, frame: null, see: sketch(id).relation, answers: README[id][1], notes: README[id][2] })) },
     { title: '第四轮：关系的画法', note: '只画 Agent 判断里的一种关系，读同一份回放；未选帧时停在各自的默认帧，合页里不讲开场。', sections: [...['morph', 'peak', 'age', 'chain', 'tug', 'khipu'].map(id => (
       { id, name: sketch(id).name, href: `forms/sketches/${id}.html`, frame: null, see: sketch(id).relation, answers: README[id][1], notes: README[id][2] })),
-      // 回应托盘是手机上的形式页（同腕上一瞥的页框）：概念卡收起，未选帧时停在 f26（story 是 f20，五个托盘）。
-      { id: 'trays', name: card('trays').name, href: 'forms/trays.html', embed: { card: 0 }, frame: at(26, 22), see: card('trays').tagline, answers: 'confirm、approve、choose 一下；defer、schedule 两下（先点开再挑）；reply 有建议句一下、没有两下；托盘里轻点作答，轻点托盘长出详情，长按看概要', notes: 'trays-motion', size: 'is-phone' }] },
-    { title: '第五轮：小屏', note: '眼镜的显示面按 1:1 像素放大，概念卡收起（card=0）；未选帧时停在 f26（story 是 f22，最前那件换了的一轮），合页里不讲开场。', sections: [
-      { id: 'glasses', name: card('glasses').name, href: 'forms/glasses.html', embed: { card: 0 }, frame: at(26, 24), see: card('glasses').tagline, answers: 'confirm、approve 与 ≤ 4 项的 choose 在眼镜上答（轻点打开、滑动换选、轻点确定）；reply、schedule、defer 长按交给手机；通话中亮对方在等的那一件', notes: 'glasses-concept' }] },
+      // 回应托盘是手机上的形式页（同腕上一瞥的页框）：概念卡收起，未选帧时停在 f22（六个托盘；composite 是 f26，story 是 f22）。
+      { id: 'trays', name: card('trays').name, href: 'forms/trays.html', embed: { card: 0 }, frame: at(22, 26, 22), see: card('trays').tagline, answers: 'confirm、approve、choose 一下；defer、schedule 两下（先点开再挑）；reply 有建议句一下、没有两下；托盘里轻点作答，轻点托盘长出详情，长按看概要', notes: 'trays-motion', size: 'is-phone' }] },
+    { title: '第五轮：小屏', note: '眼镜的显示面按 1:1 像素放大，概念卡收起（card=0）；未选帧时停在最前那件换了的一轮（陆晨的两周是 f21，composite 是 f26，story 是 f24），合页里不讲开场。', sections: [
+      { id: 'glasses', name: card('glasses').name, href: 'forms/glasses.html', embed: { card: 0 }, frame: at(21, 26, 24), see: card('glasses').tagline, answers: 'confirm、approve 与 ≤ 4 项的 choose 在眼镜上答（轻点打开、滑动换选、轻点确定）；reply、schedule、defer 长按交给手机；通话中亮对方在等的那一件', notes: 'glasses-concept' }] },
     { title: '第三轮：概念动画', note: '官网用的概念动画，读同一份回放。整理脉冲未选帧时从 f00 自动连播，顶栏选帧时演一遍那一轮再停住；份额拨盘单独打开时循环 20 秒的三拍，合页里只走单帧，跟着顶栏的帧走，不自己循环。两页都可以悬停看概要、点击展开详情。', sections: [
       { id: 'pulse', name: motion('pulse').name, href: `forms/${motion('pulse').page}`, embed: { card: 0 }, frame: null, see: motion('pulse').tagline, answers: '不承载作答；朱红只标新登记的问题、你的回应与答掉的记号；悬停枝条看概要，点击展开详情，问题旁的“去回答 →”链到同一帧的 D' },
-      { id: 'dial', name: motion('dial').name, href: `forms/${motion('dial').page}`, embed: { card: 0 }, frame: at(26, 17), see: motion('dial').tagline, answers: '不承载作答；游标只指要紧的问题；悬停扇区看概要，点击展开详情，问题旁的“去回答 →”链到同一帧的 D' },
+      { id: 'dial', name: motion('dial').name, href: `forms/${motion('dial').page}`, embed: { card: 0 }, frame: at(22, 26, 17), see: motion('dial').tagline, answers: '不承载作答；游标只指要紧的问题；悬停扇区看概要，点击展开详情，问题旁的“去回答 →”链到同一帧的 D' },
     ] },
     { title: '回应组件', note: '', sections: [
       { id: 'respond', name: '回应组件页', href: 'forms/respond.html', frame: null, see: '按 ask.expects 逐类演示六种回应控件，并列出与 event.feedback 同形的反馈记录；顶栏选帧时改的是它的回放时刻。', answers: 'confirm、choose、reply、schedule、approve、defer', size: 'is-long' },
