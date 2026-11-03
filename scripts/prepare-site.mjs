@@ -170,8 +170,9 @@ for (const [source, output] of assets) {
 }
 
 // The 16-page booklet that used to live at /docs/brief/ became docs/why.md: its old address forwards there, with the
-// old page anchors mapped to the sections that now carry them.
-const briefPages = { 2: 'two-of-many', 3: 'front-page', 4: 'two-of-many', 5: 'where-it-errs', 6: 'where-it-errs', 7: 'same-game', 8: 'same-game', 9: 'same-game', 10: 'same-game', 11: 'same-game', 12: 'after-answer', 13: 'after-answer', 14: 'where-we-are', 15: 'where-we-are' };
+// old page anchors mapped to the sections that now carry them (it keeps the booklet's order: pages 2–13 are sections
+// 2–13, pages 14 and 15 became section 14, page 16 became the foot).
+const briefPages = { 2: 'two-of-many', 3: 'front-page', 4: 'two-weeks', 5: 'mostly-right', 6: 'where-it-errs', 7: 'same-game', 8: 'glance', 9: 'desk', 10: 'when', 11: 'review', 12: 'after-answer', 13: 'try', 14: 'where-we-are', 15: 'where-we-are' };
 await write('public/docs/brief/index.html', `<!doctype html>
 <html lang="zh-CN">
 <head>
