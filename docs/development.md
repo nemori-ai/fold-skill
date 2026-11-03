@@ -152,28 +152,28 @@ node scripts/check-ix.mjs --data story                            # 悬停与展
 
 每种形式写 `<out>/<form>.png`，另写 `report.json`（URL、页面报错、检查结果）；有报错时退出码为 1。`--eval "<js>"` 在截图前执行一段脚本，`--base` 改原型地址，`CHROME` 环境变量指定浏览器。默认关掉显卡，页面里的 WebGL 会退回 Canvas 2D；要截 WebGL 画面（整理脉冲的粒子与余辉）时加 `--gpu`。
 
-体验站导航的“全部原型”面板与入口页的画廊共用 `site/.vitepress/theme/prototypes.mjs` 列出的全部原型，面板顺序、默认帧与弹框里加的 `embed=1`、`card=0` 都照合页 `all.html`。卡片预览图是 `site/previews/<id>.webp`（640×400，共约 560 KB），原型界面明显变化后按同样的参数重截：原版与 A/B/C/D/E 隐藏方案切换栏，形式页收起概念卡，复盘图与回应组件页用各自的默认帧（批次记谱直接打开会先演开场，截图前跳到终态；回应时序直接打开会先讲一遍，所以带上它弹框里停的默认帧 f26），概念动画在弹框里不带帧（播各自的循环），预览图停在第三拍：份额拨盘取落定的 f26，整理脉冲加 `--gpu` 取 f20 朱红线打下的那一刻，再用 Homebrew 的 `cwebp` 缩到 640 像素宽：
+体验站导航的“全部原型”面板与入口页的画廊共用 `site/.vitepress/theme/prototypes.mjs` 列出的全部原型，面板顺序、默认帧与弹框里加的 `embed=1`、`card=0` 都照合页 `all.html`。卡片预览图是 `site/previews/<id>.webp`（640×400，共约 760 KB），原型界面明显变化后按同样的参数重截：原版与 A/B/C/D/E 隐藏方案切换栏，形式页收起概念卡，复盘图与回应组件页用各自的默认帧（批次记谱直接打开会先演开场，截图前跳到终态；回应时序直接打开会先讲一遍，所以带上它弹框里停的默认帧 f28），概念动画在弹框里不带帧（播各自的循环），预览图停在第三拍：份额拨盘取落定的 f21，整理脉冲加 `--gpu` 取 f20 朱红线打下的那一刻，再用 Homebrew 的 `cwebp` 缩到 640 像素宽：
 
 ```sh
 out=.local/previews
-node scripts/shoot-forms.mjs --out $out --only original,a,b,d,duo --frame 26 --eval "document.documentElement.classList.add('is-embedded')"
-node scripts/shoot-forms.mjs --out $out/c --only c --frame 25 --eval "document.documentElement.classList.add('is-embedded')"
-node scripts/shoot-forms.mjs --out $out/w --only watch,multiples --frame 26 --eval "document.querySelector('[data-card]').click()"
+node scripts/shoot-forms.mjs --out $out --only original,a,b,d,duo --frame 22 --eval "document.documentElement.classList.add('is-embedded')"
+node scripts/shoot-forms.mjs --out $out/c --only c --frame 22 --eval "document.documentElement.classList.add('is-embedded')"
+node scripts/shoot-forms.mjs --out $out/w --only watch,multiples --frame 22 --eval "document.querySelector('[data-card]').click()"
 node scripts/shoot-forms.mjs --out $out/r --only radio,strips,frontpage,receipt,orb,departures,blame,chat --eval "document.querySelector('[data-card]').click()"
 node scripts/shoot-forms.mjs --out $out/s --only lineage,provenance,respond
 node scripts/shoot-forms.mjs --out $out/n --only notation --eval "foldNotation.skip()"
-node scripts/shoot-forms.mjs --out $out/t --only timing --frame 26
-node scripts/shoot-forms.mjs --out $out/y --only yield --frame 22     # 让位图不带帧直接打开会讲一遍，预览取静止的默认帧
+node scripts/shoot-forms.mjs --out $out/t --only timing --frame 28
+node scripts/shoot-forms.mjs --out $out/y --only yield --frame 20     # 让位图不带帧直接打开会讲一遍，预览取静止的默认帧
 node scripts/shoot-forms.mjs --out $out/v --only morph --frame 28     # 变形同理，静止时停在最后一帧
-node scripts/shoot-forms.mjs --out $out/k --only peak --frame 26      # 峰值保持同理，取弹框里停的默认帧 f26
-node scripts/shoot-forms.mjs --out $out/g --only age --frame 26       # 驻龄同样：取弹框里停的默认帧 f26
+node scripts/shoot-forms.mjs --out $out/k --only peak --frame 22      # 峰值保持同理，取弹框里停的默认帧 f22
+node scripts/shoot-forms.mjs --out $out/g --only age --frame 22       # 驻龄同样：取弹框里停的默认帧 f22
 node scripts/shoot-forms.mjs --out $out/ch --only chain --frame 28    # 等待链同上，取弹框里停的最后一帧
-node scripts/shoot-forms.mjs --out $out/u --only tug --frame 26       # 拔河同样，预览取故事的末帧 f26
+node scripts/shoot-forms.mjs --out $out/u --only tug --frame 28       # 拔河同样，预览取两周的末帧 f28
 node scripts/shoot-forms.mjs --out $out/kh --only khipu --data story --frame f26   # 结绳的默认样张是手写情境；带帧打开不讲，取 f26 的根层
-node scripts/shoot-forms.mjs --out $out/m --only dial --frame 26 --eval "document.querySelector('[data-card]').click()"
+node scripts/shoot-forms.mjs --out $out/m --only dial --frame 21 --eval "document.querySelector('[data-card]').click()"
 node scripts/shoot-forms.mjs --out $out/p --only pulse --gpu --frame 20 --eval "(async () => { document.querySelector('[data-card]').click(); await new Promise(r => setTimeout(r, 400)); foldPulse.seek(20, 3.55); })()"
-node scripts/shoot-forms.mjs --out $out/t4 --only trays --frame 26 --eval "document.querySelector('[data-card]').click()"   # 回应托盘带帧打开不讲一遍
-node scripts/shoot-forms.mjs --out $out/gl --only glasses --frame 26 --eval "(async () => { document.querySelector('[data-card]').click(); foldGlasses.press('click'); await foldGlasses.settle(); })()"   # 智能眼镜带帧打开不讲一遍，预览取 f26 打开的那一件
+node scripts/shoot-forms.mjs --out $out/t4 --only trays --frame 22 --eval "document.querySelector('[data-card]').click()"   # 回应托盘带帧打开不讲一遍
+node scripts/shoot-forms.mjs --out $out/gl --only glasses --frame 21 --eval "(async () => { document.querySelector('[data-card]').click(); foldGlasses.press('click'); await foldGlasses.settle(); })()"   # 智能眼镜带帧打开不讲一遍，预览取 f21 打开的那一件
 for f in $out/*.png $out/*/*.png; do cwebp -quiet -q 82 -m 6 -sharp_yuv -resize 640 0 "$f" -o "site/previews/$(basename "$f" .png).webp"; done
 ```
 
