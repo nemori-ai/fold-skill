@@ -10,7 +10,7 @@
 - **真实语料。** 从公开渠道收集带噪音的真实输入，拼成化名人物 Jonas 的两周，再加上作者编写的家庭往来，共 3217 条（家庭流 388 条）；前四条流用当事人后来的行为推出弱标注，家庭流的标注由作者写定，见[真实语料](corpus/README.md)。
 - **原型与形式。** 第二次自由运行的结果经人工打磨（修正逐条记录）成原型的默认演示数据；同一份状态有十二种表达形式，共用一套回应组件，见[交互原型](prototype/README.md)。另一套手写情境的输入与判断预先编排，可切换。演示不代表真实 Agent 已经稳定达到其中的判断质量。
 
-想先快速看懂这项工作，读 16 页的[小册子](docs/brief/index.html)；精确规则以下面的规范为准。各处撞到、还没决定的问题集中在[决策记录的未决问题](docs/decisions.md#未决问题)。
+想先弄清为什么做这件事，从头读[为什么要做 Fold](docs/why.md)；精确规则以下面的规范为准。各处撞到、还没决定的问题集中在[决策记录的未决问题](docs/decisions.md#未决问题)。
 
 人离开后再回来，是首个验收场景；Fold 同样适用于人在场时的持续整理。需要立即告知的事情先走即时渠道，再按持续关注价值纳入状态。
 
@@ -36,7 +36,7 @@ flowchart LR
 
 | 想了解什么 | 入口 |
 | --- | --- |
-| 这项工作在做什么、做到了哪里 | [小册子](docs/brief/index.html)：问题、假设、真实数据、评测、按读者处境分工的表达形式与还缺什么，16 页 |
+| 为什么做这件事、做到了哪里 | [为什么要做 Fold](docs/why.md)：问题从哪来、为什么难、Fold 的两个判断、模型会错在哪、现在做到了哪 |
 | 产品为什么做、人怎样使用 | [产品方向](docs/product.md)、[用户故事](docs/user-stories.md) |
 | 现在的范围、实施顺序与未决问题 | [决策记录](docs/decisions.md) |
 
@@ -55,7 +55,7 @@ flowchart LR
 | [docs/formal-model.md](docs/formal-model.md) | 用数学检查输入输出、语义估计、预算与执行的关系；可先读公式旁的解释 |
 | [docs/decisions.md](docs/decisions.md) | 首切片范围、实施顺序、并行工作的进展与未决问题 |
 
-准备实现时，接着读 [AGENTS.md](AGENTS.md) 与[工作环境说明](docs/development.md)。[六组一致性用例](conformance/cases)提供验收材料，[配图索引](docs/visual-guide.md)帮助定位图示。[原始设计草案 v0.3](docs/reference/design-v0.3.md) 原样保存，供回看动机与早期设计，不是现行实现规范。故事、配图、形式模型与小册子用于解释；精确外部行为以信息契约为准，持久化以架构为准，范围及实施次序以决策记录为准。
+准备实现时，接着读 [AGENTS.md](AGENTS.md) 与[工作环境说明](docs/development.md)。[六组一致性用例](conformance/cases)提供验收材料，[配图索引](docs/visual-guide.md)帮助定位图示。[原始设计草案 v0.3](docs/reference/design-v0.3.md) 原样保存，供回看动机与早期设计，不是现行实现规范。故事、配图、形式模型与“为什么要做 Fold”一篇用于解释；精确外部行为以信息契约为准，持久化以架构为准，范围及实施次序以决策记录为准。
 
 ### 判断与评测
 
@@ -99,9 +99,9 @@ make prototype        # 本地原型，http://127.0.0.1:4173
 
 ## 文档与原型体验站
 
-在线体验：[fold.vibecoding.icu](https://fold.vibecoding.icu/)。首页是一页入口：首屏把同一刻 Agent 读过的 3051 条铺成一片点，一扇窗随处境改形（骑车、桌前、复盘），窗里重新编码、没用到的原地暗下；往下是为什么这是新问题（一个软件的通知有尽头，Agent 看见的没有）、六种处境按带宽从窄到宽、一种编码的例子（把注意力切成固定的份数：一轮整理的三拍与一张能按的演示卡）、六种处境的原型（各一段循环录像）与其余原型的轮播，所有数字都来自演示回放的第 26 轮；第三轮入口页用 `npm run deploy:v2` 先发到 fold-v2.vibecoding.icu；规格、选型与验收见 [site/landing/spec.md](site/landing/spec.md)。顶部菜单的“全部原型”是全部原型（含第三轮的概念动画）的画册网格（顺序与[合页](prototype/all.html)相同），点卡片在当前页的弹框里载入那个原型，可直接逐帧回放与就地回应，也可另开新标签页。默认演示数据与小册子截图含化名改写的真实公开文本，2026-10-15 用户决定照现状公开，来源、许可与已知的署名缺口见 [SOURCES.md](prototype/data/composite/SOURCES.md#公开与许可)。
+在线体验：[fold.vibecoding.icu](https://fold.vibecoding.icu/)。首页是一页入口：首屏把同一刻 Agent 读过的 3051 条铺成一片点，一扇窗随处境改形（骑车、桌前、复盘），窗里重新编码、没用到的原地暗下；往下是为什么这是新问题（一个软件的通知有尽头，Agent 看见的没有）、六种处境按带宽从窄到宽、一种编码的例子（把注意力切成固定的份数：一轮整理的三拍与一张能按的演示卡）、六种处境的原型（各一段循环录像）与其余原型的轮播，所有数字都来自演示回放的第 26 轮；第三轮入口页用 `npm run deploy:v2` 先发到 fold-v2.vibecoding.icu；规格、选型与验收见 [site/landing/spec.md](site/landing/spec.md)。顶部菜单的“全部原型”是全部原型（含第三轮的概念动画）的画册网格（顺序与[合页](prototype/all.html)相同），点卡片在当前页的弹框里载入那个原型，可直接逐帧回放与就地回应，也可另开新标签页。默认演示数据与站内截图含化名改写的真实公开文本，2026-10-15 用户决定照现状公开，来源、许可与已知的署名缺口见 [SOURCES.md](prototype/data/composite/SOURCES.md#公开与许可)。
 
-体验站使用 VitePress 构建文档导航、中文搜索、公式和流程图，在 `/prototype/` 提供完整原型，在 `/docs/brief/` 提供小册子。原始 Markdown 和原型代码仍是内容源；构建时生成站点文件。
+体验站使用 VitePress 构建文档导航、中文搜索、公式和流程图，在 `/prototype/` 提供完整原型，在 `/docs/why` 提供从头读起的一篇（旧小册子的地址 `/docs/brief/` 跳到这里）。原始 Markdown 和原型代码仍是内容源；构建时生成站点文件。
 
 使用 Node.js 22+，在仓库根目录执行：
 
@@ -111,6 +111,7 @@ npm run site:dev      # 本地文档与原型，http://127.0.0.1:4174
 npm run site:build    # 生成 dist/
 npm run site:preview  # 预览构建结果
 node scripts/check-landing.mjs  # 入口页自动检查（读 dist/）：数字对得上 data.json、七个尺寸无报错无横向滚动、减弱动态给终态、画廊块数等
+node scripts/check-why.mjs      # /docs/why 的检查（读 dist/）：七个尺寸无报错无横向滚动、图片都加载、旧地址 /docs/brief/ 能跳过来
 ```
 
 本机 Wrangler 登录后，`npm run deploy` 构建并发布到 Cloudflare Workers Static Assets；只在用户指示时运行。部署配置为 `wrangler.jsonc`，只上传 `dist/`；依赖、缓存和本地试验资料不发布。构建目录和依赖均不提交版本库。

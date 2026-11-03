@@ -65,8 +65,8 @@ export default defineConfig({
       };
       const linkOpen = md.renderer.rules.link_open;
       md.renderer.rules.link_open = (tokens, index, options, env, self) => {
-        // Prototype pages and the brief are static HTML outside the VitePress router.
-        if (/^\/(?:prototype|docs\/brief)\//.test(tokens[index].attrGet('href') || '')) {
+        // Prototype pages are static HTML outside the VitePress router.
+        if (/^\/prototype\//.test(tokens[index].attrGet('href') || '')) {
           tokens[index].attrSet('data-vp-ignore', '');
           tokens[index].attrSet('target', '_self');
         }
@@ -81,9 +81,9 @@ export default defineConfig({
       { text: '处境', link: '/#bandwidth' },
       // 全部原型：铺开全部原型的画册面板，点卡片在本页弹框里打开（theme/PrototypeMenu.vue、PrototypeLayer.vue）。
       { component: 'PrototypeMenu' },
-      { text: '小册子', link: '/docs/brief/index.html', target: '_self' },
+      { text: '从头读起', link: '/docs/why' },
       // 文档：按读者分组，与入口页的文档区同一份清单（theme/landing.mjs DOC_GROUPS）。
-      { text: '文档', activeMatch: '^/(?:overview|agents|docs|skill|corpus|prototype-notes|conformance|source)(?:/|$)', items: DOC_GROUPS.map(group => ({
+      { text: '文档', activeMatch: '^/(?:overview|agents|docs(?!/why)|skill|corpus|prototype-notes|conformance|source)(?:/|$)', items: DOC_GROUPS.map(group => ({
         text: group.title,
         items: group.items.map(([text, link]) => (link.endsWith('.html') ? { text, link, target: '_self' } : { text, link })),
       })) },
@@ -91,7 +91,7 @@ export default defineConfig({
     sidebar: [
       { text: '产品', items: [
         { text: '项目概览', link: '/overview' },
-        { text: '小册子（16 页图文）', link: '/docs/brief/index.html', target: '_self' },
+        { text: '为什么要做 Fold', link: '/docs/why' },
         { text: '产品方向', link: '/docs/product' },
         { text: '用户故事', link: '/docs/user-stories' },
         { text: 'Skill 设计', link: '/docs/skill-design' },

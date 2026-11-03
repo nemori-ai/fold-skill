@@ -90,7 +90,7 @@ export function directHref(prototype) {
 
 export const DOC_GROUPS = [
   { title: '第一次了解', note: '五分钟到半小时', items: [
-    ['小册子', '/docs/brief/index.html', '16 页图文：问题、假设、真实数据、评测与形式'],
+    ['为什么要做 Fold', '/docs/why', '从头读到尾：问题从哪来、为什么难、Fold 的判断、做到了哪'],
     ['项目概览', '/overview', '整体流程、当前阶段与阅读顺序'],
     ['产品方向', '/docs/product', '为什么做、核心体验、术语与成功信号'],
     ['用户故事', '/docs/user-stories', '五个完整情境：人看到什么、Agent 怎样整理'],

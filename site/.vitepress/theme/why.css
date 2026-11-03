@@ -1,0 +1,527 @@
+/* 为什么要做 Fold（docs/why.md，layout: page，pageClass: fold-why）：入口页那张纸上的一篇长文。
+   颜色取 style.css 映射好的主题变量，深浅跟文档页走；字与栅格照 site/landing/style.md：标题与引句是
+   Fold Serif SC 子集（scripts/landing-fonts.mjs 从这一篇的标题与引句收字），小字是系统等宽，正文是系统字。
+   手机一栏；iPad 竖屏一栏放宽；960 起 8 列，左两列是钉住的节名，右六列是正文与图。 */
+
+.fold-why {
+  --fw-ink: var(--vp-c-text-1);
+  --fw-ink-2: var(--vp-c-text-2);
+  --fw-ink-3: var(--vp-c-text-3);
+  --fw-rule: var(--vp-c-divider);
+  --fw-line: var(--vp-c-border);
+  --fw-card: var(--vp-c-bg-elv);
+  --fw-m: 16px;
+}
+
+/* No outline bar under the nav: the page carries its own list of sections. */
+.fold-why .VPLocalNav {
+  display: none !important;
+}
+
+.fw {
+  max-width: calc(1280px + 2 * var(--fw-m));
+  margin: 0 auto;
+  padding: 0 var(--fw-m) 72px;
+  overflow-wrap: break-word;
+  color: var(--fw-ink);
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.fw p,
+.fw h1,
+.fw h2,
+.fw ul,
+.fw ol {
+  margin: 0;
+}
+
+/* No lone character at the end of a paragraph where the browser can help it. */
+.fw p,
+.fw li,
+.fw td {
+  text-wrap: pretty;
+}
+
+.fw a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--fw-line);
+  text-underline-offset: 4px;
+}
+
+.fw a:focus-visible {
+  outline: 2px solid var(--fw-ink);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .fw a:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+.fw .header-anchor {
+  display: none;
+}
+
+.fw-kick,
+.fw-no {
+  font: 11px/1.4 var(--vp-font-family-mono);
+  letter-spacing: 0.06em;
+  color: var(--fw-ink-2);
+}
+
+/* ---------- the head and the list of sections ---------- */
+
+.fw-head {
+  padding-top: 28px;
+}
+
+.fw h1 {
+  margin-top: 8px;
+  font: 700 32px/1.25 var(--fold-font-display);
+  letter-spacing: 0.01em;
+}
+
+.fw-lede {
+  margin-top: 12px;
+  max-width: 34em;
+  color: var(--fw-ink-2);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.fw-toc ol {
+  margin-top: 28px;
+  padding: 0;
+  list-style: none;
+  counter-reset: fw-toc;
+  border-top: 1px solid var(--fw-ink);
+}
+
+.fw-toc li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.2em minmax(0, 1fr);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--fw-rule);
+  counter-increment: fw-toc;
+  line-height: 1.45;
+}
+
+.fw-toc li::before {
+  content: "0" counter(fw-toc);
+  grid-row: 1 / 3;
+  padding-top: 3px;
+  font: 11px/1.4 var(--vp-font-family-mono);
+  color: var(--fw-ink-3);
+}
+
+.fw-toc a {
+  font: 700 16px/1.45 var(--fold-font-display);
+  text-decoration: none;
+}
+
+/* The whole row is the link's target, at least 44px tall. */
+.fw-toc a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.fw-toc span {
+  grid-column: 2;
+  font-size: 13px;
+  color: var(--fw-ink-2);
+}
+
+@media (hover: hover) {
+  .fw-toc li:hover a {
+    text-decoration: underline;
+    text-decoration-color: currentColor;
+  }
+}
+
+/* ---------- sections ---------- */
+
+.fw-sec {
+  margin-top: 56px;
+  padding-top: 14px;
+  border-top: 1px solid var(--fw-ink);
+  scroll-margin-top: 16px;
+}
+
+.fw h2 {
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  font: 700 25px/1.32 var(--fold-font-display);
+  letter-spacing: 0.01em;
+  scroll-margin-top: calc(var(--vp-nav-height) + 16px);
+}
+
+.fw-body {
+  margin-top: 18px;
+}
+
+.fw-body > p,
+.fw-body > ul,
+.fw-body > blockquote {
+  max-width: 34em;
+}
+
+.fw-body > p + p,
+.fw-body > p + ul,
+.fw-body > ul + p {
+  margin-top: 0.85em;
+}
+
+.fw-body > ul {
+  margin-top: 0.6em;
+  padding-left: 1.2em;
+  list-style: disc;
+}
+
+.fw-body > ul > li::marker {
+  color: var(--fw-ink-3);
+}
+
+.fw-body li + li {
+  margin-top: 0.35em;
+}
+
+.fw-body strong {
+  font-weight: 650;
+}
+
+/* A judgment that stands on its own line. */
+.fw blockquote {
+  margin: 1.3em 0;
+  padding: 2px 0 2px 14px;
+  border-left: 2px solid var(--fw-ink);
+}
+
+.fw blockquote p {
+  font: 700 19px/1.5 var(--fold-font-display);
+  letter-spacing: 0.01em;
+}
+
+/* The six inputs and what the Agent did with them. */
+.fw table {
+  display: table;
+  width: 100%;
+  max-width: 44em;
+  margin: 1.1em 0 1.4em;
+  border-collapse: collapse;
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+.fw th {
+  padding: 0 12px 6px 0;
+  border-bottom: 1px solid var(--fw-ink);
+  text-align: left;
+  font: 11px/1.4 var(--vp-font-family-mono);
+  letter-spacing: 0.06em;
+  color: var(--fw-ink-2);
+}
+
+.fw td {
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--fw-rule);
+  vertical-align: top;
+}
+
+.fw td:first-child {
+  width: 54%;
+}
+
+.fw td:last-child {
+  color: var(--fw-ink-2);
+}
+
+.fw td strong {
+  color: var(--fw-ink);
+}
+
+/* ---------- the four readings of one moment ----------
+   Two rows, each a justified row: a pane's basis and growth follow its picture's aspect, so the pictures in a row
+   end up the same height. The first row (the narrow situations) is held narrower than the second. */
+.fw-quad {
+  margin: 1.6em 0 1.8em;
+}
+
+.fw-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 12px;
+}
+
+.fw-row:first-child {
+  max-width: 640px;
+}
+
+.fw-row + .fw-row {
+  margin-top: 18px;
+}
+
+.fw-pane {
+  flex: var(--a) 1 calc(var(--a) * var(--fw-h, 170px));
+  min-width: 0;
+  text-decoration: none !important;
+}
+
+.fw-pane.is-watch { --a: 0.841; }
+.fw-pane.is-phone { --a: 0.936; }
+.fw-pane.is-desk { --a: 1.326; }
+.fw-pane.is-review { --a: 1.449; }
+
+.fw-pane img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--fw-rule);
+  border-radius: 10px;
+  background: var(--fw-card);
+}
+
+.fw-pane b {
+  display: block;
+  margin-top: 8px;
+  font-size: 13.5px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.fw-pane span {
+  display: block;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--fw-ink-2);
+}
+
+@media (hover: hover) {
+  .fw-pane:hover img {
+    border-color: var(--fw-ink-3);
+  }
+
+  .fw-pane:hover b {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+.fw-quad figcaption {
+  margin-top: 14px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--fw-ink-3);
+}
+
+/* ---------- try it, read on, the foot ---------- */
+
+.fw-try {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin: 1.4em 0 !important;
+  padding: 14px 16px;
+  border: 1px solid var(--fw-rule);
+  border-radius: 14px;
+  background: var(--fw-card);
+}
+
+.fw-try span {
+  flex: 1 1 16em;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--fw-ink-2);
+}
+
+.fw .fw-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--fw-ink);
+  color: var(--vp-c-bg);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  .fw .fw-btn:hover {
+    background: var(--fw-ink-2);
+  }
+}
+
+.fw-more {
+  margin-top: 1.6em;
+}
+
+.fw-more ul {
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--fw-ink);
+}
+
+.fw-more li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--fw-rule);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--fw-ink-2);
+}
+
+.fw-more a {
+  color: var(--fw-ink);
+  font-weight: 600;
+}
+
+.fw-foot {
+  margin-top: 64px;
+  padding-top: 16px;
+  border-top: 1px solid var(--fw-rule);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--fw-ink-2);
+}
+
+.fw-foot p + p {
+  margin-top: 6px;
+}
+
+/* ---------- iPad portrait and up ---------- */
+@media (min-width: 700px) {
+  .fold-why {
+    --fw-m: 32px;
+  }
+
+  .fw {
+    font-size: 17px;
+  }
+
+  .fw-head {
+    padding-top: 56px;
+  }
+
+  .fw h1 {
+    font-size: 42px;
+  }
+
+  .fw-lede {
+    font-size: 16px;
+  }
+
+  .fw-toc ol {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 32px;
+    margin-top: 36px;
+  }
+
+  .fw-sec {
+    margin-top: 80px;
+  }
+
+  .fw h2 {
+    font-size: 30px;
+  }
+
+  .fw blockquote p {
+    font-size: 21px;
+  }
+
+  .fw table {
+    font-size: 15px;
+  }
+
+  .fw-pane b {
+    font-size: 14px;
+  }
+
+  .fw-pane span {
+    font-size: 13px;
+  }
+}
+
+/* ---------- desk: 8 columns, the section's name pinned on the left ---------- */
+@media (min-width: 960px) {
+  .fold-why {
+    --fw-m: 48px;
+  }
+
+  .fw-head,
+  .fw-toc,
+  .fw-sec,
+  .fw-foot {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    column-gap: 32px;
+  }
+
+  .fw-head {
+    padding-top: 72px;
+  }
+
+  .fw-head > * {
+    grid-column: 1 / 7;
+  }
+
+  .fw h1 {
+    font-size: clamp(40px, 3.6vw, 52px);
+  }
+
+  .fw-toc ol {
+    grid-column: 3 / 9;
+    margin-top: 48px;
+  }
+
+  .fw-sec {
+    margin-top: 112px;
+    padding-top: 18px;
+  }
+
+  .fw-rail {
+    grid-column: 1 / 3;
+    align-self: start;
+    position: sticky;
+    top: calc(var(--vp-nav-height) + 24px);
+  }
+
+  .fw h2 {
+    font-size: clamp(26px, 2.2vw, 32px);
+  }
+
+  .fw-body {
+    grid-column: 3 / 9;
+    margin-top: 0;
+  }
+
+  .fw-body > p,
+  .fw-body > ul,
+  .fw-body > blockquote {
+    max-width: 36em;
+  }
+
+  .fw-foot {
+    margin-top: 96px;
+  }
+
+  .fw-foot > * {
+    grid-column: 3 / 9;
+    max-width: 52em;
+  }
+}
+
+@media (min-width: 1440px) {
+  .fold-why {
+    --fw-m: 80px;
+  }
+}
