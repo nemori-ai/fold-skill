@@ -1,0 +1,1464 @@
+{
+  "title": "陆晨的两周",
+  "subtitle": "9月7日—20日 · 铃语公司、开源库 saydone、开发者小聚、家里与生活 · 人物与消息都是作者编写的",
+  "persona": {
+    "name": "陆晨",
+    "role": "铃语科技联合创始人，管产品和技术 · 杭州滨江",
+    "context": "铃语是一家 7 个人的小公司，做给小店用的 AI 前台：替口腔诊所、理发店、健身房接电话、回微信、约时间。他写代码、管上线，也对接大客户的技术部分。第一个大客户是杭州 9 家店的白鹭口腔，9 月 15 日从 2 家店试用改成 9 家店全用。他业余维护开源库 saydone（判断电话里对方的话说完没有），和两位朋友每月合办一次语音AI小聚。家里有妻子韩敏、女儿可可（9 岁，三年级）、儿子豆豆（5 岁，幼儿园大班）和柯基土豆，父母住在拱墅。人物、公司与全部消息都是作者编写的，不来自真实的人。",
+    "accounts": {
+      "feishu": "陆晨",
+      "wechat": "陆晨",
+      "github": "luchen-hz",
+      "discord": "luchen",
+      "x": "@luchen_hz",
+      "email": "luchen@lingyu.example"
+    },
+    "short": "陆晨"
+  },
+  "source": {
+    "corpus": "corpus/founder/README.md",
+    "outline": "corpus/founder/OUTLINE.md",
+    "polish": "prototype/data/founder/POLISH.md"
+  },
+  "initial_title": "还没有整理过任何输入",
+  "initial_narrative": "9 月 7 日周一零点。Fold 刚接入陆晨的飞书、微信、邮件、GitHub、Discord、短信、电话和几个 App 的通知，状态是空的。",
+  "chapters": [
+    {
+      "id": "plan",
+      "from": "f00",
+      "to": "f04",
+      "title": "9月7—8日 · 定下 15 日切换，理发店说丢了预约"
+    },
+    {
+      "id": "prices",
+      "from": "f05",
+      "to": "f10",
+      "title": "9月9—11日 · 两份价目表、月报与演练"
+    },
+    {
+      "id": "weekend",
+      "from": "f11",
+      "to": "f14",
+      "title": "9月12—13日 · 周末：看狗、停水、订国庆"
+    },
+    {
+      "id": "cutover",
+      "from": "f15",
+      "to": "f18",
+      "title": "9月14—15日 · 切换：滨江店的电话转到了旧手机"
+    },
+    {
+      "id": "outage",
+      "from": "f19",
+      "to": "f22",
+      "title": "9月16—17日 · 周三晚的故障，第二天要给客户答复"
+    },
+    {
+      "id": "meeting",
+      "from": "f23",
+      "to": "f28",
+      "title": "9月18—20日 · 开会、新版本与收尾"
+    }
+  ],
+  "categories": {
+    "bailu-cutover": {
+      "label": "白鹭九家店改由 AI 接电话",
+      "short": "九店上线"
+    },
+    "api-cert": {
+      "label": "接口证书 22 日到期",
+      "short": "证书续期"
+    },
+    "home-shopping": {
+      "label": "电饭煲坏了要换",
+      "short": "电饭煲"
+    },
+    "meetup-signup": {
+      "label": "语音AI小聚第 7 期",
+      "short": "开发者聚会"
+    },
+    "parcel-today": {
+      "label": "快递取件",
+      "short": "快递"
+    },
+    "kk-school-notice": {
+      "label": "可可学校的通知",
+      "short": "学校通知"
+    },
+    "saydone-py313": {
+      "label": "saydone 在 3.13 上装不上",
+      "short": "装不上"
+    },
+    "archive-alert": {
+      "label": "录音归档凌晨失败",
+      "short": "归档告警"
+    },
+    "telecom-bill": {
+      "label": "声通云 8 月账单",
+      "short": "电话账单"
+    },
+    "jianyue-lost-booking": {
+      "label": "理发店说 AI 弄丢了预约",
+      "short": "丢的预约"
+    },
+    "tudou-ear": {
+      "label": "土豆看耳朵、打疫苗",
+      "short": "土豆看病"
+    },
+    "aug-expense": {
+      "label": "8 月报销待审批",
+      "short": "报销"
+    },
+    "saydone-pypi-token": {
+      "label": "saydone 0.9 发版",
+      "short": "开源发版"
+    },
+    "aug-report": {
+      "label": "投资人月报的数据页",
+      "short": "月报"
+    },
+    "tinglan-maintenance": {
+      "label": "听澜 16 日夜里维护",
+      "short": "听澜维护"
+    },
+    "devconf-talk": {
+      "label": "深圳的大会请他演讲",
+      "short": "深圳邀请"
+    },
+    "doudou-cough": {
+      "label": "豆豆咳嗽看医生",
+      "short": "豆豆看病"
+    },
+    "jianyue-answer-rate": {
+      "label": "两家小店晚上接通率低",
+      "short": "小店接通"
+    },
+    "national-day-hotel": {
+      "label": "国庆一家去青岛",
+      "short": "国庆青岛"
+    },
+    "mooncake-parents": {
+      "label": "给两边老人订月饼",
+      "short": "中秋月饼"
+    },
+    "doudou-quilt": {
+      "label": "豆豆午睡要带小被子",
+      "short": "小被子"
+    },
+    "water-outage": {
+      "label": "13 日小区停水",
+      "short": "停水"
+    },
+    "dad-paycode": {
+      "label": "爸的付款码打不开",
+      "short": "爸付款码"
+    },
+    "saydone-harborline": {
+      "label": "Harborline 问付费支持",
+      "short": "企业询价"
+    },
+    "keke-class-move": {
+      "label": "可可英语课改到周日",
+      "short": "英语课"
+    },
+    "ranli-invoice": {
+      "label": "健身工作室要发票",
+      "short": "小店发票"
+    },
+    "yunjie-price": {
+      "label": "云阶 10 月涨价",
+      "short": "模型涨价"
+    },
+    "family-wed-fri": {
+      "label": "韩敏出差，周三接豆豆",
+      "short": "接豆豆"
+    },
+    "interview-backend": {
+      "label": "面试后端候选人",
+      "short": "招后端"
+    },
+    "kk-autumn-trip": {
+      "label": "可可的秋游回执",
+      "short": "女儿回执"
+    },
+    "property-fee": {
+      "label": "四季度物业费",
+      "short": "物业费"
+    },
+    "tinglan-outage": {
+      "label": "周三晚的故障与客户年单",
+      "short": "故障与年单"
+    },
+    "doudou-open-day": {
+      "label": "豆豆幼儿园开放日",
+      "short": "开放日"
+    },
+    "yueyan-trial": {
+      "label": "悦颜美容两家店试用",
+      "short": "美容店试用"
+    },
+    "saydone-japanese": {
+      "label": "saydone 的日语支持",
+      "short": "日语支持"
+    },
+    "soy-sauce-errand": {
+      "label": "回家带酱油",
+      "short": "带酱油"
+    },
+    "qusheng-backup": {
+      "label": "备用语音服务的报价",
+      "short": "备用服务"
+    },
+    "mid-autumn-parents": {
+      "label": "中秋去爸妈家",
+      "short": "中秋"
+    },
+    "saydone-readme": {
+      "label": "saydone 上手说明过时",
+      "short": "上手说明"
+    }
+  },
+  "frames": {
+    "f01": {
+      "title": "周会定 15 日切换，电饭煲坏了",
+      "narrative": "周一上午 63 条。周会定了 15 号周二白鹭九家店一起切到 AI 接电话，他说今天下午发切换清单；孟洁在微信发来价目表，郑婉说合同要写清 AI 接不起来怎么办。家里韩敏说电饭煲坏了。Agent 一上来就把白鹭的切换记成最要紧的事，给 24 份。"
+    },
+    "f02": {
+      "title": "清单发出；这一轮 Agent 没有整理",
+      "narrative": "周一下午到夜里 102 条：他把切换清单发到上线群，各人认领一块；郑婉发来合同草稿，他改了故障那条；晚上他发两款电饭煲让韩敏挑，韩敏发来三家青岛酒店。这一轮模型只回了 4 条处置、没有任何改动，其余 98 条没有判断。打磨时只补了一处：清单已经发了，否则后面十几轮都会以为它没发。",
+      "batch": [
+        {
+          "op": "add",
+          "declaration": {
+            "id": "bailu-checklist",
+            "relation": "supersedes:bailu-checklist",
+            "title": "切换清单已发群，各自认领",
+            "summary": "你 7 日 14:12 在上线群发了切换清单，何嘉、宋悦、高翔、小罗各认领一块。",
+            "weight": "low",
+            "kind": "done",
+            "due_at": null,
+            "reason": "清单已经发出，剩下的是各人按清单做。",
+            "sources": [
+              {
+                "channel": "飞书 · 白鹭上线",
+                "ref": "event:fd-24be368e",
+                "quote": "切换清单 https://lingyu.feishu.example/docx/BailuCutover 每人看下自己那块 漏了直接往里加"
+              }
+            ]
+          },
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（补上清单已发）"
+        },
+        {
+          "op": "add",
+          "declaration": {
+            "id": "bailu-cutover",
+            "relation": "supersedes:bailu-cutover",
+            "title": "白鹭15日九店切换，清单已发",
+            "summary": "周会定了15日周二九家店一起切；切换清单已发群，另有约错周日和合同故障条款要跟。",
+            "weight": "critical",
+            "kind": "needs-you"
+          },
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（白鹭这件的标题跟着改）"
+        }
+      ]
+    },
+    "f03": {
+      "title": "理发店说丢了预约，土豆挠耳朵",
+      "narrative": "周二上午 82 条。理发店王姐说 AI 弄丢了周六的预约，他让宋悦查日志、答应今天回话；价目表和排班导入上线；老范问小聚开场他讲不讲；韩敏说土豆老挠右耳。Agent 把王姐的投诉记成等你、12 份，电饭煲那件降到 3 份。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "bailu-cutover",
+          "set": {
+            "title": "白鹭15日切换，价目表已上线",
+            "summary": "15日九店切换；价目表和排班今天已上线，店里在试打；切换清单昨天已发群。",
+            "reason": "第一个大客户全面上线；价目表已上线。"
+          },
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（白鹭这件的标题与摘要里去掉“清单未发”）"
+        },
+        {
+          "op": "drop",
+          "id": "bailu-checklist",
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（去掉“清单未发”的改写）"
+        }
+      ]
+    },
+    "f04": {
+      "title": "新版价目表进了邮箱",
+      "narrative": "周二下午到夜里 97 条。孟洁晚上八点四十用邮件发来新版价目表，说微信那份不要用了，没人回；王姐傍晚又来催，他说明天上午给准话；他答应讲小聚开场。Agent 看到了这封邮件，在白鹭下面记了“新价目表 6 项调价，待导入”。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "bailu-cutover",
+          "set": {
+            "title": "白鹭15日切换，新价目表待导入",
+            "summary": "15日九店切换；孟洁晚上发了新价目表，6项调价，还没见新版上线。",
+            "reason": "第一个大客户全面上线，线上价目表要按新版更新。"
+          },
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（白鹭这件的标题与摘要里去掉“清单未发”）"
+        },
+        {
+          "op": "patch",
+          "id": "bailu-checklist",
+          "set": {
+            "weight": "low",
+            "kind": "done"
+          },
+          "unset": [
+            "title",
+            "summary",
+            "reason",
+            "sources",
+            "due_at"
+          ],
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（清单保持“已发群”）"
+        }
+      ]
+    },
+    "f05": {
+      "title": "律师改合同，月报要数据页",
+      "narrative": "周三上午 76 条。白鹭的律师发来合同修改意见，郑婉让他先看第九条；杨帆问月报，郑婉要他周四前把数据页给她；王姐的预约查明是店员删的；家委会提议凑钱给老师买花；云阶来信 10 月起涨价两成，夹在供应商邮件里。Agent 记下了月报数据页；凑钱和涨价都没有单列。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "bailu-cutover",
+          "set": {
+            "summary": "15日九店切换；新价目表还没见上线；律师合同意见到了；九个店长切换前要装店长小程序。",
+            "reason": "第一个大客户全面上线，合同故障条款要你看。"
+          },
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（白鹭这件的标题与摘要里去掉“清单未发”）"
+        }
+      ]
+    },
+    "f06": {
+      "title": "店长说 AI 报错了种植牙的价",
+      "narrative": "周三下午到夜里 91 条。两位店长说 AI 报种植牙 6800，店里是 7200，何嘉问到底按哪份；听澜通知 16 日夜里十点例行维护；深圳的大会请他 11 月去讲；王老师在群里重申不收礼；他约了周六上午带土豆看耳朵。Agent 把报错价升到最高，说新表就在前一晚的邮件里。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "bailu-cutover",
+          "set": {
+            "summary": "15日九店切换，周五10点演练；种植牙报旧价6800，店长投诉；合同等律师回复。",
+            "reason": "两家店客人已被报了错价；周五要演练。"
+          },
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（白鹭这件的标题与摘要里去掉“清单未发”）"
+        }
+      ]
+    },
+    "f07": {
+      "title": "按邮件里的新版改价",
+      "narrative": "周四上午 97 条。他找到孟洁的邮件，定了按新版，何嘉改了 6 项重新上线；家长群四十来条教师节祝福；豆豆咳嗽，韩敏带去看了医生；王姐收到说明，回了个抱拳。Agent 把价目表记成已办，月报数据页升到 12 份。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "bailu-cutover",
+          "set": {
+            "title": "白鹭15日切换，新价已上线",
+            "summary": "15日九店切换，周五10点演练；种植牙等6项新价今天已上线；合同等律师。",
+            "reason": "错价已修正上线，周五要演练。"
+          },
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（白鹭这件的标题与摘要里去掉“清单未发”）"
+        },
+        {
+          "op": "drop",
+          "id": "bailu-checklist",
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（去掉“清单未发”的改写）"
+        }
+      ]
+    },
+    "f08": {
+      "title": "数据页压到深夜才发",
+      "narrative": "周四下午到夜里 100 条。郑婉下午来要数据页，夜里杨帆和郑婉都发了“??”，他 23:40 才发出；韩敏说他选的那家酒店国庆满了，又发来两家；场地催定金，老范说他付了。Agent 把月报记成已交，新记了国庆订酒店。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "bailu-cutover",
+          "set": {
+            "title": "白鹭15日切换，今天10点演练",
+            "summary": "15日九店切换，今天10点演练已通知店长；新价西溪店实测通过；合同等律师。",
+            "reason": "演练就在今天上午。"
+          },
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（白鹭这件的标题与摘要里去掉“清单未发”）"
+        },
+        {
+          "op": "drop",
+          "id": "bailu-checklist",
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（去掉“清单未发”的改写）"
+        }
+      ]
+    },
+    "f09": {
+      "title": "演练：滨江店的电话一响就断",
+      "narrative": "周五上午 78 条。十点演练，多数店打进来都是 AI 接的，余杭第二条线没设，滨江店转来的电话响一下就断；他又给场地转了 2000 定金，其实老范前一晚付过了；体检报告说血脂偏高。Agent 在白鹭下面记了滨江断线，也看出定金可能付了两次。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "bailu-cutover",
+          "set": {
+            "summary": "15日九店切换；今天演练8店通，滨江来电3秒被挂、高翔下午查；余杭二线未设。",
+            "reason": "演练结果出来了：滨江店还不通，离切换只剩4天。"
+          },
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（白鹭这件的标题与摘要里去掉“清单未发”）"
+        },
+        {
+          "op": "patch",
+          "id": "bailu-checklist",
+          "set": {
+            "weight": "low",
+            "kind": "done"
+          },
+          "unset": [
+            "title",
+            "summary",
+            "reason",
+            "sources",
+            "due_at"
+          ],
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（清单保持“已发群”）"
+        }
+      ]
+    },
+    "f10": {
+      "title": "滨江要改转移，月饼要订",
+      "narrative": "周五下午到夜里 94 条。高翔查出滨江是座机的呼叫转移设得不对，要周一前改好；韩敏去开家长会，让他给两边老人各订一盒月饼；Priya 问流式接口的改动能不能在 0.9 之前评审。Agent 把 Priya 的请求并进了 saydone 发版那件。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "bailu-cutover",
+          "set": {
+            "summary": "15日九店切换；滨江待曹店长周一上午改无条件转移；余杭二线已设待复测。",
+            "reason": "滨江原因查明但要周一才改，离切换只隔一天。"
+          },
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（白鹭这件的标题与摘要里去掉“清单未发”）"
+        },
+        {
+          "op": "patch",
+          "id": "saydone-pypi-token",
+          "set": {
+            "summary": "令牌已换；你定第二个测试版周六21点发，未合并的推到0.10；Priya 请你评审流式输入改动。"
+          },
+          "why": "用语：人名照写 Priya，不用小写的账号名"
+        }
+      ]
+    },
+    "f11": {
+      "title": "周六带土豆看耳朵",
+      "narrative": "周六上午 55 条。他带土豆看耳朵：外耳炎，滴耳液一周，医生约了 18 日上午 9:30 打疫苗、26 日复查；小聚报名满了 120 人。工作上只有告警和部署通知。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "saydone-pypi-token",
+          "set": {
+            "summary": "今晚21点发第二个测试版；默认静音时长已合入；你已评审示例改动并提问；Priya 的改动仍待你评审。"
+          },
+          "why": "用语：人名照写 Priya，不用小写的账号名"
+        }
+      ]
+    },
+    "f12": {
+      "title": "saydone 第二个测试版发了",
+      "narrative": "周六下午到夜里 44 条。他晚上九点发了 saydone 0.9 的第二个测试版；物业通知明天停水；信用卡账单到了，自动还款。Agent 新记了停水。",
+      "batch": [
+        {
+          "op": "drop",
+          "id": "bailu-checklist",
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（去掉“清单未发”的改写）"
+        },
+        {
+          "op": "patch",
+          "id": "saydone-pypi-token",
+          "set": {
+            "summary": "21:03已发到PyPI，2人确认3.13能装；发布前源码包构建失败，原因未查；Priya 的改动未见评审。"
+          },
+          "why": "用语：人名照写 Priya，不用小写的账号名"
+        }
+      ]
+    },
+    "f13": {
+      "title": "周日停水",
+      "narrative": "周日上午 39 条。小区停水，物业短信、业主群公告和邻居拍的通知说的是同一件事；何嘉问白鹭的常见问题还没给，切换先用通用版行不行。Agent 把三处停水并成一件。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "bailu-cutover",
+          "set": {
+            "summary": "15日九店切换；萧山店长问切换当天做什么；滨江周一改转移；常见问题未到，何嘉问先用通用版？",
+            "reason": "店长在问切换当天的安排；问答资料没到，用通用版还是等资料要你定。"
+          },
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（白鹭这件的标题与摘要里去掉“清单未发”）"
+        },
+        {
+          "op": "patch",
+          "id": "bailu-checklist",
+          "set": {
+            "weight": "low",
+            "kind": "done"
+          },
+          "unset": [
+            "title",
+            "summary",
+            "reason",
+            "sources",
+            "due_at"
+          ],
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（清单保持“已发群”）"
+        },
+        {
+          "op": "patch",
+          "id": "tinglan-maintenance",
+          "set": {
+            "title": "听澜16日夜维护，推不推迟今晚定"
+          },
+          "why": "用语：“今晚定推迟”读成已经定了推迟，原意是推不推迟今晚要定"
+        },
+        {
+          "op": "patch",
+          "id": "bailu-faq",
+          "set": {
+            "title": "白鹭的常见问题没给，用通用版吗",
+            "summary": "何嘉说白鹭的常见问题还没给，问明天还没有的话切换先用通用版，等你定。"
+          },
+          "why": "用语：FAQ 写成“常见问题”"
+        }
+      ]
+    },
+    "f14": {
+      "title": "订好国庆，明天对清单",
+      "narrative": "周日下午到夜里 56 条。两人在家订好去青岛的机票和酒店；郑婉发语音说明天把切换清单一条条对一遍；美国一家公司来问 saydone 有没有付费支持。Agent 把国庆记成已订，只剩加床的事。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "bailu-checklist",
+          "set": {
+            "summary": "小罗已回葛店长店里只需设好转移；明天周会后11点和郑婉逐条过清单，过完号码映射上线。",
+            "reason": "店长的追问已有人回复，过完清单号码映射才能上线。"
+          },
+          "why": "f02 这一轮模型只回了 4 条处置、没有改动，没看到他 9 月 7 日 14:12 已在上线群发了切换清单；之后各轮都以为清单没发（摘要里去掉“清单仍未发群”）"
+        },
+        {
+          "op": "patch",
+          "id": "bailu-cutover",
+          "set": {
+            "summary": "15日9点九店切换，孟洁去西溪店盯；明天11点和郑婉过清单后号码映射上线；滨江周一改转移；常见问题用哪版待定。"
+          },
+          "why": "用语：FAQ 写成“常见问题”"
+        },
+        {
+          "op": "patch",
+          "id": "jianyue-answer-rate",
+          "set": {
+            "title": "晚间接通率：剪约没恢复，燃力已恢复"
+          },
+          "why": "用语：“未复”是省出来的说法"
+        }
+      ]
+    },
+    "f15": {
+      "title": "切换前一天：店长们回“已设置”",
+      "narrative": "周一上午 87 条。七位店长在对接群回“已设置”，滨江的曹店长最后一个回；英语课顾问说周六的课挪到周日，又推秋季续费；他下单了两盒月饼；小金要 8 月发票。Agent 新记了英语课改期和小金的发票，都只给 1 份。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "bailu-faq",
+          "set": {
+            "title": "常见问题先用通用版，切完再换",
+            "summary": "白鹭仍没给常见问题，何嘉决定切换先用通用版，切完再换。"
+          },
+          "why": "用语：FAQ 写成“常见问题”；“切后换”说全"
+        },
+        {
+          "op": "patch",
+          "id": "bailu-cutover",
+          "set": {
+            "summary": "明9点九店切，8:30大会议室集合；七店转移都已设；下午对清单后号码映射上线；常见问题先用通用版。"
+          },
+          "why": "用语：FAQ 写成“常见问题”"
+        }
+      ]
+    },
+    "f16": {
+      "title": "对完清单，明早九点切",
+      "narrative": "周一下午到夜里 111 条。下午对完切换清单，宋悦问店长回的“已设置”要不要再打电话确认，没人接话；何嘉算出云阶涨价每月多四千左右；韩敏说周三到周五去上海。Agent 把白鹭记成今早 9 点到期的等你，涨价只给 1 份。"
+    },
+    "f17": {
+      "title": "切换日：滨江店转到了旧手机",
+      "narrative": "周二上午 144 条。九点切换，滨江店来电一直是 0：曹店长把转移设到了前台以前用的旧手机上；他定了让店长改、不撤，11:40 改好，给孟洁回了电话；携程通知去青岛的航班提前到 7:10。Agent 看到时已经修好，把白鹭降到 12 份。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "national-day-hotel",
+          "set": {
+            "title": "青岛去程提前到7:10，改不改未定"
+          },
+          "why": "用语：“改否待定”是书面的生造说法"
+        }
+      ]
+    },
+    "f18": {
+      "title": "接通率 97%，一位讲者去不了",
+      "narrative": "周二下午到夜里 116 条。下午九家店接通率 97%，孟洁在群里道谢；一位讲者在三百人的参会者大群里说 26 号去不了；韩敏说明晚 8 点要他去游泳馆接豆豆。Agent 把小聚找替补升到 12 份，和白鹭并列最大。"
+    },
+    "f19": {
+      "title": "韩敏出发，听澜提醒今晚维护",
+      "narrative": "周三上午 95 条。韩敏去上海的路上接受了航班变动；听澜提醒今晚十点维护，高翔说他盯着；小金第三次来问发票，只发了“??”；下午三点要面一位后端候选人。Agent 把航班记成已办，接豆豆升到 6 份。"
+    },
+    "f20": {
+      "title": "周三晚：故障撞上接孩子",
+      "narrative": "周三下午到夜里 211 条，两周里最多的一轮。19:41 起语音识别超时，他 20:03 拍板把九家店切成直接转门店电话，20:40 切回；同一时间他走不开，打电话请爸去接豆豆，爸去了东门、豆豆在南门；孟洁夜里说好几家店的客人打不进来；十点又是真的维护。Agent 新立“识别故障”给 24 份，七十多张重复告警判为重复。"
+    },
+    "f21": {
+      "title": "孟洁要周五开会说清楚",
+      "narrative": "周四上午 118 条。何嘉先说周三晚受影响的来电 64 通，十分钟后改成 46 通、挂断 11 通，小罗上午都回拨了；孟洁打来电话又发微信：周五开会说清楚周三的事，国庆期间 AI 接不了的电话能不能转到店里的值班手机，做不到年单先放一放；凌晨巴西的用户报 saydone 第二个测试版把葡语的短回答“sim”丢了。Agent 把孟洁的要求并进“识别故障”那件，仍是 24 份；saydone 升到 12 份。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "saydone-pypi-token",
+          "set": {
+            "title": "saydone 测试版把葡语短回答丢了"
+          },
+          "why": "用语：“测试版2吞葡语短答”拗口"
+        }
+      ]
+    },
+    "f22": {
+      "title": "明早几件事撞在一起",
+      "narrative": "周四下午到夜里 169 条。孟洁把会改到明早十点，邀请邮件里还写着下午两点；高翔给了备用语音服务的两个办法；他夜里十点四十把转接方案发给郑婉；老范说声通云想上台讲 15 分钟换茶歇钱；王老师说已缴费的也要交回执；韩敏在上海，问明早谁带土豆打针，十点多又发“??”。Agent 把“故障与见客户”留在 24 份，回执、赞助、saydone 和打疫苗各 6 份。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "saydone-pypi-token",
+          "set": {
+            "title": "saydone 短回答问题查明，待定发版"
+          },
+          "why": "用语：“吞短答查明”拗口"
+        },
+        {
+          "op": "patch",
+          "id": "meetup-signup",
+          "set": {
+            "title": "小聚赞助要讲15分钟，明天中午前回"
+          },
+          "why": "用语：“明午前回”是省出来的说法"
+        }
+      ]
+    },
+    "f23": {
+      "title": "开会答应 28 日前上线转接",
+      "narrative": "周五上午 108 条。七点二十他签好回执，七点四十请爸带土豆去打针；八点半在 saydone 里说 0.9 推迟一天、先把默认值改回去；路上回老范，赞助商只给 5 分钟；十点见孟洁，十一点半孟洁说合同加一条 9 月 28 日前上线转接，下周一盖章。Agent 把“故障与见客户”改成“年单谈成”、降到 12 份；明早的四个问题和年单都答掉了。"
+    },
+    "f24": {
+      "title": "律师要改季度付，模型先测两家",
+      "narrative": "周五下午到夜里 95 条。转接开工：宋悦做值班手机的配置页，高翔做后端，何嘉写转接前 AI 说的那句话；律师发来合同第二版，白鹭财务想把半年付改成季度付；何嘉发来两家备选模型的第一轮评测，他说先测两家、默认先不动；听澜给 9 月账单减免 15%；寄宁波的月饼到了，岳母说太多了下次别买。Agent 把合同第二版记成等你确认、12 份。"
+    },
+    "f25": {
+      "title": "郑婉回了季度付，saydone 修好合进去",
+      "narrative": "周六上午 57 条。郑婉回律师季度付可以，说这事她回了、他不用管；Lucas 用改好的分支跑了 300 通没再丢，他评审、合并；英语课顾问提醒今天停课、明天补课，续报优惠明天截止，他只回了“好的”；宠物医院确认了国庆寄养。Agent 把合同记成只剩周一盖章，英语课续费重新浮上来。"
+    },
+    "f26": {
+      "title": "saydone 0.9 正式发了",
+      "narrative": "周六下午到夜里 56 条。小聚海报发到大群，有人问退讲的齐老师怎么还在上面，老范说替补周一前定；青岛的酒店问两个孩子要不要加床和早餐，25 日前回；晚上九点他发了 saydone 0.9，在 Discord 说短回答的问题修好了；一位日本开发者愿意出 40 小时做日语支持，他说下周发邮件。Agent 把发版记成已办，新记了日语支持。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "saydone-japanese",
+          "set": {
+            "summary": "一位日本开发者愿出40小时做日语支持，你答应下周发邮件谈交接，许可不变。"
+          },
+          "why": "用语：账号名换成人话"
+        },
+        {
+          "op": "patch",
+          "id": "saydone-pypi-token",
+          "set": {
+            "summary": "21点已发到PyPI，含源码包；已请巴西用户确认短回答；Windows 的 ARM 版仍要等上游出包。"
+          },
+          "why": "用语：“arm64”是行话"
+        }
+      ]
+    },
+    "f27": {
+      "title": "巴西用户说修好了，源码包又漏一项",
+      "narrative": "周日上午 41 条。巴西的用户确认 0.9 不再丢“sim”；另一位用户在老机器上装 0.9 报错，Mateo 查出源码包里漏了 Python 版本要求，他说 0.9.1 修；凌晨录音归档又失败一次；可可去补英语课，顾问说续报优惠留到月底；韩敏让他回来带酱油。Agent 把 saydone 改回等你，英语课续费推到月底。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "parcel-today",
+          "set": {
+            "title": "4号柜的快递今晚21点前取"
+          },
+          "why": "用语：取件码不进标题"
+        },
+        {
+          "op": "patch",
+          "id": "saydone-pypi-token",
+          "set": {
+            "title": "saydone 源码包漏了版本要求，待0.9.1"
+          },
+          "why": "用语：“漏版本限制”说清楚"
+        }
+      ]
+    },
+    "f28": {
+      "title": "曲声报价到了，妈问中秋几点来",
+      "narrative": "周日下午到夜里 50 条。曲声发来备用语音服务的报价，每月两千到三千，他转给郑婉说周一一起看；孟洁通知国庆 1—3 日各店只开上午；老范问了三位替补都没空；深圳的大会发来讲者名单，他一直没回；妈问中秋几点过来，他说明天打给她。Agent 新记了备用服务的报价和中秋的事，撤下了深圳的邀请。",
+      "batch": [
+        {
+          "op": "patch",
+          "id": "parcel-today",
+          "set": {
+            "title": "4号柜的快递已过期，没见取"
+          },
+          "why": "用语：取件码不进标题"
+        },
+        {
+          "op": "patch",
+          "id": "saydone-readme",
+          "set": {
+            "title": "saydone 上手说明过时，对方明天改",
+            "summary": "0.9.0照上手说明写会报错，回调0.8就去掉了；你请报问题的人来改，他说明天提改动。"
+          },
+          "why": "用语：“README”与账号名换成人话"
+        }
+      ]
+    }
+  },
+  "asks": [
+    {
+      "item": "home-shopping",
+      "frame": "f01",
+      "until": "f02",
+      "template": "answer",
+      "prompt": "电饭煲坏了，买哪个？挑好了发给韩敏",
+      "short": "买哪个电饭煲"
+    },
+    {
+      "item": "meetup-signup",
+      "frame": "f03",
+      "expects": "choose",
+      "prompt": "小聚的开场 10 分钟你讲吗？",
+      "short": "小聚开场你讲吗",
+      "actions": [
+        {
+          "id": "me",
+          "label": "我讲",
+          "meaning": "decide"
+        },
+        {
+          "id": "fan",
+          "label": "请老范讲",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-09T23:59:00+08:00",
+      "until": "f04"
+    },
+    {
+      "item": "tudou-ear",
+      "frame": "f03",
+      "expects": "choose",
+      "prompt": "土豆老挠耳朵，要不要带去看？",
+      "short": "带狗看耳朵吗",
+      "actions": [
+        {
+          "id": "sat",
+          "label": "周六带去",
+          "meaning": "decide"
+        },
+        {
+          "id": "wait",
+          "label": "再看两天",
+          "meaning": "decide"
+        }
+      ],
+      "until": "f06"
+    },
+    {
+      "item": "aug-report",
+      "frame": "f05",
+      "until": "f08",
+      "expects": "confirm",
+      "due_at": "2026-09-10T23:59:00+08:00",
+      "prompt": "投资人月报的数据页，周四前给郑婉",
+      "short": "月报数据页",
+      "actions": [
+        {
+          "id": "done",
+          "label": "已发给郑婉",
+          "meaning": "act"
+        }
+      ]
+    },
+    {
+      "item": "bailu-prices",
+      "frame": "f06",
+      "expects": "choose",
+      "prompt": "白鹭的价目表有两个版本，上线按哪份？",
+      "short": "价目表用哪份",
+      "actions": [
+        {
+          "id": "email",
+          "label": "按邮件里的新版",
+          "meaning": "decide"
+        },
+        {
+          "id": "wechat",
+          "label": "按微信里的旧版",
+          "meaning": "decide"
+        },
+        {
+          "id": "ask",
+          "label": "先问孟洁哪份为准",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-14T23:59:00+08:00",
+      "until": "f07"
+    },
+    {
+      "item": "devconf-talk",
+      "frame": "f06",
+      "expects": "choose",
+      "prompt": "深圳 11 月的大会请你演讲，9 月 20 日前回复：去吗？",
+      "short": "去深圳演讲吗",
+      "actions": [
+        {
+          "id": "go",
+          "label": "去",
+          "meaning": "decide"
+        },
+        {
+          "id": "no",
+          "label": "不去",
+          "meaning": "decide"
+        },
+        {
+          "id": "refer",
+          "label": "推荐别人",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-20T23:59:00+08:00"
+    },
+    {
+      "item": "national-day-hotel",
+      "frame": "f08",
+      "expects": "choose",
+      "prompt": "国庆青岛住哪家？你选的那家满了，韩敏又发来望潮、云帆两家",
+      "short": "国庆住哪家",
+      "actions": [
+        {
+          "id": "wangchao",
+          "label": "望潮酒店",
+          "meaning": "decide"
+        },
+        {
+          "id": "yunfan",
+          "label": "云帆酒店",
+          "meaning": "decide"
+        },
+        {
+          "id": "later",
+          "label": "周末一起看",
+          "meaning": "decide"
+        }
+      ],
+      "until": "f14"
+    },
+    {
+      "item": "mooncake-parents",
+      "frame": "f10",
+      "expects": "choose",
+      "prompt": "中秋给两边老人各订一盒月饼，订哪家？",
+      "short": "月饼订哪家",
+      "actions": [
+        {
+          "id": "old",
+          "label": "去年那家老字号",
+          "meaning": "decide"
+        },
+        {
+          "id": "hotel",
+          "label": "酒店的礼盒",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-15T23:59:00+08:00",
+      "until": "f15"
+    },
+    {
+      "item": "saydone-pypi-token",
+      "frame": "f10",
+      "until": "f21",
+      "template": "review",
+      "prompt": "Priya 的流式接口改动在等你评审：0.9 之前合吗？",
+      "short": "评审流式接口",
+      "subject": {
+        "label": "合并 Priya 的流式接口改动",
+        "url": "https://github.com/saydone/saydone/pull/54"
+      }
+    },
+    {
+      "item": "keke-class-move",
+      "frame": "f15",
+      "expects": "choose",
+      "prompt": "英语课 19 日停一次，改到周日 10 点行吗？",
+      "short": "英语课改周日行吗",
+      "actions": [
+        {
+          "id": "sunday",
+          "label": "周日可以",
+          "meaning": "decide"
+        },
+        {
+          "id": "skip",
+          "label": "这次不上了",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-17T23:59:00+08:00",
+      "until": "f16"
+    },
+    {
+      "item": "yunjie-price",
+      "frame": "f16",
+      "expects": "choose",
+      "prompt": "云阶 10 月起涨价两成：换不换默认模型？",
+      "short": "换默认模型吗",
+      "actions": [
+        {
+          "id": "test",
+          "label": "先测两家再定",
+          "meaning": "decide"
+        },
+        {
+          "id": "keep",
+          "label": "10 月照用云阶",
+          "meaning": "decide"
+        },
+        {
+          "id": "switch",
+          "label": "现在就换",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-30T23:59:00+08:00",
+      "until": "f24"
+    },
+    {
+      "item": "national-day-hotel",
+      "frame": "f17",
+      "expects": "choose",
+      "prompt": "去青岛的航班提前到 7:10，接受还是改签？",
+      "short": "航班提前了改不改",
+      "actions": [
+        {
+          "id": "accept",
+          "label": "接受",
+          "meaning": "decide"
+        },
+        {
+          "id": "change",
+          "label": "免费改签",
+          "meaning": "decide"
+        },
+        {
+          "id": "refund",
+          "label": "退票重订",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-20T23:59:00+08:00",
+      "until": "f19"
+    },
+    {
+      "item": "meetup-signup",
+      "frame": "f18",
+      "expects": "choose",
+      "prompt": "一位讲者去不了，找谁替补？",
+      "short": "替补讲者找谁",
+      "actions": [
+        {
+          "id": "s5",
+          "label": "请第 5 期的讲者",
+          "meaning": "decide"
+        },
+        {
+          "id": "hejia",
+          "label": "请何嘉讲评测",
+          "meaning": "decide"
+        },
+        {
+          "id": "qa",
+          "label": "空出来做问答",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-22T23:59:00+08:00",
+      "until": "f22"
+    },
+    {
+      "item": "family-wed-fri",
+      "frame": "f18",
+      "expects": "choose",
+      "prompt": "周三晚 8 点去游泳馆接豆豆（韩敏出差）",
+      "short": "周三八点接豆豆",
+      "actions": [
+        {
+          "id": "me",
+          "label": "我去接",
+          "meaning": "decide"
+        },
+        {
+          "id": "dad",
+          "label": "请爸去接",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-16T20:00:00+08:00",
+      "until": "f20"
+    },
+    {
+      "item": "tinglan-outage",
+      "frame": "f21",
+      "expects": "choose",
+      "prompt": "周五见白鹭：国庆前能不能答应“AI 接不了的电话转到店里手机”？",
+      "short": "答应国庆前加转接吗",
+      "actions": [
+        {
+          "id": "yes928",
+          "label": "答应，9 月 28 日前上线",
+          "meaning": "decide"
+        },
+        {
+          "id": "after",
+          "label": "答应，国庆后上线",
+          "meaning": "decide"
+        },
+        {
+          "id": "no",
+          "label": "不答应，说明原因",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-18T10:00:00+08:00",
+      "until": "f23"
+    },
+    {
+      "item": "saydone-pypi-token",
+      "frame": "f21",
+      "expects": "choose",
+      "prompt": "有人报第二个测试版把葡语短回答截掉：0.9 周五照发，还是推迟？",
+      "short": "0.9 周五发吗",
+      "actions": [
+        {
+          "id": "ship",
+          "label": "周五照发",
+          "meaning": "decide"
+        },
+        {
+          "id": "delay",
+          "label": "推迟一天，先改默认值",
+          "meaning": "decide"
+        },
+        {
+          "id": "week",
+          "label": "推迟到下周",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-18T23:59:00+08:00",
+      "until": "f23"
+    },
+    {
+      "item": "meetup-signup",
+      "frame": "f22",
+      "expects": "choose",
+      "prompt": "声通云想赞助茶歇，条件是上台讲 15 分钟产品：答应吗？",
+      "short": "赞助商上台吗",
+      "actions": [
+        {
+          "id": "five",
+          "label": "答应，只给 5 分钟",
+          "meaning": "decide"
+        },
+        {
+          "id": "fifteen",
+          "label": "答应 15 分钟",
+          "meaning": "decide"
+        },
+        {
+          "id": "no",
+          "label": "不要这笔赞助",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-18T12:00:00+08:00",
+      "until": "f23"
+    },
+    {
+      "item": "kk-autumn-trip",
+      "frame": "f22",
+      "until": "f23",
+      "expects": "confirm",
+      "due_at": "2026-09-18T07:50:00+08:00",
+      "prompt": "可可的秋游回执还没签，明早要交",
+      "short": "签秋游回执",
+      "actions": [
+        {
+          "id": "done",
+          "label": "已签好",
+          "meaning": "act"
+        }
+      ]
+    },
+    {
+      "item": "tudou-ear",
+      "frame": "f22",
+      "expects": "choose",
+      "prompt": "明早 9:30 土豆打疫苗：你带去，还是改约？",
+      "short": "明早谁带狗打针",
+      "actions": [
+        {
+          "id": "me",
+          "label": "我带去",
+          "meaning": "decide"
+        },
+        {
+          "id": "dad",
+          "label": "请爸带去",
+          "meaning": "decide"
+        },
+        {
+          "id": "move",
+          "label": "改约",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-18T09:30:00+08:00",
+      "until": "f23"
+    },
+    {
+      "item": "meetup-signup",
+      "frame": "f24",
+      "expects": "choose",
+      "prompt": "一位讲者去不了，找谁替补？（赞助的事答过之后再问一次）",
+      "short": "替补讲者找谁",
+      "actions": [
+        {
+          "id": "s5",
+          "label": "请第 5 期的讲者",
+          "meaning": "decide"
+        },
+        {
+          "id": "hejia",
+          "label": "请何嘉讲评测",
+          "meaning": "decide"
+        },
+        {
+          "id": "qa",
+          "label": "空出来做问答",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-22T23:59:00+08:00"
+    },
+    {
+      "item": "tinglan-outage",
+      "frame": "f24",
+      "expects": "choose",
+      "prompt": "白鹭的律师要把半年付改成季度付，可以吗？",
+      "short": "季度付款行吗",
+      "actions": [
+        {
+          "id": "ok",
+          "label": "季度付可以",
+          "meaning": "decide"
+        },
+        {
+          "id": "half",
+          "label": "坚持半年付",
+          "meaning": "decide"
+        },
+        {
+          "id": "zheng",
+          "label": "交给郑婉定",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-21T10:00:00+08:00",
+      "until": "f25"
+    },
+    {
+      "item": "keke-class-move",
+      "frame": "f25",
+      "expects": "choose",
+      "prompt": "可可的英语课秋季续不续费？",
+      "short": "英语课续费吗",
+      "actions": [
+        {
+          "id": "renew",
+          "label": "续",
+          "meaning": "decide"
+        },
+        {
+          "id": "stop",
+          "label": "不续了",
+          "meaning": "decide"
+        },
+        {
+          "id": "later",
+          "label": "问问可可再说",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-20T23:59:00+08:00",
+      "until": "f27"
+    },
+    {
+      "item": "keke-class-move",
+      "frame": "f27",
+      "expects": "choose",
+      "prompt": "可可的英语课秋季续不续费？顾问说续报优惠留到月底",
+      "short": "英语课续费吗",
+      "actions": [
+        {
+          "id": "renew",
+          "label": "续",
+          "meaning": "decide"
+        },
+        {
+          "id": "stop",
+          "label": "不续了",
+          "meaning": "decide"
+        },
+        {
+          "id": "later",
+          "label": "问问可可再说",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-30T23:59:00+08:00"
+    },
+    {
+      "item": "national-day-hotel",
+      "frame": "f26",
+      "expects": "choose",
+      "prompt": "青岛的酒店问两个孩子要不要加床和儿童早餐，25 日前回",
+      "short": "酒店要加床吗",
+      "actions": [
+        {
+          "id": "both",
+          "label": "加床和早餐都要",
+          "meaning": "decide"
+        },
+        {
+          "id": "bed",
+          "label": "只要加床",
+          "meaning": "decide"
+        },
+        {
+          "id": "none",
+          "label": "都不要",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-25T23:59:00+08:00"
+    },
+    {
+      "item": "qusheng-backup",
+      "frame": "f28",
+      "expects": "choose",
+      "prompt": "要不要接一家备用的语音识别？曲声报价每月两千到三千",
+      "short": "接备用语音服务吗",
+      "actions": [
+        {
+          "id": "base",
+          "label": "只做备用，两千出头",
+          "meaning": "decide"
+        },
+        {
+          "id": "dialect",
+          "label": "加方言包，两千八",
+          "meaning": "decide"
+        },
+        {
+          "id": "no",
+          "label": "先不接",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-21T23:59:00+08:00"
+    },
+    {
+      "item": "mid-autumn-parents",
+      "frame": "f28",
+      "expects": "choose",
+      "prompt": "中秋那天几点去爸妈家？妈要算时间蒸螃蟹",
+      "short": "中秋几点去爸妈家",
+      "actions": [
+        {
+          "id": "noon",
+          "label": "中午去",
+          "meaning": "decide"
+        },
+        {
+          "id": "evening",
+          "label": "晚上去",
+          "meaning": "decide"
+        },
+        {
+          "id": "call",
+          "label": "明天打电话再定",
+          "meaning": "decide"
+        }
+      ],
+      "due_at": "2026-09-25T23:59:00+08:00"
+    }
+  ],
+  "feedback": {
+    "fd-3e498b79": [
+      {
+        "ask": "@item",
+        "target": "meetup-signup",
+        "action": "me",
+        "meaning": "decide",
+        "via": "source"
+      }
+    ],
+    "fd-4573f44c": [
+      {
+        "ask": "@item",
+        "target": "tudou-ear",
+        "action": "sat",
+        "meaning": "decide",
+        "via": "source"
+      }
+    ],
+    "fd-9580bb5c": [
+      {
+        "ask": "@item",
+        "target": "aug-report",
+        "action": "done",
+        "meaning": "act",
+        "via": "source"
+      }
+    ],
+    "fd-df3f0840": [
+      {
+        "ask": "@item",
+        "target": "bailu-prices",
+        "action": "email",
+        "meaning": "decide",
+        "via": "source"
+      }
+    ],
+    "fd-1269aad6": [
+      {
+        "ask": "@item",
+        "target": "national-day-hotel",
+        "action": "wangchao",
+        "meaning": "decide",
+        "via": "source"
+      }
+    ],
+    "fd-e60245e2": [
+      {
+        "ask": "@item",
+        "target": "mooncake-parents",
+        "action": "old",
+        "meaning": "decide",
+        "via": "source"
+      }
+    ],
+    "fd-9f3ac02b": [
+      {
+        "ask": "@item",
+        "target": "keke-class-move",
+        "action": "sunday",
+        "meaning": "decide",
+        "via": "source"
+      }
+    ],
+    "fd-e0008a79": [
+      {
+        "ask": "@item",
+        "target": "yunjie-price",
+        "action": "test",
+        "meaning": "decide",
+        "via": "source"
+      }
+    ],
+    "fd-80051f7c": [
+      {
+        "ask": "@item",
+        "target": "family-wed-fri",
+        "action": "dad",
+        "meaning": "decide",
+        "via": "source"
+      }
+    ],
+    "fd-63031082": [
+      {
+        "ask": "@item",
+        "target": "tinglan-outage",
+        "action": "yes928",
+        "meaning": "decide",
+        "via": "source"
+      }
+    ],
+    "fd-b7ea8642": [
+      {
+        "ask": "@item",
+        "target": "saydone-pypi-token",
+        "action": "delay",
+        "meaning": "decide",
+        "via": "source"
+      }
+    ],
+    "fd-99526085": [
+      {
+        "ask": "@item",
+        "target": "meetup-signup",
+        "action": "five",
+        "meaning": "decide",
+        "via": "source"
+      }
+    ],
+    "fd-9fec719a": [
+      {
+        "ask": "@item",
+        "target": "kk-autumn-trip",
+        "action": "done",
+        "meaning": "act",
+        "via": "source"
+      }
+    ],
+    "fd-9919a5b4": [
+      {
+        "ask": "@item",
+        "target": "tudou-ear",
+        "action": "dad",
+        "meaning": "decide",
+        "via": "source"
+      }
+    ]
+  },
+  "sketchFrames": {
+    "lineage": "f28",
+    "provenance": "f28",
+    "notation": "f22",
+    "timing": "f28",
+    "yield": "f20"
+  },
+  "sketchNotes": {
+    "lineage": "选最后一帧：只画两周里累计份额最多的 12 件，看得到白鹭上线从第一轮起占 24 份、切换后一路降到 3 份，周三晚的故障在 9/17 零点一下占 24 份、开完会降到 12，小聚在找替补和赞助时两次升到 12 份。",
+    "provenance": "选最后一帧：两周 2532 条输入里，订阅 123 条没有一条进事项；社区里别人发来的 310 条只用上 31 条；家里别人发来的 292 条用上 127 条。",
+    "notation": "选 9/18 零点：明早十点见客户，这一轮收到 169 条、写了 13 条声明，故障那件改写成“9点与郑婉对方案，10点见孟洁”，土豆打疫苗从 1 份升到 6 份，saydone 从 12 份降到 6 份，豆豆开放日新记一件。",
+    "timing": "选最后一帧：两周登记过 26 条回应路径，大多在本人去来源处回复后关上；开得最久的是深圳的演讲邀请，9/10 起一直开着，到期没回，9/21 随邀请撤下而失效。",
+    "yield": "选 9/17 零点：周三晚的故障一来就是 24 份，看它从哪里拿到：白鹭上线让出 6 份，接豆豆、面试、听澜维护三件撤下，快递、小店接通率、国庆各让 2 份。"
+  },
+  "corpus_version": {
+    "run": "corpus/founder 2026-11-03（frames.json sha256 e0c7974db669…，2532 条）",
+    "demo": "同一版本，2532 条全部收入"
+  }
+}

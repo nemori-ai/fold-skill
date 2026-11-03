@@ -115,6 +115,8 @@ DATASETS = {
         # 所有流里不是普通消息的事件都带 kind：通话、转账、语音、GitHub 的评审与关闭等，形式据此写本人的动作。
         "kind_streams": None,
         "source_actions": FOUNDER_SOURCE_ACTIONS,
+        # 微信、飞书里他转发的链接、发的图片与文件也是在来源处的回复（composite 的这几类事件不是本人的动作，不推导）。
+        "extra_verbs": {"forward": "comment", "image": "comment", "file": "comment"},
         "time_zone": "Asia/Shanghai",
         "rebuild": "scripts/founder_corpus.py build（见 corpus/founder/README.md）",
         "header": "// Texts are authored fiction (corpus/founder), clipped to 500 characters; see corpus/founder/README.md and POLISH.md.",
@@ -467,7 +469,7 @@ def attach_asks(frames: list[dict], edits: dict, versions: list[dict]) -> list[d
     return registry
 
 
-def source_verb(event: dict) -> str | None:
+def source_verb(event: dict, extra: dict | None = None) -> str | None:
     kind = event.get("kind")
     if kind == "review":
         return {"APPROVED": "approve", "CHANGES_REQUESTED": "request-changes"}.get(event.get("review_state"), "comment")
@@ -479,7 +481,7 @@ def source_verb(event: dict) -> str | None:
         return "call" if kind == "call_log" or event["call"].get("direction") == "out" else None
     if kind == "transfer" and event.get("transfer"):
         return "pay" if event["transfer"].get("direction") == "out" else "collect"
-    return VERB_OF_KIND.get(kind)
+    return VERB_OF_KIND.get(kind) or (extra or {}).get(kind)
 
 
 def derive_feedback(frames: list[dict], corpus: dict, edits: dict, items_before: list[dict], registry: list[dict], log: list,
@@ -511,7 +513,7 @@ def derive_feedback(frames: list[dict], corpus: dict, edits: dict, items_before:
             if not event.get("self"):
                 continue
             source = raw[event["id"]]
-            verb = source_verb(source)
+            verb = source_verb(source, cfg.get("extra_verbs"))
             thread = source.get("thread")
             if not verb or not thread:
                 continue
