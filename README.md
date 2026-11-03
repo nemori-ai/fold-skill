@@ -81,7 +81,7 @@ flowchart LR
 | --- | --- |
 | [prototype/README.md](prototype/README.md) | 运行方式、演示数据、十二种形式的场景与入口 |
 | [prototype/forms/CONCEPTS.md](prototype/forms/CONCEPTS.md) | 两轮形式的概念卡与结论、状态里缺的信息、打磨记录索引 |
-| [prototype/data/founder/POLISH.md](prototype/data/founder/POLISH.md) | 默认演示数据：founder 上的自由运行怎样打磨成演示，38 处修正（f02 空帧的连带修正与措辞）与没有改的判断分歧 |
+| [prototype/data/founder/POLISH.md](prototype/data/founder/POLISH.md) | 默认演示数据：founder 上的自由运行怎样打磨成演示，59 处修正（f02 空帧的连带修正 19 处、措辞 40 处）与没有改的判断分歧 |
 | [prototype/data/founder/SOURCES.md](prototype/data/founder/SOURCES.md) | founder 演示数据的来源：全部由作者编写，没有第三方内容 |
 | [prototype/data/composite/POLISH.md](prototype/data/composite/POLISH.md) | 旧演示数据：composite 第二次自由运行怎样打磨成演示，9 处修正与几类常见错误 |
 | [prototype/data/composite/SOURCES.md](prototype/data/composite/SOURCES.md) | composite 演示数据各流的来源、许可与已知的署名缺口 |
