@@ -14,7 +14,10 @@
       document.documentElement.classList.add('opening-exploration');
     }
     // ?embed=1: shown inside all.html, which lists every version itself; hide only the version switchers.
+    // ?embed=show: played as a picture on the site's landing page (prototype/embed.mjs): the variant hides its own
+    // controls too (.is-show rules in its stylesheet).
     if (opening.get('embed') === '1') document.documentElement.classList.add('is-embedded');
+    if (opening.get('embed') === 'show') document.documentElement.classList.add('is-embedded', 'is-show');
   }
   </script>
   <style>.opening-exploration .app-shell { display: none; }

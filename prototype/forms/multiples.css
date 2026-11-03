@@ -122,3 +122,5 @@
 @media (prefers-reduced-motion: reduce) {
   .mx-frame, .mx-spark-now, .mx-item, .mx-dot { transition: none !important; }
 }
+/* ?embed=show (forms/shell.mjs): played as a picture on the site's landing page, so no buttons */
+.fs-show .mx-tools { display: none; }

@@ -219,3 +219,5 @@
   .tr-tray.is-pulse::after { animation: none; }
   .tr-btn, .tr-chip { transition: none; }
 }
+/* ?embed=show (forms/shell.mjs): played as a picture on the site's landing page, so no rules or buttons under the trays */
+.fs-show .tr-foot { display: none; }

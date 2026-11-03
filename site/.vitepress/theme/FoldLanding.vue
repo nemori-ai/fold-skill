@@ -10,12 +10,14 @@
 // sets the state classes on the round section (s1–s3, ans) as the reader scrolls, adds `tx` when one beat follows
 // the previous, and drops it to jump (a skipped or reversed beat lands on its end state). Their times are TIMING.
 // prefers-reduced-motion: no motion at all.
-import { createStaticVNode, onBeforeUnmount, onMounted, ref } from 'vue'
+import { createStaticVNode, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import data from '../../landing/data.json'
 // Written by scripts/prepare-site.mjs: the recordings in site/media (a prototype without one shows its preview).
 import media from '../../.generated/landing-media.json'
 import { combinedPage, datasetNotice, openPrototype, prototypes } from './prototypes.mjs'
-import { DESK_ONLY, DOC_GROUPS, SITUATIONS, TIMING, deskHTML, directHref, fieldBox, fieldSVG, galleryOf, ladderOf, momentCSS, reviewSVG, showcaseOf, stageHTML, stageModel, whyModel } from './landing.mjs'
+import { gallery as overlay } from './prototypes.mjs'
+import { DESK_ONLY, DOC_GROUPS, LIVE, SITUATIONS, TIMING, deskHTML, directHref, fieldBox, fieldSVG, galleryOf, ladderOf, liveLabel, liveSrc, momentCSS, reviewSVG, showcaseOf, stageHTML, stageModel, stillOf, whyModel } from './landing.mjs'
+import { playLive } from './live.mjs'
 
 const v = field => field.value
 // Only the numbers the page still shows (2026-11-03: “不要到处写满数字”): the rest stay in data.json.
@@ -54,8 +56,12 @@ const seen = v(data.hero.seen)
 const lead = n.lead.plain
 // The second section: a day of one person (an order of magnitude, not the replay), against one app.
 const why = whyModel(data)
-const showcase = showcaseOf(prototypes).map((t, i) => ({ ...t, no: String(i + 1).padStart(2, '0'), figure: t.fig(data), href: directHref(t.prototype) }))
-// The third section's rows link to their card when the showcase has one, else to the prototype itself.
+const showcase = showcaseOf(prototypes).map(t => ({ ...t, href: directHref(t.prototype) }))
+const liveLast = LIVE.frames.at(-1)
+// Three to a row on a wide desk (each row's blocks share one height, widths by their shape), so all six are seen
+// moving together; two columns on a tablet, one on a phone.
+const showRows = [0, 3].map(i => showcase.slice(i, i + 3))
+// The third section's rows link to their block when the fifth section has one, else to the prototype itself.
 const cards = new Set(showcase.map(c => c.id))
 const ladder = ladderOf(data).map(l => {
   const prototype = prototypes.find(p => p.id === l.id)
@@ -178,7 +184,20 @@ function drawOnce(el, threshold) {
   cleanups.push(() => io.disconnect())
 }
 
-// ---------- recordings: only the ones in view play; nothing loads before it is needed ----------
+// ---------- the six, live: one clock, the prototypes themselves as pictures (live.mjs) ----------
+
+const showEl = ref(null)
+function startLive() {
+  const byId = new Map(showcase.map(c => [c.id, c.prototype]))
+  const player = playLive(showEl.value, {
+    ...LIVE, srcOf: (id, frame) => liveSrc(byId.get(id), frame), stillOf, label: frame => liveLabel(data, frame),
+  })
+  // While the viewer or the gallery panel is open over the page, the six stop and wait.
+  const stopWatch = watch(() => Boolean(overlay.current || overlay.open), on => player.hold(on))
+  cleanups.push(() => { stopWatch(); player.stop() })
+}
+
+// ---------- gallery recordings: only the ones in view play; nothing loads before it is needed ----------
 
 function play(video) {
   if (reduced) return
@@ -190,18 +209,6 @@ function play(video) {
   }
   const p = video.play()
   if (p) p.catch(() => {})   // autoplay refused (low power mode): the poster stays
-}
-function watchShowcase() {
-  const io = new IntersectionObserver(entries => {
-    for (const e of entries) {
-      const video = e.target.querySelector('video')
-      if (!video) continue
-      if (e.isIntersecting) play(video)
-      else video.pause()
-    }
-  }, { threshold: 0.4 })
-  for (const m of document.querySelectorAll('.fl-show .fl-media')) io.observe(m)
-  cleanups.push(() => io.disconnect())
 }
 
 // ---------- the gallery: rows that keep moving (compositor-driven), stop for a hand or a pointer, drag sideways ----------
@@ -324,7 +331,7 @@ onMounted(() => {
   watchRound()
   drawOnce(whyEl.value, 0.3)
   drawOnce(ladderEl.value, 0.2)
-  watchShowcase()
+  startLive()
   watchGallery()
 })
 onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).forEach(fn => fn()) })
@@ -478,36 +485,35 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
       </div>
     </section>
 
-    <!-- 六种处境：录像是原型自己讲一遍，按钮打开原型本身。 -->
-    <section id="forms" class="fl-show" aria-labelledby="fl-show-title">
-      <p class="fl-kick">六种处境</p>
-      <h2 id="fl-show-title" class="fl-h">同一份状态，六种读法</h2>
-      <article v-for="(c, i) in showcase" :id="`form-${c.id}`" :key="c.id" class="fl-form" :class="[`is-${c.record}`, { flip: i % 2 }]">
-        <header class="hd"><span class="no">{{ c.no }}</span><h3>{{ c.name }}</h3><span class="where">{{ c.where }}</span></header>
-        <div class="fl-media">
-          <img :src="recorded.has(`${c.id}.webp`) ? `/media/${c.id}.webp` : c.prototype.preview" alt="" loading="lazy" decoding="async">
-          <video v-if="clip(c.id)" :data-src="clip(c.id)" muted playsinline loop preload="none" :aria-label="`${c.name}的录像：原型自己讲一遍`" />
+    <!-- 同一份状态，不同的交互呈现：六个原型本身（不是录像），一个时钟同步播放，不接收操作（live.mjs）；按钮打开可操作的原型。 -->
+    <section id="forms" ref="showEl" class="fl-show" aria-labelledby="fl-show-title">
+      <div class="hd">
+        <p class="fl-kick">六个原型 · 同步播放</p>
+        <h2 id="fl-show-title" class="fl-h">同一份状态，不同的交互呈现</h2>
+        <p class="fl-lede">下面六个原型都在实时运行，不是录像。它们读取同一份回放数据，由同一个时钟驱动，逐轮同步播放到此刻。如需自己操作，请点“打开原型”。</p>
+      </div>
+      <div class="lv-grid">
+        <div v-for="(row, r) in showRows" :key="r" class="lv-row">
+        <article v-for="c in row" :id="`form-${c.id}`" :key="c.id" class="lv-card" :class="`lv-${c.id}`" :style="{ '--ar': (c.view[0] / c.view[1]).toFixed(4) }">
+          <a class="lv-frame" :href="c.href" target="_self" rel="noreferrer" tabindex="-1" aria-hidden="true" :data-live="c.id" :data-w="c.view[0]" :data-h="c.view[1]" :data-title="`${c.name}（播放中）`" @click="open($event, c.prototype)">
+            <picture><source media="(prefers-reduced-motion: reduce)" :srcset="stillOf(c.id, liveLast)"><img :src="stillOf(c.id, LIVE.frames[0])" alt="" loading="lazy" decoding="async" :width="c.view[0]" :height="c.view[1]"></picture>
+          </a>
+          <p class="lv-at" aria-hidden="true"><span class="lv-ticks" data-live-ticks><i v-for="(f, i) in LIVE.frames" :key="f" :class="{ on: i === 0 }" /></span><span data-live-at>{{ liveLabel(data, LIVE.frames[0]) }}</span></p>
+          <div class="lv-txt">
+            <h3>{{ c.name }}<span class="where">{{ c.where }}</span></h3>
+            <p class="line">{{ c.line }}</p>
+            <p class="go"><a class="fl-btn" :href="c.href" target="_self" rel="noreferrer" @click="open($event, c.prototype)">打开原型 ↗</a><small v-if="c.better" class="better">{{ c.better }}</small></p>
+          </div>
+        </article>
         </div>
-        <p class="cap">{{ c.record === 'phone' ? '手机 390 宽' : 'iPad 横屏' }}录像 · 原型自己讲一遍</p>
-        <div class="txt">
-          <p class="sit">{{ c.situation }}</p>
-          <p class="form">{{ c.form }}</p>
-          <p class="k">
-            <span class="fig"><span class="fl-num" :class="{ ver: c.ver }" :data-k="c.figure[2]">{{ c.figure[0] }}</span>{{ c.figure[1] }}</span>
-            <span class="go">
-              <a class="fl-btn solid" :href="c.href" target="_self" rel="noreferrer" @click="open($event, c.prototype)">打开原型 ↗</a>
-              <small v-if="c.better" class="better">{{ c.better }}</small>
-            </span>
-          </p>
-        </div>
-      </article>
+      </div>
     </section>
 
     <!-- 其余的：三行交错轮播，按住暂停、左右拖，点开。 -->
     <section id="all" class="fl-gal" aria-labelledby="fl-gal-title">
       <div class="fl-gal-hd">
-        <p class="fl-kick">其余 <span data-k="gallery.count">{{ gallery.length }}</span> 种 · 一直在动</p>
-        <h2 id="fl-gal-title" class="fl-h">还有 {{ gallery.length }} 种读法</h2>
+        <p class="fl-kick">其余 <span data-k="gallery.count">{{ gallery.length }}</span> 个原型 · 循环播放录像</p>
+        <h2 id="fl-gal-title" class="fl-h">还有 {{ gallery.length }} 种呈现方式</h2>
         <p class="fl-lede">带“桌面”的按电脑宽度排版，手机上先看录像。按住暂停，左右拖动，点开试用。</p>
       </div>
       <div v-for="(row, r) in rows" :key="r" class="fl-row" :class="r % 2 ? 'to-right' : 'to-left'">
@@ -1014,29 +1020,34 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .fl-note { margin-top: 8px; font: 11.5px/1.6 var(--mono) !important; color: var(--ink-3) !important; }
 
 .fl-show, .fl-docs { max-width: calc(var(--maxw) + 2 * var(--m)); margin: 0 auto; padding: 56px var(--m) 0; }
-.fl-show > h2 { margin: 8px 0 8px; font-size: 25px; line-height: 1.3; }
 
-/* ===== the six situations ===== */
-.fl-form { margin-top: 26px; padding-top: 12px; border-top: 1px solid var(--ink); }
-.fl-form .hd { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
-.fl-form .hd .no { font: 13px var(--mono); color: var(--ink-2); }
-.fl-form .hd h3 { font: 700 22px/1.2 var(--cjk); }
-.fl-form .hd .where { margin-left: auto; font: 11px/1.3 var(--mono); color: var(--ink-2); text-align: right; }
-.fl-media { position: relative; display: grid; place-items: center; overflow: hidden; border: 1px solid var(--rule); border-radius: 18px; background: var(--paper-2); }
-.fl-media img, .fl-media video { grid-area: 1 / 1; display: block; width: 100%; height: auto; }
-.fl-media video { opacity: 0; transition: opacity 300ms; }
-.fl-media video.on { opacity: 1; }
-.fl-form.is-phone .fl-media { aspect-ratio: auto; padding: 14px 0; }
-.fl-form.is-phone .fl-media img, .fl-form.is-phone .fl-media video { width: auto; max-width: 78%; max-height: min(62svh, 560px); border-radius: 12px; box-shadow: 0 0 0 1px var(--rule); }
-.fl-form.is-pad .fl-media img, .fl-form.is-pad .fl-media video { aspect-ratio: 1180 / 820; object-fit: cover; }
-.fl-form .cap { margin-top: 6px; font: 11px/1.4 var(--mono); color: var(--ink-3); }
-.fl-form .sit { margin: 14px 0 4px; font: 600 15px/1.5 var(--sans); }
-.fl-form .form { color: var(--ink-2); font-size: 14.5px; line-height: 1.65; }
-.fl-form .k { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-top: 14px; }
-.fl-form .fig { font: 13px var(--mono); }
-.fl-form .fig .fl-num { margin-right: 6px; font-size: 38px; vertical-align: -4px; }
-.fl-form .go { display: flex; align-items: center; gap: 10px; }
-.fl-form .better { font: 11px/1.4 var(--mono); color: var(--ink-3); max-width: 9em; }
+/* ===== the six, live (live.mjs): the prototypes themselves, scaled into blocks of their own shape ===== */
+.fl-show .hd h2 { margin: 8px 0 8px; font-size: 25px; line-height: 1.3; }
+.fl-show .hd .fl-lede { max-width: 40em; }
+.lv-grid { display: flex; flex-direction: column; gap: 40px; margin-top: 26px; }
+.lv-row { display: contents; }
+.lv-card { min-width: 0; }
+/* the frame keeps the page's shape; the still fills it, the live page goes on top only while it shows the same frame */
+.lv-frame { position: relative; display: block; overflow: hidden; aspect-ratio: var(--ar); border: 1px solid var(--rule); border-radius: 14px; background: var(--paper-2); -webkit-tap-highlight-color: transparent; }
+.lv-frame picture, .lv-frame img { display: block; width: 100%; height: 100%; }
+.lv-frame img { object-fit: cover; }
+.lv-live { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; opacity: 0; pointer-events: none; transition: opacity 260ms ease-out; }
+.lv-live.on { opacity: 1; }
+/* the phone-sized ones keep about a phone's width, centred */
+.lv-trays .lv-frame, .lv-trays .lv-at { width: min(100%, 230px); margin-inline: auto; }
+.lv-watch .lv-frame, .lv-watch .lv-at { width: min(100%, 260px); margin-inline: auto; }
+/* the common progress: the same round under every block */
+.lv-at { display: flex; align-items: center; gap: 8px; margin-top: 8px; font: 10.5px/1.4 var(--mono); color: var(--ink-3); white-space: nowrap; }
+.lv-ticks { display: flex; gap: 3px; }
+.lv-ticks i { width: 7px; height: 2px; background: var(--rule); transition: background-color 300ms; }
+.lv-ticks i.on { background: var(--ink-2); }
+.lv-txt h3 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin: 10px 0 4px; font: 700 19px/1.3 var(--cjk); }
+.lv-txt .where { font: 11px/1.3 var(--mono); font-weight: 400; color: var(--ink-2); }
+.lv-txt .line { color: var(--ink-2); font-size: 14px; line-height: 1.65; }
+.lv-txt .go { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; }
+.lv-txt .better { font: 11px/1.4 var(--mono); color: var(--ink-3); }
+@media (min-width: 700px) { .lv-txt .fl-btn { min-height: 36px; padding: 0 14px; font-size: 13px; } }
+@media (hover: hover) { .lv-frame:hover { border-color: var(--ink-3); } }
 
 /* ===== the gallery ===== */
 .fl-gal { padding: 64px 0 0; }
@@ -1115,7 +1126,11 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
   .fl-step h3 { font-size: 26px; }
   .fl-step p:not(.no) { font-size: 15.5px; max-width: 36em; }
   .fl-beat-stage { --zw: min(100%, 560px); --zmax: 560px; }
-  .fl-show > h2 { font-size: 32px; }
+  .fl-show .hd h2 { font-size: 32px; }
+  .lv-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 44px 28px; }
+  .lv-trays .lv-frame, .lv-trays .lv-at { width: min(100%, 230px); }
+  .lv-watch .lv-frame, .lv-watch .lv-at { width: min(100%, 280px); }
+  .lv-txt .better { display: none; }
   .fl-tile { width: 260px; }
   .fl-docs .groups { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 32px; }
 }
@@ -1157,17 +1172,8 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
   .fl-count { height: 104px; }
   .fl-count .alt { font-size: 12.5px; }
   .fl-beat-stage { --gut: 72px; --ax: 22px; --rg: 14px; --rh: 38px; --cardH: 196px; }
-  .fl-show > h2 { margin-bottom: 8px; }
-  .fl-form { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); column-gap: 32px; row-gap: 0; margin-top: 44px; }
-  .fl-form .hd { grid-column: 1 / 9; }
-  .fl-form .fl-media { grid-column: 1 / 6; grid-row: 2; }
-  .fl-form .cap { grid-column: 1 / 6; grid-row: 3; }
-  .fl-form .txt { grid-column: 6 / 9; grid-row: 2; align-self: center; }
-  .fl-form.flip .fl-media, .fl-form.flip .cap { grid-column: 4 / 9; }
-  .fl-form.flip .txt { grid-column: 1 / 4; }
-  .fl-form .sit { margin-top: 0; font-size: 17px; }
-  .fl-form .form { font-size: 15px; }
-  .fl-form.is-phone .fl-media img, .fl-form.is-phone .fl-media video { max-height: 600px; }
+  .fl-show .hd h2 { margin-bottom: 8px; }
+  .lv-grid { margin-top: 34px; }
   .fl-gal { padding-top: 96px; }
   .fl-gal-hd h2 { font-size: 32px; }
   .fl-tile { width: 300px; }
@@ -1177,6 +1183,16 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
   .fl-docs h2 { font-size: 32px; }
   .fl-foot { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
   .fl-foot .links { grid-column: 1 / 3; margin-top: 10px; }
+}
+/* ===== a wide desk: the six in two rows of three, all on one screen ===== */
+@media (min-width: 1200px) {
+  .lv-grid { display: flex; flex-direction: column; gap: 40px; }
+  /* widths by shape, so a row's frames share one height */
+  .lv-row { display: flex; align-items: flex-start; gap: 28px; }
+  .lv-row .lv-card { flex: var(--ar) 1 0; }
+  .lv-row .lv-frame, .lv-row .lv-at { width: auto; margin-inline: 0; }
+  .lv-txt h3 { font-size: 18px; }
+  .lv-txt .line { font-size: 13.5px; line-height: 1.6; max-width: 34em; }
 }
 @media (min-width: 1440px) { .fl { --m: 80px; } }
 

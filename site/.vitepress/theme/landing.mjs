@@ -7,55 +7,64 @@ const v = field => field.value
 
 // ---------- which prototypes, in what order ----------
 
-// The six showcase forms, in the order the user signed off (2026-11-02): from one minute on a phone, to a few
-// minutes with one thumb, to two seconds on a wrist, to unfolding the device, to a weekend review, to the timeline.
-// `record` is the size its clip is recorded at (scripts/record-landing.mjs): a phone for the phone-native forms,
-// an iPad on its side for the ones that need the room.
+// The six played live in the fifth section (#forms), in the order the user set (2026-11-03): the desk's attention
+// squares, the trays for one thumb, the wrist, the folding phone, the timeline, the weekend review. Each card says one
+// plain sentence and no figures. `view` is the size the prototype is laid out at ([width, height], CSS px): the block
+// keeps that shape and scales the page into it (A and B wide, the watch small, the trays tall). `better`: shown
+// under the button on a phone, for the ones laid out for a bigger screen.
 export const TOP = [
-  {
-    id: 'd', name: '手机首页', where: '手机 · 1 分钟', record: 'phone',
-    situation: '离开半天回来，掏出手机看一分钟。',
-    form: '一屏只放得下三张卡、拇指只够一排按钮，所以首页只排等你回应的事：最急的在最上面、字最大，一按就答，答完原地收成回执。',
-    fig: d => [v(d.beat3.open), '件等你回应', 'beat3.open'], ver: true,
-  },
-  {
-    id: 'trays', name: '回应托盘', where: '手机 · 几分钟', record: 'phone',
-    situation: '排队、通勤的几分钟，想一口气答完。',
-    form: '只有一只拇指和几分钟，所以按“要点几下”排：每个问题一个托盘，托盘几排就要点几下，按掉一下矮一排。',
-    fig: d => [v(d.beat3.taps), `下答完 ${v(d.beat3.open)} 个问题`, 'beat3.taps'],
-  },
-  {
-    id: 'watch', name: '腕上一瞥', where: '手表 · 2 秒', record: 'phone',
-    situation: '会议间隙抬腕，两秒：要不要现在掏手机？',
-    form: '两秒读不完一句话，只读得了一个数和一圈刻度：64 份卷成 64 格表圈，要紧的亮朱红，中间的数只数要紧的。',
-    fig: d => [v(d.beat3.urgent).length, '件要紧', 'beat3.urgent.length'], ver: true,
-  },
-  {
-    id: 'duo', name: '折叠屏', where: '折叠屏 · iPad 横 · 5 分钟', record: 'pad', better: '横屏 iPad 或电脑上更好',
-    situation: '翻开折叠屏，想知道这几张卡是从哪来的。',
-    form: '屏幕大了一倍，就把这一轮的原料摊在左页：采用的按落进哪件分组，一条线穿过折痕连到右页那张卡，没采用的灰着折在下面。',
-    fig: d => [v(d.beat1.n), `条进来，${v(d.beat2.folded)} 条折掉`, 'beat1.n'],
-  },
-  {
-    id: 'multiples', name: '两周小倍数', where: '大屏 · 10 分钟 · 不作答', record: 'pad', better: '横屏 iPad 或电脑上更好',
-    situation: '周末复盘：这两周注意力花在哪了。',
-    form: '要看的是走向，不是某一件：每一轮一张 8 × 8 = 64 格的小方阵，同尺度并排，不承载作答。',
-    fig: d => [v(d.twoWeeks.roundsAtFull), `次用满 64 份（共 ${v(d.beat1.context.rounds)} 轮）`, 'twoWeeks.roundsAtFull'],
-  },
-  {
-    id: 'b', name: '时间展开', where: 'iPad · 几分钟', record: 'pad', better: '横屏 iPad 或电脑上更好',
-    situation: '想知道哪件事的期限先到，还剩多久。',
-    form: '时间往右展开：此刻是一条竖线，每件事一条带、粗细是份额；期限落在此刻线之后的哪里，就标在哪里，谁先到一眼看出。',
-    fig: d => [v(d.dueAhead)[0].hours, '小时后，最近的期限', 'dueAhead.0.hours'],
-  },
+  { id: 'a', name: '空间排布', where: '电脑 · 坐下几分钟', view: [1180, 580], better: '在电脑上查看效果更好',
+    line: '适合坐在电脑前时使用：每件事占用的面积代表它分到的注意力，需要你回复的问题排在左侧，可以直接作答。' },
+  { id: 'trays', name: '回应托盘', where: '手机 · 通勤几分钟', view: [390, 800],
+    line: '适合通勤时单手操作：每个问题一个托盘，需要点几下就叠几层，每点一下少一层，几分钟内可以全部答完。' },
+  { id: 'watch', name: '腕上一瞥', where: '手表 · 抬腕两秒', view: [390, 520],
+    line: '抬腕时只显示一个数字：表圈每格代表一份注意力，紧急事项标为红色，用来判断现在是否需要拿出手机。' },
+  { id: 'duo', name: '折叠屏', where: '折叠屏 · 展开后几分钟', view: [1180, 760], better: '在横屏平板或电脑上查看效果更好',
+    line: '展开后屏幕面积加倍：左页列出这一轮收到的原始消息，并用连线把它们接到右页对应的卡片上。' },
+  { id: 'b', name: '时间展开', where: '平板 · 几分钟', view: [1180, 660], better: '在电脑上查看效果更好',
+    line: '以时间为横轴：竖线代表此刻，每件事是一条色带，期限标在竖线右侧，可以看出哪件事最先到期。' },
+  { id: 'multiples', name: '两周小倍数', where: '大屏 · 周末复盘', view: [1180, 800], better: '在电脑上查看效果更好',
+    line: '用于周末复盘，不需要作答：每一轮整理画成一个小方阵并排排列，可以看出两周内注意力的变化。' },
 ]
 
-// The rest, in the gallery's order: the smart glasses (newest, fine on a phone and a pad) and the original tree map
-// first, then the ones still usable on a phone or a pad
+// How the six play (site/.vitepress/theme/live.mjs): one clock for all of them, from three days before 此刻 up to it,
+// a round at a time, with a longer stop on 此刻, then round again. `dwell`/`hold` in ms; `settle` is how long a page
+// that was behind gets to finish its own transition (covered by its still) before it is shown. `phoneStill`: played as
+// stills, still in step, on a phone (one round of E takes long tasks over the budget there: spec.md「验收」).
+// phoneStill: prototypes too heavy to play live on a phone (a frame step with a long task over 250 ms at 4× CPU
+// throttle) play there as stills that follow the clock. None over f16–f22 (E 折叠屏 peaks at 107 ms); E was one while
+// the six played f20–f26 (259 ms at f23).
+export const LIVE = { frames: [16, 17, 18, 19, 20, 21, 22], dwell: 3400, hold: 7000, settle: 1100, phoneStill: [] }
+
+/** The page a block plays: the prototype's own address with ?embed=show (prototype/embed.mjs) at that frame. */
+export function liveSrc(prototype, frame) {
+  const url = new URL(prototype.href, 'https://fold.invalid')
+  url.searchParams.set('embed', 'show')
+  url.searchParams.set('frame', String(frame))
+  return `${url.pathname}${url.search}`
+}
+/** A block's still for a frame (scripts/record-landing.mjs shoots them): what shows before and between live pages. */
+export const stillOf = (id, frame) => `/media/live/${id}-${frame}.webp`
+
+/** The common progress line under the blocks: "8/13 中午 → 此刻", and "此刻" on the last frame played (the page's
+ *  "now", f22). The replay sorts every 12 hours, so a frame's time is counted from the one data.json names
+ *  (data.frame), on the replay's own clock. */
+export function liveLabel(d, frame) {
+  if (frame === LIVE.frames.at(-1)) return '此刻'
+  const at = v(d.frame.at), anchor = Number(v(d.frame.id).slice(1))
+  const offset = at.match(/([+-])(\d\d):(\d\d)$/)
+  const shift = offset ? (offset[1] === '-' ? -1 : 1) * (Number(offset[2]) * 60 + Number(offset[3])) * 60000 : 0
+  const t = new Date(Date.parse(at) - (anchor - frame) * 12 * 3600000 + shift)
+  const part = { 0: '零点', 12: '中午' }[t.getUTCHours()] ?? `${t.getUTCHours()} 点`
+  return `${t.getUTCMonth() + 1}/${t.getUTCDate()} ${part} → 此刻`
+}
+
+// The rest, in the gallery's order: the smart glasses (newest, fine on a phone and a pad), the phone home page and the
+// original tree map first, then the ones still usable on a phone or a pad
 // and the strongest pictures, the desk-only relation views by finish × representativeness, the component demo,
 // and the eight forms withdrawn after round one. A prototype missing here (a new one) goes to the end.
 export const GALLERY_ORDER = [
-  'glasses', 'original', 'pulse', 'a', 'chain', 'c', 'morph', 'dial', 'timing', 'peak', 'yield', 'age', 'notation', 'tug',
+  'glasses', 'd', 'original', 'pulse', 'chain', 'c', 'morph', 'dial', 'timing', 'peak', 'yield', 'age', 'notation', 'tug',
   'lineage', 'provenance', 'khipu', 'respond', 'chat', 'radio', 'departures', 'blame', 'frontpage', 'receipt', 'strips', 'orb',
 ]
 

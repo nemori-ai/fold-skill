@@ -464,3 +464,5 @@
   .variant-a .a-paper > .flip-shape, .variant-a .a-slider-thumb, .variant-a .a-slider-fill, .variant-a .a-ask, .variant-a .a-tail-open { transition:none; }
   .variant-a .a-reader, .variant-a .a-panel { animation:none; }
 }
+/* ?embed=show (prototype/embed.mjs): played as a picture on the site's landing page, so no controls, only the desk */
+.is-show .variant-a .a-header-tools, .is-show .variant-a .a-meaning, .is-show .variant-a .a-time-controls, .is-show .variant-a .a-compare-toggle { display: none; }

@@ -153,3 +153,5 @@
   .w-wrap *, .w-wrap *::before { transition: none !important; animation: none !important; }
 }
 .w-keys.is-playing { color: var(--ink); font-weight: 600; }
+/* ?embed=show (forms/shell.mjs): played as a picture on the site's landing page, so only the question and the face */
+.fs-show .w-row > .w-fig:not(.w-fig-face), .fs-show .w-names, .fs-show .w-fig-face figcaption, .fs-show .w-keys { display: none; }

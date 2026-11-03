@@ -1,5 +1,5 @@
 import { createModel, escapeHTML as esc, inputHTML, scenario as data, notice } from './variants/shared.mjs?v=feedback-loop-1';
-import { followFrames } from './embed.mjs';
+import { followFrames, shown } from './embed.mjs';
 
 // The prototype is served as static files. Keep a review's modules and styles
 // together even when an already-open browser has cached the previous version.
@@ -58,7 +58,7 @@ async function switchVariant(next) {
   try {
     const module=await import(`./variants/${key}.mjs?v=${reviewVersion}`);await stylesReady;
     if(token!==generation)return;
-    host.innerHTML='';mountedCleanup=module.mount(host,model)||null;
+    host.innerHTML='';mountedCleanup=module.mount(host,model)||null;shown();
   }catch(error){
     if(token!==generation)return;
     host.innerHTML=`<div class="lab-loading"><h1>视图加载失败</h1><p>${esc(error.message)}</p><a href="./">打开原版</a></div>`;

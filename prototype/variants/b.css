@@ -548,3 +548,5 @@
 @media (prefers-reduced-motion: reduce) {
   .variant-b .b-concept { display: none; }
 }
+/* ?embed=show (prototype/embed.mjs): played as a picture on the site's landing page, so no controls, only the chart */
+.is-show .variant-b .b-header-actions, .is-show .variant-b .b-time-tools, .is-show .variant-b .b-view-options, .is-show .variant-b .b-scrubber { display: none; }

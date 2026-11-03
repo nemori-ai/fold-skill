@@ -425,3 +425,5 @@
   .u-half.is-pulse::after { animation: none; }
   .u-spread > .u-cl, .u-spread > .u-cr { transition: none; }
 }
+/* ?embed=show (prototype/embed.mjs): played as a picture on the site's landing page, so only the device */
+.is-show .d-rail, .is-show .u-grip { display: none; }
