@@ -14,11 +14,12 @@ make prototype
 
 ## 演示数据
 
-所有页面（原版、A/B/C/D、形式画廊、合页、腕上一瞥、小倍数、五张复盘图与第一轮撤下的八个形式）都从 `scenario.mjs` 读同一份回放，用 `?data=<名字>` 选择数据集，在原型内点链接会带上这个选择；可选的数据集登记在 [data/select.mjs](data/select.mjs)：
+所有页面（原版、A/B/C/D、形式画廊、合页、腕上一瞥、小倍数、五张复盘图与第一轮撤下的八个形式）都从 `scenario.mjs` 读同一份回放，用 `?data=<名字>` 选择数据集，在原型内点链接会带上这个选择；可选的数据集登记在 [data/select.mjs](data/select.mjs)，不带 `?data=` 时用默认的 `founder`：
 
 | `?data=` | 内容 |
 | --- | --- |
-| `composite`（默认） | [data/composite/scenario.mjs](data/composite/scenario.mjs)：化名人物 Jonas Berglund 的两周，[混合语料](../corpus/composite/MIX.md)的输入：29 帧，`f00` 是空状态，其后 28 帧共 3196 条（四条流是化名改写的真实公开数据，另有作者编写的家庭流 388 条；正文截到 500 字，去掉了 21 封 Enron 营销邮件）。判断来自混合语料上的第二次自由运行（`free-20261015-161501`，`claude-opus-5-5`，31 次调用，23.23 美元，报告见[评测记录](../docs/evaluations/free-run-composite-v2-2026-10-15.md)），再经人工打磨：对 Agent 批次的修正 9 处、手写反馈链接 4 处，登记回应路径 26 条（都带短问法），从本人后续动作推出反馈链接 160 条。由 `scripts/build_demo_data.py` 从 Agent 批次（[agent-batches.json](data/composite/agent-batches.json)）与修正（[edits.json](data/composite/edits.json)）重放生成，修正逐条记在 [POLISH.md](data/composite/POLISH.md)；各流的来源、许可、引用长度与化名处理见 [SOURCES.md](data/composite/SOURCES.md)，改写文本已于 2026-10-15 由用户决定随站点公开。 |
+| `founder`（默认） | [data/founder/scenario.mjs](data/founder/scenario.mjs)：作者编写的陆晨两周，[founder 语料](../corpus/founder/README.md)的输入：29 帧，`f00` 是空状态，其后 28 帧共 2532 条（工作、家里、生活、社区、订阅五条流，人物与每一条消息都是作者编写的，不来自真实的人；正文截到 500 字）。判断来自 founder 语料上的一次自由运行（`free-20261103-225347`，`claude-opus-5-5`，28 次调用，16.38 美元，28 帧全部被接受），再经人工打磨：对 Agent 批次的修正 38 处（其中 19 处是 f02 那一轮 Agent 没有整理的连带修正，19 处是措辞）、手写反馈链接 14 条，登记回应路径 26 条（对应剧本 27 个问题里的 24 个，都带短问法），从本人后续动作推出反馈链接 238 条。白鹭上线一件带子层。由 `scripts/build_demo_data.py founder` 从 Agent 批次（[agent-batches.json](data/founder/agent-batches.json)）与修正（[edits.json](data/founder/edits.json)）重放生成，修正逐条记在 [POLISH.md](data/founder/POLISH.md)，来源见 [SOURCES.md](data/founder/SOURCES.md)。 |
+| `composite` | 旧语料。[data/composite/scenario.mjs](data/composite/scenario.mjs)：化名人物 Jonas Berglund 的两周，[混合语料](../corpus/composite/MIX.md)的输入：29 帧，`f00` 是空状态，其后 28 帧共 3196 条（四条流是化名改写的真实公开数据，另有作者编写的家庭流 388 条；正文截到 500 字，去掉了 21 封 Enron 营销邮件）。判断来自混合语料上的第二次自由运行（`free-20261015-161501`，`claude-opus-5-5`，31 次调用，23.23 美元，报告见[评测记录](../docs/evaluations/free-run-composite-v2-2026-10-15.md)），再经人工打磨：对 Agent 批次的修正 9 处、手写反馈链接 4 处，登记回应路径 26 条（都带短问法），从本人后续动作推出反馈链接 160 条。由 `scripts/build_demo_data.py` 从 Agent 批次（[agent-batches.json](data/composite/agent-batches.json)）与修正（[edits.json](data/composite/edits.json)）重放生成，修正逐条记在 [POLISH.md](data/composite/POLISH.md)；各流的来源、许可、引用长度与化名处理见 [SOURCES.md](data/composite/SOURCES.md)，改写文本已于 2026-10-15 由用户决定随站点公开。 |
 | `story` | [data/story/scenario.mjs](data/story/scenario.mjs)：作者手写的林苒两周，37 帧、112 条输入，判断全部预先编排（[STORY.md](STORY.md)）。判断评测（`scripts/eval_judgment.py`）读的也是它。 |
 
 每个数据集在 `select.mjs` 里带一句 `notice`，页面在数据旁照写，说明人物、输入与判断从哪里来。
@@ -62,9 +63,9 @@ make prototype
 | 驻龄 | 此刻的份额多少是沉淀的、多少是刚换手的；64 格两周不挪，一轮三个动作：清出、加圈、新框；直接打开讲一遍约 23 秒 | 不承载作答；悬停一块地盘看概要，点击展开详情，开着的问题旁“去回答 →”链到同一帧的 D | [sketches/age.html](forms/sketches/age.html) | [age-motion.md](forms/polish/age-motion.md) |
 | 等待链 | 谁在等你、你挡住了谁：每个开着的问题后面站着哪些人、各等了多久；直接打开讲一遍约 12 秒：答掉一件，放走一串人 | 不承载作答；朱红只给你这根脊与脊上的结；悬停一行或一个人看概要，点击展开，开着的问题旁“去回答 →”链到同一帧的 D | [sketches/chain.html](forms/sketches/chain.html) | [chain-motion.md](forms/polish/chain-motion.md) |
 | 拔河 | 家里与工作在 64 份里此消彼长，你实际在哪一边动手；直接打开讲一遍约 23 秒：份额说家里重、手却在工作上，家里坠到 59 : 5，一天后弹回 | 不承载作答；朱红短柱是你在来源处的回应（向上工作、向下家里）；悬停条上的一段、曲线上的一轮或一根柱看概要，点击展开详情，开着的问题链到同一帧的 D | [sketches/tug.html](forms/sketches/tug.html) | [tug-motion.md](forms/polish/tug-motion.md) |
-| 结绳 | 一件事里还有自己的 64 份，最深一件折合根层才几份；默认样张是手写情境，直接打开讲一遍约 9 秒，停在发布的子层画框里（composite 两周没有子层，只画根层与分组合计） | 不承载作答；朱红只标此刻开着的问题，详情卡与侧栏的“去回答 →”链到同一帧的 D；悬停垂绳看概要，点击展开，点有子层的垂绳长成画框 | [sketches/khipu.html?data=story](forms/sketches/khipu.html?data=story) | [khipu-motion.md](forms/polish/khipu-motion.md) |
+| 结绳 | 一件事里还有自己的 64 份，最深一件折合根层才几份；默认样张是手写情境，直接打开讲一遍约 9 秒，停在发布的子层画框里（陆晨的两周只有白鹭上线一件分了一层子层，讲一遍停在 f06 白鹭的画框里；composite 两周没有子层，只画根层与分组合计） | 不承载作答；朱红只标此刻开着的问题，详情卡与侧栏的“去回答 →”链到同一帧的 D；悬停垂绳看概要，点击展开，点有子层的垂绳长成画框 | [sketches/khipu.html?data=story](forms/sketches/khipu.html?data=story) | [khipu-motion.md](forms/polish/khipu-motion.md) |
 | 回应托盘 | 排队、通勤的几分钟，一口气答完：托盘几排就要点几下，按掉一下矮一排，答完原地收成回执，下一轮整理读到才让位；直接打开讲一遍约 8 秒 | confirm、approve、choose 一下；defer、schedule 两下（先点开再挑）；reply 有建议句一下、没有两下；照片、预填金额一下；轻点托盘长出详情，长按看概要，左滑知道了 | [forms/trays.html](forms/trays.html?frame=26) | [trays-motion.md](forms/polish/trays-motion.md) |
-| 智能眼镜 | Even G2 那样 576 × 288 的单色绿显示面，平时 0 像素：只给要紧的问题里排第一的那一件，最前那件换了才经手机通知亮一次（composite 两周 28 轮亮 4 次）；唯一的例外是你在和等你的人通话，那时亮她在等的那一件，别的要紧事挂断后出一次（对上 3 次）；不画 64 份，用图片容器画离截止的小时刻度、谁在等的首字块、金额比例条、通话分钟与等下一轮的进度；直接打开讲一遍约 10 秒 | confirm、approve 与 ≤ 4 项的 choose 在眼镜上答（轻点打开、滑动换选、轻点确定）；reply、schedule、defer 长按交给手机；镜腿五个手势、H 抬头、[ ] 跳到下一个值得看的时刻 | [forms/glasses.html](forms/glasses.html?frame=26) | [glasses-concept.md](forms/polish/glasses-concept.md) |
+| 智能眼镜 | Even G2 那样 576 × 288 的单色绿显示面，平时 0 像素：只给要紧的问题里排第一的那一件，最前那件换了才经手机通知亮一次（陆晨的两周 28 轮亮 8 次，composite 亮 4 次）；唯一的例外是你在和等你的人通话，那时亮对方在等的那一件，别的要紧事挂断后出一次（陆晨的两周 21 次通话对上 4 次，composite 对上 3 次）；不画 64 份，用图片容器画离截止的小时刻度、谁在等的首字块、金额比例条、通话分钟与等下一轮的进度；直接打开讲一遍约 10 秒 | confirm、approve 与 ≤ 4 项的 choose 在眼镜上答（轻点打开、滑动换选、轻点确定）；reply、schedule、defer 长按交给手机；镜腿五个手势、H 抬头、[ ] 跳到下一个值得看的时刻 | [forms/glasses.html](forms/glasses.html?frame=26) | [glasses-concept.md](forms/polish/glasses-concept.md) |
 | 整理脉冲（动画） | 官网首屏：一轮整理演成 4.25 秒的一次脉冲 | 不承载作答；详情里链到 D 作答；朱红只标新登记的问题、你的回应与答掉的记号 | [motion/pulse.html](forms/motion/pulse.html) | [story.md](forms/motion/pulse/story.md) |
 | 份额拨盘（动画） | 第一次看 Fold 的人，20 秒：64 份是怎样的硬约束，满了谁让位 | 不承载作答；详情里链到 D 作答；游标只指要紧的问题 | [motion/dial.html](forms/motion/dial.html) | [story.md](forms/motion/dial/story.md) |
 
@@ -72,7 +73,7 @@ make prototype
 
 整理脉冲默认从 `f00` 自动连播并首尾相接，`?frame=` 演一遍那一轮再停住，`?from=` 从那一轮起连播（官网首屏可用 `?from=19`）；悬停（或 Tab 到）枝条看概要，点击展开详情，两者都让本轮停在当前时刻，详情里的问题链到同一帧的 D 去回答（见 [story.md](forms/motion/pulse/story.md) 末节“交互”）；参考拆解、数字与故事见 [spec.md](forms/motion/pulse/spec.md)、[data.json](forms/motion/pulse/data.json)、[story.md](forms/motion/pulse/story.md)。份额拨盘默认循环 20 秒三拍，空格连播全部轮次，←/→ 逐帧并停住，`?frame=` 直接停在那帧；悬停（或 Tab 到）扇区看概要，点击展开详情，两者都让播放停在当前轮，详情里的问题链到同一帧的 D 去回答（见 [story.md](forms/motion/dial/story.md) 末节“交互”）。
 
-入口里的 `frame` 是帧序号，composite 的 29 帧从 `f00`（空状态）到 `f28`；复盘类不带 `frame` 时打开数据集自己的默认帧。[形式画廊](forms/index.html)把它们并排放在一起，[回应组件页](forms/respond.html)逐类演示六种回应控件。
+入口里的 `frame` 是帧序号，陆晨的两周与 composite 都是 29 帧，从 `f00`（空状态）到 `f28`；复盘类不带 `frame` 时打开数据集自己的默认帧。[形式画廊](forms/index.html)把它们并排放在一起，[回应组件页](forms/respond.html)逐类演示六种回应控件。
 
 [全部原型合页](./all.html)把上面十二种、回应组件页和第一轮撤下的八个形式按顺序嵌在一个长页面里，每节是实时运行的页面：顶栏选一帧，各页通过 `postMessage` 原地切到那一帧（[embed.mjs](embed.mjs)；页面自己往前走不会被拉回），切数据集时整页重载；离视野远的页面会卸载，滚回来时按所选帧重新载入。原版与 A/B/C/D 在合页里带 `?embed=1`，只隐藏方案切换栏；形式页带 `?card=0` 收起概念卡。
 
@@ -85,11 +86,11 @@ make prototype
 - 批次记谱直接打开（不带 `frame=`）时停在最后一帧，先演 12 秒的开场：读、丢、动三拍同时作用在全部行上，任意键或点一下跳到终态，R 或顶栏“重演”从头演到此刻；嵌入与带 `frame=` 的链接不演。换帧时新的一行演 0.9 秒的缩短版。悬停一行看这一轮的账，悬停记号看这一件，点击展开到侧栏，与两个动画共用 `forms/motion/ix.mjs`（见 [notation-motion.md](forms/polish/notation-motion.md)）。
 - 回应时序直接打开（不带 `frame=`）时先讲一遍约 24 秒：开得最久的“母亲九月住哪？”从登记、等 19 轮到别人先开口，落在最后一帧；任意键或点一下跳到终态，顶栏“▶ 讲一遍”重讲；嵌入与带 `frame=` 的链接不讲。之后 ▶ 连播、←/→ 逐帧都按同一节拍走：此刻线缓出，批次刻度上硬切。悬停一条时序线看概要，点击弹出 8 px、引线出到详情卡，右栏切到“这一件”，同样共用 `forms/motion/ix.mjs`（见 [timing-motion.md](forms/polish/timing-motion.md)）。
 - C 流动形态直接打开（不带 `frame=`、不是从别处链进来）时先讲一遍约 20 秒：猫看病那件（story 是费用）沉下去、在水下等 9 轮（story 13 轮）、到点带着新消息浮起，落在浮起那一帧；任意键或点一下跳到终态，顶栏“▶ 讲一遍”重讲；嵌入、合页与带 `frame=` 的链接不讲。换轮按涌入（一粒一条输入）、长缩（份额加留白始终是 64）、沉浮、数字落定四段走。悬停一滴看概要、其余压暗，点击沿它自己的方向弹出 8 px、引线出到详情卡，右栏切到“这一件”，共用 `forms/motion/ix.mjs`；作答时右栏控件原地收成回执，液滴等下一轮整理读到才沉（见 [c-motion.md](forms/polish/c-motion.md)）。
-- 变形直接打开（不带 `frame=`、不是从别处链进来）时先讲一遍约 7 秒，停在 f26（story 是 f15）：圆按收到的条数长出来，再原地变成份额，最后圈出收到最多与份额最多的两件；任意键或点一下跳到终态，顶栏“▶ 讲一遍”重讲；嵌入、合页与带 `frame=` 的链接不讲，默认停在最后一帧。顶栏“收到/给出”或 M 在两态之间原地变形 1 秒，所有圆同一条缓动、同起同落，数字落地才换。悬停一个圆看概要，点击沿它自己的方向弹出 8 px、引线出到详情卡，右栏切到“这一件”，共用 `forms/motion/ix.mjs`（见 [morph-motion.md](forms/polish/morph-motion.md)）。
-- 驻龄直接打开（不带 `frame=`、不是从别处链进来）时先讲一遍约 23 秒（story 约 21 秒）：从空状态起每一轮清出、加圈、新框，快放的轮次一闪而过，在“母亲换水管”一次清出 18 格的那一轮与最后一轮放慢，落在 f26（story 是 f19）；任意键跳到终态，顶栏“▶ 讲一遍”重讲；嵌入、合页与带 `frame=` 的链接不讲。悬停一块地盘看概要，点击沿它的方向弹出 8 px、引线沿格缝出到详情卡，右栏切到“这一件”，共用 `forms/motion/ix.mjs`（见 [age-motion.md](forms/polish/age-motion.md)）。
+- 变形直接打开（不带 `frame=`、不是从别处链进来）时先讲一遍约 7 秒，停在 f21（composite 是 f26，story 是 f15）：圆按收到的条数长出来，再原地变成份额，最后圈出收到最多与份额最多的两件；任意键或点一下跳到终态，顶栏“▶ 讲一遍”重讲；嵌入、合页与带 `frame=` 的链接不讲，默认停在最后一帧。顶栏“收到/给出”或 M 在两态之间原地变形 1 秒，所有圆同一条缓动、同起同落，数字落地才换。悬停一个圆看概要，点击沿它自己的方向弹出 8 px、引线出到详情卡，右栏切到“这一件”，共用 `forms/motion/ix.mjs`（见 [morph-motion.md](forms/polish/morph-motion.md)）。
+- 驻龄直接打开（不带 `frame=`、不是从别处链进来）时先讲一遍约 23 秒（story 约 21 秒）：从空状态起每一轮清出、加圈、新框，快放的轮次一闪而过；陆晨的两周在切换日交回 12 格、周三晚的故障认领 24 个新格的几轮放慢，落在 f22（composite 在“母亲换水管”一次清出 18 格的那一轮与最后一轮放慢，落在 f26；story 落在 f19）；任意键跳到终态，顶栏“▶ 讲一遍”重讲；嵌入、合页与带 `frame=` 的链接不讲。悬停一块地盘看概要，点击沿它的方向弹出 8 px、引线沿格缝出到详情卡，右栏切到“这一件”，共用 `forms/motion/ix.mjs`（见 [age-motion.md](forms/polish/age-motion.md)）。
 - 等待链直接打开（不带 `frame=`、不是从别处链进来）时先讲一遍约 12 秒（story 约 9 秒）：等你的人一行行站到脊上、英雄数字跟着数；时间走到你的回答，结填成朱红、人还挂着；下一轮整理一到，答掉的那几行松开、滑进“不经过你”，数字落下；那一轮由规则选出（两周里被你的回答放走的人最多的一轮：composite f22→f23 是 9 → 2，story f25→f26 是 3 → 1）。任意键或点一下跳到终态，顶栏“▶ 重演”再讲；嵌入、合页与带 `frame=` 的链接不讲。“谁在等你”由规则从每件事这一版的依据里现算，不手工标注。一行或一个人都是一件：悬停看概要，点击弹出 8 px、引线出到详情卡，右栏切到“这一件”，共用 `forms/motion/ix.mjs`（见 [chain-motion.md](forms/polish/chain-motion.md)）。
-- 回应托盘直接打开（顶层、不带 `frame=`、没有来源页）时先讲一遍：composite 约 8 秒，从 f25 叠起到 f26，替你按一下“批准”、两下“推到…→周一”，讲完撤回，停在 f26；story 约 6 秒，从 f19 到 f20，替你按真实数据里的“拍一张”，再到 f21 看回执让位。任意键或轻点跳到终态，页底“↺ 重演”重讲；嵌入、合页与带 `frame=` 的链接不讲。它是手机页面：轻点按钮作答，轻点托盘长出详情，长按看概要，左滑知道了（见 [trays-motion.md](forms/polish/trays-motion.md)）。
-- 智能眼镜直接打开（顶层、不带 `frame=`、没有来源页）时先讲一遍约 10 秒：composite 从 f25 的 0 像素到 f26 落地，手机通知镜像上来，替你轻点打开、下滑挑“免挖穿新管”、轻点存下，再双击撤回，停在 f26 打开的那一件；story 停在 f22。任意键或点按跳到终态，页底“↺ 重演”重讲；嵌入、合页与带 `frame=` 的链接不讲。显示面是 576 × 288 的容器页，按 1:1 像素整体放大（手机与 iPad 上按宽度放下，像素网格不变），图片按真机的代价逐张送达；`?at=<毫秒>` 停在两轮之间的某一刻（通话、早上抬头），`?still=display|view|boxes` 只出显示面、视野或两倍的容器标注（见 [glasses-concept.md](forms/polish/glasses-concept.md)）。
+- 回应托盘直接打开（顶层、不带 `frame=`、没有来源页）时先讲一遍：陆晨的两周约 6 秒，从 f21 到 f22，替你按真实数据里的“请爸带去”（明早谁带狗打针），再到 f23 看回执让位，回答留着；composite 约 8 秒，从 f25 叠起到 f26，替你按一下“批准”、两下“推到…→周一”，讲完撤回，停在 f26；story 约 6 秒，从 f19 到 f20，替你按真实数据里的“拍一张”，再到 f21 看回执让位。任意键或轻点跳到终态，页底“↺ 重演”重讲；嵌入、合页与带 `frame=` 的链接不讲。它是手机页面：轻点按钮作答，轻点托盘长出详情，长按看概要，左滑知道了（见 [trays-motion.md](forms/polish/trays-motion.md)）。
+- 智能眼镜直接打开（顶层、不带 `frame=`、没有来源页）时先讲一遍约 10 秒（陆晨的两周从 f25 到 f26，亮的是“去深圳演讲吗”）：composite 从 f25 的 0 像素到 f26 落地，手机通知镜像上来，替你轻点打开、下滑挑“免挖穿新管”、轻点存下，再双击撤回，停在 f26 打开的那一件；story 停在 f22。任意键或点按跳到终态，页底“↺ 重演”重讲；嵌入、合页与带 `frame=` 的链接不讲。显示面是 576 × 288 的容器页，按 1:1 像素整体放大（手机与 iPad 上按宽度放下，像素网格不变），图片按真机的代价逐张送达；`?at=<毫秒>` 停在两轮之间的某一刻（通话、早上抬头），`?still=display|view|boxes` 只出显示面、视野或两倍的容器标注（见 [glasses-concept.md](forms/polish/glasses-concept.md)）。
 - 本页作答只存在浏览器内存里：按下即“已保存”，推进到下一轮整理后显示“已收到”，随时可撤回；不写回演示数据，也不调用模型。
 - 原版与 A/B/C/D 都保留未分配份额：原版与 A 用面积、B 用带宽、C 用液滴面积与 64 格预算带、D 用先后与字号表达份额，精确份数在详情里。
 - `prefers-reduced-motion` 时切帧与作答直接到终态。
@@ -122,4 +123,4 @@ C 用自写的 WebGL2 着色器画液滴，不再使用随原型保存的 [Three
 
 ## 评审留白
 
-通过实际播放继续判断：取舍是否自然，时间关系是否清楚，动画中的注意力转移是否可读，哪里需要反复查 JSON，以及噪音是否影响阅读。十二种形式都没有选定；公开体验不代表已选定产品方案，也不代表真实 Agent 判断质量或 Fold CLI 已通过验收。默认演示数据含化名改写的真实公开文本，2026-10-15 用户决定照现状公开，来源与许可见 [SOURCES.md](data/composite/SOURCES.md#公开与许可)。
+通过实际播放继续判断：取舍是否自然，时间关系是否清楚，动画中的注意力转移是否可读，哪里需要反复查 JSON，以及噪音是否影响阅读。十二种形式都没有选定；公开体验不代表已选定产品方案，也不代表真实 Agent 判断质量或 Fold CLI 已通过验收。默认演示数据（陆晨的两周）的人物与消息全部由作者编写，没有第三方内容，见 [SOURCES.md](data/founder/SOURCES.md)；旧的 composite 含化名改写的真实公开文本，2026-10-15 用户决定照现状公开，来源与许可见 [SOURCES.md](data/composite/SOURCES.md#公开与许可)。
