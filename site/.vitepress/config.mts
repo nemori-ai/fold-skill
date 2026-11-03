@@ -77,7 +77,6 @@ export default defineConfig({
   themeConfig: {
     siteTitle: 'Fold',
     nav: [
-      { text: '为什么', link: '/#why' },
       { text: '处境', link: '/#bandwidth' },
       // 全部原型：铺开全部原型的画册面板，点卡片在本页弹框里打开（theme/PrototypeMenu.vue、PrototypeLayer.vue）。
       { component: 'PrototypeMenu' },
