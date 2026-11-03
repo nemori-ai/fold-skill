@@ -5,7 +5,8 @@ import { reactive } from 'vue'
 import { forms, withdrawn, sketches, motions } from '../../../prototype/forms/catalog.mjs'
 import { datasets, defaultDataset } from '../../../prototype/data/select.mjs'
 
-// Short lines and default frames follow prototype/README.md「十二种形式」and all.html; names and the
+// Short lines and default frames follow prototype/README.md「十二种形式」and all.html (the default dataset, founder:
+// f22, the night before the customer meeting; the glasses f21, when the customer's question became the top one); names and the
 // withdrawn forms' questions come from catalog.mjs so they stay in step with the prototype itself.
 // `embed` holds what all.html adds when it embeds a page: the desks hide their version switchers
 // (the gallery is the switcher here) and the forms fold their concept card, which the page can reopen.
@@ -15,14 +16,14 @@ const sketch = id => sketches.find(f => f.id === id)
 const motion = id => motions.find(f => f.id === id)
 
 const entries = [
-  desk('original', '原版树图', '在电脑前掌握两周局面，顺手处理工作评审', 26),
-  desk('a', 'A 空间排布', '桌前，生活急事要当场二选一', 26),
-  desk('b', 'B 时间展开', '期限落在此刻之后的哪里，谁先到', 26),
-  desk('c', 'C 流动形态', '可以推后的事沉下去，到点浮起', 25),
-  desk('d', 'D 手机首页', '离开半天回来，先答最急的 3 件', 26),
-  desk('duo', 'E 折叠屏', '翻开折叠屏：左页摊开这一轮的输入，每组一条线穿过折痕连进右页那张卡', 26),
-  { id: 'watch', name: form('watch').name, line: '抬腕两秒：要不要现在掏手机', page: '/prototype/forms/watch.html', embed: { card: 0 }, frame: 26 },
-  { id: 'multiples', name: form('multiples').name, line: '复盘两周注意力怎样移动', page: '/prototype/forms/multiples.html', embed: { card: 0 }, frame: 26 },
+  desk('original', '原版树图', '在电脑前掌握两周局面，顺手处理工作评审', 22),
+  desk('a', 'A 空间排布', '桌前，生活急事要当场二选一', 22),
+  desk('b', 'B 时间展开', '期限落在此刻之后的哪里，谁先到', 22),
+  desk('c', 'C 流动形态', '可以推后的事沉下去，到点浮起', 22),
+  desk('d', 'D 手机首页', '离开半天回来，先答最急的 3 件', 22),
+  desk('duo', 'E 折叠屏', '翻开折叠屏：左页摊开这一轮的输入，每组一条线穿过折痕连进右页那张卡', 22),
+  { id: 'watch', name: form('watch').name, line: '抬腕两秒：要不要现在掏手机', page: '/prototype/forms/watch.html', embed: { card: 0 }, frame: 22 },
+  { id: 'multiples', name: form('multiples').name, line: '复盘两周注意力怎样移动', page: '/prototype/forms/multiples.html', embed: { card: 0 }, frame: 22 },
   ...[
     ['lineage', '追一件事的来龙去脉：改名、撤下、并入'],
     ['timing', '我欠了谁什么回应，开了多久'],
@@ -35,15 +36,16 @@ const entries = [
     ['chain', '谁在等你、你挡住了谁：答掉一件，放走一串人'],
     ['tug', '家里与工作在 64 份里此消彼长，你实际在哪一边动手'],
   ].map(([id, line]) => ({ id, name: sketch(id).name, line, page: `/prototype/forms/sketches/${id}.html` })),
-  // 结绳 opens on its default sample, the hand-written story (composite has no layers in two weeks).
+  // 结绳 opens on its default sample, the hand-written story (catalog.mjs `sample`): it has two levels of sub-layers;
+  // founder has one (白鹭上线, f04–f06, reachable from the page's own dataset link) and composite none.
   { id: 'khipu', name: sketch('khipu').name, line: '一件事里还有自己的 64 份，最深一件折合根层才几份', page: '/prototype/forms/sketches/khipu.html', query: { data: 'story' } },
-  { id: 'trays', name: form('trays').name, line: '答完这些要点几下：托盘几排就是几下，按掉一下矮一排', page: '/prototype/forms/trays.html', embed: { card: 0 }, frame: 26 },
+  { id: 'trays', name: form('trays').name, line: '答完这些要点几下：托盘几排就是几下，按掉一下矮一排', page: '/prototype/forms/trays.html', embed: { card: 0 }, frame: 22 },
   // Round-three concept animations open without a frame, so the viewer plays their loop.
   { id: 'pulse', name: motion('pulse').name, line: '一轮整理演成一次脉冲：上百条进来，要你开口的只有一两件', page: '/prototype/forms/motion/pulse.html', embed: { card: 0 } },
   { id: 'dial', name: motion('dial').name, line: '64 份是怎样的硬约束：一轮整理演成 20 秒动画', page: '/prototype/forms/motion/dial.html', embed: { card: 0 } },
   { id: 'respond', name: '回应组件', line: '六种回应控件逐类演示，附反馈记录', page: '/prototype/forms/respond.html' },
   ...withdrawn.map(f => ({ id: f.id, name: f.name, line: f.question, page: `/prototype/forms/${f.id}.html`, embed: { card: 0 }, withdrawn: true })),
-  { id: 'glasses', name: form('glasses').name, line: '眼镜上只给一件：最前那件换了才亮，通话时亮对方在等的那件', page: '/prototype/forms/glasses.html', embed: { card: 0 }, frame: 26 },
+  { id: 'glasses', name: form('glasses').name, line: '眼镜上只给一件：最前那件换了才亮，通话时亮对方在等的那件', page: '/prototype/forms/glasses.html', embed: { card: 0 }, frame: 21 },
 ]
 
 function address(entry, embedded) {

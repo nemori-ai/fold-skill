@@ -1,5 +1,5 @@
 // The landing page (FoldLanding.vue): which prototypes it shows and in what order, what each card says, and the
-// geometry of the first screen, the situations' glyphs and the beat stage, all computed from site/landing/data.json (the f26 replay).
+// geometry of the first screen, the situations' glyphs and the beat stage, all computed from site/landing/data.json (the replay at f22).
 // No imports: the page, config.mts and the scripts (record-landing, check-landing) read the same tables.
 // Rationale and audit: site/landing/spec.md; story and timings: site/landing/story.md; look: site/landing/style.md.
 
@@ -56,7 +56,7 @@ export function liveSrc(prototype, frame) {
 /** A block's still for a frame (scripts/record-landing.mjs shoots them): what shows before and between live pages. */
 export const stillOf = (id, frame) => `/media/live/${id}-${frame}.webp`
 
-/** The common progress line under the blocks: "8/13 中午 → 此刻", and "此刻" on the last frame played (the page's
+/** The common progress line under the blocks: "9/15 零点 → 此刻", and "此刻" on the last frame played (the page's
  *  "now", f22). The replay sorts every 12 hours, so a frame's time is counted from the one data.json names
  *  (data.frame), on the replay's own clock. */
 export function liveLabel(d, frame) {
@@ -125,10 +125,11 @@ export const DOC_GROUPS = [
     ['Skill 设计', '/docs/skill-design', '何时调用、上下文视图与验证计划'],
     ['评测报告', '/docs/evaluations/README', '真实模型评测：设置、指标与结论'],
   ] },
-  { title: '关心数据从哪来', note: '真实语料', items: [
+  { title: '关心数据从哪来', note: '语料与演示数据', items: [
+    ['演示语料', '/corpus/founder/README', '一位创业者的两周：人物和消息都是编写的，两千多条，带噪音'],
+    ['演示数据打磨', '/prototype-notes/data/founder/POLISH', '一次真实模型的运行怎样打磨成演示数据'],
     ['真实语料', '/corpus/README', '来源调查、许可、重建方法与弱标注'],
-    ['混合人物语料', '/corpus/composite/MIX', 'Jonas 的两周：五条流的来源与改写'],
-    ['演示数据打磨', '/prototype-notes/data/composite/POLISH', '自由运行怎样打磨成演示数据'],
+    ['旧的演示语料', '/corpus/composite/MIX', '之前用的混合人物语料：化名改写的真实公开数据'],
   ] },
   { title: '想看形式怎么来的', note: '原型与形式', items: [
     ['原型说明', '/prototype-notes/README', '各种形式的场景、入口与共同操作'],
@@ -499,7 +500,7 @@ export function stageHTML(d, mode) {
     + '</div>'
 }
 
-// ---------- the six glyphs of the third section: the same f26 state as each situation's prototype draws it ----------
+// ---------- the six glyphs of the third section: the same f22 state as each situation's prototype draws it ----------
 
 export function glyphs(d) {
   const segs = v(d.beat2.segments)
@@ -596,7 +597,7 @@ export function glyphs(d) {
 }
 
 // The third section's ladder: the six situations from the narrowest to the widest, each with its glyph and at most one
-// number its prototype shows for f26.
+// number its prototype shows for f22.
 export function ladderOf(d) {
   const g = glyphs(d)
   return LADDER.map(l => ({ ...l, svg: g[l.id], figure: l.fig(d) }))
