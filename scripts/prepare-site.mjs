@@ -47,8 +47,6 @@ for (const file of await walk('site/fonts')) if (mediaExtensions.has(path.extnam
 for (const file of await walk('docs')) {
   if (file.endsWith('.md')) pages.set(file, file);
   else if (file.startsWith('docs/assets/')) assets.set(file, file);
-  // The brief is a standalone HTML booklet with its own screenshots; it is copied as is.
-  else if (file.startsWith('docs/brief/') && (file.endsWith('.html') || mediaExtensions.has(path.extname(file).toLowerCase()))) assets.set(file, file);
 }
 // The skill and the corpus notes are documents too; the corpus data and scripts stay in the repository.
 for (const directory of ['skill', 'corpus']) {
@@ -170,6 +168,24 @@ for (const [source, output] of assets) {
   await mkdir(path.dirname(destination), { recursive: true });
   await copyFile(path.join(root, source), destination);
 }
+
+// The 16-page booklet that used to live at /docs/brief/ became docs/why.md: its old address forwards there, with the
+// old page anchors mapped to the sections that now carry them.
+const briefPages = { 2: 'two-of-many', 3: 'front-page', 4: 'two-of-many', 5: 'where-it-errs', 6: 'where-it-errs', 7: 'same-game', 8: 'same-game', 9: 'same-game', 10: 'same-game', 11: 'same-game', 12: 'after-answer', 13: 'after-answer', 14: 'where-we-are', 15: 'where-we-are' };
+await write('public/docs/brief/index.html', `<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>为什么要做 Fold</title>
+<link rel="canonical" href="/docs/why">
+<meta http-equiv="refresh" content="0; url=/docs/why">
+<script>const p = ${JSON.stringify(briefPages)}[(location.hash.match(/^#page-(\\d+)$/) || [])[1]]; location.replace('/docs/why' + (p ? '#' + p : ''));</script>
+</head>
+<body><p>小册子已改写为<a href="/docs/why">为什么要做 Fold</a>。</p></body>
+</html>
+`);
 
 const descriptions = {
   '01-us01-roundtrip': '单 Agent 往返、覆盖、合并与批注确认',

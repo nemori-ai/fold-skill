@@ -183,17 +183,23 @@ node scripts/export-all.mjs --out .local/export/all.html && node scripts/shoot-f
 
 发布前运行 `make check` 和 `npm run site:build`，并核对文档链接、公式、流程图、搜索及原型交互。站点构建成功不等于产品 CLI 的持久化与完整验收已经完成。
 
-默认演示数据与小册子的截图含化名改写的真实公开文本，`npm run site:build` 会把它们一起放进 `dist/`。2026-10-15 用户决定照现状公开，来源、许可与已知的署名缺口见[演示数据的来源与许可](../prototype/data/composite/SOURCES.md#公开与许可)；`npm run deploy` 只在用户指示时运行。
+默认演示数据与站内的原型截图含化名改写的真实公开文本，`npm run site:build` 会把它们一起放进 `dist/`。2026-10-15 用户决定照现状公开，来源、许可与已知的署名缺口见[演示数据的来源与许可](../prototype/data/composite/SOURCES.md#公开与许可)；`npm run deploy` 只在用户指示时运行。
 
-## 小册子
+## 为什么要做 Fold
 
-[brief/index.html](brief/index.html) 是一份 16 页、A4 分页的图文说明，给人快速理解这项工作，不是规范出处；每页的数字在页脚注明来自哪份文件。它是单个 HTML 文件，样式与脚本内联，不依赖外部库；配图只用原型的真实截图（`brief/assets/`，最宽 1200 像素、每张 300 KB 以内）与 CSS 画的示意。第 13 页内嵌原型的手机首页，用相对路径 `../../prototype/index.html`，所以要从仓库根目录或体验站打开，打印时换成同一帧的截图。
+[why.md](why.md) 是给第一次了解的人从头读到尾的一篇：问题从哪来、为什么难、Fold 的两个判断、模型会错在哪、现在做到了哪。它讲道理，不是规范出处，也不是原型导览；原型只在能证明论点时出现。它取代了原来 16 页的小册子。
 
-- 本地阅读：在仓库根目录运行 `python3 -m http.server 4190 --bind 127.0.0.1`，打开 `http://127.0.0.1:4190/docs/brief/`。
-- 体验站：`scripts/prepare-site.mjs` 把 `docs/brief/` 原样复制到站点的 `/docs/brief/`，Markdown 里指向它的链接改写为这个地址。
-- 打印：工具栏的“打印”按 A4 一页一张；也可以用无头 Chrome 的 `--print-to-pdf` 导出。PDF 不入库。
-- 截图更新：先用 `node scripts/shoot-forms.mjs --only <形式> --frame <帧> --scale 2 --out .local/<目录>` 按两倍像素密度截出原型画面，再用 `magick <in>.png -crop <宽>x<高>+<x>+<y> +repage -resize 1200x -colors 256 PNG8:<out>.png` 裁出所需区域并缩小；原型或演示数据改动后，涉及的截图与数字要一起核对。
-- 版面检查：每页固定为 1000×1414，超出部分会被裁掉；改动后在宽屏与手机宽度各看一遍，再打印一次确认仍是 16 页。窄屏样式只对 `screen` 生效，打印始终用 A4 版面。
+- 站点：它是站点里的一页（frontmatter 里 `layout: page`、`pageClass: fold-why`），导航“从头读起”、侧栏与入口页文档区都链到 `/docs/why`。版式在 `site/.vitepress/theme/why.css`，与入口页同一张纸（[style.md](../site/landing/style.md)）；颜色取文档页的主题变量，所以深色外观下也能读。旧地址 `/docs/brief/` 由 `scripts/prepare-site.mjs` 生成一页跳转，旧的 `#page-N` 落到对应的节。
+- 字体：节名、引句（`>` 开头的行）和标题用 Fold Serif SC 子集。`scripts/landing-fonts.mjs` 从这一篇的 `#`、`##` 与 `>` 行收字放进文档子集；改了这些字要重跑它，`--check` 漏字即失败。
+- 截图：全篇只有一张图，8 月 14 日零点（composite 的 f22）的四种读法，存在 `assets/why/`（webp）。手机首页与腕上一瞥按手机宽度截，原版树图与两周小倍数按桌面截，再裁出所需区域、用 `cwebp -q 82 -m 6 -sharp_yuv -resize <宽> 0` 转成 webp：
+
+  ```sh
+  node scripts/shoot-forms.mjs --out .local/why/phone --only d,watch --frame 22 --width 390 --height 844 --scale 3 --eval "document.querySelector('[data-card]')?.click()"
+  node scripts/shoot-forms.mjs --out .local/why/desk --only original,multiples --frame 22 --scale 2 --eval "document.documentElement.classList.add('is-embedded'); document.querySelector('[data-card]')?.click()"
+  ```
+
+  四张图的宽高比写在 `why.css` 的 `--a` 里，换图时一起改。原型或演示数据改动后，正文里的例子（六条输入、两处判错）与截图要一起核对。
+- 检查：`npm run site:build && node scripts/check-why.mjs`，七个尺寸无报错、无横向滚动、图片都加载、旧地址能跳过来；`--shots <目录>` 顺带存每个尺寸的整页截图。
 
 ## 实现时使用哪份规范
 
@@ -221,7 +227,7 @@ node scripts/export-all.mjs --out .local/export/all.html && node scripts/shoot-f
 | [visual-guide.md](visual-guide.md) | 按文档定位配图与对应章节的索引 |
 | [assets/illustrations](assets/illustrations) | 项目内保存的配图与生成提示词 |
 | [development.md](development.md) | 本文：环境与检查说明 |
-| [brief/index.html](brief/index.html) | 小册子：16 页图文说明，给人快速阅读 |
+| [why.md](why.md) | 为什么要做 Fold：给第一次了解的人从头读到尾的一篇 |
 | [reference/design-v0.3.md](reference/design-v0.3.md) | 用户原始设计草案的原样副本 |
 | [Makefile](../Makefile) | 环境初始化、检查与用例入口 |
 | [scripts/check.py](../scripts/check.py) | 无第三方依赖的启动检查 |
@@ -230,6 +236,7 @@ node scripts/export-all.mjs --out .local/export/all.html && node scripts/shoot-f
 | [skill/SKILL.md](../skill/SKILL.md) | 首版 Fold skill：面向使用 Fold 汇报工作的 Agent |
 | [scripts/export-scenario.mjs](../scripts/export-scenario.mjs) | 把原型的手写演示情境导出为 JSON |
 | [scripts/shoot-forms.mjs](../scripts/shoot-forms.mjs) | 用本机 Chrome 无头截取原型各形式并检查页面报错 |
+| [scripts/check-why.mjs](../scripts/check-why.mjs) | 用本机 Chrome 无头检查 `/docs/why`：七个尺寸、图片与旧地址跳转 |
 | [scripts/export-all.mjs](../scripts/export-all.mjs) | 把全部原型合页导出为可双击打开的单个 HTML 文件 |
 | [scripts/build_demo_data.py](../scripts/build_demo_data.py) | 把自由运行的批次按 edits.json 修正、重放成原型演示数据 |
 | [scripts/eval_judgment.py](../scripts/eval_judgment.py) | 用真实模型逐帧评测判断：手写情境与作者批次对比；真实语料自由运行，与弱标注对照 |

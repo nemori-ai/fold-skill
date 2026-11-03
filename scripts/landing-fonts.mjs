@@ -1,5 +1,5 @@
 // 站点展示字体的子集：只给极少的字用网络字体，其余交给系统（规格见 site/landing/style.md「字体」）。
-// 收集入口页标题（FoldLanding.vue 里 class 含 fl-h 的元素、六张卡的名字）与各篇文档 h1 用到的字，向 Google Fonts
+// 收集入口页标题（FoldLanding.vue 里 class 含 fl-h 的元素、六张卡的名字）、各篇文档 h1 与 docs/why.md 的节名和引句用到的字，向 Google Fonts
 // 的 css2 接口按 text= 取子集 woff2，存进 site/fonts/（自托管，运行时不请求第三方），并生成带 unicode-range 的
 // site/.vitepress/theme/fonts.css。入口页只用得到第一份中文子集；文档 h1 里入口页没有的字放进第二份，只在文档页下载。
 // 字体是 SIL Open Font License 1.1，许可全文与版权行一起写进 site/fonts/OFL.txt。
@@ -59,6 +59,12 @@ export async function docsText() {
   return text;
 }
 
+// docs/why.md also sets its section titles and the judgments that stand on their own line (> …) in the serif.
+export async function whyText() {
+  const body = await readFile(path.join(root, 'docs/why.md'), 'utf8');
+  return [...body.matchAll(/^(?:#{1,2}|>) (.+)$/gm)].map(m => strip(m[1].replace(/\{#[^}]*\}/g, ''))).join('');
+}
+
 function ranges(chars) {
   const points = [...chars].map(c => c.codePointAt(0)).sort((a, b) => a - b);
   const out = [];
@@ -84,7 +90,8 @@ async function subset(family, text, file) {
 
 const manifestPath = path.join(out, 'subset.json');
 const landing = unique(BASE + await landingText());
-const docsAll = unique(BASE + await docsText());
+const why = unique(await whyText());
+const docsAll = unique(BASE + await docsText() + why);
 const docsOnly = [...docsAll].filter(c => !landing.includes(c)).join('');
 
 if (process.argv.includes('--check')) {
@@ -92,6 +99,8 @@ if (process.argv.includes('--check')) {
   const missing = [...landing].filter(c => !manifest.landing.includes(c));
   const missingDocs = [...docsOnly].filter(c => !manifest.landing.includes(c) && !manifest.docs.includes(c));
   if (missing.length) { console.error(`入口页标题有 ${missing.length} 个字不在子集里：${missing.join('')}；重跑 node scripts/landing-fonts.mjs`); process.exit(1); }
+  const missingWhy = [...why].filter(c => !manifest.landing.includes(c) && !manifest.docs.includes(c));
+  if (missingWhy.length) { console.error(`docs/why.md 的标题与引句有 ${missingWhy.length} 个字不在子集里：${missingWhy.join('')}；重跑 node scripts/landing-fonts.mjs`); process.exit(1); }
   if (missingDocs.length) console.warn(`文档 h1 有 ${missingDocs.length} 个字不在子集里（回落到系统宋体）：${missingDocs.join('')}`);
   console.log(`字体子集覆盖入口页标题的 ${landing.length} 个字。`);
   process.exit(0);

@@ -7,6 +7,7 @@ import MermaidDiagram from './MermaidDiagram.vue'
 import PrototypeLayer from './PrototypeLayer.vue'
 import PrototypeMenu from './PrototypeMenu.vue'
 import './style.css'
+import './why.css'
 
 // The landing page is paper-white whatever the reader's appearance setting: it hides the switch and keeps the
 // `dark` class off <html> while it is shown (config.mts drops VitePress's own pre-paint check on that page).
