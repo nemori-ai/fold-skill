@@ -18,6 +18,7 @@ import { spawn } from 'node:child_process';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { defaultDataset } from '../prototype/data/select.mjs';
 
 // Each page: where to open it (a held frame, and a playing one), the window hook, which item to use, a point 9 px
 // outside that item's drawn geometry (still inside the widened hit band), a blank point, whether the page has cut to
@@ -29,7 +30,8 @@ const PAGES = {
     pick: `foldPulse.geom().sort((a, b) => b.share - a.share)[0].short`,
     // Perpendicular to the branch, 9 px off its middle (the lines are thin; the band is 10 px either side).
     near: name => `(() => { const g = foldPulse.geom().find(x => x.short === ${JSON.stringify(name)}); const a = g.tip * Math.PI / 180; const p = foldPulse.pointOf(${JSON.stringify(name)}); return { x: p.x + Math.cos(a) * 9, y: p.y + Math.sin(a) * 9 }; })()`,
-    blank: { x: 1300, y: 120 },
+    // founder: the open detail card of 故障与年单 covers the top right, so the blank is further right.
+    blank: { x: 1300, y: 120, founder: { x: 1425, y: 480 } },
     cut: `document.querySelector('.pl-signal').textContent.startsWith('这一件') && document.querySelector('[data-p="round"] h3').textContent.startsWith('这一件')`,
     // Playing on from f19: wait for f20 to have played through before hovering its largest branch.
     playReady: `new Promise(r => { const go = () => (foldPulse.index === 20 ? r(1) : setTimeout(go, 50)); go(); }).then(() => new Promise(r => setTimeout(r, 4300)))`,
@@ -41,7 +43,8 @@ const PAGES = {
     pick: `(() => { const r = foldDial.rounds[foldDial.player.index]; return [...r.sectors].filter(s => s.id !== r.cursor?.root).sort((a, b) => b.share - a.share)[0].short; })()`,
     // Just outside the rim, along the sector's middle (sectors are hit by angle up to R + 16).
     near: name => `(() => { const p = foldDial.pointOf(${JSON.stringify(name)}), g = foldDial.geom(), box = document.querySelector('.dl-main').getBoundingClientRect(); const dx = p.x - box.left - g.cx, dy = p.y - box.top - g.cy, d = Math.hypot(dx, dy); return { x: box.left + g.cx + dx / d * (g.R + 9), y: box.top + g.cy + dy / d * (g.R + 9) }; })()`,
-    blank: { x: 60, y: 600 },
+    // founder: the open detail card sits on the left half, so the blank is at the top left.
+    blank: { x: 60, y: 600, founder: { x: 60, y: 120 } },
     cut: `document.querySelector('.dl-kicker').textContent.startsWith('这一件') && document.querySelector('.dl-p h4').textContent.includes('这一件')`,
     playReady: `new Promise(r => { const go = () => (foldDial.player.index >= 3 ? r(1) : setTimeout(go, 50)); go(); })`,
   },
@@ -225,15 +228,17 @@ const PAGES = {
   // E 折叠屏：触屏流程见 runDuo（桌面尺寸、CDP 触屏事件），在 D 那一套之外加铰链（把手、[ ]、F、?hinge=、三个姿态）、
   // 左页详情（右半仍可作答）、色带格联动与讲一遍。held 是作答的一帧，next 是它的下一轮，follow 是问题原样重登记的一帧。
   duo: { hook: 'foldDuo', duo: true,
-    frames: { composite: { held: 'f22', next: 'f23', follow: 'f26', item: 'smilla-vet' }, story: { held: 'f04', next: 'f05', follow: 'f05', item: 'launch' } } },
-  // 回应托盘：手机触屏，流程见 runTrays。held 是一轮里有一下与两下托盘的一帧（story 两周都没有两下的托盘）；
+    frames: { founder: { held: 'f22', next: 'f23', follow: 'f26', item: 'tinglan-outage' }, composite: { held: 'f22', next: 'f23', follow: 'f26', item: 'smilla-vet' }, story: { held: 'f04', next: 'f05', follow: 'f05', item: 'launch' } } },
+  // 回应托盘：手机触屏，流程见 runTrays。held 是一轮里有一下与两下托盘的一帧（founder 与 story 两周都没有两下的托盘）；
   // tell 是直接打开时讲一遍的起点与终态。
   trays: { hook: 'foldTrays', touch: true, runner: runTrays, page: 'forms/trays.html',
-    held: { composite: 'f26', story: 'f20' }, tell: { composite: { from: 'f25', end: 'f26' }, story: { from: 'f19', end: 'f21' } } },
+    held: { founder: 'f22', composite: 'f26', story: 'f20' },
+    tell: { founder: { from: 'f21', end: 'f23' }, composite: { from: 'f25', end: 'f26' }, story: { from: 'f19', end: 'f21' } } },
   // 智能眼镜：显示面是 576 × 288 的容器页，流程见 runGlasses。expect 是这份数据上应得的数（规格 B 节）：甲亮几次、乙对上几次、
   // 通话几次，一次对上的通话、一次对不上的通话与一个早上；story 没有通话记录。
   glasses: { hook: 'foldGlasses', runner: runGlasses, page: 'forms/glasses.html',
-    expect: { composite: { pushes: 4, lit: 3, calls: 10, call: '2026-08-13T19:30:00+02:00', miss: '2026-08-14T08:02:00+02:00', morning: '2026-08-16T07:25:00+02:00' },
+    expect: { founder: { pushes: 8, lit: 4, calls: 21, call: '2026-09-18T09:00:24+08:00', miss: '2026-09-20T20:12:41+08:00', morning: '2026-09-20T07:30:00+08:00' },
+      composite: { pushes: 4, lit: 3, calls: 10, call: '2026-08-13T19:30:00+02:00', miss: '2026-08-14T08:02:00+02:00', morning: '2026-08-16T07:25:00+02:00' },
       story: { calls: 0, lit: 0 } } },
 };
 
@@ -312,6 +317,7 @@ async function run(cdp, base, data, name) {
   };
   const tap = async (x, y) => { await S('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await S('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); };
   const state = async () => ({ ...(await ev(`${P.hook}.ixState()`)), cut: await ev(P.cut), index: await ev(P.index) });
+  const blank = P.blank?.[data || defaultDataset] || P.blank;
   const results = [];
   const check = (label, ok, info) => results.push({ ok: Boolean(ok), label, info: JSON.stringify(info) });
   const card = s => s.peek || s.inPlace;
@@ -328,7 +334,7 @@ async function run(cdp, base, data, name) {
   await move(off.x, off.y); await wait(200);
   s = await state();
   check('离开图形 9 px 仍算悬停（命中区放宽）', s.hover, { hover: s.hover, at: off });
-  await move(P.blank.x, P.blank.y); await wait(250);
+  await move(blank.x, blank.y); await wait(250);
   s = await state();
   check('移开 0.25 秒：卡收起、播放仍停（0.15 宽限 + 0.4 恢复）', !s.hover && s.paused, s);
   await wait(600);
@@ -347,12 +353,12 @@ async function run(cdp, base, data, name) {
   s = await state();
   check('再点同一件：收回', !s.open && !s.detail, s);
   await click(pt.x, pt.y); await wait(1000);
-  await click(P.blank.x, P.blank.y); await wait(700);
+  await click(blank.x, blank.y); await wait(700);
   s = await state();
   check('点空白：收回', !s.open && !s.detail, s);
   // 9–11: keyboard. Tab from the bar's last control lands on the first item's hidden button (a hover); Enter opens and
   // moves focus into the card; Esc folds it and puts focus back on that button.
-  await move(P.blank.x, P.blank.y); await wait(800);
+  await move(blank.x, blank.y); await wait(800);
   await ev(`document.querySelector(${JSON.stringify(P.tabFrom || '[data-card]')}).focus(), 1`);
   await key('Tab'); await wait(400);
   s = await state();
@@ -372,7 +378,7 @@ async function run(cdp, base, data, name) {
   await tap(pt.x, pt.y); await wait(1100);
   s = await state();
   check('触屏第二下：展开', s.open && s.detail, s);
-  await tap(P.blank.x, P.blank.y); await wait(800);
+  await tap(blank.x, blank.y); await wait(800);
   await S('Emulation.setTouchEmulationEnabled', { enabled: false });
   // 16 (before the playing page): navigation drops hover and detail at once.
   if (P.prepare) { await ev(`(${P.prepare}, 1)`); await wait(200); }
@@ -388,7 +394,7 @@ async function run(cdp, base, data, name) {
   await wait(5000);
   s = await state();
   check('连播中悬停：5 秒不进下一轮', s.index === i0 && s.paused, { i0, ...s });
-  await move(P.blank.x, P.blank.y); await wait(5200);
+  await move(blank.x, blank.y); await wait(5200);
   s = await state();
   check('移开后接着播', s.index > i0, { i0, index: s.index });
   check('→ 换轮：立即收起', !stepped.open && !stepped.detail && stepped.index === P.step, stepped);
@@ -454,7 +460,8 @@ async function runHome(cdp, base, data, name) {
   await open(P.held);
   const landing = await ev(`({ id: ${H}.model.snapshot().frame.id,
     running: document.getAnimations().filter(a => a.playState === 'running' && a.animationName !== 'd-new').length })`);
-  check('带 ?frame= 进来：落在那一帧，不演开场', landing.id === 'f22' && landing.running === 0, landing);
+  const heldId = new URL(P.held, 'http://x/').searchParams.get('frame');
+  check('带 ?frame= 进来：落在那一帧，不演开场', landing.id === heldId && landing.running === 0, landing);
   // 2–6: long press is the hover; a tap elsewhere folds it; moving cancels it; a tap on the summary opens the row.
   await open(P.rows);
   const row = await at('.d-line');
@@ -535,7 +542,13 @@ async function runHome(cdp, base, data, name) {
   s = await state();
   check('→ 换轮：概要立即收起，到下一轮', !s.peek && !s.hover && s.index === i0 + 1, { i0, ...s });
   // 19–21: keyboard: Tab onto a row shows its summary; Enter opens; Esc folds and gives focus back.
-  await ev(`(document.querySelector('.d-zone-head [data-ack-many]') || document.querySelector('.d-card:last-of-type')).focus(), 1`);
+  // On a fresh copy of the rows frame (the play above may still be running and rebuild the list under the focus).
+  // From “这些都知道了” when the zone has one; otherwise from whatever is focusable just before the first row (or card).
+  await open(P.rows);
+  await ev(`(() => { const many = document.querySelector('.d-zone-head [data-ack-many]'); if (many) return many.focus(), 1;
+    const all = [...document.querySelectorAll('button, a[href], [tabindex]')].filter(e => e.tabIndex >= 0 && e.getClientRects().length);
+    const rows = all.findIndex(e => e.matches('.d-ask-row, .d-line, .d-tail-item')), k = rows >= 0 ? rows : all.findIndex(e => e.matches('.d-card'));
+    (all[k - 1] || document.querySelector('.d-card:last-of-type')).focus(); return 1; })()`);
   await key('Tab'); await wait(400);
   s = await state();
   check('Tab 到行：概要卡出现', s.hover && s.peek && s.focus === 'proxy', s);
@@ -571,7 +584,7 @@ async function runHome(cdp, base, data, name) {
 // 左页摊开的原料：每条输入记一次、每组与它那张卡同一行同一高、线穿过折痕并随铰链长出、作答后那组折成一行，灰的几行
 // 点开是原文；屏的圆角与机身同心（读计算出的圆角与盒子）。
 async function runDuo(cdp, base, data, name) {
-  const P = PAGES[name], F = P.frames[data || 'composite'] || P.frames.composite;
+  const P = PAGES[name], F = P.frames[data || defaultDataset] || P.frames[defaultDataset];
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
   const S = (m, p) => cdp.send(m, p, sessionId);
@@ -989,7 +1002,7 @@ async function runDuo(cdp, base, data, name) {
   await S('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
   await open(`frame=${F.held}&posture=table`);
   const tf = await ev(`(async () => { const w = ms => new Promise(r => setTimeout(r, ms)), n = ${H}.model.snapshot().frames.length, b = document.querySelector('.u-bot');
-    for (let i = 0; i < n; i += 1) { ${H}.go(i); await w(120); if (b.scrollHeight - b.clientHeight > 20) return ${H}.model.snapshot().frame.id; } return null; })()`);
+    for (let i = 0; i < n; i += 1) { ${H}.go(i); await w(120); if (b.scrollHeight - b.clientHeight > 42) return ${H}.model.snapshot().frame.id; } return null; })()`);
   await S('Emulation.setEmulatedMedia', { features: [] });
   await open(`frame=${tf || F.held}&posture=table`);
   const tableDom = `(() => { const d = document.querySelector('.u-device'), k = d.getBoundingClientRect().width / d.offsetWidth, r0 = d.getBoundingClientRect(), q = s => document.querySelector(s);
@@ -998,7 +1011,7 @@ async function runDuo(cdp, base, data, name) {
     return { th: y(q('[data-key="th"]')), band: y(q('[data-key="tband"]')), card: y(q('.u-bot > [data-key]')), cols, lines: document.querySelectorAll('.u-dline').length,
       shown: +getComputedStyle(q('.u-tlinks')).opacity, apart: q('.u-table').classList.contains('is-apart'), edge: +getComputedStyle(q('.u-table'), '::after').opacity, scroll: ${H}.state().scroll }; })()`;
   const zT0 = await ev(tableDom);
-  const tdy = tf ? 40 : 0;
+  const tdy = tf ? 40 : 0; // the frame found above overflows by more than this
   await ev(`${H}.scroll('bottom', ${tdy}), 1`); await wait(400);
   const t1 = await ev(tableDom);
   await ev(`${H}.posture('book', { animate: false }), 1`); await wait(300);
@@ -1104,9 +1117,9 @@ async function runDuo(cdp, base, data, name) {
 
 // 回应托盘（trays）：与 D 同一组触屏规则（长按代替悬停、轻点长出详情、下拉收回、Tab / Enter / Esc、连播中长按停住、
 // 手指保护、撤回、回执跟着条目走、左滑知道了），加上它自己的：托盘高 = 头部 + 剩下几下 × 一排、数字 = 各托盘几下之和、
-// 两下的托盘一下矮一排（× 退回）、直接打开先讲一遍（轻点跳过到终态）、减弱动态时不讲。story 没有两下的托盘，那几项只核对“没有”。
+// 两下的托盘一下矮一排（× 退回）、直接打开先讲一遍（轻点跳过到终态）、减弱动态时不讲。founder 与 story 没有两下的托盘，那几项只核对“没有”。
 async function runTrays(cdp, base, data, name) {
-  const P = PAGES[name], held = P.held[data === 'story' ? 'story' : 'composite'], tell = P.tell[data === 'story' ? 'story' : 'composite'];
+  const set = data || defaultDataset, P = PAGES[name], held = P.held[set] || P.held[defaultDataset], tell = P.tell[set] || P.tell[defaultDataset];
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
   const S = (m, p) => cdp.send(m, p, sessionId);
@@ -1321,7 +1334,7 @@ async function runTrays(cdp, base, data, name) {
 // 五个手势、抬头、时刻跳转、两周时间轴、作答与撤回走通；通话中亮对方在等的那件，挂断出按住的，对不上的通话 0 像素；换轮不亮；
 // 直接打开讲一遍、任意键跳到终态、减弱动态不讲；手机尺寸上显示面可以直接点、双击。
 async function runGlasses(cdp, base, data, name) {
-  const P = PAGES[name], X = P.expect[data === 'story' ? 'story' : 'composite'];
+  const P = PAGES[name], X = P.expect[data || defaultDataset] || P.expect[defaultDataset];
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
   const S = (m, p) => cdp.send(m, p, sessionId);
