@@ -1,5 +1,5 @@
 {
- "about": "31 个原型的适配审计：逐个直接打开 href（整页，不是嵌入），在 390×844（手机，DPR 2，移动模拟 + 触屏）、820×1180 与 1180×820（iPad，移动模拟 + 触屏）、1440×900（桌面）下截图并量版面。scores 为 1–5，口径见 spec.md「打分口径」；measured 是截图时在页面里量到的事实；shot 是截图在审计目录里的相对路径（截图不入库，见 spec.md）。2026-11-02，原型取自 main fa99395。",
+ "about": "31 个原型的适配审计：逐个直接打开 href（整页，不是嵌入），在 390×844（手机，DPR 2，移动模拟 + 触屏）、820×1180 与 1180×820（iPad，移动模拟 + 触屏）、1440×900（桌面）下截图并量版面。scores 为 1–5，口径见 spec.md「打分口径」；measured 是截图时在页面里量到的事实；shot 是截图在审计目录里的相对路径（截图不入库，见 spec.md）。2026-11-02，原型取自 main fa99395，当时默认数据集是 composite，href 里的帧号是 composite 的默认帧；2026-11-04 起站点按 founder 打开（多数是 f22，见 site/.vitepress/theme/prototypes.mjs），排版宽度不随数据集变，分数没有按 founder 重打。",
  "method": {
   "open": "Page.navigate 到 http://127.0.0.1:4173 上的 href（去掉 /prototype 前缀），等 load 后 5 秒截第一张，再按一下 Shift（讲一遍会被任意键跳过）等 2.2 秒截第二张；measured 取第二张时的页面。",
   "layoutWidth": "页面实际排版宽度（innerWidth）。大于设备宽时手机浏览器整页缩小，scale = 设备宽 / 排版宽。",
@@ -1249,7 +1249,7 @@
     "quality": 3,
     "rep": 3
    },
-   "evidence": "版面 1440 宽：手机 27%；默认样张是手写情境（composite 两周没有子层）",
+   "evidence": "版面 1440 宽：手机 27%；默认样张是手写情境（它有两层子层；founder 只有白鹭上线一件分了一层，composite 两周没有子层）",
    "place": {
     "gallery": 16
    },
