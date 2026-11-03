@@ -1,0 +1,161 @@
+{
+ "source": "founder-mini",
+ "status": "小样例：只用来跑通 scripts/founder_corpus.py 的五步与检查，不是正式内容。格式与 corpus/founder/OUTLINE.md 第 7 节一致。",
+ "doc": "corpus/founder/README.md",
+ "title": "founder 小样例：陆晨的两周（三件事、十拍）",
+ "window": {"start": "2026-09-07", "end": "2026-09-21", "timezone": "Asia/Shanghai"},
+ "languages": ["zh", "en"],
+ "persona": {
+  "name": "陆晨",
+  "role": "铃语科技联合创始人、产品技术负责人，住杭州（作者编写的人物）",
+  "context": "小样例：他管第一个大客户白鹭口腔的上线，业余维护开源库 saydone；家里有妻子韩敏和一只柯基土豆。人物与消息都是作者编写的。",
+  "accounts": {"feishu": "陆晨", "github": "luchen-hz", "email": "luchen@lingyu.example"},
+  "language": "输入多为中文；saydone 的 GitHub 与 Discord 是英文。整理结果用中文写：标签说一件事和它现在卡在哪，20 字以内；短名 6 字以内，是名词短语。人名写中文名，产品名保留原文，不写编号和 PR、CI 这类缩写。"
+ },
+ "streams": {
+  "work": "工作：铃语公司、开源库 saydone 与合办的开发者聚会",
+  "community": "社区：saydone 的 Discord、X 上的提及与陌生同行的微信群",
+  "life": "生活服务：快递、银行、订单、物业与短信",
+  "family": "家人：妻子、孩子、父母、老师、课外班与宠物医院",
+  "subscription": "订阅、推送与营销"
+ },
+ "levels": ["critical", "high", "normal", "low", "trace", "none"],
+ "templates": {
+  "alert_zero": "【告警】{shop}{metric}为 {value}（过去 {window}）",
+  "alert_rate": "【告警】{shop}{metric} {value}%（阈值 {threshold}%），已持续 {minutes} 分钟",
+  "clinic_visit": "【禾木宠物医院】{pet}今日就诊：{what}。如需改约请回复本短信。",
+  "clinic_done": "【禾木宠物医院】{pet}已完成年度疫苗接种，记录已存入电子疫苗本。",
+  "pickup": "【小区驿站】您的快递已到 3 号柜，取件码 {code}，请当天取件。"
+ },
+ "people": {
+  "luchen": {"name": "陆晨", "author_kind": "self", "role": "本人"},
+  "zhengwan": {"name": "郑婉", "author_kind": "human", "role": "CEO，联合创始人"},
+  "gaoxiang": {"name": "高翔", "author_kind": "human", "role": "后端，电话与语音链路"},
+  "mengjie": {"name": "孟洁", "author_kind": "human", "role": "白鹭运营总监"},
+  "alert": {"name": "监控告警", "author_kind": "bot", "role": "飞书里的监控机器人"},
+  "mateo": {"name": "Mateo Ruiz", "author_kind": "human", "role": "saydone 共同维护者"},
+  "lucas": {"name": "Lucas Almeida", "author_kind": "human", "role": "巴西用户"},
+  "rafa": {"name": "rafa_dev", "author_kind": "human", "role": "Discord 上的用户"},
+  "hanmin": {"name": "韩敏", "author_kind": "human", "role": "妻子"},
+  "dad": {"name": "爸", "author_kind": "human", "role": "父亲"},
+  "clinic": {"name": "禾木宠物医院", "author_kind": "automation", "role": "宠物医院短信"},
+  "express": {"name": "小区驿站", "author_kind": "automation", "role": "快递柜短信"}
+ },
+ "channels": {
+  "fs-bailu": {"channel": "飞书 · 白鹭上线", "medium": "group", "stream": "work", "project": "main", "row": "飞书 · 白鹭上线"},
+  "fs-bot": {"channel": "飞书 · 监控告警", "medium": "bot", "stream": "work", "project": "main", "row": "飞书 · 机器人"},
+  "wx-mengjie": {"channel": "微信 · 孟洁", "medium": "chat", "stream": "work", "project": "main", "row": "微信 · 孟洁"},
+  "phone": {"channel": "电话", "medium": "call_log", "stream": "work", "project": "main", "row": "电话"},
+  "gh-saydone": {"channel": "GitHub · saydone/saydone", "medium": "github", "stream": "work", "project": "oss", "row": "GitHub · saydone/saydone"},
+  "discord": {"channel": "Discord · saydone", "medium": "group", "stream": "community", "project": "oss", "row": "Discord · saydone"},
+  "wx-hanmin": {"channel": "微信 · 韩敏", "medium": "chat", "stream": "family", "row": "微信 · 韩敏"},
+  "wx-dad": {"channel": "微信 · 爸", "medium": "chat", "stream": "family", "row": "微信 · 爸、妈"},
+  "sms-clinic": {"channel": "短信 · 禾木宠物医院", "medium": "sms", "stream": "family", "row": "宠物医院"},
+  "sms-express": {"channel": "短信 · 小区驿站", "medium": "sms", "stream": "life", "row": "快递"}
+ },
+ "items": {
+  "fd:A-bailu": {"line": "A", "title": "白鹭九店上线", "short": "九店上线", "stream": "work", "project": "main", "kind": "主线"},
+  "fd:F-saydone": {"line": "F", "title": "saydone 0.9 发版", "short": "新版本", "stream": "work", "project": "oss", "kind": "副线"},
+  "fd:I-dog": {"line": "I", "title": "土豆看耳朵与打疫苗", "short": "狗打疫苗", "stream": "family", "kind": "家里"}
+ },
+ "beats": [
+  {"id": "A01", "item": "fd:A-bailu", "gist": "周会定下 15 日切换，九家店一起上；他说今天列切换清单。", "level": "normal",
+   "messages": [
+    {"at": "2026-09-07T09:30:12+08:00", "ch": "fs-bailu", "who": "zhengwan", "text": "周会定了 15 号切换 九家店一起上"},
+    {"at": "2026-09-07T09:31:40+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "好", "ignore": "ack"},
+    {"at": "2026-09-07T09:41:05+08:00", "ch": "fs-bailu", "who": "luchen", "text": "收到 我今天把切换清单列出来"}]},
+  {"id": "F01", "item": "fd:F-saydone", "gist": "Mateo 说 0.9.0 定在 18 日周五；他同意，周末发 rc2。", "level": "low",
+   "messages": [
+    {"at": "2026-09-10T21:02:10+08:00", "ch": "gh-saydone", "who": "mateo", "kind": "comment",
+     "subject": "[saydone/saydone] 0.9.0 release plan (Issue #61)", "url": "https://github.com/saydone/saydone/issues/61",
+     "text": "rc1 has been out a week, nothing serious so far. Targeting Friday the 18th for 0.9.0 unless someone yells."},
+    {"at": "2026-09-10T21:40:33+08:00", "ch": "gh-saydone", "who": "luchen", "kind": "comment",
+     "subject": "Re: [saydone/saydone] 0.9.0 release plan (Issue #61)", "url": "https://github.com/saydone/saydone/issues/61",
+     "text": "Friday works for me. I'll cut rc2 this weekend with the pt/es short-answer tweaks."}]},
+  {"id": "I01", "item": "fd:I-dog", "gist": "宠物医院短信：土豆右耳外耳炎；韩敏提醒滴耳液一天两次。", "level": "low",
+   "messages": [
+    {"at": "2026-09-12T10:02:30+08:00", "ch": "sms-clinic", "who": "clinic", "kind": "notification", "template": "clinic_visit",
+     "params": {"pet": "土豆", "what": "右耳外耳炎，滴耳液一天两次，连用一周"}},
+    {"at": "2026-09-12T10:15:12+08:00", "ch": "wx-hanmin", "who": "hanmin", "text": "滴耳液一天两次 别忘了"},
+    {"at": "2026-09-12T10:40:03+08:00", "ch": "wx-hanmin", "who": "luchen", "text": "好"}]},
+  {"id": "A02", "item": "fd:A-bailu", "gist": "切换后告警：滨江店来电为 0；孟洁打电话来，又在微信里说电话打不进来。", "level": "critical",
+   "ask": {"id": "a2", "q": "滨江店的电话还转到旧手机：今天让店长改，还是先退回试点名单？", "short": "滨江店先退出吗",
+           "options": ["让店长改", "先退回试点"], "due": "2026-09-15T12:00:00+08:00"},
+   "messages": [
+    {"at": "2026-09-15T09:20:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_zero",
+     "params": {"shop": "滨江店", "metric": "来电数", "value": 0, "window": "20 分钟"}},
+    {"at": "2026-09-15T09:40:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_zero",
+     "params": {"shop": "滨江店", "metric": "来电数", "value": 0, "window": "40 分钟"}, "ignore": "alert_repeat", "dup_of": "A02.1"},
+    {"at": "2026-09-15T09:46:30+08:00", "ch": "phone", "who": "mengjie", "kind": "call_log",
+     "call": {"direction": "in", "peer": "孟洁", "seconds": 184}},
+    {"at": "2026-09-15T09:52:10+08:00", "ch": "wx-mengjie", "who": "mengjie", "text": "滨江店的电话打不进来 前台说一上午没响过"}]},
+  {"id": "A03", "item": "fd:A-bailu", "answers": "a2", "gist": "他让曹店长改呼叫转移，不退试点；11:40 高翔说滨江店恢复。", "level": "normal",
+   "messages": [
+    {"at": "2026-09-15T10:05:30+08:00", "ch": "fs-bailu", "who": "luchen", "text": "先让曹店长改转移 不退试点 我来盯"},
+    {"at": "2026-09-15T11:40:12+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "滨江店好了 来电正常进来了"}]},
+  {"id": "F02", "item": "fd:F-saydone", "gist": "Lucas 报 rc2 把葡语短回答截掉，Discord 上也有人说；晚上 Mateo 查到是默认静音时长改短了。",
+   "level": "normal",
+   "ask": {"id": "f1", "q": "有人报 rc2 把葡语短回答截掉：0.9 周五照发，还是推迟？", "short": "0.9 周五发吗",
+           "options": ["照发", "推迟一天"], "due": "2026-09-18T12:00:00+08:00"},
+   "messages": [
+    {"at": "2026-09-17T03:10:44+08:00", "ch": "gh-saydone", "who": "lucas", "kind": "issue_opened",
+     "subject": "[saydone/saydone] rc2 drops short \"sim\" answers in pt-BR (Issue #63)", "url": "https://github.com/saydone/saydone/issues/63",
+     "text": "rc2 drops short \"sim\" answers in pt-BR, about 1 in 5 calls. rc1 is fine.\n\nLogs below:\n```\n[turn] partial=\"sim\" eou=0.41 silence_ms=380 -> continue\n[turn] partial=\"sim\" eou=0.38 silence_ms=380 -> continue\n```"},
+    {"at": "2026-09-17T03:31:02+08:00", "ch": "discord", "who": "rafa", "text": "anyone else on rc2 seeing the bot talk over people who just say 'sim'? rolled back to rc1 for now"},
+    {"at": "2026-09-17T22:00:15+08:00", "ch": "gh-saydone", "who": "mateo", "kind": "comment",
+     "subject": "Re: [saydone/saydone] rc2 drops short \"sim\" answers in pt-BR (Issue #63)", "url": "https://github.com/saydone/saydone/issues/63",
+     "text": "Found it: rc2 lowered the default silence from 600 to 380ms, which is what cuts the short answers. Revert the default or make it per-language?"}]},
+  {"id": "I02", "item": "fd:I-dog", "gist": "韩敏在上海，问明早谁带土豆打针；他没回，22:50 她发“??”。", "level": "high",
+   "misfit": "韩敏的“??”是对同一问题的重复催促",
+   "ask": {"id": "i2", "q": "明早 9:30 土豆打疫苗：你带去，还是改约？", "short": "明早谁带狗打针",
+           "options": ["我带去", "请爸带去", "改约"], "due": "2026-09-18T09:30:00+08:00"},
+   "messages": [
+    {"at": "2026-09-17T21:30:12+08:00", "ch": "wx-hanmin", "who": "hanmin", "text": "明天狗打针你带去吗"},
+    {"at": "2026-09-17T21:30:40+08:00", "ch": "wx-hanmin", "who": "hanmin", "text": "我回不来 寄养那边要看疫苗记录"},
+    {"at": "2026-09-17T22:50:03+08:00", "ch": "wx-hanmin", "who": "hanmin", "text": "??", "ignore": "resend", "dup_of": "I02.1"}]},
+  {"id": "I03", "item": "fd:I-dog", "answers": "i2", "gist": "他打电话请爸带去，告诉韩敏疫苗本在哪；医院短信说已接种，他给爸转了钱。", "level": "low",
+   "messages": [
+    {"at": "2026-09-18T07:40:15+08:00", "ch": "wx-dad", "who": "luchen", "kind": "call_log",
+     "call": {"direction": "out", "peer": "爸", "seconds": 95}},
+    {"at": "2026-09-18T07:42:30+08:00", "ch": "wx-hanmin", "who": "luchen", "text": "我让爸带去了 疫苗本在鞋柜上"},
+    {"at": "2026-09-18T10:05:11+08:00", "ch": "sms-clinic", "who": "clinic", "kind": "notification", "template": "clinic_done",
+     "params": {"pet": "土豆"}},
+    {"at": "2026-09-18T10:20:40+08:00", "ch": "wx-dad", "who": "luchen", "kind": "transfer",
+     "transfer": {"direction": "out", "peer": "爸", "amount": 180}}]},
+  {"id": "F03", "item": "fd:F-saydone", "answers": "f1", "gist": "他在 issue 里说推迟一天，先把默认值改回去。", "level": "low",
+   "messages": [
+    {"at": "2026-09-18T08:30:20+08:00", "ch": "gh-saydone", "who": "luchen", "kind": "comment",
+     "subject": "Re: [saydone/saydone] rc2 drops short \"sim\" answers in pt-BR (Issue #63)", "url": "https://github.com/saydone/saydone/issues/63",
+     "text": "Pushing 0.9 by a day. Reverting the default to 600ms first, per-language later.", "edited": true},
+    {"at": "2026-09-18T08:44:51+08:00", "ch": "gh-saydone", "who": "mateo", "kind": "comment",
+     "subject": "Re: [saydone/saydone] rc2 drops short \"sim\" answers in pt-BR (Issue #63)", "url": "https://github.com/saydone/saydone/issues/63",
+     "text": "👍 makes sense", "ignore": "ack"}]},
+  {"id": "A04", "item": "fd:A-bailu", "gist": "孟洁发来一周数字：接了 1286 个电话，漏接 3 个。", "level": "low",
+   "messages": [
+    {"at": "2026-09-19T10:02:44+08:00", "ch": "wx-mengjie", "who": "mengjie", "text": "这周九家店 AI 接了 1286 个电话 漏接 3 个 辛苦你们"},
+    {"at": "2026-09-19T10:30:05+08:00", "ch": "wx-mengjie", "who": "luchen", "text": "收到 谢谢孟总 下周再看一次滨江店"}]}
+ ],
+ "noise": [
+  {"id": "N-express-01", "thread": "fd:n-express-0914", "topic": "驿站取件码",
+   "messages": [
+    {"at": "2026-09-14T18:05:12+08:00", "ch": "sms-express", "who": "express", "kind": "notification", "template": "pickup",
+     "params": {"code": "6-2-3018"}, "ignore": "notification"}]},
+  {"id": "N-alerts-01", "thread": "fd:n-alerts-asr-0916", "topic": "语音识别超时的告警，每分钟一条",
+   "messages": [
+    {"at": "2026-09-16T19:41:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_rate", "params": {"shop": "全部门店", "metric": "识别超时率", "value": 18, "threshold": 5, "minutes": 1}, "ignore": "alert_repeat"},
+    {"at": "2026-09-16T19:42:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_rate", "params": {"shop": "全部门店", "metric": "识别超时率", "value": 19, "threshold": 5, "minutes": 2}, "ignore": "alert_repeat"},
+    {"at": "2026-09-16T19:43:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_rate", "params": {"shop": "全部门店", "metric": "识别超时率", "value": 18, "threshold": 5, "minutes": 3}, "ignore": "alert_repeat"},
+    {"at": "2026-09-16T19:44:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_rate", "params": {"shop": "全部门店", "metric": "识别超时率", "value": 21, "threshold": 5, "minutes": 4}, "ignore": "alert_repeat"},
+    {"at": "2026-09-16T19:45:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_rate", "params": {"shop": "全部门店", "metric": "识别超时率", "value": 20, "threshold": 5, "minutes": 5}, "ignore": "alert_repeat"},
+    {"at": "2026-09-16T19:46:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_rate", "params": {"shop": "全部门店", "metric": "识别超时率", "value": 18, "threshold": 5, "minutes": 6}, "ignore": "alert_repeat"},
+    {"at": "2026-09-16T19:47:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_rate", "params": {"shop": "全部门店", "metric": "识别超时率", "value": 17, "threshold": 5, "minutes": 7}, "ignore": "alert_repeat"},
+    {"at": "2026-09-16T19:48:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_rate", "params": {"shop": "全部门店", "metric": "识别超时率", "value": 18, "threshold": 5, "minutes": 8}, "ignore": "alert_repeat"},
+    {"at": "2026-09-16T19:49:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_rate", "params": {"shop": "全部门店", "metric": "识别超时率", "value": 19, "threshold": 5, "minutes": 9}, "ignore": "alert_repeat"},
+    {"at": "2026-09-16T19:50:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_rate", "params": {"shop": "全部门店", "metric": "识别超时率", "value": 18, "threshold": 5, "minutes": 10}, "ignore": "alert_repeat"},
+    {"at": "2026-09-16T19:51:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_rate", "params": {"shop": "全部门店", "metric": "识别超时率", "value": 18, "threshold": 5, "minutes": 11}, "ignore": "alert_repeat"},
+    {"at": "2026-09-16T19:52:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_rate", "params": {"shop": "全部门店", "metric": "识别超时率", "value": 20, "threshold": 5, "minutes": 12}, "ignore": "alert_repeat"},
+    {"at": "2026-09-16T19:53:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_rate", "params": {"shop": "全部门店", "metric": "识别超时率", "value": 19, "threshold": 5, "minutes": 13}, "ignore": "alert_repeat"},
+    {"at": "2026-09-16T19:54:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_rate", "params": {"shop": "全部门店", "metric": "识别超时率", "value": 18, "threshold": 5, "minutes": 14}, "ignore": "alert_repeat"},
+    {"at": "2026-09-16T19:55:00+08:00", "ch": "fs-bot", "who": "alert", "kind": "notification", "template": "alert_rate", "params": {"shop": "全部门店", "metric": "识别超时率", "value": 18, "threshold": 5, "minutes": 15}, "ignore": "alert_repeat"}]}
+ ]
+}
