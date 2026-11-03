@@ -1,0 +1,4538 @@
+{
+ "source": "founder",
+ "status": "共用设定：人物、渠道、事项、问题、预算与归属，由架构按 corpus/founder/OUTLINE.md 整理；写作者只读不改，要改先提出来。写法见 corpus/founder/WRITING.md。",
+ "doc": "corpus/founder/README.md",
+ "title": "陆晨的两周：一位 AI 前台创业者（作者编写）",
+ "window": {"start": "2026-09-07", "end": "2026-09-21", "timezone": "Asia/Shanghai"},
+ "languages": ["zh", "en"],
+ "persona": {
+  "name": "陆晨",
+  "role": "铃语科技联合创始人、产品技术负责人，住杭州滨江（作者编写的人物）",
+  "context": "铃语是给小店用的 AI 前台，替口腔诊所、理发店、健身房接电话、回微信、约时间；公司 7 个人，种子轮。他写代码、管上线、对接大客户的技术部分。第一个大客户是杭州 9 家店的连锁口腔诊所白鹭口腔，9 月 15 日从 2 家店试用切到 9 家店全用。他业余维护开源库 saydone（判断电话里对方的话说完没有），和两位朋友每月合办一次语音AI小聚。家里有妻子韩敏、女儿可可（9 岁，三年级）、儿子豆豆（5 岁，幼儿园大班）和柯基土豆；父母住拱墅。人物与消息都是作者编写的。",
+  "accounts": {
+   "feishu": "陆晨",
+   "wechat": "陆晨",
+   "github": "luchen-hz",
+   "discord": "luchen",
+   "x": "@luchen_hz",
+   "email": "luchen@lingyu.example"
+  },
+  "language": "输入多为中文；saydone 的 GitHub、Discord、X 与海外来信是英文。整理结果用中文写：标签说一件事和它现在卡在哪，20 字以内；短名 6 字以内，是名词短语，如“客户年单”“狗打疫苗”“女儿回执”。人名写中文名，产品名（saydone、铃语、白鹭口腔）与通用词（App、Excel）保留，不写编号和 PR、CI 这类缩写，用“改动”“构建”。"
+ },
+ "streams": {
+  "work": "工作：铃语公司（主项目）、开源库 saydone、合办的语音AI小聚与杂项来信",
+  "community": "社区：saydone 的 Discord、X 上的提及、小聚的参会者大群与两个陌生同行的微信群",
+  "life": "生活服务：快递、银行、订单、物业、出行、体检与短信",
+  "family": "家人：妻子、孩子、父母、老师与家长群、课外班与宠物医院",
+  "subscription": "订阅、推送与营销：技术与行业的 newsletter 和订阅号（工作侧），购物、外卖、出行与视频的推送（生活侧）"
+ },
+ "levels": ["critical", "high", "normal", "low", "trace", "none"],
+ "parts": {
+  "main-customer": {
+   "file": "main-customer.json",
+   "lines": "A、C",
+   "noise_prefix": "Nc-",
+   "noise": "飞书 · 白鹭上线、微信 · 白鹭口腔×铃语、微信 · 孟洁、电话（工作）"
+  },
+  "main-ops": {
+   "file": "main-ops.json",
+   "lines": "B、D、E",
+   "noise_prefix": "No-",
+   "noise": "飞书 · 铃语全员、飞书 · 单聊、飞书 · 机器人、GitHub · lingyu-ai/frontdesk、微信 · 小店老板、邮件 · 工作"
+  },
+  "side": {
+   "file": "side.json",
+   "lines": "F、G、H",
+   "noise_prefix": "Ns-",
+   "noise": "saydone 的 GitHub、邮件、Discord 与 X，语音AI小聚的各群与报名，杂项来信，三个陌生人的群，技术与行业订阅"
+  },
+  "home": {"file": "home.json", "lines": "I–N", "noise_prefix": "Nh-", "noise": "家里与生活的全部渠道，App 推送与营销"}
+ },
+ "ignore_reasons": {
+  "ack": "“收到”“好的”“+1”“same here”这类只表示看到了的回应",
+  "emoji": "只有表情、贴图或表情回应",
+  "chatter": "和他无关的闲聊",
+  "greeting": "节日问候与刷屏（“老师节日快乐”）",
+  "resend": "没回音时的再发（“??”、同一句再发一遍）；写 dup_of",
+  "dup": "同一内容的重复：转发到另一个群、同一通知发两次、重复开的 issue；写 dup_of",
+  "superseded": "被后一条更正或取代（64 通 → 46 通）；写 dup_of 指向更正的那条之前的原话",
+  "alert_repeat": "同一告警的重复卡片与恢复通知；写 dup_of 指向这一串的第一张",
+  "bot": "构建、部署、依赖升级、覆盖率、stale 等例行机器人通知",
+  "notification": "例行程序通知：快递、动账、订单、验证码、日程提醒",
+  "promo": "营销推送、广告、砍一刀",
+  "forward": "转发的文章、养生文、公众号链接",
+  "subscription": "newsletter、订阅号长文、工具更新",
+  "scam": "诈骗与骚扰短信、推销电话（不能和真的快递、银行并在一起）",
+  "recalled": "撤回的消息",
+  "system": "入群、改群名等系统消息",
+  "signup": "报名小程序的新报名与候补通知",
+  "cold": "冷邮件、猎头、推销、招聘平台推荐",
+  "offtopic": "发错群的话、陌生人群里与他无关的提问",
+  "fragment": "半截话（“在吗”“陆总”），真正的事在下一条；另标 fragment: true"
+ },
+ "templates": {
+  "alert": "【告警】{title}\n指标：{metric} = {value}\n阈值：{threshold}\n持续：{duration}\n范围：{scope}\n详情：https://monitor.lingyu.example/a/{alert_id}",
+  "alert_recover": "【恢复】{title}\n指标：{metric} = {value}\n告警持续了 {duration}\n范围：{scope}",
+  "deploy_ok": "部署完成 · frontdesk · {env}\n版本 {version}（{commit}）\n{summary}\n操作人：{who}",
+  "deploy_fail": "部署失败 · frontdesk · {env}\n版本 {version}（{commit}）\n失败步骤：{step}\n操作人：{who}\n日志：https://ci.lingyu.example/runs/{run}",
+  "cal_invite": "{who} 邀请你参加日程\n{title}\n时间：{when}\n地点：{where}",
+  "cal_remind": "日程提醒：{title}\n{when} · {where}",
+  "approval": "{who} 提交了{type}，待你审批\n事由：{summary}\n金额：¥{amount}",
+  "doc_comment": "{who} 在文档《{doc}》中评论了你\n“{quote}”\n{comment}",
+  "doc_mention": "{who} 在文档《{doc}》中提到了你",
+  "gh_ci_failure": "{workflow} failed on {branch}\n\n{repo} @ {commit}: {title}\nFailed jobs: {jobs}\n\nhttps://github.com/{repo}/actions/runs/{run}",
+  "gh_ci_fixed": "{workflow} is passing again on {branch}\n\n{repo} @ {commit}: {title}\n\nhttps://github.com/{repo}/actions/runs/{run}",
+  "gh_dependabot": "Bumps {package} from {old} to {new}.\n\nThe changelog and commit list are linked in the PR body.\nThis PR is kept up to date with {base}; comment `@dependabot rebase` to refresh it by hand.",
+  "gh_stale": "Nobody has touched this {what} in {days} days, so it is now labelled stale. It will close in {close} days unless someone comments or removes the label.",
+  "gh_codecov": "Coverage {direction} by {delta} ({base}% → {head}%). {files} files changed, {missed} new lines not covered.",
+  "gh_review_requested": "{who} requested your review on this pull request.",
+  "gh_closed": "Closed #{number}{reason}.",
+  "gh_merged": "Merged #{number} into {base}.",
+  "gh_reopened": "Reopened #{number}.",
+  "pypi_release": "A new release of saydone was published: {version}\n\nFiles: {files}\nUploaded by: {who}\nhttps://pypi.org/project/saydone/{version}/",
+  "express_pickup": "【小区驿站】您的{courier}包裹已到{place}，取件码 {code}，请凭码取件，{until}前未取将退回。",
+  "express_delivering": "【顺路快递】您的快件（尾号{tail}）正在派送，派送员{courier} {phone}，今天{eta}前送达。",
+  "express_signed": "【顺路快递】您的快件（尾号{tail}）已签收，签收人：{who}。如有疑问请联系 {phone}。",
+  "bank_out": "【云杉银行】您尾号{card}的账户{time}支出人民币{amount}元（{merchant}），余额{balance}元。",
+  "bank_in": "【云杉银行】您尾号{card}的账户{time}收入人民币{amount}元（{merchant}），余额{balance}元。",
+  "bank_card_spend": "【云杉银行】您尾号{card}的信用卡{time}消费人民币{amount}元（{merchant}）。",
+  "bank_card_bill": "【云杉银行】您尾号{card}的信用卡{month}月账单{amount}元，最后还款日{due}，已开通自动还款，将从尾号{debit}账户扣款。",
+  "verify_code": "【{app}】验证码 {code}，{minutes} 分钟内有效。请勿泄露给他人。",
+  "pet_visit": "【禾木宠物医院】{pet}今日就诊：{what}。复诊请提前预约，咨询电话 0571-8693 2210。",
+  "pet_booked": "【禾木宠物医院】预约成功：{pet}，{when}，{what}。请携带疫苗本按时到院。",
+  "pet_remind": "【禾木宠物医院】温馨提示：您的爱宠{pet}已预约{when}接种{vaccine}，请携带疫苗本按时到院。",
+  "pet_done": "【禾木宠物医院】{pet}已于{when}完成{vaccine}接种，记录已存入电子疫苗本，下次接种时间{next}。",
+  "pet_boarding": "【禾木宠物医院】寄养预约成功：{pet}，{start}至{end}，{room}。入住请带疫苗本与日常口粮。",
+  "clinic_booking": "【江涛社区卫生服务中心】预约成功：{name}，{date} {time}，{dept}，就诊序号{no}。请提前15分钟到院签到。",
+  "clinic_paid": "【江涛社区卫生服务中心】{name}缴费成功，金额{amount}元，项目：{items}。",
+  "checkup_report": "【康途体检】{name}您好，您{date}的体检报告已出，请在小程序“报告查询”中查看。",
+  "property": "【江景湾物业】{text}",
+  "ctrip_flight": "【携程旅行】机票出票成功：{date} {route} {flight} {dep}起飞，乘机人{passengers}。订单号{order}。",
+  "ctrip_hotel": "【携程旅行】酒店预订成功：{hotel}，{checkin}入住，{nights}晚，{room}。订单号{order}。",
+  "ctrip_change": "【携程旅行】航班变动提醒：您{date}{route}的{flight}航班，起飞时间由{old}调整为{new}。您可免费改签或退票，请在App内处理。订单号{order}。",
+  "ctrip_change_ok": "【携程旅行】您已接受航班变动：{flight} {date} {new}起飞。新的行程单已发至App。",
+  "order_status": "【{app}】您的订单“{item}”{status}。",
+  "food_status": "【饭点外卖】{shop}：{status}，预计{eta}送达。",
+  "signup_one": "第7期语音AI小聚 · 新报名\n{name}｜{org}\n已报 {n}/120",
+  "signup_batch": "第7期语音AI小聚 · 过去一小时新增 {k} 人\n已报 {n}/120",
+  "signup_waitlist": "第7期语音AI小聚 · 候补 +1（{name}）\n已满 120，候补 {w} 人",
+  "recalled": "“{who}”撤回了一条消息",
+  "wx_joined": "“{inviter}”邀请“{who}”加入了群聊",
+  "wx_rename": "“{who}”修改群名为“{name}”",
+  "school_notice": "{title}\n{body}\n——{sender}\n请家长点击“确认已读”。",
+  "recruit_pick": "【招聘 App】为你推荐 {n} 位候选人：{names} 等。职位：{job}。"
+ },
+ "people": {
+  "luchen": {
+   "name": "陆晨",
+   "author_kind": "self",
+   "role": "本人：铃语科技联合创始人、产品技术负责人，37 岁，住杭州滨江",
+   "voice": {
+    "style": "工作里短句、先给结论再说下一步（“我来盯”“明早给你”）；对客户与律师客气完整；家里忙时只回“好”“晚点说”“在开会”；GitHub 与 Discord 上是工程师的英文，简短、直接，偶尔省主语",
+    "length": "中文 2–30 字，方案与复盘可到几百字；GitHub 评论 1–4 句",
+    "punctuation": "聊天不打句号，用空格断句；给孟洁、律师、杨帆用逗号句号",
+    "emoji": "几乎不用；微信偶尔 [抱拳] [OK]，GitHub 偶尔 👍"
+   },
+   "channels": ["fs-all", "fs-bailu", "fs-zhengwan", "fs-gaoxiang", "fs-hejia", "fs-songyue", "fs-luoxiaowen", "fs-dengyifan", "gh-frontdesk", "wx-bailu", "wx-mengjie", "wx-wangjie", "wx-xiaojin", "wx-azhen", "mail-work", "phone", "gh-saydone", "mail-saydone", "wx-meetup", "wx-laofan", "wx-venue", "wx-sponsor", "mail-misc", "wx-hunter", "dc-help", "dc-general", "x-mentions", "wx-meetup-big", "wx-hzai", "wx-llmdev", "wx-hanmin", "wx-family", "wx-dad", "wx-mom", "watch-keke", "wx-class", "wx-kinder", "wx-swim", "wx-cici", "wx-pet", "wx-owners", "ctrip-hotel", "sms-health"],
+   "aliases": {
+    "github": "luchen-hz",
+    "discord": "luchen",
+    "x": "@luchen_hz",
+    "mail-saydone": "Lu Chen",
+    "wx-class": "可可爸爸",
+    "wx-kinder": "豆豆爸爸",
+    "wx-swim": "豆豆爸爸",
+    "wx-meetup-big": "陆晨-铃语"
+   }
+  },
+  "zhengwan": {
+   "name": "郑婉",
+   "author_kind": "human",
+   "role": "CEO、联合创始人：销售、融资、合同",
+   "voice": {
+    "style": "语音转文字多（kind 写 voice），一条一件事，爱 @ 人，夜里十一点还在发；偶尔说“对齐一下”；语音转出来的字有口头禅“那个”“就是”，偶有同音错字",
+    "length": "语音 20–80 字；打字 5–30 字",
+    "punctuation": "语音转文字有逗号句号；打字少标点",
+    "emoji": "少；[OK] [抱拳]"
+   },
+   "channels": ["fs-all", "fs-bailu", "fs-zhengwan", "wx-bailu", "mail-work", "phone"]
+  },
+  "gaoxiang": {
+   "name": "高翔",
+   "author_kind": "human",
+   "role": "后端，电话与语音链路",
+   "voice": {
+    "style": "话少，先“我看下”，再贴日志或截图，最后“好了”；凌晨也回；不寒暄",
+    "length": "2–20 字；贴日志时几百字",
+    "punctuation": "几乎不用标点",
+    "emoji": "不用"
+   },
+   "channels": ["fs-all", "fs-bailu", "fs-gaoxiang", "gh-frontdesk", "phone"],
+   "aliases": {"github": "gaoxiang-ly"}
+  },
+  "hejia": {
+   "name": "何嘉",
+   "author_kind": "human",
+   "role": "提示词与评测",
+   "voice": {
+    "style": "发表格和数字，长消息带 1. 2. 3. 编号；常发完再改（edited），或者紧跟一条“更正：”",
+    "length": "30–300 字",
+    "punctuation": "标点齐全",
+    "emoji": "很少"
+   },
+   "channels": ["fs-all", "fs-bailu", "fs-hejia", "gh-frontdesk"],
+   "aliases": {"github": "hejia-eval"}
+  },
+  "songyue": {
+   "name": "宋悦",
+   "author_kind": "human",
+   "role": "前端，店长用的小程序",
+   "voice": {
+    "style": "客气，先问“现在方便吗”，再带截图说事；“好的～”“麻烦啦”",
+    "length": "10–60 字",
+    "punctuation": "爱用～和…",
+    "emoji": "偶尔 [微笑] [捂脸]"
+   },
+   "channels": ["fs-all", "fs-bailu", "fs-songyue", "gh-frontdesk"],
+   "aliases": {"github": "songyue-fe"}
+  },
+  "luoxiaowen": {
+   "name": "罗晓雯",
+   "author_kind": "human",
+   "role": "客户成功，白鹭的对接人；同事叫她小罗",
+   "voice": {
+    "style": "合并转发店长的话（kind forward）；“收到我去问”“好嘞”；回得快",
+    "length": "5–40 字",
+    "punctuation": "少",
+    "emoji": "偶尔 [OK] 👌"
+   },
+   "channels": ["fs-all", "fs-bailu", "fs-luoxiaowen", "wx-bailu"],
+   "aliases": {"wechat": "铃语-小罗"}
+  },
+  "dengyifan": {
+   "name": "邓一凡",
+   "author_kind": "human",
+   "role": "后端实习生",
+   "voice": {"style": "问基础问题，先“陆老师 打扰一下”；“好的陆老师”；有一次把消息发错群", "length": "10–50 字", "punctuation": "标点规整", "emoji": "[抱拳]"},
+   "channels": ["fs-all", "fs-dengyifan", "gh-frontdesk"],
+   "aliases": {"github": "dengyf"}
+  },
+  "yangfan": {
+   "name": "杨帆",
+   "author_kind": "human",
+   "role": "北岸资本合伙人，每月 10 日前要月报；这两周只发邮件",
+   "voice": {"style": "短，直接；回复全部；手机发的邮件只有一行", "length": "2–60 字", "punctuation": "规整；“??”也会发", "emoji": "不用"},
+   "channels": ["mail-work"],
+   "aliases": {"email": "杨帆 | 北岸资本"}
+  },
+  "mengjie": {
+   "name": "孟洁",
+   "author_kind": "human",
+   "role": "白鹭口腔运营总监，拍板的人",
+   "voice": {
+    "style": "说话直接，有事先打电话，没接再发微信；不客套；“周五开会说清楚”",
+    "length": "10–50 字",
+    "punctuation": "逗号句号齐全",
+    "emoji": "很少，偶尔 [握手]"
+   },
+   "channels": ["wx-bailu", "wx-mengjie", "mail-work", "phone"],
+   "aliases": {"wx-bailu": "孟洁（白鹭运营）"}
+  },
+  "lawyer": {
+   "name": "沈雅琴",
+   "author_kind": "human",
+   "role": "白鹭外聘的律师，改合同",
+   "voice": {"style": "书面但不套话；按条款编号写修改意见，引用原文再给改法", "length": "邮件 200–2500 字", "punctuation": "规范", "emoji": "不用"},
+   "channels": ["mail-work"]
+  },
+  "mgr-binjiang": {
+   "name": "曹店长（滨江）",
+   "author_kind": "human",
+   "role": "白鹭滨江店店长；“已设置”其实设到了前台的旧手机",
+   "voice": {"style": "短，口语；“设好了”“收到”", "length": "2–20 字", "punctuation": "少", "emoji": "[OK]"},
+   "channels": ["wx-bailu"]
+  },
+  "mgr-xixi": {
+   "name": "郭店长（西溪）",
+   "author_kind": "human",
+   "role": "白鹭西溪店店长，试点店，发现种植牙报价不对",
+   "voice": {"style": "说事带数字，“客人说……”", "length": "10–50 字", "punctuation": "逗号", "emoji": "少"},
+   "channels": ["wx-bailu"]
+  },
+  "mgr-chengxi": {
+   "name": "邵店长（城西）",
+   "author_kind": "human",
+   "role": "白鹭城西店店长，试点店，话多",
+   "voice": {"style": "爱发语音，抱怨与夸奖都直说", "length": "10–60 字", "punctuation": "少", "emoji": "[捂脸] [强]"},
+   "channels": ["wx-bailu"]
+  },
+  "mgr-xiasha": {
+   "name": "钟店长（下沙）",
+   "author_kind": "human",
+   "role": "白鹭下沙店店长",
+   "voice": {"style": "只回“收到”“已设置”", "length": "2–10 字", "punctuation": "无", "emoji": "无"},
+   "channels": ["wx-bailu"]
+  },
+  "mgr-xiaoshan": {
+   "name": "葛店长（萧山）",
+   "author_kind": "human",
+   "role": "白鹭萧山店店长",
+   "voice": {"style": "问操作细节，常带截图", "length": "10–40 字", "punctuation": "问号多", "emoji": "少"},
+   "channels": ["wx-bailu"]
+  },
+  "mgr-gongshu": {
+   "name": "彭店长（拱墅）",
+   "author_kind": "human",
+   "role": "白鹭拱墅店店长",
+   "voice": {"style": "只回“收到”“好的”", "length": "2–10 字", "punctuation": "无", "emoji": "无"},
+   "channels": ["wx-bailu"]
+  },
+  "mgr-yuhang": {
+   "name": "田店长（余杭）",
+   "author_kind": "human",
+   "role": "白鹭余杭店店长",
+   "voice": {"style": "回得慢，一次说几件事", "length": "20–60 字", "punctuation": "逗号", "emoji": "少"},
+   "channels": ["wx-bailu"]
+  },
+  "mgr-qjxc": {
+   "name": "任店长（钱江新城）",
+   "author_kind": "human",
+   "role": "白鹭钱江新城店店长",
+   "voice": {"style": "客气，“辛苦了”", "length": "5–20 字", "punctuation": "感叹号", "emoji": "[玫瑰]"},
+   "channels": ["wx-bailu"]
+  },
+  "mgr-liangzhu": {
+   "name": "傅店长（良渚）",
+   "author_kind": "human",
+   "role": "白鹭良渚店店长",
+   "voice": {"style": "只回“收到”", "length": "2–6 字", "punctuation": "无", "emoji": "无"},
+   "channels": ["wx-bailu"]
+  },
+  "fd-binjiang": {
+   "name": "滨江店前台-小俞",
+   "author_kind": "human",
+   "role": "白鹭滨江店前台",
+   "voice": {"style": "怯，问“这样对吗”", "length": "5–30 字", "punctuation": "问号", "emoji": "[捂脸]"},
+   "channels": ["wx-bailu"]
+  },
+  "fd-xixi": {
+   "name": "西溪前台 婷婷",
+   "author_kind": "human",
+   "role": "白鹭西溪店前台",
+   "voice": {"style": "转述客人的话", "length": "10–40 字", "punctuation": "少", "emoji": "少"},
+   "channels": ["wx-bailu"]
+  },
+  "fd-chengxi": {
+   "name": "城西前台 阿May",
+   "author_kind": "human",
+   "role": "白鹭城西店前台",
+   "voice": {"style": "短，爱发截图", "length": "5–20 字", "punctuation": "少", "emoji": "[OK]"},
+   "channels": ["wx-bailu"]
+  },
+  "wangjie": {
+   "name": "王姐（剪约造型）",
+   "author_kind": "human",
+   "role": "理发店老板，付费小店",
+   "voice": {"style": "急，先语音后文字，“陆总”；事后不再追问，有时群发店里的促销", "length": "10–60 字", "punctuation": "感叹号多", "emoji": "[抱拳] [玫瑰]"},
+   "channels": ["wx-wangjie"]
+  },
+  "xiaojin": {
+   "name": "小金｜燃力健身",
+   "author_kind": "human",
+   "role": "健身工作室老板，要发票，三天问三次，第三次只有“??”",
+   "voice": {"style": "一句话，不寒暄", "length": "2–30 字", "punctuation": "少，“??”", "emoji": "无"},
+   "channels": ["wx-xiaojin"]
+  },
+  "azhen": {
+   "name": "悦颜美容 阿珍",
+   "author_kind": "human",
+   "role": "美容店老板娘，朋友推荐来询价",
+   "voice": {"style": "客气，问价钱和店数", "length": "10–40 字", "punctuation": "～", "emoji": "[微笑]"},
+   "channels": ["wx-azhen"]
+  },
+  "tinglan-ops": {
+   "name": "听澜语音 运维通知",
+   "author_kind": "automation",
+   "role": "语音识别供应商（虚构）的维护与状态通知",
+   "voice": {"style": "通知体：先日期与时段，再影响与建议", "length": "100–400 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["mail-work"]
+  },
+  "tinglan-support": {
+   "name": "听澜语音 技术支持",
+   "author_kind": "human",
+   "role": "语音识别供应商（虚构）的技术支持，写事故说明与减免",
+   "voice": {"style": "工程师写的事故说明：时间线、原因、影响、后续；不推卸也不煽情", "length": "300–2500 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["mail-work"]
+  },
+  "yunjie": {
+   "name": "云阶模型",
+   "author_kind": "automation",
+   "role": "大模型 API 供应商（虚构），10/1 起标准版单价上调约两成",
+   "voice": {"style": "价格调整通知：生效日期、旧价新价、建议", "length": "200–600 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["mail-work"]
+  },
+  "qusheng": {
+   "name": "骆涛（曲声）",
+   "author_kind": "human",
+   "role": "另一家语音识别（虚构）的销售，给备用方案报价",
+   "voice": {"style": "销售邮件：报价表、阶梯价、有效期；客气但不油", "length": "100–2500 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["mail-work"]
+  },
+  "shengtong-bill": {
+   "name": "声通云 账单",
+   "author_kind": "automation",
+   "role": "电话线路供应商（虚构）的月账单",
+   "voice": {"style": "账单通知", "length": "80–200 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["mail-work"]
+  },
+  "aliyun": {
+   "name": "阿里云",
+   "author_kind": "automation",
+   "role": "真实平台，只发账单与用量提醒",
+   "voice": {"style": "账单通知", "length": "80–200 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["mail-work"]
+  },
+  "github-billing": {
+   "name": "GitHub",
+   "author_kind": "automation",
+   "role": "真实平台，只发账单",
+   "voice": {"style": "英文账单通知", "length": "80–200 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["mail-work"]
+  },
+  "bot-alert": {
+   "name": "监控告警",
+   "author_kind": "bot",
+   "role": "飞书里的监控机器人：一个指标一张卡片",
+   "voice": {"style": "卡片：标题、指标、阈值、持续时间、链接", "length": "60–150 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["fs-alert"]
+  },
+  "bot-deploy": {
+   "name": "部署通知",
+   "author_kind": "bot",
+   "role": "飞书里的部署机器人",
+   "voice": {"style": "卡片：环境、版本、提交、操作人", "length": "60–150 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["fs-deploy"]
+  },
+  "bot-calendar": {
+   "name": "日历助手",
+   "author_kind": "bot",
+   "role": "飞书日历",
+   "voice": {"style": "日程邀请与提醒", "length": "30–100 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["fs-calendar"]
+  },
+  "bot-approval": {
+   "name": "审批",
+   "author_kind": "bot",
+   "role": "飞书审批",
+   "voice": {"style": "报销、采购审批", "length": "40–100 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["fs-approval"]
+  },
+  "bot-docs": {
+   "name": "云文档",
+   "author_kind": "bot",
+   "role": "飞书云文档的评论与提及",
+   "voice": {"style": "“某某在文档《…》中评论了你”加引文", "length": "40–200 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["fs-docs"]
+  },
+  "gha": {
+   "name": "github-actions[bot]",
+   "author_kind": "bot",
+   "role": "GitHub Actions：构建失败、发布",
+   "voice": {"style": "英文模板", "length": "60–300 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["gh-frontdesk", "gh-saydone"]
+  },
+  "dependabot": {
+   "name": "dependabot[bot]",
+   "author_kind": "bot",
+   "role": "依赖升级的改动",
+   "voice": {"style": "英文模板", "length": "150–600 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["gh-frontdesk", "gh-saydone"]
+  },
+  "codecov": {
+   "name": "codecov[bot]",
+   "author_kind": "bot",
+   "role": "覆盖率评论",
+   "voice": {"style": "英文模板", "length": "80–300 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["gh-frontdesk", "gh-saydone"]
+  },
+  "stalebot": {
+   "name": "stale[bot]",
+   "author_kind": "bot",
+   "role": "给久没动的 issue 打 stale",
+   "voice": {"style": "英文模板", "length": "100–200 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["gh-saydone"]
+  },
+  "precommit": {
+   "name": "pre-commit-ci[bot]",
+   "author_kind": "bot",
+   "role": "格式检查的自动修复",
+   "voice": {"style": "英文模板", "length": "40–120 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["gh-saydone"]
+  },
+  "pypi": {
+   "name": "PyPI",
+   "author_kind": "bot",
+   "role": "发布到 PyPI 的确认邮件",
+   "voice": {"style": "英文模板", "length": "100–300 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["mail-saydone"]
+  },
+  "mateo": {
+   "name": "Mateo Ruiz",
+   "author_kind": "human",
+   "role": "saydone 共同维护者，布宜诺斯艾利斯（UTC−3，北京时间晚上 8 点到凌晨 6 点是他的白天）",
+   "voice": {
+    "style": "随意的英文，小写开头，短句；偶尔一个西语词（dale、listo）；查问题时贴最小复现",
+    "length": "1–4 句；排查时一段加代码",
+    "punctuation": "少",
+    "emoji": "偶尔 👍 🙃"
+   },
+   "channels": ["gh-saydone", "mail-saydone", "dc-help", "dc-general"],
+   "aliases": {"github": "mateoruiz", "discord": "mateo.r", "mail-saydone": "Mateo Ruiz"}
+  },
+  "priya": {
+   "name": "Priya Nair",
+   "author_kind": "human",
+   "role": "贡献者，班加罗尔（北京时间减 2.5 小时）；流式接口的大改动在等评审",
+   "voice": {"style": "礼貌、规整的英文，会说明改了什么和测了什么；催评审只问一句", "length": "2–6 句", "punctuation": "规整", "emoji": "少"},
+   "channels": ["gh-saydone", "dc-help", "dc-general"],
+   "aliases": {"github": "priya-nair", "discord": "priya.n"}
+  },
+  "lucas": {
+   "name": "Lucas Almeida",
+   "author_kind": "human",
+   "role": "巴西用户，生产环境每天几千通葡语电话；报 rc2 截掉“sim”",
+   "voice": {
+    "style": "非母语英文：缺冠词、时态乱，偶尔葡语词（obrigado）；问题描述后贴很长的日志",
+    "length": "issue 带日志可超 2000 字；评论 1–3 句",
+    "punctuation": "随意",
+    "emoji": "偶尔 🙏"
+   },
+   "channels": ["gh-saydone"],
+   "aliases": {"github": "lucas-almeida"}
+  },
+  "dana": {
+   "name": "Dana Whitfield",
+   "author_kind": "human",
+   "role": "Harborline（呼叫中心软件公司）的工程负责人，来问付费支持",
+   "voice": {"style": "母语英文，商务但直接：规模、需求、问能不能通话", "length": "80–200 词", "punctuation": "规整", "emoji": "无"},
+   "channels": ["mail-saydone"]
+  },
+  "laofan": {
+   "name": "老范",
+   "author_kind": "human",
+   "role": "范志强，在一家大公司做语音，小聚的牵头人",
+   "voice": {"style": "热心、急，事多就连发；截图转述；“兄弟”“搞定”", "length": "5–60 字", "punctuation": "少，爱用“！”", "emoji": "[抱拳] [强] [呲牙]"},
+   "channels": ["wx-meetup", "wx-laofan", "wx-meetup-big"]
+  },
+  "yaojia": {
+   "name": "姚佳",
+   "author_kind": "human",
+   "role": "自由职业的活动策划，管海报、场地流程与报名",
+   "voice": {"style": "条理清楚，清单式；“我这边”", "length": "10–80 字", "punctuation": "规整", "emoji": "[OK] ✨"},
+   "channels": ["wx-meetup", "wx-meetup-big"]
+  },
+  "ajie": {
+   "name": "阿杰",
+   "author_kind": "human",
+   "role": "志愿者，大学生",
+   "voice": {"style": "“收到！”“我来！”", "length": "2–20 字", "punctuation": "感叹号", "emoji": "[呲牙]"},
+   "channels": ["wx-meetup"]
+  },
+  "xiaosun": {
+   "name": "小孙",
+   "author_kind": "human",
+   "role": "志愿者，刚工作",
+   "voice": {"style": "问细节，“几点到场？”", "length": "5–30 字", "punctuation": "问号", "emoji": "少"},
+   "channels": ["wx-meetup"]
+  },
+  "dujingli": {
+   "name": "杜经理（弦外空间）",
+   "author_kind": "human",
+   "role": "小聚场地的经理",
+   "voice": {"style": "生意人，客气，催定金；“老师”", "length": "10–40 字", "punctuation": "～", "emoji": "[玫瑰]"},
+   "channels": ["wx-venue"]
+  },
+  "panyue": {
+   "name": "潘越（声通云）",
+   "author_kind": "human",
+   "role": "声通云的商务，想赞助小聚换上台时间",
+   "voice": {"style": "热情的商务口吻，但具体：钱数与条件", "length": "20–80 字", "punctuation": "感叹号", "emoji": "[握手]"},
+   "channels": ["wx-sponsor"]
+  },
+  "qisiyuan": {
+   "name": "齐思远",
+   "author_kind": "human",
+   "role": "已确认的讲者，9/15 在参会者大群里说去不了（发错了群）",
+   "voice": {"style": "客气、抱歉", "length": "20–60 字", "punctuation": "规整", "emoji": "[抱拳]"},
+   "channels": ["wx-meetup-big"]
+  },
+  "signup-bot": {
+   "name": "活动报名",
+   "author_kind": "automation",
+   "role": "报名小程序的服务通知",
+   "voice": {"style": "模板", "length": "30–60 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["signup"]
+  },
+  "keman": {
+   "name": "柯蔓（湾区开发者大会）",
+   "author_kind": "human",
+   "role": "深圳一个开发者大会的讲师组，9/9 邀请他 11 月演讲",
+   "voice": {"style": "会务邮件：主题、时间、需要回复什么", "length": "200–500 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["mail-misc"]
+  },
+  "conf-sz": {
+   "name": "湾区开发者大会组委会",
+   "author_kind": "automation",
+   "role": "同一个大会的群发：温馨提醒、讲者名单",
+   "voice": {"style": "群发通知", "length": "200–600 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["mail-misc"]
+  },
+  "vc-qingya": {
+   "name": "柏然（青崖资本）",
+   "author_kind": "human",
+   "role": "一家投资机构的投资经理，冷邮件",
+   "voice": {"style": "“陆总您好，关注铃语很久了”，约聊", "length": "100–300 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["mail-misc"]
+  },
+  "vc-scout": {
+   "name": "Jordan Pike",
+   "author_kind": "human",
+   "role": "海外一家种子基金的 scout，英文冷邮件，看到了 saydone",
+   "voice": {"style": "母语英文，直接，问 20 分钟通话", "length": "50–120 词", "punctuation": "规整", "emoji": "无"},
+   "channels": ["mail-misc"]
+  },
+  "fa-yan": {
+   "name": "严博（FA）",
+   "author_kind": "human",
+   "role": "财务顾问，同一封邮件发了三次",
+   "voice": {"style": "长，带项目亮点清单与附件", "length": "300–2500 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["mail-misc"]
+  },
+  "hunter": {
+   "name": "Kelly｜猎头",
+   "author_kind": "human",
+   "role": "猎头，给他推大公司的语音负责人",
+   "voice": {"style": "“陆总方便聊聊吗”，微信加邮件", "length": "20–200 字", "punctuation": "～", "emoji": "[玫瑰]"},
+   "channels": ["mail-misc", "wx-hunter"]
+  },
+  "recruit-app": {
+   "name": "招聘 App",
+   "author_kind": "automation",
+   "role": "招聘平台的候选人推荐",
+   "voice": {"style": "模板", "length": "40–100 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["app-recruit"]
+  },
+  "sales-expense": {
+   "name": "费控宝 · 小汪",
+   "author_kind": "human",
+   "role": "报销软件的销售",
+   "voice": {"style": "推销", "length": "80–300 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["mail-misc"]
+  },
+  "sales-outsource": {
+   "name": "龚经理（码力外包）",
+   "author_kind": "human",
+   "role": "外包团队的销售",
+   "voice": {"style": "推销", "length": "80–300 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["mail-misc"]
+  },
+  "sales-idc": {
+   "name": "数港 IDC · 方女士",
+   "author_kind": "human",
+   "role": "机房的销售",
+   "voice": {"style": "推销", "length": "80–300 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["mail-misc"]
+  },
+  "peer-bd": {
+   "name": "语鹿科技 BD",
+   "author_kind": "human",
+   "role": "同行，谈“合作”（其实想挖客户）",
+   "voice": {"style": "推销", "length": "80–300 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["mail-misc"]
+  },
+  "hanmin": {
+   "name": "韩敏",
+   "author_kind": "human",
+   "role": "妻子，外企市场部；9/16–9/18 在上海培训，9/18 晚回",
+   "voice": {
+    "style": "短句连发，一条塞两三件事；截学校通知的图；没回音就发“??”",
+    "length": "2–40 字，连发 2–4 条",
+    "punctuation": "几乎不用句号，用空格",
+    "emoji": "偶尔 [捂脸] [白眼]"
+   },
+   "channels": ["wx-hanmin", "wx-family", "wx-class", "wx-kinder", "wx-swim"],
+   "aliases": {"wx-class": "可可妈妈", "wx-kinder": "豆豆妈妈", "wx-swim": "豆豆妈妈"}
+  },
+  "keke": {
+   "name": "可可",
+   "author_kind": "human",
+   "role": "女儿，9 岁，三年级；用电话手表发语音（转成文字）和表情",
+   "voice": {"style": "“爸爸爸爸”开头，童言，转文字有错字", "length": "3–30 字", "punctuation": "无", "emoji": "[开心] [哭] [爱心]"},
+   "channels": ["watch-keke"]
+  },
+  "dad": {
+   "name": "爸",
+   "author_kind": "human",
+   "role": "父亲，66 岁，住拱墅；9/16 下午到 9/18 晚和妈住在儿子家帮忙",
+   "voice": {"style": "话少，“好”“到了”，打电话比打字多，发照片", "length": "1–10 字", "punctuation": "无", "emoji": "无"},
+   "channels": ["wx-family", "wx-dad"]
+  },
+  "mom": {
+   "name": "妈",
+   "author_kind": "human",
+   "role": "母亲，63 岁；早上六点多转发养生文章，偶尔砍一刀，爱发长语音",
+   "voice": {"style": "长语音转文字，絮叨；转发文章", "length": "语音 30–150 字", "punctuation": "转文字的逗号", "emoji": "[玫瑰] [太阳]"},
+   "channels": ["wx-family", "wx-mom"]
+  },
+  "teacher-wang": {
+   "name": "王老师",
+   "author_kind": "human",
+   "role": "可可的班主任",
+   "voice": {"style": "规范的通知，结尾“收到请回复”", "length": "30–300 字", "punctuation": "规范", "emoji": "少"},
+   "channels": ["wx-class"]
+  },
+  "teacher-qian": {
+   "name": "钱老师（数学）",
+   "author_kind": "human",
+   "role": "可可班的数学老师",
+   "voice": {"style": "作业通知", "length": "20–100 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["wx-class"]
+  },
+  "jwh-zihan": {
+   "name": "子涵妈妈（家委会）",
+   "author_kind": "human",
+   "role": "家委会成员，9/9 提议凑钱给老师买花",
+   "voice": {"style": "热心，接龙发起人", "length": "20–80 字", "punctuation": "～", "emoji": "[玫瑰] [爱心]"},
+   "channels": ["wx-class"]
+  },
+  "school": {
+   "name": "江畔小学",
+   "author_kind": "automation",
+   "role": "家校通知 App 的学校通知",
+   "voice": {"style": "通知", "length": "50–400 字", "punctuation": "规范", "emoji": "无"},
+   "channels": ["school"]
+  },
+  "teacher-dai": {
+   "name": "戴老师（大二班）",
+   "author_kind": "human",
+   "role": "豆豆的幼儿园班主任",
+   "voice": {"style": "温和，发照片与通知", "length": "10–100 字", "punctuation": "～", "emoji": "[爱心] [太阳]"},
+   "channels": ["wx-kinder"]
+  },
+  "cici": {
+   "name": "课程顾问 Cici",
+   "author_kind": "human",
+   "role": "可可英语课的课程顾问",
+   "voice": {"style": "波浪号和玫瑰，一周问三次续费", "length": "20–80 字", "punctuation": "～～", "emoji": "[玫瑰] [爱心]"},
+   "channels": ["wx-cici"]
+  },
+  "coach-li": {
+   "name": "李教练",
+   "author_kind": "human",
+   "role": "豆豆的游泳教练",
+   "voice": {"style": "简短，点名", "length": "5–30 字", "punctuation": "少", "emoji": "无"},
+   "channels": ["wx-swim"]
+  },
+  "pet-desk": {
+   "name": "禾木宠物医院-前台小谢",
+   "author_kind": "human",
+   "role": "宠物医院前台（微信）",
+   "voice": {"style": "客气，发用法图片", "length": "10–50 字", "punctuation": "～", "emoji": "[爱心]"},
+   "channels": ["wx-pet"]
+  },
+  "pet-sms": {
+   "name": "禾木宠物医院",
+   "author_kind": "automation",
+   "role": "宠物医院短信（虚构）",
+   "voice": {"style": "模板", "length": "40–120 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sms-pet"]
+  },
+  "clinic": {
+   "name": "江涛社区卫生服务中心",
+   "author_kind": "automation",
+   "role": "社区医院（虚构）的挂号与缴费短信",
+   "voice": {"style": "模板", "length": "40–100 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sms-health"]
+  },
+  "checkup": {
+   "name": "康途体检",
+   "author_kind": "automation",
+   "role": "体检中心（虚构）",
+   "voice": {"style": "模板", "length": "40–100 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sms-health"]
+  },
+  "property": {
+   "name": "江景湾物业",
+   "author_kind": "automation",
+   "role": "物业短信",
+   "voice": {"style": "模板", "length": "40–150 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sms-property"]
+  },
+  "steward": {
+   "name": "物业管家 小钱",
+   "author_kind": "human",
+   "role": "业主群里的物业管家",
+   "voice": {"style": "公告与回复，“各位业主”", "length": "20–200 字", "punctuation": "规范", "emoji": "[抱拳]"},
+   "channels": ["wx-owners"]
+  },
+  "express-station": {
+   "name": "小区驿站",
+   "author_kind": "automation",
+   "role": "快递驿站短信",
+   "voice": {"style": "模板", "length": "40–80 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sms-express"]
+  },
+  "courier": {
+   "name": "顺路快递",
+   "author_kind": "automation",
+   "role": "快递公司（虚构）短信",
+   "voice": {"style": "模板", "length": "40–80 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sms-express"]
+  },
+  "bank": {
+   "name": "云杉银行",
+   "author_kind": "automation",
+   "role": "银行（虚构）动账与账单短信",
+   "voice": {"style": "模板", "length": "40–100 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sms-bank"]
+  },
+  "shop-app": {
+   "name": "万象购",
+   "author_kind": "automation",
+   "role": "购物 App（虚构）的订单",
+   "voice": {"style": "模板", "length": "20–60 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["app-shop", "push-shop"]
+  },
+  "food-app": {
+   "name": "饭点外卖",
+   "author_kind": "automation",
+   "role": "外卖 App（虚构）",
+   "voice": {"style": "模板", "length": "20–60 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["app-food", "push-food"]
+  },
+  "grocery-app": {
+   "name": "鲜到家",
+   "author_kind": "automation",
+   "role": "买菜 App（虚构）",
+   "voice": {"style": "模板", "length": "20–60 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["app-grocery"]
+  },
+  "video-app": {
+   "name": "青柚视频",
+   "author_kind": "automation",
+   "role": "视频会员 App（虚构）",
+   "voice": {"style": "推送", "length": "10–40 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["push-video"]
+  },
+  "ride-app": {
+   "name": "随行出行",
+   "author_kind": "automation",
+   "role": "打车 App（虚构）",
+   "voice": {"style": "推送", "length": "10–40 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["push-ride"]
+  },
+  "ctrip": {
+   "name": "携程旅行",
+   "author_kind": "automation",
+   "role": "真实平台，只发订单与航变的例行通知",
+   "voice": {"style": "模板", "length": "60–150 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["ctrip"]
+  },
+  "hotel": {
+   "name": "望潮酒店（青岛）",
+   "author_kind": "human",
+   "role": "青岛海边的酒店（虚构），通过携程的酒店消息联系",
+   "voice": {"style": "客气的客服，“您好～”", "length": "20–80 字", "punctuation": "～", "emoji": "无"},
+   "channels": ["ctrip-hotel"]
+  },
+  "sms-code": {
+   "name": "1069 短信服务",
+   "author_kind": "automation",
+   "role": "各家的验证码短信",
+   "voice": {"style": "模板", "length": "30–60 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sms-misc"]
+  },
+  "sms-spam": {
+   "name": "+86 171 3826 0094",
+   "author_kind": "automation",
+   "role": "陌生号码：骚扰与诈骗短信（不能和真的快递并在一起）",
+   "voice": {"style": "骚扰与诈骗", "length": "40–100 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sms-misc"]
+  },
+  "caller-spam": {
+   "name": "0571 8829 3316",
+   "author_kind": "human",
+   "role": "陌生号码：推销电话",
+   "voice": {"style": "只有未接来电与通话记录", "length": "—", "punctuation": "—", "emoji": "—"},
+   "channels": ["phone"]
+  },
+  "caller-spam2": {
+   "name": "021 6157 4420",
+   "author_kind": "human",
+   "role": "陌生号码：贷款推销电话",
+   "voice": {"style": "只有未接来电", "length": "—", "punctuation": "—", "emoji": "—"},
+   "channels": ["phone"]
+  },
+  "nl-turn": {
+   "name": "Turn-Taking Digest",
+   "author_kind": "automation",
+   "role": "英文 newsletter：对话式语音的论文与开源项目，周二、周五",
+   "voice": {"style": "订阅的长文或更新摘要；每期 2000 字以上的约占一半", "length": "800–4000 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sub-newsletter"]
+  },
+  "nl-llmops": {
+   "name": "Applied LLM Notes",
+   "author_kind": "automation",
+   "role": "英文 newsletter：大模型工程实践，周三",
+   "voice": {"style": "订阅的长文或更新摘要；每期 2000 字以上的约占一半", "length": "800–4000 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sub-newsletter"]
+  },
+  "nl-speech": {
+   "name": "Speech Stack Weekly",
+   "author_kind": "automation",
+   "role": "英文 newsletter：语音技术栈与供应商动态，周一",
+   "voice": {"style": "订阅的长文或更新摘要；每期 2000 字以上的约占一半", "length": "800–4000 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sub-newsletter"]
+  },
+  "nl-maint": {
+   "name": "Maintainer Mail",
+   "author_kind": "automation",
+   "role": "英文 newsletter：开源维护者的经验，隔周周四",
+   "voice": {"style": "订阅的长文或更新摘要；每期 2000 字以上的约占一半", "length": "800–4000 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sub-newsletter"]
+  },
+  "mp-voice": {
+   "name": "语音智能观察",
+   "author_kind": "automation",
+   "role": "公众号：语音行业长文",
+   "voice": {"style": "订阅的长文或更新摘要；每期 2000 字以上的约占一半", "length": "800–4000 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sub-wxmp"]
+  },
+  "mp-aipm": {
+   "name": "AI 产品手记",
+   "author_kind": "automation",
+   "role": "公众号：AI 产品的案例",
+   "voice": {"style": "订阅的长文或更新摘要；每期 2000 字以上的约占一半", "length": "800–4000 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sub-wxmp"]
+  },
+  "mp-hzvc": {
+   "name": "杭州创投日报",
+   "author_kind": "automation",
+   "role": "公众号：本地融资与政策",
+   "voice": {"style": "订阅的长文或更新摘要；每期 2000 字以上的约占一半", "length": "800–4000 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sub-wxmp"]
+  },
+  "mp-llmeng": {
+   "name": "大模型工程实践",
+   "author_kind": "automation",
+   "role": "公众号：工程长文",
+   "voice": {"style": "订阅的长文或更新摘要；每期 2000 字以上的约占一半", "length": "800–4000 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sub-wxmp"]
+  },
+  "mp-night": {
+   "name": "工程师夜读",
+   "author_kind": "automation",
+   "role": "公众号：杂文",
+   "voice": {"style": "订阅的长文或更新摘要；每期 2000 字以上的约占一半", "length": "800–4000 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sub-wxmp"]
+  },
+  "tool-term": {
+   "name": "Termbox 更新日志",
+   "author_kind": "automation",
+   "role": "工具更新邮件（虚构的终端工具）",
+   "voice": {"style": "订阅的长文或更新摘要；每期 2000 字以上的约占一半", "length": "800–4000 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sub-tools"]
+  },
+  "tool-notelab": {
+   "name": "Notelab 产品更新",
+   "author_kind": "automation",
+   "role": "工具更新邮件（虚构的笔记工具）",
+   "voice": {"style": "订阅的长文或更新摘要；每期 2000 字以上的约占一半", "length": "800–4000 字", "punctuation": "—", "emoji": "—"},
+   "channels": ["sub-tools"]
+  },
+  "class-01": {
+   "name": "子涵妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-02": {
+   "name": "一诺妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-03": {
+   "name": "梓萱爸爸",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-04": {
+   "name": "浩宇妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-05": {
+   "name": "3-2 王欣怡爸爸",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-06": {
+   "name": "宇轩妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-07": {
+   "name": "诗涵妈妈🌸",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-08": {
+   "name": "沐阳爸爸",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-09": {
+   "name": "3-2 张若曦妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-10": {
+   "name": "俊熙妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-11": {
+   "name": "语桐爸爸",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-12": {
+   "name": "3-2 刘嘉懿妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-13": {
+   "name": "梓睿妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-14": {
+   "name": "雨桐妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-15": {
+   "name": "皓轩爸",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-16": {
+   "name": "3-2 黄安琪妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-17": {
+   "name": "天佑妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-18": {
+   "name": "芊芊爸爸",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-19": {
+   "name": "博文妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-20": {
+   "name": "3-2 徐铭泽爸爸",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-21": {
+   "name": "依依妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-22": {
+   "name": "子墨妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-23": {
+   "name": "梓轩爸爸",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-24": {
+   "name": "佳怡奶奶",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-25": {
+   "name": "承泽妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-26": {
+   "name": "3-2 马心悦妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-27": {
+   "name": "奕辰妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-28": {
+   "name": "雅琪爸爸",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-29": {
+   "name": "煜祺妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-30": {
+   "name": "乐瑶妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-31": {
+   "name": "景行外婆",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-32": {
+   "name": "书瑶妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-33": {
+   "name": "锦程爸爸",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-34": {
+   "name": "欣妍妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-35": {
+   "name": "泽宇妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-36": {
+   "name": "静怡爸爸",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-37": {
+   "name": "一航妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-38": {
+   "name": "朵朵妈妈",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-39": {
+   "name": "Sunny（欣妍妈妈）",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-40": {
+   "name": "静待花开",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-41": {
+   "name": "老李（泽宇爸）",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "class-42": {
+   "name": "Amy",
+   "author_kind": "human",
+   "role": "成员池 class",
+   "pool": "class",
+   "channels": ["wx-class"]
+  },
+  "kinder-01": {
+   "name": "小米爸爸",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-02": {
+   "name": "果果妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-03": {
+   "name": "糖糖妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-04": {
+   "name": "乐乐爸爸",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-05": {
+   "name": "安安妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-06": {
+   "name": "一一妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-07": {
+   "name": "多多爸爸",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-08": {
+   "name": "皮皮妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-09": {
+   "name": "桐桐妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-10": {
+   "name": "七七爸爸",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-11": {
+   "name": "甜甜妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-12": {
+   "name": "球球妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-13": {
+   "name": "布丁爸爸",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-14": {
+   "name": "元宝妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-15": {
+   "name": "橙子妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-16": {
+   "name": "小满爸爸",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-17": {
+   "name": "团团妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-18": {
+   "name": "圆圆妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-19": {
+   "name": "嘟嘟爸爸",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-20": {
+   "name": "牛牛妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-21": {
+   "name": "毛毛妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-22": {
+   "name": "悠悠爸爸",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-23": {
+   "name": "笑笑妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-24": {
+   "name": "贝贝妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-25": {
+   "name": "天天爸爸",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-26": {
+   "name": "跳跳妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-27": {
+   "name": "芒果妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-28": {
+   "name": "木木爸爸",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-29": {
+   "name": "大二班 叶子妈妈",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "kinder-30": {
+   "name": "向阳而生",
+   "author_kind": "human",
+   "role": "成员池 kinder",
+   "pool": "kinder",
+   "channels": ["wx-kinder"]
+  },
+  "swim-01": {
+   "name": "航航妈妈",
+   "author_kind": "human",
+   "role": "成员池 swim",
+   "pool": "swim",
+   "channels": ["wx-swim"]
+  },
+  "swim-02": {
+   "name": "睿睿爸爸",
+   "author_kind": "human",
+   "role": "成员池 swim",
+   "pool": "swim",
+   "channels": ["wx-swim"]
+  },
+  "swim-03": {
+   "name": "妞妞妈",
+   "author_kind": "human",
+   "role": "成员池 swim",
+   "pool": "swim",
+   "channels": ["wx-swim"]
+  },
+  "swim-04": {
+   "name": "小宝妈妈",
+   "author_kind": "human",
+   "role": "成员池 swim",
+   "pool": "swim",
+   "channels": ["wx-swim"]
+  },
+  "swim-05": {
+   "name": "阳阳妈妈",
+   "author_kind": "human",
+   "role": "成员池 swim",
+   "pool": "swim",
+   "channels": ["wx-swim"]
+  },
+  "swim-06": {
+   "name": "可乐爸爸",
+   "author_kind": "human",
+   "role": "成员池 swim",
+   "pool": "swim",
+   "channels": ["wx-swim"]
+  },
+  "swim-07": {
+   "name": "璐璐妈妈",
+   "author_kind": "human",
+   "role": "成员池 swim",
+   "pool": "swim",
+   "channels": ["wx-swim"]
+  },
+  "swim-08": {
+   "name": "凯凯妈妈",
+   "author_kind": "human",
+   "role": "成员池 swim",
+   "pool": "swim",
+   "channels": ["wx-swim"]
+  },
+  "swim-09": {
+   "name": "西西妈妈",
+   "author_kind": "human",
+   "role": "成员池 swim",
+   "pool": "swim",
+   "channels": ["wx-swim"]
+  },
+  "swim-10": {
+   "name": "Coco妈妈",
+   "author_kind": "human",
+   "role": "成员池 swim",
+   "pool": "swim",
+   "channels": ["wx-swim"]
+  },
+  "owners-01": {
+   "name": "6幢-1802 刘",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-02": {
+   "name": "3幢-602 王姐",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-03": {
+   "name": "老马（7幢）",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-04": {
+   "name": "Vivian 5-1101",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-05": {
+   "name": "开心就好",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-06": {
+   "name": "2-1503 胡先生",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-07": {
+   "name": "8幢 宁宁妈",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-08": {
+   "name": "11-702 郭",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-09": {
+   "name": "大鹏",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-10": {
+   "name": "阿琴 9幢",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-11": {
+   "name": "1幢-2301",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-12": {
+   "name": "静水流深",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-13": {
+   "name": "10-1204 何姐",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-14": {
+   "name": "楼下的猫",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-15": {
+   "name": "4-801 朱",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-16": {
+   "name": "Mike 6幢",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-17": {
+   "name": "12幢-603 邱阿姨",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-18": {
+   "name": "风轻云淡",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-19": {
+   "name": "5-302 程",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-20": {
+   "name": "金哥",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-21": {
+   "name": "9-1401 戚女士",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-22": {
+   "name": "老温",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-23": {
+   "name": "7-2002",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-24": {
+   "name": "桂花香",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-25": {
+   "name": "3-1101 彤彤爸",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-26": {
+   "name": "江景湾-阿亮",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-27": {
+   "name": "2幢 梁先生",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-28": {
+   "name": "小葱拌豆腐",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-29": {
+   "name": "8-901 方姐",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "owners-30": {
+   "name": "向日葵",
+   "author_kind": "human",
+   "role": "成员池 owners",
+   "pool": "owners",
+   "channels": ["wx-owners"]
+  },
+  "hzai-01": {
+   "name": "杭州-AI客服-张伟",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-02": {
+   "name": "Kevin｜Agent方向",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-03": {
+   "name": "老K-投资",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-04": {
+   "name": "阿飞",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-05": {
+   "name": "杭州-出海SaaS-刘洋",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-06": {
+   "name": "大鹏🦅",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-07": {
+   "name": "云上的猫",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-08": {
+   "name": "产品-小黄",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-09": {
+   "name": "独立开发 阿城",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-10": {
+   "name": "Leo-跨境",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-11": {
+   "name": "杭州-数字人-马骁",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-12": {
+   "name": "胡老师（某高校）",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-13": {
+   "name": "Echo｜AI教育",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-14": {
+   "name": "猫叔",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-15": {
+   "name": "杭州-法律科技-郭一",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-16": {
+   "name": "老温-做硬件的",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-17": {
+   "name": "Tony 机器人",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-18": {
+   "name": "小鹿-HR",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-19": {
+   "name": "Vincent",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-20": {
+   "name": "FA-小葛",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-21": {
+   "name": "杭州-ToB销售-倪",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-22": {
+   "name": "滨江-视觉-阿坤",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-23": {
+   "name": "Grace 产品经理",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-24": {
+   "name": "老鲍",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-25": {
+   "name": "AI+医疗-于博",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-26": {
+   "name": "Jason（杭州）",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-27": {
+   "name": "做客服的小崔",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-28": {
+   "name": "柒柒",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-29": {
+   "name": "西湖区-智能硬件-汪",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "hzai-30": {
+   "name": "Ray",
+   "author_kind": "human",
+   "role": "成员池 hzai",
+   "pool": "hzai",
+   "channels": ["wx-hzai"]
+  },
+  "llmdev-01": {
+   "name": "RAG 老王",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-02": {
+   "name": "深圳-语音-阿Ken",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-03": {
+   "name": "北京-大模型-Jason",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-04": {
+   "name": "上海-Agent-李梦",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-05": {
+   "name": "成都-独立开发-小熊",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-06": {
+   "name": "做Bot的阿强",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-07": {
+   "name": "Ethan",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-08": {
+   "name": "算法-小葵",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-09": {
+   "name": "全栈-大白",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-10": {
+   "name": "广州-外呼-彭工",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-11": {
+   "name": "向量库-老包",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-12": {
+   "name": "NLP-阿秀",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-13": {
+   "name": "杭州-推理优化-严",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-14": {
+   "name": "Claire",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-15": {
+   "name": "苏州-质检-阿伟",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-16": {
+   "name": "Mr.丁",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-17": {
+   "name": "西安-教育AI-康",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-18": {
+   "name": "Bruce",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-19": {
+   "name": "AI 测试-小冉",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-20": {
+   "name": "多模态-老蒋",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-21": {
+   "name": "Ivy",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-22": {
+   "name": "南京-客服SaaS-华",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-23": {
+   "name": "提示词工程师 Momo",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-24": {
+   "name": "武汉-语音合成-童",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-25": {
+   "name": "Alex",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-26": {
+   "name": "天津-数据-阿鹏",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-27": {
+   "name": "做外呼的老蔡",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-28": {
+   "name": "Nora",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-29": {
+   "name": "厦门-跨境-阿杰哥",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "llmdev-30": {
+   "name": "老聂",
+   "author_kind": "human",
+   "role": "成员池 llmdev",
+   "pool": "llmdev",
+   "channels": ["wx-llmdev"]
+  },
+  "meetup-01": {
+   "name": "网易-语音-陶然",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-02": {
+   "name": "独立开发者-Neo",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-03": {
+   "name": "浙大-研二-沈之",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-04": {
+   "name": "海康-石磊",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-05": {
+   "name": "Mia-产品",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-06": {
+   "name": "某银行科技部-老俞",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-07": {
+   "name": "阿里-算法-小羽",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-08": {
+   "name": "第5期讲者-邬",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-09": {
+   "name": "Yuki",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-10": {
+   "name": "滴滴-ASR-卢",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-11": {
+   "name": "创业中-阿毛",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-12": {
+   "name": "设计师 Coco",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-13": {
+   "name": "大学生-小陶",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-14": {
+   "name": "华三-测试-叶",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-15": {
+   "name": "Allen-出海",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-16": {
+   "name": "蚂蚁-风控-阮",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-17": {
+   "name": "钉钉-Agent-欧阳",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-18": {
+   "name": "Peter",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-19": {
+   "name": "某车企-语音-岑",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-20": {
+   "name": "学生-阿哲",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-21": {
+   "name": "医疗AI-芮医生",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-22": {
+   "name": "杭电-研一-甘",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-23": {
+   "name": "做硬件的老包",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-24": {
+   "name": "Sophie",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-25": {
+   "name": "旷野-运营",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-26": {
+   "name": "智能客服-匡",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-27": {
+   "name": "Lily-HR",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-28": {
+   "name": "游戏-配音-阿亮",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-29": {
+   "name": "Daniel",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-30": {
+   "name": "电商-小钟",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-31": {
+   "name": "Zoe",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-32": {
+   "name": "运营商-网优-乐",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-33": {
+   "name": "AI 律师-詹",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-34": {
+   "name": "老顾",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-35": {
+   "name": "Vicky 投资",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-36": {
+   "name": "教育-阿鸣",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-37": {
+   "name": "自由职业-七月",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-38": {
+   "name": "小米-语音-贺",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-39": {
+   "name": "Tom 自动驾驶",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "meetup-40": {
+   "name": "车载-小雷",
+   "author_kind": "human",
+   "role": "成员池 meetup",
+   "pool": "meetup",
+   "channels": ["wx-meetup-big"]
+  },
+  "discord-01": {
+   "name": "rafa_dev",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-02": {
+   "name": "kenji.t",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-03": {
+   "name": "obi",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-04": {
+   "name": "ttsnerd",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-05": {
+   "name": "mwangi_k",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-06": {
+   "name": "anapaula.dev",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-07": {
+   "name": "ghost_in_the_vad",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-08": {
+   "name": "devon_h",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-09": {
+   "name": "sasha.k",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-10": {
+   "name": "tomasz",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-11": {
+   "name": "nikhil_v",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-12": {
+   "name": "jules",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-13": {
+   "name": "carmen.r",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-14": {
+   "name": "huxley",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-15": {
+   "name": "pierre_l",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-16": {
+   "name": "dimas",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-17": {
+   "name": "yuki_s",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-18": {
+   "name": "akin",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-19": {
+   "name": "farah.m",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-20": {
+   "name": "zeke",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-21": {
+   "name": "matias.g",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-22": {
+   "name": "chloe_dev",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-23": {
+   "name": "bruno.s",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-24": {
+   "name": "ravi_k",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "discord-25": {
+   "name": "wren",
+   "author_kind": "human",
+   "role": "成员池 discord",
+   "pool": "discord",
+   "channels": ["dc-help", "dc-general"]
+  },
+  "github-01": {
+   "name": "jkowalski",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-02": {
+   "name": "dmitri-v",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-03": {
+   "name": "sanjay-r",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-04": {
+   "name": "tlee-voice",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-05": {
+   "name": "orb1t",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-06": {
+   "name": "heyitsmarco",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-07": {
+   "name": "paulo-ferreira",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-08": {
+   "name": "aiko-n",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-09": {
+   "name": "bgonzalez",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-10": {
+   "name": "mtran",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-11": {
+   "name": "fcosta",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-12": {
+   "name": "voicebot-ops",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-13": {
+   "name": "kwame-a",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-14": {
+   "name": "ines-b",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-15": {
+   "name": "rgupta-dev",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-16": {
+   "name": "hpark",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-17": {
+   "name": "ollie-w",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-18": {
+   "name": "andres-m",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-19": {
+   "name": "s-mukherjee",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-20": {
+   "name": "cjohnson",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-21": {
+   "name": "vnguyen",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-22": {
+   "name": "eitan-k",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-23": {
+   "name": "marta-l",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-24": {
+   "name": "deepak-s",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-25": {
+   "name": "gabe-r",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-26": {
+   "name": "tomas-h",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-27": {
+   "name": "keisuke-m",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-28": {
+   "name": "abdul-r",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-29": {
+   "name": "petra-v",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-30": {
+   "name": "jmiller",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-31": {
+   "name": "ruben-d",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-32": {
+   "name": "sofia-c",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-33": {
+   "name": "callflow-bot-dev",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-34": {
+   "name": "nzimmer",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "github-35": {
+   "name": "lpereira",
+   "author_kind": "human",
+   "role": "成员池 github",
+   "pool": "github",
+   "channels": ["gh-saydone"]
+  },
+  "x-01": {
+   "name": "@voicebotdaily",
+   "author_kind": "human",
+   "role": "成员池 x",
+   "pool": "x",
+   "channels": ["x-mentions"]
+  },
+  "x-02": {
+   "name": "@ana_builds",
+   "author_kind": "human",
+   "role": "成员池 x",
+   "pool": "x",
+   "channels": ["x-mentions"]
+  },
+  "x-03": {
+   "name": "@kenji_codes",
+   "author_kind": "human",
+   "role": "成员池 x",
+   "pool": "x",
+   "channels": ["x-mentions"]
+  },
+  "x-04": {
+   "name": "@ptbr_dev",
+   "author_kind": "human",
+   "role": "成员池 x",
+   "pool": "x",
+   "channels": ["x-mentions"]
+  },
+  "x-05": {
+   "name": "@callcenter_ai",
+   "author_kind": "human",
+   "role": "成员池 x",
+   "pool": "x",
+   "channels": ["x-mentions"]
+  },
+  "x-06": {
+   "name": "@ml_marisol",
+   "author_kind": "human",
+   "role": "成员池 x",
+   "pool": "x",
+   "channels": ["x-mentions"]
+  },
+  "x-07": {
+   "name": "@thefounderlog",
+   "author_kind": "human",
+   "role": "成员池 x",
+   "pool": "x",
+   "channels": ["x-mentions"]
+  },
+  "x-08": {
+   "name": "@dev_rahul",
+   "author_kind": "human",
+   "role": "成员池 x",
+   "pool": "x",
+   "channels": ["x-mentions"]
+  },
+  "x-09": {
+   "name": "@sil_ent",
+   "author_kind": "human",
+   "role": "成员池 x",
+   "pool": "x",
+   "channels": ["x-mentions"]
+  },
+  "x-10": {
+   "name": "@turnsignal_fm",
+   "author_kind": "human",
+   "role": "成员池 x",
+   "pool": "x",
+   "channels": ["x-mentions"]
+  },
+  "x-11": {
+   "name": "@opensource_br",
+   "author_kind": "human",
+   "role": "成员池 x",
+   "pool": "x",
+   "channels": ["x-mentions"]
+  },
+  "x-12": {
+   "name": "@carlos_vox",
+   "author_kind": "human",
+   "role": "成员池 x",
+   "pool": "x",
+   "channels": ["x-mentions"]
+  }
+ },
+ "pools": {
+  "class": {
+   "description": "三(2)班家长，约 40 位（另有王老师、钱老师、家委会的子涵妈妈）",
+   "channels": ["wx-class"],
+   "voice": {
+    "style": "老师要求群昵称写“孩子名+爸爸/妈妈”，少数人没改；接龙、“收到”、问作业、节日问候；很少聊别的",
+    "length": "2–30 字",
+    "punctuation": "无或～",
+    "emoji": "[玫瑰] [爱心] [强] [抱拳]"
+   },
+   "members": ["class-01", "class-02", "class-03", "class-04", "class-05", "class-06", "class-07", "class-08", "class-09", "class-10", "class-11", "class-12", "class-13", "class-14", "class-15", "class-16", "class-17", "class-18", "class-19", "class-20", "class-21", "class-22", "class-23", "class-24", "class-25", "class-26", "class-27", "class-28", "class-29", "class-30", "class-31", "class-32", "class-33", "class-34", "class-35", "class-36", "class-37", "class-38", "class-39", "class-40", "class-41", "class-42"]
+  },
+  "kinder": {
+   "description": "大二班家长，约 30 位（另有戴老师）",
+   "channels": ["wx-kinder"],
+   "voice": {"style": "看老师发的照片，回“收到”“谢谢老师”“宝贝们好可爱”", "length": "2–20 字", "punctuation": "～", "emoji": "[爱心] [玫瑰] [太阳]"},
+   "members": ["kinder-01", "kinder-02", "kinder-03", "kinder-04", "kinder-05", "kinder-06", "kinder-07", "kinder-08", "kinder-09", "kinder-10", "kinder-11", "kinder-12", "kinder-13", "kinder-14", "kinder-15", "kinder-16", "kinder-17", "kinder-18", "kinder-19", "kinder-20", "kinder-21", "kinder-22", "kinder-23", "kinder-24", "kinder-25", "kinder-26", "kinder-27", "kinder-28", "kinder-29", "kinder-30"]
+  },
+  "swim": {
+   "description": "游泳课家长，约 10 位（另有李教练）",
+   "channels": ["wx-swim"],
+   "voice": {"style": "“收到”“今天请假”“几号泳道”", "length": "2–20 字", "punctuation": "少", "emoji": "少"},
+   "members": ["swim-01", "swim-02", "swim-03", "swim-04", "swim-05", "swim-06", "swim-07", "swim-08", "swim-09", "swim-10"]
+  },
+  "owners": {
+   "description": "江景湾 2 期业主，约 30 位（另有物业管家小钱）",
+   "channels": ["wx-owners"],
+   "voice": {
+    "style": "团购、找东西、投诉停车和装修噪音，偶尔吵起来；转发物业公告；拍照",
+    "length": "5–80 字",
+    "punctuation": "随意，感叹号",
+    "emoji": "[发怒] [强] [抱拳]"
+   },
+   "members": ["owners-01", "owners-02", "owners-03", "owners-04", "owners-05", "owners-06", "owners-07", "owners-08", "owners-09", "owners-10", "owners-11", "owners-12", "owners-13", "owners-14", "owners-15", "owners-16", "owners-17", "owners-18", "owners-19", "owners-20", "owners-21", "owners-22", "owners-23", "owners-24", "owners-25", "owners-26", "owners-27", "owners-28", "owners-29", "owners-30"]
+  },
+  "hzai": {
+   "description": "杭州AI创业交流群里的陌生同行，约 30 位",
+   "channels": ["wx-hzai"],
+   "voice": {
+    "style": "转发融资新闻和活动、招人、求介绍、偶尔吵模型哪家强；群规要求“城市-方向-名字”",
+    "length": "10–100 字，转发更长",
+    "punctuation": "随意",
+    "emoji": "[强] [呲牙] [旺柴]"
+   },
+   "members": ["hzai-01", "hzai-02", "hzai-03", "hzai-04", "hzai-05", "hzai-06", "hzai-07", "hzai-08", "hzai-09", "hzai-10", "hzai-11", "hzai-12", "hzai-13", "hzai-14", "hzai-15", "hzai-16", "hzai-17", "hzai-18", "hzai-19", "hzai-20", "hzai-21", "hzai-22", "hzai-23", "hzai-24", "hzai-25", "hzai-26", "hzai-27", "hzai-28", "hzai-29", "hzai-30"]
+  },
+  "llmdev": {
+   "description": "大模型应用开发群里的陌生同行，约 30 位",
+   "channels": ["wx-llmdev"],
+   "voice": {"style": "提问没人答、吐槽供应商、贴报错截图、问“有人遇到过吗”", "length": "10–80 字", "punctuation": "随意", "emoji": "[捂脸] [裂开]"},
+   "members": ["llmdev-01", "llmdev-02", "llmdev-03", "llmdev-04", "llmdev-05", "llmdev-06", "llmdev-07", "llmdev-08", "llmdev-09", "llmdev-10", "llmdev-11", "llmdev-12", "llmdev-13", "llmdev-14", "llmdev-15", "llmdev-16", "llmdev-17", "llmdev-18", "llmdev-19", "llmdev-20", "llmdev-21", "llmdev-22", "llmdev-23", "llmdev-24", "llmdev-25", "llmdev-26", "llmdev-27", "llmdev-28", "llmdev-29", "llmdev-30"]
+  },
+  "meetup": {
+   "description": "语音AI小聚③群的参会者，约 300 人里常说话的 40 位",
+   "channels": ["wx-meetup-big"],
+   "voice": {
+    "style": "问地址、问有没有回放、发广告被踢、表情接力；群昵称多是“公司-方向-名字”",
+    "length": "2–60 字",
+    "punctuation": "随意",
+    "emoji": "[强] [鼓掌] [玫瑰]"
+   },
+   "members": ["meetup-01", "meetup-02", "meetup-03", "meetup-04", "meetup-05", "meetup-06", "meetup-07", "meetup-08", "meetup-09", "meetup-10", "meetup-11", "meetup-12", "meetup-13", "meetup-14", "meetup-15", "meetup-16", "meetup-17", "meetup-18", "meetup-19", "meetup-20", "meetup-21", "meetup-22", "meetup-23", "meetup-24", "meetup-25", "meetup-26", "meetup-27", "meetup-28", "meetup-29", "meetup-30", "meetup-31", "meetup-32", "meetup-33", "meetup-34", "meetup-35", "meetup-36", "meetup-37", "meetup-38", "meetup-39", "meetup-40"]
+  },
+  "discord": {
+   "description": "saydone Discord 里的用户，约 25 位",
+   "channels": ["dc-help", "dc-general"],
+   "voice": {"style": "英文，小写，贴代码块，问配置；水平参差，有人只说 “bump”", "length": "1–5 句", "punctuation": "随意", "emoji": "偶尔 🙏 😅"},
+   "members": ["discord-01", "discord-02", "discord-03", "discord-04", "discord-05", "discord-06", "discord-07", "discord-08", "discord-09", "discord-10", "discord-11", "discord-12", "discord-13", "discord-14", "discord-15", "discord-16", "discord-17", "discord-18", "discord-19", "discord-20", "discord-21", "discord-22", "discord-23", "discord-24", "discord-25"]
+  },
+  "github": {
+   "description": "saydone 上的路过用户，约 35 位",
+   "channels": ["gh-saydone"],
+   "voice": {
+    "style": "英文：报问题、“same here”、“+1”、“works for me”，偶尔提小改动；有母语也有非母语",
+    "length": "1 句到带日志的长 issue",
+    "punctuation": "随意",
+    "emoji": "偶尔 👍"
+   },
+   "members": ["github-01", "github-02", "github-03", "github-04", "github-05", "github-06", "github-07", "github-08", "github-09", "github-10", "github-11", "github-12", "github-13", "github-14", "github-15", "github-16", "github-17", "github-18", "github-19", "github-20", "github-21", "github-22", "github-23", "github-24", "github-25", "github-26", "github-27", "github-28", "github-29", "github-30", "github-31", "github-32", "github-33", "github-34", "github-35"]
+  },
+  "x": {
+   "description": "X 上提到 saydone 或他的人，约 12 位",
+   "channels": ["x-mentions"],
+   "voice": {"style": "英文为主，有一位葡语；提及、转发加一句评价", "length": "1–2 句", "punctuation": "随意", "emoji": "🔥 👀"},
+   "members": ["x-01", "x-02", "x-03", "x-04", "x-05", "x-06", "x-07", "x-08", "x-09", "x-10", "x-11", "x-12"]
+  }
+ },
+ "channels": {
+  "fs-all": {
+   "channel": "飞书 · 铃语全员",
+   "app": "feishu",
+   "medium": "group",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "飞书 · 铃语全员",
+   "noise_part": "main-ops",
+   "target": {"n": 160, "self": 25, "ignore": 65},
+   "members": ["luchen", "zhengwan", "gaoxiang", "hejia", "songyue", "luoxiaowen", "dengyifan"],
+   "note": "闲聊、点外卖、行政通知、表情，偶尔拍板"
+  },
+  "fs-bailu": {
+   "channel": "飞书 · 白鹭上线",
+   "app": "feishu",
+   "medium": "group",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "飞书 · 白鹭上线",
+   "noise_part": "main-customer",
+   "target": {"n": 170, "self": 40, "ignore": 30},
+   "members": ["luchen", "zhengwan", "gaoxiang", "hejia", "songyue", "luoxiaowen"],
+   "note": "A 与 B 共用；噪音归 main-customer"
+  },
+  "fs-zhengwan": {
+   "channel": "飞书 · 郑婉",
+   "app": "feishu",
+   "medium": "dm",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "飞书 · 单聊",
+   "noise_part": "main-ops",
+   "target": {"n": 60, "self": 21, "ignore": 20},
+   "members": ["luchen", "zhengwan"]
+  },
+  "fs-gaoxiang": {
+   "channel": "飞书 · 高翔",
+   "app": "feishu",
+   "medium": "dm",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "飞书 · 单聊",
+   "noise_part": "main-ops",
+   "target": {"n": 30, "self": 10, "ignore": 20},
+   "members": ["luchen", "gaoxiang"]
+  },
+  "fs-hejia": {
+   "channel": "飞书 · 何嘉",
+   "app": "feishu",
+   "medium": "dm",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "飞书 · 单聊",
+   "noise_part": "main-ops",
+   "target": {"n": 18, "self": 6, "ignore": 20},
+   "members": ["luchen", "hejia"]
+  },
+  "fs-songyue": {
+   "channel": "飞书 · 宋悦",
+   "app": "feishu",
+   "medium": "dm",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "飞书 · 单聊",
+   "noise_part": "main-ops",
+   "target": {"n": 15, "self": 5, "ignore": 20},
+   "members": ["luchen", "songyue"]
+  },
+  "fs-luoxiaowen": {
+   "channel": "飞书 · 罗晓雯",
+   "app": "feishu",
+   "medium": "dm",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "飞书 · 单聊",
+   "noise_part": "main-ops",
+   "target": {"n": 25, "self": 8, "ignore": 20},
+   "members": ["luchen", "luoxiaowen"]
+  },
+  "fs-dengyifan": {
+   "channel": "飞书 · 邓一凡",
+   "app": "feishu",
+   "medium": "dm",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "飞书 · 单聊",
+   "noise_part": "main-ops",
+   "target": {"n": 12, "self": 5, "ignore": 20},
+   "members": ["luchen", "dengyifan"]
+  },
+  "fs-alert": {
+   "channel": "飞书 · 监控告警",
+   "app": "feishu",
+   "medium": "bot",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "飞书 · 机器人",
+   "noise_part": "main-ops",
+   "target": {"n": 115, "self": 0, "ignore": 85},
+   "members": ["bot-alert"]
+  },
+  "fs-deploy": {
+   "channel": "飞书 · 部署通知",
+   "app": "feishu",
+   "medium": "bot",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "飞书 · 机器人",
+   "noise_part": "main-ops",
+   "target": {"n": 35, "self": 0, "ignore": 85},
+   "members": ["bot-deploy"]
+  },
+  "fs-calendar": {
+   "channel": "飞书 · 日历",
+   "app": "feishu",
+   "medium": "bot",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "飞书 · 机器人",
+   "noise_part": "main-ops",
+   "target": {"n": 12, "self": 0, "ignore": 85},
+   "members": ["bot-calendar"]
+  },
+  "fs-approval": {
+   "channel": "飞书 · 审批",
+   "app": "feishu",
+   "medium": "bot",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "飞书 · 机器人",
+   "noise_part": "main-ops",
+   "target": {"n": 6, "self": 0, "ignore": 85},
+   "members": ["bot-approval"]
+  },
+  "fs-docs": {
+   "channel": "飞书 · 云文档",
+   "app": "feishu",
+   "medium": "bot",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "飞书 · 机器人",
+   "noise_part": "main-ops",
+   "target": {"n": 12, "self": 0, "ignore": 85},
+   "members": ["bot-docs"]
+  },
+  "gh-frontdesk": {
+   "channel": "GitHub · lingyu-ai/frontdesk",
+   "app": "github",
+   "medium": "github",
+   "stream": "work",
+   "project": "main",
+   "language": "zh/en",
+   "row": "GitHub · lingyu-ai/frontdesk",
+   "noise_part": "main-ops",
+   "target": {"n": 120, "self": 35, "ignore": 45},
+   "members": ["luchen", "gaoxiang", "hejia", "songyue", "dengyifan", "gha", "dependabot", "codecov"],
+   "note": "公司的私有仓库：标题与评论中英混写，提交信息英文"
+  },
+  "wx-bailu": {
+   "channel": "微信 · 白鹭口腔×铃语",
+   "app": "wechat",
+   "medium": "group",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "微信 · 白鹭口腔×铃语",
+   "noise_part": "main-customer",
+   "target": {"n": 130, "self": 18, "ignore": 50},
+   "members": ["luchen", "zhengwan", "luoxiaowen", "mengjie", "mgr-binjiang", "mgr-xixi", "mgr-chengxi", "mgr-xiasha", "mgr-xiaoshan", "mgr-gongshu", "mgr-yuhang", "mgr-qjxc", "mgr-liangzhu", "fd-binjiang", "fd-xixi", "fd-chengxi"]
+  },
+  "wx-mengjie": {
+   "channel": "微信 · 孟洁",
+   "app": "wechat",
+   "medium": "dm",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "微信 · 孟洁",
+   "noise_part": "main-customer",
+   "target": {"n": 22, "self": 9, "ignore": 5},
+   "members": ["luchen", "mengjie"]
+  },
+  "wx-wangjie": {
+   "channel": "微信 · 王姐",
+   "app": "wechat",
+   "medium": "dm",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "微信 · 小店老板",
+   "noise_part": "main-ops",
+   "target": {"n": 17, "self": 7, "ignore": 30},
+   "members": ["luchen", "wangjie"]
+  },
+  "wx-xiaojin": {
+   "channel": "微信 · 小金",
+   "app": "wechat",
+   "medium": "dm",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "微信 · 小店老板",
+   "noise_part": "main-ops",
+   "target": {"n": 7, "self": 2, "ignore": 30},
+   "members": ["luchen", "xiaojin"]
+  },
+  "wx-azhen": {
+   "channel": "微信 · 悦颜美容 阿珍",
+   "app": "wechat",
+   "medium": "dm",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "微信 · 小店老板",
+   "noise_part": "main-ops",
+   "target": {"n": 4, "self": 1, "ignore": 30},
+   "members": ["luchen", "azhen"]
+  },
+  "mail-work": {
+   "channel": "邮件 · 工作",
+   "app": "email",
+   "medium": "email",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "邮件 · 工作",
+   "noise_part": "main-ops",
+   "target": {"n": 26, "self": 5, "ignore": 40},
+   "members": ["luchen", "zhengwan", "mengjie", "lawyer", "yangfan", "tinglan-ops", "tinglan-support", "yunjie", "qusheng", "shengtong-bill", "aliyun", "github-billing"],
+   "note": "律师线 7、供应商 13、杨帆 4、孟洁 2（含本人）；国内供应商用中文"
+  },
+  "phone": {
+   "channel": "电话",
+   "app": "phone",
+   "medium": "call_log",
+   "stream": "work",
+   "project": "main",
+   "language": "zh",
+   "row": "电话",
+   "noise_part": "main-customer",
+   "target": {"n": 16, "self": 6, "ignore": 30},
+   "members": ["luchen", "mengjie", "zhengwan", "gaoxiang", "caller-spam", "caller-spam2"],
+   "note": "只放工作电话；和家人的通话在微信会话里"
+  },
+  "gh-saydone": {
+   "channel": "GitHub · saydone/saydone",
+   "app": "github",
+   "medium": "github",
+   "stream": "work",
+   "project": "oss",
+   "language": "en",
+   "row": "GitHub · saydone/saydone",
+   "noise_part": "side",
+   "target": {"n": 240, "self": 55, "ignore": 45},
+   "members": ["luchen", "mateo", "priya", "lucas", "gha", "dependabot", "codecov", "stalebot", "precommit", "@github"]
+  },
+  "mail-saydone": {
+   "channel": "邮件 · saydone",
+   "app": "email",
+   "medium": "email",
+   "stream": "work",
+   "project": "oss",
+   "language": "en",
+   "row": "邮件 · saydone",
+   "noise_part": "side",
+   "target": {"n": 10, "self": 3, "ignore": 30},
+   "members": ["luchen", "mateo", "dana", "pypi"]
+  },
+  "wx-meetup": {
+   "channel": "微信 · 语音AI小聚·筹备",
+   "app": "wechat",
+   "medium": "group",
+   "stream": "work",
+   "project": "collab",
+   "language": "zh",
+   "row": "微信 · 语音AI小聚·筹备",
+   "noise_part": "side",
+   "target": {"n": 90, "self": 24, "ignore": 40},
+   "members": ["luchen", "laofan", "yaojia", "ajie", "xiaosun"]
+  },
+  "wx-laofan": {
+   "channel": "微信 · 老范",
+   "app": "wechat",
+   "medium": "dm",
+   "stream": "work",
+   "project": "collab",
+   "language": "zh",
+   "row": "微信 · 老范、场地、赞助",
+   "noise_part": "side",
+   "target": {"n": 13, "self": 6, "ignore": 15},
+   "members": ["luchen", "laofan"]
+  },
+  "wx-venue": {
+   "channel": "微信 · 杜经理（弦外空间）",
+   "app": "wechat",
+   "medium": "dm",
+   "stream": "work",
+   "project": "collab",
+   "language": "zh",
+   "row": "微信 · 老范、场地、赞助",
+   "noise_part": "side",
+   "target": {"n": 8, "self": 3, "ignore": 15},
+   "members": ["luchen", "dujingli"]
+  },
+  "wx-sponsor": {
+   "channel": "微信 · 潘越（声通云）",
+   "app": "wechat",
+   "medium": "dm",
+   "stream": "work",
+   "project": "collab",
+   "language": "zh",
+   "row": "微信 · 老范、场地、赞助",
+   "noise_part": "side",
+   "target": {"n": 5, "self": 2, "ignore": 15},
+   "members": ["luchen", "panyue"]
+  },
+  "signup": {
+   "channel": "报名小程序 · 第7期语音AI小聚",
+   "app": "signup",
+   "medium": "bot",
+   "stream": "work",
+   "project": "collab",
+   "language": "zh",
+   "row": "报名小程序",
+   "noise_part": "side",
+   "target": {"n": 40, "self": 0, "ignore": 95},
+   "members": ["signup-bot"]
+  },
+  "mail-misc": {
+   "channel": "邮件 · 杂项来信",
+   "app": "email",
+   "medium": "email",
+   "stream": "work",
+   "project": "misc",
+   "language": "zh/en",
+   "row": "邮件与 App · 杂项来信",
+   "noise_part": "side",
+   "target": {"n": 42, "self": 3, "ignore": 90},
+   "members": ["luchen", "keman", "conf-sz", "vc-qingya", "vc-scout", "fa-yan", "hunter", "sales-expense", "sales-outsource", "sales-idc", "peer-bd"]
+  },
+  "app-recruit": {
+   "channel": "招聘 App · 消息",
+   "app": "app",
+   "medium": "bot",
+   "stream": "work",
+   "project": "misc",
+   "language": "zh",
+   "row": "邮件与 App · 杂项来信",
+   "noise_part": "side",
+   "target": {"n": 9, "self": 0, "ignore": 95},
+   "members": ["recruit-app"]
+  },
+  "wx-hunter": {
+   "channel": "微信 · Kelly｜猎头",
+   "app": "wechat",
+   "medium": "dm",
+   "stream": "work",
+   "project": "misc",
+   "language": "zh",
+   "row": "邮件与 App · 杂项来信",
+   "noise_part": "side",
+   "target": {"n": 4, "self": 1, "ignore": 75},
+   "members": ["luchen", "hunter"]
+  },
+  "dc-help": {
+   "channel": "Discord · saydone #help",
+   "app": "discord",
+   "medium": "group",
+   "stream": "community",
+   "project": "oss",
+   "language": "en",
+   "row": "Discord · saydone",
+   "noise_part": "side",
+   "target": {"n": 62, "self": 8, "ignore": 80},
+   "members": ["luchen", "mateo", "priya", "@discord"]
+  },
+  "dc-general": {
+   "channel": "Discord · saydone #general",
+   "app": "discord",
+   "medium": "group",
+   "stream": "community",
+   "project": "oss",
+   "language": "en",
+   "row": "Discord · saydone",
+   "noise_part": "side",
+   "target": {"n": 38, "self": 4, "ignore": 90},
+   "members": ["luchen", "mateo", "priya", "@discord"]
+  },
+  "x-mentions": {
+   "channel": "X · 提及",
+   "app": "x",
+   "medium": "feed",
+   "stream": "community",
+   "project": "oss",
+   "language": "en",
+   "row": "X · 提及",
+   "noise_part": "side",
+   "target": {"n": 15, "self": 2, "ignore": 70},
+   "members": ["luchen", "@x"]
+  },
+  "wx-meetup-big": {
+   "channel": "微信 · 语音AI小聚③群",
+   "app": "wechat",
+   "medium": "group",
+   "stream": "community",
+   "project": "collab",
+   "language": "zh",
+   "row": "微信 · 语音AI小聚③群",
+   "noise_part": "side",
+   "target": {"n": 70, "self": 3, "ignore": 90},
+   "members": ["luchen", "laofan", "yaojia", "qisiyuan", "@meetup"]
+  },
+  "wx-hzai": {
+   "channel": "微信 · 杭州AI创业交流",
+   "app": "wechat",
+   "medium": "group",
+   "stream": "community",
+   "project": "misc",
+   "language": "zh",
+   "row": "微信 · 杭州AI创业交流",
+   "noise_part": "side",
+   "target": {"n": 80, "self": 1, "ignore": 95},
+   "members": ["luchen", "@hzai"]
+  },
+  "wx-llmdev": {
+   "channel": "微信 · 大模型应用开发",
+   "app": "wechat",
+   "medium": "group",
+   "stream": "community",
+   "project": "misc",
+   "language": "zh",
+   "row": "微信 · 大模型应用开发",
+   "noise_part": "side",
+   "target": {"n": 65, "self": 2, "ignore": 95},
+   "members": ["luchen", "@llmdev"],
+   "note": "B 在 9/16 19:44 的那句问话与几句回应由 main-ops 写"
+  },
+  "sub-newsletter": {
+   "channel": "邮件 · Newsletter",
+   "app": "email",
+   "medium": "feed",
+   "stream": "subscription",
+   "side": "work",
+   "language": "en",
+   "row": "订阅 · 技术与行业",
+   "noise_part": "side",
+   "target": {"n": 26, "self": 0, "ignore": 100},
+   "members": ["nl-turn", "nl-llmops", "nl-speech", "nl-maint"]
+  },
+  "sub-wxmp": {
+   "channel": "微信 · 订阅号",
+   "app": "wechat",
+   "medium": "feed",
+   "stream": "subscription",
+   "side": "work",
+   "language": "zh",
+   "row": "订阅 · 技术与行业",
+   "noise_part": "side",
+   "target": {"n": 22, "self": 0, "ignore": 100},
+   "members": ["mp-voice", "mp-aipm", "mp-hzvc", "mp-llmeng", "mp-night"]
+  },
+  "sub-tools": {
+   "channel": "邮件 · 工具更新",
+   "app": "email",
+   "medium": "feed",
+   "stream": "subscription",
+   "side": "work",
+   "language": "zh/en",
+   "row": "订阅 · 技术与行业",
+   "noise_part": "side",
+   "target": {"n": 6, "self": 0, "ignore": 100},
+   "members": ["tool-term", "tool-notelab"]
+  },
+  "wx-hanmin": {
+   "channel": "微信 · 韩敏",
+   "app": "wechat",
+   "medium": "dm",
+   "stream": "family",
+   "language": "zh",
+   "row": "微信 · 韩敏",
+   "noise_part": "home",
+   "target": {"n": 120, "self": 48, "ignore": 25},
+   "members": ["luchen", "hanmin"]
+  },
+  "wx-family": {
+   "channel": "微信 · 一家人",
+   "app": "wechat",
+   "medium": "group",
+   "stream": "family",
+   "language": "zh",
+   "row": "微信 · 一家人",
+   "noise_part": "home",
+   "target": {"n": 35, "self": 8, "ignore": 60},
+   "members": ["luchen", "hanmin", "dad", "mom"]
+  },
+  "wx-dad": {
+   "channel": "微信 · 爸",
+   "app": "wechat",
+   "medium": "dm",
+   "stream": "family",
+   "language": "zh",
+   "row": "微信 · 爸、妈",
+   "noise_part": "home",
+   "target": {"n": 12, "self": 5, "ignore": 40},
+   "members": ["luchen", "dad"],
+   "note": "含微信语音通话"
+  },
+  "wx-mom": {
+   "channel": "微信 · 妈",
+   "app": "wechat",
+   "medium": "dm",
+   "stream": "family",
+   "language": "zh",
+   "row": "微信 · 爸、妈",
+   "noise_part": "home",
+   "target": {"n": 10, "self": 3, "ignore": 40},
+   "members": ["luchen", "mom"]
+  },
+  "watch-keke": {
+   "channel": "电话手表 · 可可",
+   "app": "watch",
+   "medium": "dm",
+   "stream": "family",
+   "language": "zh",
+   "row": "电话手表 · 可可",
+   "noise_part": "home",
+   "target": {"n": 14, "self": 4, "ignore": 30},
+   "members": ["luchen", "keke"]
+  },
+  "wx-class": {
+   "channel": "微信 · 三(2)班家长群",
+   "app": "wechat",
+   "medium": "group",
+   "stream": "family",
+   "language": "zh",
+   "row": "微信 · 三(2)班家长群",
+   "noise_part": "home",
+   "target": {"n": 85, "self": 2, "ignore": 80},
+   "members": ["luchen", "hanmin", "teacher-wang", "teacher-qian", "jwh-zihan", "@class"]
+  },
+  "school": {
+   "channel": "家校通知 · 江畔小学",
+   "app": "school",
+   "medium": "bot",
+   "stream": "family",
+   "language": "zh",
+   "row": "家校通知",
+   "noise_part": "home",
+   "target": {"n": 8, "self": 0, "ignore": 40},
+   "members": ["school"]
+  },
+  "wx-kinder": {
+   "channel": "微信 · 大二班家长群",
+   "app": "wechat",
+   "medium": "group",
+   "stream": "family",
+   "language": "zh",
+   "row": "微信 · 大二班家长群",
+   "noise_part": "home",
+   "target": {"n": 35, "self": 1, "ignore": 85},
+   "members": ["luchen", "hanmin", "teacher-dai", "@kinder"]
+  },
+  "wx-swim": {
+   "channel": "微信 · 豆豆游泳课",
+   "app": "wechat",
+   "medium": "group",
+   "stream": "family",
+   "language": "zh",
+   "row": "微信 · 课外班",
+   "noise_part": "home",
+   "target": {"n": 18, "self": 1, "ignore": 60},
+   "members": ["luchen", "hanmin", "coach-li", "@swim"]
+  },
+  "wx-cici": {
+   "channel": "微信 · 课程顾问 Cici",
+   "app": "wechat",
+   "medium": "dm",
+   "stream": "family",
+   "language": "zh",
+   "row": "微信 · 课外班",
+   "noise_part": "home",
+   "target": {"n": 12, "self": 4, "ignore": 50},
+   "members": ["luchen", "cici"]
+  },
+  "sms-pet": {
+   "channel": "短信 · 禾木宠物医院",
+   "app": "sms",
+   "medium": "sms",
+   "stream": "family",
+   "language": "zh",
+   "row": "宠物医院",
+   "noise_part": "home",
+   "target": {"n": 5, "self": 0, "ignore": 25},
+   "members": ["pet-sms"]
+  },
+  "wx-pet": {
+   "channel": "微信 · 禾木宠物医院前台",
+   "app": "wechat",
+   "medium": "dm",
+   "stream": "family",
+   "language": "zh",
+   "row": "宠物医院",
+   "noise_part": "home",
+   "target": {"n": 6, "self": 3, "ignore": 25},
+   "members": ["luchen", "pet-desk"]
+  },
+  "wx-owners": {
+   "channel": "微信 · 江景湾2期业主群",
+   "app": "wechat",
+   "medium": "group",
+   "stream": "life",
+   "language": "zh",
+   "row": "微信 · 业主群",
+   "noise_part": "home",
+   "target": {"n": 50, "self": 1, "ignore": 95},
+   "members": ["luchen", "steward", "@owners"]
+  },
+  "sms-property": {
+   "channel": "短信 · 江景湾物业",
+   "app": "sms",
+   "medium": "sms",
+   "stream": "life",
+   "language": "zh",
+   "row": "物业与水电燃气",
+   "noise_part": "home",
+   "target": {"n": 6, "self": 0, "ignore": 50},
+   "members": ["property"]
+  },
+  "sms-express": {
+   "channel": "短信 · 快递",
+   "app": "sms",
+   "medium": "sms",
+   "stream": "life",
+   "language": "zh",
+   "row": "快递",
+   "noise_part": "home",
+   "target": {"n": 35, "self": 0, "ignore": 90},
+   "members": ["express-station", "courier"]
+  },
+  "app-shop": {
+   "channel": "App · 万象购 订单",
+   "app": "app",
+   "medium": "bot",
+   "stream": "life",
+   "language": "zh",
+   "row": "购物与外卖订单",
+   "noise_part": "home",
+   "target": {"n": 14, "self": 0, "ignore": 80},
+   "members": ["shop-app"]
+  },
+  "app-food": {
+   "channel": "App · 饭点外卖",
+   "app": "app",
+   "medium": "bot",
+   "stream": "life",
+   "language": "zh",
+   "row": "购物与外卖订单",
+   "noise_part": "home",
+   "target": {"n": 8, "self": 0, "ignore": 80},
+   "members": ["food-app"]
+  },
+  "app-grocery": {
+   "channel": "App · 鲜到家 买菜",
+   "app": "app",
+   "medium": "bot",
+   "stream": "life",
+   "language": "zh",
+   "row": "购物与外卖订单",
+   "noise_part": "home",
+   "target": {"n": 8, "self": 0, "ignore": 80},
+   "members": ["grocery-app"]
+  },
+  "sms-bank": {
+   "channel": "短信 · 云杉银行",
+   "app": "sms",
+   "medium": "sms",
+   "stream": "life",
+   "language": "zh",
+   "row": "银行",
+   "noise_part": "home",
+   "target": {"n": 30, "self": 0, "ignore": 90},
+   "members": ["bank"]
+  },
+  "ctrip": {
+   "channel": "携程 · 订单通知",
+   "app": "ctrip",
+   "medium": "bot",
+   "stream": "life",
+   "language": "zh",
+   "row": "携程、航空、酒店",
+   "noise_part": "home",
+   "target": {"n": 10, "self": 0, "ignore": 20},
+   "members": ["ctrip"]
+  },
+  "ctrip-hotel": {
+   "channel": "携程 · 望潮酒店",
+   "app": "ctrip",
+   "medium": "dm",
+   "stream": "life",
+   "language": "zh",
+   "row": "携程、航空、酒店",
+   "noise_part": "home",
+   "target": {"n": 4, "self": 2, "ignore": 40},
+   "members": ["luchen", "hotel"]
+  },
+  "sms-health": {
+   "channel": "短信 · 体检与挂号",
+   "app": "sms",
+   "medium": "sms",
+   "stream": "life",
+   "language": "zh",
+   "row": "体检与挂号",
+   "noise_part": "home",
+   "target": {"n": 8, "self": 1, "ignore": 50},
+   "members": ["luchen", "clinic", "checkup"]
+  },
+  "sms-misc": {
+   "channel": "短信 · 验证码与陌生号码",
+   "app": "sms",
+   "medium": "sms",
+   "stream": "life",
+   "language": "zh",
+   "row": "短信",
+   "noise_part": "home",
+   "target": {"n": 15, "self": 0, "ignore": 100},
+   "members": ["sms-code", "sms-spam"]
+  },
+  "push-shop": {
+   "channel": "App 推送 · 万象购",
+   "app": "push",
+   "medium": "feed",
+   "stream": "subscription",
+   "side": "life",
+   "language": "zh",
+   "row": "App 推送与营销",
+   "noise_part": "home",
+   "target": {"n": 24, "self": 0, "ignore": 100},
+   "members": ["shop-app"]
+  },
+  "push-food": {
+   "channel": "App 推送 · 饭点外卖",
+   "app": "push",
+   "medium": "feed",
+   "stream": "subscription",
+   "side": "life",
+   "language": "zh",
+   "row": "App 推送与营销",
+   "noise_part": "home",
+   "target": {"n": 20, "self": 0, "ignore": 100},
+   "members": ["food-app"]
+  },
+  "push-video": {
+   "channel": "App 推送 · 青柚视频",
+   "app": "push",
+   "medium": "feed",
+   "stream": "subscription",
+   "side": "life",
+   "language": "zh",
+   "row": "App 推送与营销",
+   "noise_part": "home",
+   "target": {"n": 14, "self": 0, "ignore": 100},
+   "members": ["video-app"]
+  },
+  "push-ride": {
+   "channel": "App 推送 · 随行出行",
+   "app": "push",
+   "medium": "feed",
+   "stream": "subscription",
+   "side": "life",
+   "language": "zh",
+   "row": "App 推送与营销",
+   "noise_part": "home",
+   "target": {"n": 14, "self": 0, "ignore": 100},
+   "members": ["ride-app"]
+  }
+ },
+ "items": {
+  "fd:A-bailu": {
+   "line": "A",
+   "title": "白鹭九家店改由 AI 接电话",
+   "short": "九店上线",
+   "stream": "work",
+   "project": "main",
+   "kind": "主线",
+   "part": "main-customer",
+   "levels": {
+    "f01": "normal",
+    "f06": "normal",
+    "f07": "normal",
+    "f16": "high",
+    "f17": "critical",
+    "f18": "normal",
+    "f22": "low",
+    "f23": "low",
+    "f25": "low"
+   },
+   "note": "9/15 切换；f22 起记“九店在用”"
+  },
+  "fd:B-outage": {
+   "line": "B",
+   "title": "周三晚语音识别故障与备用服务",
+   "short": "周三故障",
+   "stream": "work",
+   "project": "main",
+   "kind": "主线",
+   "part": "main-ops",
+   "levels": {
+    "f06": "trace",
+    "f19": "low",
+    "f20": ["critical", "high"],
+    "f21": "high",
+    "f22": "normal",
+    "f28": "normal"
+   },
+   "note": "9/9 的维护通知与 9/16 晚 22:00 的维护都在这一件里，但旁白要写明维护不是 19:41 故障的原因"
+  },
+  "fd:C-contract": {
+   "line": "C",
+   "title": "白鹭年单：转接承诺与付款方式",
+   "short": "客户年单",
+   "stream": "work",
+   "project": "main",
+   "kind": "主线",
+   "part": "main-customer",
+   "levels": {
+    "f01": "normal",
+    "f05": "low",
+    "f21": "high",
+    "f22": "high",
+    "f23": "normal",
+    "f24": "normal",
+    "f25": "normal"
+   }
+  },
+  "fd:C-transfer": {
+   "line": "C",
+   "title": "9 月 28 日前给白鹭上线转接",
+   "short": "上线转接",
+   "stream": "work",
+   "project": "main",
+   "kind": "一次性",
+   "part": "main-customer",
+   "levels": {"f23": "normal"},
+   "note": "c1 答应后转成的事项：AI 接不了的电话转到店里值班手机"
+  },
+  "fd:D-shops": {
+   "line": "D",
+   "title": "理发店说 AI 弄丢了预约",
+   "short": "丢的预约",
+   "stream": "work",
+   "project": "main",
+   "kind": "一次性",
+   "part": "main-ops",
+   "levels": {"f03": "normal", "f05": "low", "f07": "none"}
+  },
+  "fd:D-invoice": {
+   "line": "D",
+   "title": "健身工作室要 8 月发票",
+   "short": "小店发票",
+   "stream": "work",
+   "project": "main",
+   "kind": "一次性",
+   "part": "main-ops",
+   "levels": {"f15": "low"},
+   "note": "交给小罗开"
+  },
+  "fd:D-inquiry": {
+   "line": "D",
+   "title": "美容店来问价格",
+   "short": "新询价",
+   "stream": "work",
+   "project": "main",
+   "kind": "一次性",
+   "part": "main-ops",
+   "levels": {"f22": "trace"},
+   "note": "小罗跟进"
+  },
+  "fd:E-company": {
+   "line": "E",
+   "title": "投资人月报与模型涨价",
+   "short": "公司日常",
+   "stream": "work",
+   "project": "main",
+   "kind": "主线",
+   "part": "main-ops",
+   "levels": {"f05": "normal", "f08": "normal", "f16": "low", "f24": "low"}
+  },
+  "fd:E-hiring": {
+   "line": "E",
+   "title": "后端候选人面试",
+   "short": "招后端",
+   "stream": "work",
+   "project": "main",
+   "kind": "一次性",
+   "part": "main-ops",
+   "levels": {"f20": "trace"},
+   "note": "招聘平台的推荐与猎头归 H"
+  },
+  "fd:F-saydone": {
+   "line": "F",
+   "title": "saydone 0.9 发版",
+   "short": "开源发版",
+   "stream": "work",
+   "project": "oss",
+   "kind": "副线",
+   "part": "side",
+   "levels": {"f02": "low", "f10": "low", "f12": "low", "f21": "normal", "f22": "normal", "f23": "low", "f26": "low"}
+  },
+  "fd:F-harborline": {
+   "line": "F",
+   "title": "Harborline 问付费支持",
+   "short": "企业询价",
+   "stream": "work",
+   "project": "oss",
+   "kind": "一次性",
+   "part": "side",
+   "levels": {"f14": "trace"},
+   "note": "到窗口结束没回"
+  },
+  "fd:G-meetup": {
+   "line": "G",
+   "title": "语音AI小聚 9 月 26 日第 7 期",
+   "short": "开发者聚会",
+   "stream": "work",
+   "project": "collab",
+   "kind": "副线",
+   "part": "side",
+   "levels": {"f03": "low", "f04": "low", "f09": "trace", "f15": "trace", "f18": "low", "f22": "low", "f23": "low"}
+  },
+  "fd:H-invite": {
+   "line": "H",
+   "title": "深圳开发者大会请他 11 月演讲",
+   "short": "深圳邀请",
+   "stream": "work",
+   "project": "misc",
+   "kind": "杂项",
+   "part": "side",
+   "levels": {"f06": "low", "f28": "none"},
+   "note": "过期没回"
+  },
+  "fd:H-misc": {
+   "line": "H",
+   "title": "投资机构、猎头与推销的来信",
+   "short": "杂项来信",
+   "stream": "work",
+   "project": "misc",
+   "kind": "杂项",
+   "part": "side",
+   "levels": {},
+   "note": "都在 trace 或丢弃；不要和杨帆的月报并在一起"
+  },
+  "fd:I-dog": {
+   "line": "I",
+   "title": "土豆看耳朵、打疫苗",
+   "short": "狗打疫苗",
+   "stream": "family",
+   "kind": "家里",
+   "part": "home",
+   "levels": {"f03": "low", "f06": "low", "f11": "normal", "f12": "low", "f22": "high", "f23": "low", "f26": "trace"}
+  },
+  "fd:J-trip": {
+   "line": "J",
+   "title": "国庆一家四口去青岛",
+   "short": "国庆青岛",
+   "stream": "family",
+   "kind": "家里",
+   "part": "home",
+   "levels": {"f02": "low", "f04": "low", "f08": "low", "f14": "low", "f17": "low", "f19": "low", "f26": "low"},
+   "note": "寄养确认并进这一件"
+  },
+  "fd:K-school": {
+   "line": "K",
+   "title": "可可的学校：教师节、秋游回执",
+   "short": "女儿学校",
+   "stream": "family",
+   "kind": "家里",
+   "part": "home",
+   "levels": {"f05": "low", "f06": "trace", "f10": "trace", "f17": "low", "f22": "normal", "f23": "low", "f24": "none"}
+  },
+  "fd:L-english": {
+   "line": "L",
+   "title": "可可英语课改期与续费",
+   "short": "英语课",
+   "stream": "family",
+   "kind": "家里",
+   "part": "home",
+   "levels": {"f15": "low", "f16": "low", "f27": "low"}
+  },
+  "fd:L-swim": {
+   "line": "L",
+   "title": "周三晚接豆豆下游泳课",
+   "short": "接豆豆",
+   "stream": "family",
+   "kind": "家里",
+   "part": "home",
+   "levels": {
+    "f18": "normal",
+    "f20": ["high", "low"],
+    "f21": "trace"
+   },
+   "note": "f20 帧内升 high、答、接到后降 low"
+  },
+  "fd:M-home": {
+   "line": "M",
+   "title": "采买与中秋：电饭煲、月饼",
+   "short": "采买中秋",
+   "stream": "family",
+   "kind": "家里",
+   "part": "home",
+   "levels": {"f01": "low", "f02": "low", "f10": "low", "f15": "low", "f28": "low"}
+  },
+  "fd:N-cough": {
+   "line": "N",
+   "title": "豆豆咳嗽看医生",
+   "short": "豆豆看病",
+   "stream": "family",
+   "kind": "生活",
+   "part": "home",
+   "levels": {"f07": "low", "f09": "none"}
+  },
+  "fd:N-checkup": {
+   "line": "N",
+   "title": "体检血脂偏高，三个月后复查",
+   "short": "体检复查",
+   "stream": "life",
+   "kind": "生活",
+   "part": "home",
+   "levels": {"f09": "low"}
+  },
+  "fd:N-water": {
+   "line": "N",
+   "title": "9 月 13 日小区停水",
+   "short": "停水",
+   "stream": "life",
+   "kind": "生活",
+   "part": "home",
+   "levels": {"f12": "low", "f14": "none"},
+   "note": "物业短信、业主群公告、邻居拍的通知三处并成一件"
+  }
+ },
+ "asks": {
+  "a1": {
+   "item": "fd:A-bailu",
+   "frame": "f06",
+   "q": "白鹭的价目表有两个版本，上线按哪份？",
+   "short": "价目表用哪份",
+   "options": ["按邮件里的新版", "按微信里的旧版", "先问孟洁哪份为准"],
+   "due": "2026-09-14T23:59:00+08:00",
+   "outcome": {"how": "answered", "frame": "f07", "note": "答：按邮件里的新版（9/8 晚孟洁发的）"}
+  },
+  "a2": {
+   "item": "fd:A-bailu",
+   "frame": "f17",
+   "q": "滨江店的电话还转到旧手机：今天让店长改，还是先退回试点名单？",
+   "short": "滨江店先退出吗",
+   "options": ["今天让店长改", "先退回试点名单"],
+   "due": "2026-09-15T12:00:00+08:00",
+   "outcome": {"how": "answered", "frame": "f17", "note": "答：让店长改"}
+  },
+  "b1": {
+   "item": "fd:B-outage",
+   "frame": "f20",
+   "q": "语音识别在出错：现在把白鹭九家店都切成直接转门店电话吗？",
+   "short": "现在切回门店电话吗",
+   "options": ["现在切", "再等十分钟"],
+   "due": "2026-09-16T19:55:00+08:00",
+   "outcome": {"how": "answered", "frame": "f20", "note": "立即；19:55 登记，20:03 答：切"}
+  },
+  "b2": {
+   "item": "fd:B-outage",
+   "frame": "f22",
+   "q": "要不要接一家备用的语音识别，每月多花三千左右？",
+   "short": "接备用语音服务吗",
+   "options": ["接曲声做备用", "只做识别不好就转门店", "先看报价和 9 月用量"],
+   "due": "2026-09-21T23:59:00+08:00",
+   "outcome": {"how": "open", "note": "开着"}
+  },
+  "c1": {
+   "item": "fd:C-contract",
+   "frame": "f21",
+   "q": "周五见白鹭：国庆前能不能答应“AI 接不了的电话转到店里手机”？",
+   "short": "答应国庆前加转接吗",
+   "options": ["答应，9 月 28 日前上线", "答应，国庆后上线", "不答应，说明原因"],
+   "due": "2026-09-18T10:00:00+08:00",
+   "outcome": {"how": "answered", "frame": "f23", "note": "答：答应 9/28 前上线。登记时会还在 14:00（邀请邮件），9/17 14:10 改到 10:00，期限写改后的"}
+  },
+  "c2": {
+   "item": "fd:C-contract",
+   "frame": "f24",
+   "q": "白鹭的律师要改成季度付款，可以吗？",
+   "short": "季度付款行吗",
+   "options": ["可以", "坚持半年付", "交给郑婉定"],
+   "due": "2026-09-21T23:59:00+08:00",
+   "outcome": {"how": "void", "frame": "f25", "note": "失效：郑婉已答"}
+  },
+  "e1": {
+   "item": "fd:E-company",
+   "frame": "f05",
+   "q": "投资人月报的数据页，周四前给郑婉",
+   "short": "月报数据页",
+   "options": ["今晚做完发郑婉", "周四白天做"],
+   "due": "2026-09-10T23:59:00+08:00",
+   "outcome": {"how": "answered", "frame": "f08", "note": "答：9/10 23:40 发给郑婉"}
+  },
+  "e2": {
+   "item": "fd:E-company",
+   "frame": "f16",
+   "q": "云阶 10 月起涨价两成：换不换默认模型？",
+   "short": "换默认模型吗",
+   "options": ["先测两家再定", "10 月照用云阶", "现在就换"],
+   "due": "2026-09-30T23:59:00+08:00",
+   "outcome": {"how": "answered", "frame": "f24", "note": "答：先测两家"}
+  },
+  "f1": {
+   "item": "fd:F-saydone",
+   "frame": "f21",
+   "q": "有人报 rc2 把葡语短回答截掉：0.9 周五照发，还是推迟？",
+   "short": "0.9 周五发吗",
+   "options": ["周五照发", "推迟一天，先改默认值", "推迟到下周"],
+   "due": "2026-09-18T23:59:00+08:00",
+   "outcome": {"how": "answered", "frame": "f23", "note": "答：推迟一天"}
+  },
+  "f2": {
+   "item": "fd:F-saydone",
+   "frame": "f10",
+   "q": "Priya 的流式接口改动在等你评审",
+   "short": "评审流式接口",
+   "options": ["这周评审", "0.10 再看"],
+   "outcome": {"how": "open", "note": "开着；9/20 他回 Priya “0.10 再看”，不算回答"}
+  },
+  "g1": {
+   "item": "fd:G-meetup",
+   "frame": "f03",
+   "q": "小聚的开场 10 分钟你讲吗？",
+   "short": "小聚开场你讲吗",
+   "options": ["我讲", "请老范讲"],
+   "due": "2026-09-09T23:59:00+08:00",
+   "outcome": {"how": "answered", "frame": "f04", "note": "答：讲"}
+  },
+  "g2": {
+   "item": "fd:G-meetup",
+   "frame": "f18",
+   "q": "一位讲者去不了，找谁替补？",
+   "short": "替补讲者找谁",
+   "options": ["请第 5 期的讲者", "请何嘉讲评测", "空出来做问答"],
+   "due": "2026-09-22T23:59:00+08:00",
+   "outcome": {"how": "open", "note": "开着"}
+  },
+  "g3": {
+   "item": "fd:G-meetup",
+   "frame": "f22",
+   "q": "声通云想赞助茶歇，条件是上台讲 15 分钟产品：答应吗？",
+   "short": "赞助商上台吗",
+   "options": ["答应，只给 5 分钟", "答应 15 分钟", "不要这笔赞助"],
+   "due": "2026-09-18T12:00:00+08:00",
+   "outcome": {"how": "answered", "frame": "f23", "note": "答：只给 5 分钟"}
+  },
+  "h1": {
+   "item": "fd:H-invite",
+   "frame": "f06",
+   "q": "深圳 11 月的大会请你演讲，9/20 前回复：去吗？",
+   "short": "去深圳演讲吗",
+   "options": ["去", "不去", "推荐别人"],
+   "due": "2026-09-20T23:59:00+08:00",
+   "outcome": {"how": "void", "frame": "f28", "note": "失效：过期"}
+  },
+  "i1": {
+   "item": "fd:I-dog",
+   "frame": "f03",
+   "q": "土豆老挠耳朵，要不要带去看？",
+   "short": "带狗看耳朵吗",
+   "options": ["周六带去", "再看两天"],
+   "outcome": {"how": "answered", "frame": "f06", "note": "答：周六去"}
+  },
+  "i2": {
+   "item": "fd:I-dog",
+   "frame": "f22",
+   "q": "明早 9:30 土豆打疫苗：你带去，还是改约？",
+   "short": "明早谁带狗打针",
+   "options": ["我带去", "请爸带去", "改约"],
+   "due": "2026-09-18T09:30:00+08:00",
+   "outcome": {"how": "answered", "frame": "f23", "note": "答：请爸带去"}
+  },
+  "j1": {
+   "item": "fd:J-trip",
+   "frame": "f02",
+   "q": "国庆青岛住哪家？",
+   "short": "国庆住哪家",
+   "options": ["韩敏发的第一家", "第二家", "再看看"],
+   "outcome": {"how": "answered", "frame": "f14", "note": "f04 他回“第二个好”不算回答（那家国庆已满）；f08 韩敏又发两家，问题仍开着；f14 订好"}
+  },
+  "j2": {
+   "item": "fd:J-trip",
+   "frame": "f17",
+   "q": "去青岛的航班提前到 7:10，接受还是改签？",
+   "short": "航班提前了改不改",
+   "options": ["接受", "免费改签", "退票重订"],
+   "due": "2026-09-20T23:59:00+08:00",
+   "outcome": {"how": "void", "frame": "f19", "note": "失效：韩敏已接受"}
+  },
+  "j3": {
+   "item": "fd:J-trip",
+   "frame": "f26",
+   "q": "青岛的酒店问要不要加床和儿童早餐",
+   "short": "酒店要加床吗",
+   "options": ["加床加早餐", "只加早餐", "都不要"],
+   "due": "2026-09-25T23:59:00+08:00",
+   "outcome": {"how": "open", "note": "开着"}
+  },
+  "k1": {
+   "item": "fd:K-school",
+   "frame": "f05",
+   "q": "家委会提议教师节凑钱买花，出不出？",
+   "short": "教师节凑钱吗",
+   "options": ["出", "不出"],
+   "due": "2026-09-10T08:00:00+08:00",
+   "outcome": {"how": "void", "frame": "f06", "note": "失效：老师重申不收礼"}
+  },
+  "k2": {
+   "item": "fd:K-school",
+   "frame": "f22",
+   "q": "可可的秋游回执还没签，明早要交",
+   "short": "签秋游回执",
+   "options": ["今晚签好放书包", "明早签"],
+   "due": "2026-09-18T07:50:00+08:00",
+   "outcome": {"how": "answered", "frame": "f23", "note": "答：9/18 07:20 签好"}
+  },
+  "l1": {
+   "item": "fd:L-swim",
+   "frame": "f18",
+   "q": "周三晚 8 点去游泳馆接豆豆（韩敏出差）",
+   "short": "周三八点接豆豆",
+   "options": ["我去接", "请爸去接"],
+   "due": "2026-09-16T20:00:00+08:00",
+   "outcome": {"how": "answered", "frame": "f20", "note": "答：19:58 打电话请爸去接"}
+  },
+  "l2": {
+   "item": "fd:L-english",
+   "frame": "f15",
+   "q": "英语课 9/19 停一次，改到周日 10 点行吗？",
+   "short": "英语课改周日行吗",
+   "options": ["周日可以", "这次不上了"],
+   "due": "2026-09-17T23:59:00+08:00",
+   "outcome": {"how": "answered", "frame": "f16", "note": "答：周日可以"}
+  },
+  "l3": {
+   "item": "fd:L-english",
+   "frame": "f15",
+   "q": "可可的英语秋季续不续费？",
+   "short": "英语课续费吗",
+   "options": ["续费", "上完这期再说", "不续了"],
+   "due": "2026-09-20T23:59:00+08:00",
+   "outcome": {"how": "open", "note": "开着；9/20 顾问说优惠留到月底，期限实际改到 9/30"}
+  },
+  "m1": {
+   "item": "fd:M-home",
+   "frame": "f01",
+   "q": "电饭煲坏了，买哪个？",
+   "short": "买哪个电饭煲",
+   "options": ["买贵点的那款", "买便宜的那款"],
+   "outcome": {"how": "answered", "frame": "f02", "note": "答：他发两个链接，她挑了一个"}
+  },
+  "m2": {
+   "item": "fd:M-home",
+   "frame": "f10",
+   "q": "中秋给两边老人各订一盒月饼，订哪家？",
+   "short": "月饼订哪家",
+   "options": ["老字号那家", "酒店的礼盒"],
+   "due": "2026-09-15T23:59:00+08:00",
+   "outcome": {"how": "answered", "frame": "f15", "note": "答：9/14 下单"}
+  },
+  "m3": {
+   "item": "fd:M-home",
+   "frame": "f28",
+   "q": "中秋那天几点去爸妈家？",
+   "short": "中秋几点去爸妈家",
+   "options": ["中午去", "下午早点去"],
+   "due": "2026-09-25T10:00:00+08:00",
+   "outcome": {"how": "open", "note": "开着"}
+  }
+ },
+ "budget": {
+  "main-customer": {
+   "飞书 · 铃语全员": {
+    "n": [1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 2, 2, 1, 1, 0, 0, 2, 2, 0, 0, 0, 0],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0]
+   },
+   "飞书 · 白鹭上线": {
+    "n": [3, 5, 4, 4, 2, 4, 3, 2, 4, 5, 0, 0, 0, 1, 7, 7, 22, 13, 3, 0, 3, 9, 8, 6, 0, 0, 0, 0],
+    "self": [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 2, 2, 5, 3, 1, 0, 1, 2, 2, 1, 0, 0, 0, 0]
+   },
+   "飞书 · 单聊": {
+    "n": [2, 6, 1, 2, 2, 2, 1, 2, 1, 2, 0, 0, 1, 3, 1, 4, 6, 3, 2, 0, 5, 11, 5, 2, 1, 0, 0, 0],
+    "self": [1, 2, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 2, 1, 1, 0, 2, 4, 2, 1, 0, 0, 0, 0]
+   },
+   "飞书 · 机器人": {
+    "n": [0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 2, 10, 0, 0, 0, 1, 1, 2, 0, 0, 0, 0, 0],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "GitHub · lingyu-ai/frontdesk": {
+    "n": [1, 2, 2, 3, 1, 1, 2, 2, 1, 3, 0, 0, 0, 0, 3, 4, 5, 2, 0, 0, 1, 2, 2, 3, 0, 0, 0, 0],
+    "self": [0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 2, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0]
+   },
+   "微信 · 白鹭口腔×铃语": {
+    "n": [2, 9, 3, 2, 2, 5, 4, 2, 6, 4, 1, 1, 1, 1, 9, 5, 18, 12, 3, 0, 4, 5, 6, 3, 4, 1, 1, 1],
+    "self": [0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 4, 2, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0]
+   },
+   "微信 · 孟洁": {
+    "n": [2, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 4, 1, 0, 0, 2, 2, 2, 0, 2, 0, 0, 0],
+    "self": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0]
+   },
+   "邮件 · 工作": {
+    "n": [0, 1, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 2, 0, 0, 0],
+    "self": [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+   },
+   "电话": {
+    "n": [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 2, 2, 0, 0, 1, 0, 0],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0]
+   }
+  },
+  "main-ops": {
+   "飞书 · 铃语全员": {
+    "n": [5, 7, 4, 6, 5, 5, 5, 6, 5, 6, 1, 1, 0, 0, 5, 13, 6, 10, 7, 11, 7, 10, 5, 7, 1, 0, 0, 0],
+    "self": [1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0]
+   },
+   "飞书 · 白鹭上线": {
+    "n": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 22, 10, 11, 1, 3, 0, 2, 0, 2],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 3, 2, 0, 1, 0, 0, 0, 0]
+   },
+   "飞书 · 单聊": {
+    "n": [2, 4, 4, 3, 6, 5, 4, 7, 2, 3, 0, 0, 0, 0, 4, 6, 4, 4, 5, 10, 6, 9, 3, 4, 0, 0, 0, 0],
+    "self": [1, 1, 1, 1, 2, 2, 1, 3, 1, 1, 0, 0, 0, 0, 1, 2, 1, 1, 2, 4, 2, 3, 1, 1, 0, 0, 0, 0]
+   },
+   "飞书 · 机器人": {
+    "n": [3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 1, 2, 1, 1, 3, 4, 3, 5, 4, 75, 5, 4, 3, 4, 1, 6, 1, 2],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "GitHub · lingyu-ai/frontdesk": {
+    "n": [2, 4, 4, 5, 5, 3, 2, 3, 2, 3, 0, 0, 0, 0, 3, 3, 3, 3, 4, 8, 7, 8, 3, 5, 0, 0, 0, 0],
+    "self": [1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 0, 0, 0, 0]
+   },
+   "微信 · 白鹭口腔×铃语": {
+    "n": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 4, 3, 0, 0, 0, 0, 0, 0],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "微信 · 孟洁": {
+    "n": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 0, 0, 0, 0, 0, 0, 0],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "微信 · 小店老板": {
+    "n": [0, 0, 3, 2, 1, 3, 3, 0, 0, 2, 0, 0, 0, 0, 2, 0, 1, 1, 1, 0, 1, 4, 1, 2, 1, 0, 0, 0],
+    "self": [0, 0, 1, 1, 0, 1, 2, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0]
+   },
+   "邮件 · 工作": {
+    "n": [1, 0, 0, 0, 2, 1, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 0, 1, 0, 0, 0, 2],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1]
+   },
+   "电话": {
+    "n": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 0, 0, 0, 0, 0, 0, 0],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "微信 · 大模型应用开发": {
+    "n": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+   }
+  },
+  "side": {
+   "飞书 · 铃语全员": {
+    "n": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
+   },
+   "GitHub · saydone/saydone": {
+    "n": [5, 10, 10, 9, 11, 7, 8, 8, 5, 7, 7, 10, 8, 7, 6, 7, 7, 5, 9, 4, 17, 14, 15, 5, 12, 11, 8, 8],
+    "self": [1, 3, 2, 3, 2, 2, 1, 3, 1, 2, 1, 4, 2, 3, 1, 2, 0, 1, 1, 0, 0, 1, 2, 1, 4, 7, 2, 3]
+   },
+   "邮件 · saydone": {
+    "n": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 1, 0],
+    "self": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "微信 · 语音AI小聚·筹备": {
+    "n": [1, 3, 3, 6, 1, 2, 2, 7, 3, 4, 6, 2, 2, 3, 2, 5, 0, 7, 1, 2, 1, 7, 4, 4, 4, 4, 1, 3],
+    "self": [0, 1, 1, 2, 0, 1, 1, 2, 1, 1, 2, 0, 1, 0, 1, 2, 0, 2, 0, 0, 0, 2, 3, 1, 0, 0, 0, 0]
+   },
+   "微信 · 老范、场地、赞助": {
+    "n": [0, 0, 2, 3, 0, 0, 1, 3, 3, 1, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0, 3, 3, 1, 0, 0, 0, 0],
+    "self": [0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0]
+   },
+   "报名小程序": {
+    "n": [0, 0, 4, 4, 3, 2, 1, 2, 2, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "邮件与 App · 杂项来信": {
+    "n": [2, 3, 2, 3, 2, 4, 1, 3, 2, 3, 0, 0, 0, 0, 2, 3, 3, 3, 5, 3, 2, 3, 2, 2, 0, 0, 0, 2],
+    "self": [0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "Discord · saydone": {
+    "n": [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 5, 4, 4, 4, 4, 4, 4, 3, 5, 2, 7, 5, 4, 2, 3, 4, 4, 2],
+    "self": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
+   },
+   "X · 提及": {
+    "n": [0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 2, 2, 0, 0, 1, 0, 0, 0, 0, 2, 1, 0, 0, 0, 2, 2, 0],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+   },
+   "微信 · 语音AI小聚③群": {
+    "n": [1, 4, 1, 3, 2, 3, 1, 3, 2, 3, 3, 2, 2, 3, 1, 3, 1, 8, 1, 2, 1, 3, 1, 3, 2, 4, 2, 5],
+    "self": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+   },
+   "微信 · 杭州AI创业交流": {
+    "n": [3, 5, 2, 4, 3, 3, 2, 4, 3, 4, 2, 1, 1, 2, 3, 4, 4, 4, 4, 3, 3, 4, 3, 3, 2, 1, 1, 2],
+    "self": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "微信 · 大模型应用开发": {
+    "n": [2, 3, 2, 3, 2, 2, 2, 3, 2, 3, 2, 1, 1, 1, 2, 3, 3, 3, 3, 3, 2, 3, 2, 2, 1, 1, 1, 1],
+    "self": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "订阅 · 技术与行业": {
+    "n": [2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 3, 1, 2, 2, 2, 2, 3, 2, 3, 1, 2, 2, 3, 1, 2, 1, 1, 2],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   }
+  },
+  "home": {
+   "微信 · 韩敏": {
+    "n": [5, 8, 3, 5, 1, 5, 3, 7, 1, 6, 4, 2, 2, 3, 3, 6, 4, 6, 6, 7, 3, 8, 6, 4, 3, 4, 2, 3],
+    "self": [1, 4, 1, 3, 0, 3, 1, 4, 0, 3, 2, 1, 1, 2, 1, 3, 0, 3, 1, 2, 0, 2, 2, 2, 1, 2, 1, 2]
+   },
+   "微信 · 一家人": {
+    "n": [1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2],
+    "self": [0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1]
+   },
+   "微信 · 爸、妈": {
+    "n": [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 4, 4, 1, 0, 5, 1, 0, 0, 1, 2],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 2, 0, 0, 2, 0, 0, 0, 0, 1]
+   },
+   "电话手表 · 可可": {
+    "n": [0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 4, 0, 1, 0, 2, 0, 0],
+    "self": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0]
+   },
+   "微信 · 三(2)班家长群": {
+    "n": [2, 0, 6, 3, 4, 7, 30, 6, 2, 4, 0, 0, 0, 0, 1, 0, 6, 2, 0, 0, 0, 8, 2, 2, 0, 0, 0, 0],
+    "self": [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "家校通知": {
+    "n": [1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "微信 · 大二班家长群": {
+    "n": [1, 2, 1, 2, 1, 1, 2, 2, 2, 2, 1, 0, 0, 0, 2, 2, 2, 2, 3, 1, 1, 2, 2, 1, 0, 0, 0, 0],
+    "self": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "微信 · 课外班": {
+    "n": [0, 0, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 2, 0, 2, 2, 0, 0, 1, 6, 2, 1, 0, 0, 2, 0, 6, 2],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0]
+   },
+   "宠物医院": {
+    "n": [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 2, 0, 0, 0],
+    "self": [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+   },
+   "微信 · 业主群": {
+    "n": [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 2, 3, 3, 3, 2, 2, 2, 2, 2, 2, 1, 2, 2, 1, 2, 1, 1, 2],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "物业与水电燃气": {
+    "n": [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "快递": {
+    "n": [1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 3, 2, 1, 1, 2, 1, 2, 1, 1, 1, 1],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "购物与外卖订单": {
+    "n": [1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "银行": {
+    "n": [1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 2, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "携程、航空、酒店": {
+    "n": [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 6, 0, 0, 3, 0, 2, 0, 0, 0, 0, 0, 0, 1, 1, 0],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "体检与挂号": {
+    "n": [0, 0, 0, 0, 0, 1, 3, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "短信": {
+    "n": [1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   "App 推送与营销": {
+    "n": [2, 3, 2, 3, 2, 2, 2, 3, 2, 3, 3, 2, 2, 4, 2, 4, 3, 4, 3, 3, 2, 3, 2, 2, 2, 3, 2, 2],
+    "self": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   }
+  }
+ }
+}

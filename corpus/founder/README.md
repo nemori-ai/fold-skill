@@ -1,25 +1,37 @@
 # 创始人语料：陆晨的两周
 
-状态：2026-11-03 流水线已就绪，节拍表与消息还没写。内容写好后在这里补规模、方法与检查结果；设计见[大纲](OUTLINE.md)。
+状态：2026-11-03 流水线与共用设定（[beats/_cast.json](beats/_cast.json)）已就绪，四份节拍表还是空的，由四位写作者照[写作指引](WRITING.md)并行写。内容写好后在这里补规模、方法与检查结果；设计见[大纲](OUTLINE.md)。
 
 ## 流水线
 
-[scripts/founder_corpus.py](../../scripts/founder_corpus.py) 由节拍表 `beats.json`（事实与标注的唯一来源，格式见[大纲第 7 节](OUTLINE.md#7-数据形态)）确定性地生成其余文件，不调用模型。噪音指标与标注复用 `build_corpus.py` 与 `family_stream.py` 的函数。
+[scripts/founder_corpus.py](../../scripts/founder_corpus.py) 由节拍表（事实与标注的唯一来源，格式见[大纲第 7 节](OUTLINE.md#7-数据形态)）确定性地生成其余文件，不调用模型。噪音指标与标注复用 `build_corpus.py` 与 `family_stream.py` 的函数。
+
+节拍表可以是一个文件 `beats.json`（[小样例](../../scripts/fixtures/founder-mini/beats.json)就是这样），也可以拆成目录 `beats/`，这份语料用后者：
+
+| 文件 | 内容 | 谁改 |
+| --- | --- | --- |
+| `beats/_cast.json` | 节拍表除 `beats`、`noise` 以外的全部：人物与成员池、渠道（含目标条数与噪音归属）、事项（含归属的份与各帧的关注档）、27 个问题（问法、选项、期限与去向帧）、模板、`ignore` 的理由、四份的划分与逐帧预算 | 架构 |
+| `beats/main-customer.json`、`main-ops.json`、`side.json`、`home.json` | 只有 `beats` 与 `noise` | 各自的写作者 |
+
+合并是确定性的：拍与噪音组按第一条消息的时间（同时按编号）排序，`ask` 只写问题编号、由 `_cast.json` 展开，`from` 缺省时按人在渠道或应用里的别名补上。合并时校验：份文件只有两个键；拍的事项归这一份、拍号以事项的线字母开头；`answers` 与 `voids` 指向这一份的问题；噪音组号以这一份的前缀开头、噪音只落在噪音归这一份的渠道；`dup_of` 不跨份。不过的都报在 `parts` 一条下。拆开与单文件渲染出的成品逐字节相同（selftest 会比）。
 
 | 步 | 读 | 写 | 入库 |
 | --- | --- | --- | --- |
-| render | `beats.json` | `messages.json`（成品，一行一条）与 `BEATS.md`（中文可读版） | 是 |
+| render | 节拍表 | `messages.json`（成品，一行一条）与 `BEATS.md`（中文可读版） | 是 |
 | build | `messages.json` | `frames.json`：与 composite 同形，f01–f28，从 9/7 0:00（Asia/Shanghai）起每 12 小时一帧；演示数据的空状态 f00 由 `build_demo_data.py` 按 f01 的窗口起点补上 | 否，本机重建 |
-| labels | `beats.json`、`frames.json` | `labels.json` 的 `authored` 一节（与 composite 家庭流的作者标注同形，范围是全部五条流）与 `LABELS.md` | 是 |
+| labels | 节拍表、`frames.json` | `labels.json` 的 `authored` 一节（与 composite 家庭流的作者标注同形，范围是全部五条流）与 `LABELS.md` | 是 |
 | noise | `frames.json` | `noise.json` 与 `NOISE.md`：指标与第 5 节的目标并排，另列各渠道的条数、本人与应忽略 | 是 |
 | check | 以上全部 | 不写文件；任何一条不过就以非零退出 | — |
 
 ```sh
 .venv/bin/python scripts/founder_corpus.py all        # 依次 render、build、labels、noise、check
 .venv/bin/python scripts/founder_corpus.py check      # 只检查，并打印各渠道条数与第 5 节对照
+.venv/bin/python scripts/founder_corpus.py check --part home --strict   # 只查一份（加 _cast.json），打印这一份与预算的偏差；写作者交稿前跑
 .venv/bin/python scripts/founder_corpus.py all --beats scripts/fixtures/founder-mini/beats.json --root .local/founder-mini   # 内容写好前用小样例跑通
-.venv/bin/python scripts/founder_corpus.py selftest   # 小样例跑完各步，再逐条注入错误，确认 check 每条规则都会报；make test 会运行它
+.venv/bin/python scripts/founder_corpus.py selftest   # 小样例单文件与拆成四份各跑一遍，再逐条注入错误，确认 check 每条规则都会报；make test 会运行它
 ```
+
+默认的节拍表是 `<root>/beats/`，没有这个目录才用 `<root>/beats.json`；`--beats` 可以指向任一种。
 
 [小样例](../../scripts/fixtures/founder-mini/beats.json)有 3 件事、10 拍、2 组噪音，含一条通话记录与一笔转账，工作侧与生活侧 33 : 11，可以当节拍表的格式样板。
 
@@ -43,6 +55,11 @@
 | names | 人名不与手写情境（`prototype/STORY.md` 与它的演示数据）重名、不用那边的姓，不与 composite 的人物和家庭流重名 |
 | short、length | 短问法不超过 16 字；事项标签不超过 20 字、短名不超过 6 字 |
 | ratio | 工作侧（work、community 与 side 为 work 的订阅）比生活侧（family、life 与 side 为 life 的订阅）在 2.7–3.3 之间 |
+| parts | 拆开的节拍表合并时的归属与形式（见上） |
+| plan | 只在 `--strict`：每个问题的登记帧与去向帧（回答、失效或开着）、每个事项各帧的关注档与 `_cast.json` 一致；档写成列表时，列出的档都要在那一帧出现，最后一个是帧末的档 |
+| budget | 只在 `--part` 加 `--strict`：这一份每一行（第 5 节的渠道行）与目标差在 ±10% 内、每一帧差在 ±15% 内，本人条数同样；差 1 条（行）或 2 条（帧）以内总算通过 |
+
+`--part` 只查这一份与 `_cast.json`，跳过成品是否过期、帧与工作生活之比这些要全语料才有意义的规则；`refs` 也不要求这一份已经有拍。不加 `--strict` 时 plan 与 budget 只打印、不算不通过。
 
 ## 下游
 

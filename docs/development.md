@@ -53,7 +53,7 @@ python3 scripts/eval_judgment.py --skill <SKILL.md 路径> ...               # �
 python3 scripts/eval_judgment.py --rescore .local/eval/<run-id> --report   # 用已保存响应重新计分
 ```
 
-`make test` 运行 `scripts/run_cases.py`，即 `.venv/bin/python -B scripts/run_cases.py`。它只验证内存层：故障注入、重启恢复与概览渲染的断言标为 skipped，通过不代表文件存储或 CLI 已完成。之后运行 `scripts/founder_corpus.py selftest`：在临时目录里用小样例跑完 founder 语料的各步，再逐条注入错误，确认检查的每条规则都会报出；不读写仓库里的语料。
+`make test` 运行 `scripts/run_cases.py`，即 `.venv/bin/python -B scripts/run_cases.py`。它只验证内存层：故障注入、重启恢复与概览渲染的断言标为 skipped，通过不代表文件存储或 CLI 已完成。之后运行 `scripts/founder_corpus.py selftest`：在临时目录里用小样例跑完 founder 语料的各步，再把小样例拆成 `_cast.json` 加四份重跑、确认成品逐字节相同，然后逐条注入错误，确认检查的每条规则都会报出；不读写仓库里的语料。
 
 `scripts/eval_judgment.py` 以 teacher-forced 方式逐帧评测 [skill/SKILL.md](../skill/SKILL.md)：第 n 帧的起始状态是内核回放作者前 n−1 帧批次的结果，被测模型看不到作者的处置与批次。它调用 `claude -p`，默认模型 `claude-opus-5-5`（`--model` 可覆盖），`--jobs` 控制并行帧数。设置了 `ANTHROPIC_API_KEY` 时加 `--bare`；`--bare` 不读登录态，没有 API key 时改用登录态，并以 `--setting-sources ''`、`--strict-mcp-config`、`--disable-slash-commands`、`--tools ''` 和空工作目录隔离用户设置、hooks、MCP 与项目说明。每帧结果、`summary.json` 与 `report.md` 写到 `.local/eval/<run-id>/`，该目录不提交。真实调用有费用，全量 36 帧按 Opus 约数美元；先用 `--dry-run` 和少量帧确认提示。
 
@@ -74,6 +74,7 @@ python3 scripts/eval_judgment.py --rescore .local/eval/<run-id> --report   # 用
 .venv/bin/python scripts/compose_corpus.py build           # 拼出化名人物的两周；还有 labels、noise、audit
 .venv/bin/python scripts/compose_corpus.py family          # 追加作者编写的家庭流（节拍表入库，见 corpus/composite/family/）
 .venv/bin/python scripts/founder_corpus.py all             # 作者编写的 founder 语料：节拍表 → 成品、帧、标注、噪音与检查（见 corpus/founder/README.md）
+.venv/bin/python scripts/founder_corpus.py check --part home --strict   # 拆开的节拍表只查一份，并与预算对照（写法见 corpus/founder/WRITING.md）
 ```
 
 `scripts/fetch_corpus.py` 只用标准库与 `gh api` 子进程，顺序请求并限速、遵守 robots.txt，输出 `corpus/<source>/raw/`。主来源约需一千余次 GitHub 请求与数百次网页请求，二三十分钟；`--only` 只重抓部分流，`--start/--end` 改变窗口。抓取不调用任何模型，也不清洗或去重；唯一的改动是把电话号码样式替换为 `[phone]`。

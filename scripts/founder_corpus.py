@@ -1,17 +1,24 @@
 """founder 语料：作者编写的创业者陆晨的两周（corpus/founder/OUTLINE.md）。
 
-节拍表 beats.json 是事实与标注的唯一来源；本脚本只做确定性的转换，不调用模型：
+节拍表是事实与标注的唯一来源；本脚本只做确定性的转换，不调用模型：
 
-  render    beats.json → messages.json（入库，一行一条）与 BEATS.md（中文可读版）
+  render    节拍表 → messages.json（入库，一行一条）与 BEATS.md（中文可读版）
   build     messages.json → frames.json（不入库）：从窗口起点的当地零点起每 12 小时一帧，与 composite 同形
-  labels    beats.json + frames.json → labels.json 与 LABELS.md：作者标注（authored），覆盖全部五条流
+  labels    节拍表 + frames.json → labels.json 与 LABELS.md：作者标注（authored），覆盖全部五条流
   noise     frames.json → noise.json 与 NOISE.md：build_corpus 的噪音指标（认中文的附和），与大纲第 5 节的目标并排
   check     成品与节拍表的检查，任何一条不过就以非零退出；另打印各渠道条数与大纲第 5 节对照
+            --part NAME 只查拆开的节拍表里的一份（加 _cast.json），打印这一份按渠道与按帧的条数与预算的偏差
+            --strict 另把与大纲的对照（问题的登记与去向帧、事项的关注档）和预算偏差算作不通过
   all       依次运行 render、build、labels、noise、check
-  selftest  在临时目录里用小样例（scripts/fixtures/founder-mini）跑完各步，再逐条注入错误，确认 check 的每条规则都会报错
+  selftest  在临时目录里用小样例（scripts/fixtures/founder-mini）跑完各步，单文件与拆开的两种写法各一遍，
+            再逐条注入错误，确认 check 的每条规则都会报错
 
---root DIR 是读写的目录（默认 corpus/founder），--beats PATH 是节拍表（默认 <root>/beats.json）。正式内容写好之前：
+节拍表可以是一个文件（beats.json），也可以是拆开的目录（beats/）：_cast.json 放人物、渠道、事项、问题、预算与归属，
+每一份（main-customer.json 等）只放 beats 与 noise；合并按归属校验，见 corpus/founder/WRITING.md。
+
+--root DIR 是读写的目录（默认 corpus/founder），--beats PATH 是节拍表（默认 <root>/beats/，没有就用 <root>/beats.json）。
   .venv/bin/python scripts/founder_corpus.py all --beats scripts/fixtures/founder-mini/beats.json --root .local/founder-mini
+  .venv/bin/python scripts/founder_corpus.py check --part home --strict
 """
 
 from __future__ import annotations
@@ -107,6 +114,11 @@ NOISE_TARGETS = {
 }
 LEVEL_ORDER = {lv: n for n, lv in enumerate(family_stream.LEVELS)}
 WEEKDAYS = "一二三四五六日"
+# 拆开的节拍表：_cast.json 放共用的部分，每一份只放 beats 与 noise。
+CAST_FILE = "_cast.json"
+PART_KEYS = ("beats", "noise")
+ASK_FIELDS = ("id", "q", "short", "options", "due")   # 拍里的问题展开成这几项，与单文件的写法同形
+TOLERANCE = {"row": (0.10, 1), "frame": (0.15, 2)}    # 预算偏差：比例与最少差几条才算超出
 
 
 class CheckFailed(Exception):
@@ -115,7 +127,9 @@ class CheckFailed(Exception):
 
 def paths(root: Path, beats: Path | None) -> SimpleNamespace:
     root = root.resolve()
-    return SimpleNamespace(root=root, beats=(beats or root / "beats.json").resolve(), messages=root / "messages.json",
+    if beats is None:
+        beats = root / "beats" if (root / "beats").is_dir() else root / "beats.json"
+    return SimpleNamespace(root=root, beats=beats.resolve(), messages=root / "messages.json",
                            beats_md=root / "BEATS.md", frames=root / "frames.json", labels=root / "labels.json",
                            labels_md=root / "LABELS.md", noise=root / "noise.json", noise_md=root / "NOISE.md")
 
@@ -134,12 +148,133 @@ def load_json(path: Path, hint: str):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_source(p: SimpleNamespace, only: str | None = None) -> tuple[dict, list[str], dict | None]:
+    """(节拍表, 合并时发现的问题, _cast.json)。单文件时没有合并，问题为空、cast 为 None。"""
+    if p.beats.is_dir():
+        return merge_parts(p.beats, only)
+    return load_json(p.beats, f"内容还没写时，可以先用 --beats {FIXTURE.relative_to(ROOT)} 跑通各步"), [], None
+
+
 def load_beats(p: SimpleNamespace) -> dict:
-    return load_json(p.beats, f"内容还没写时，可以先用 --beats {FIXTURE.relative_to(ROOT)} 跑通各步")
+    doc, problems, _ = load_source(p)
+    if problems:
+        raise SystemExit("拆开的节拍表合并不了，先运行 check：\n" + "\n".join(f"- {x}" for x in problems[:12]))
+    return doc
 
 
 def shown(path: Path) -> str:
     return str(path.relative_to(ROOT)) if path.is_relative_to(ROOT) else str(path)
+
+
+def source_name(p: SimpleNamespace) -> str:
+    """生成的 Markdown 里怎样指向节拍表：与成品同目录时写相对名（目录带 /），否则写仓库里的路径。"""
+    if p.beats.parent != p.root:
+        return shown(p.beats)
+    return p.beats.name + ("/" if p.beats.is_dir() else "")
+
+
+# ---------- 拆开的节拍表：_cast.json 加四份，合并成与单文件同形的节拍表 ----------
+
+def first_at(group: dict):
+    ats = [parse_time(x["at"]) for x in group.get("messages", []) if x.get("at")]
+    return min(ats) if ats else None
+
+
+def alias_of(cast: dict, x: dict) -> str | None:
+    """人在某个渠道或应用里显示的名字：先按渠道编号，再按渠道的 app（如 GitHub 上的 luchen-hz）。"""
+    aliases = ((cast.get("people") or {}).get(x.get("who")) or {}).get("aliases") or {}
+    channel = (cast.get("channels") or {}).get(x.get("ch")) or {}
+    return aliases.get(x.get("ch")) or aliases.get(channel.get("app"))
+
+
+def merge_parts(directory: Path, only: str | None = None) -> tuple[dict, list[str], dict]:
+    """_cast.json 加各份 → 与单文件同形的节拍表，以及合并时按归属发现的问题。only 只合并这一份（check --part）。
+
+    确定性：拍与噪音组按第一条消息的时间（再按编号）排序，与各份的先后、份内的顺序无关。
+    校验：每份只有 beats 与 noise；拍只写本份的事项（_cast.json 里事项的 part），拍号以事项的线字母开头；
+    噪音组只用本份负责噪音的渠道（渠道的 noise_part），组号以本份的 noise_prefix 开头；拍里的 ask 写问题编号，
+    问法等由 _cast.json 的 asks 展开；answers / voids 只能了结本份的问题；dup_of 指向本份里的消息。
+    消息没写 from 时，按人在这个渠道或应用里的别名补上。
+    """
+    cast = load_json(directory / CAST_FILE, "拆开的节拍表要有 _cast.json")
+    parts = cast.get("parts") or {}
+    items, channels = cast.get("items") or {}, cast.get("channels") or {}
+    asks = cast.get("asks") or {}
+    problems = []
+    if only is not None and only not in parts:
+        raise SystemExit(f"_cast.json 的 parts 里没有 {only!r}，可选：{'、'.join(parts)}")
+    for key, item in items.items():
+        if item.get("part") not in parts:
+            problems.append(f"_cast.json：事项 {key} 的 part {item.get('part')!r} 不在 parts 里")
+    for key, channel in channels.items():
+        if channel.get("noise_part") not in parts:
+            problems.append(f"_cast.json：渠道 {key} 的 noise_part {channel.get('noise_part')!r} 不在 parts 里")
+    for key, ask in asks.items():
+        if (items.get(ask.get("item")) or {}).get("part") not in parts:
+            problems.append(f"_cast.json：问题 {key} 的事项 {ask.get('item')!r} 不在 items 里")
+    doc = {k: copy.deepcopy(v) for k, v in cast.items() if k not in PART_KEYS}
+    beats, noise = [], []
+    for name in ([only] if only else list(parts)):
+        path = directory / f"{name}.json"
+        if not path.exists():
+            problems.append(f"缺 {name}.json")
+            continue
+        part = json.loads(path.read_text(encoding="utf-8"))
+        extra = sorted(set(part) - set(PART_KEYS))
+        if extra:
+            problems.append(f"{name}.json 只放 beats 与 noise，多出 {'、'.join(extra)}（共用的内容写进 _cast.json）")
+        ids = {g.get("id") for g in part.get("beats", []) + part.get("noise", [])}
+        prefix = parts[name].get("noise_prefix") or ""
+        for b in part.get("beats", []):
+            b = copy.deepcopy(b)
+            where = f"{name}.json 拍 {b.get('id')}"
+            for key in {b.get("item"), *(x.get("item") for x in b.get("messages", []))} - {None}:
+                owner = (items.get(key) or {}).get("part")
+                if owner and owner != name:
+                    problems.append(f"{where}：事项 {key} 归 {owner}，不归 {name}")
+            line = (items.get(b.get("item")) or {}).get("line")
+            if line and not str(b.get("id", "")).startswith(line):
+                problems.append(f"{where}：拍号要以事项的线字母 {line} 开头")
+            if isinstance(b.get("ask"), str):
+                ask = asks.get(b["ask"])
+                if ask is None:
+                    problems.append(f"{where}：问题 {b['ask']!r} 不在 _cast.json 的 asks 里")
+                    b["ask"] = {"id": b["ask"]}
+                else:
+                    if ask.get("item") != b.get("item"):
+                        problems.append(f"{where}：问题 {b['ask']} 属于 {ask.get('item')}，拍的事项是 {b.get('item')}")
+                    b["ask"] = {"id": b["ask"], **{k: copy.deepcopy(ask[k]) for k in ASK_FIELDS[1:] if k in ask}}
+            elif b.get("ask") is not None:
+                problems.append(f"{where}：ask 只写问题编号，问法、短问法、选项与期限在 _cast.json 的 asks 里")
+            for key in ("answers", "voids"):
+                if b.get(key) and b[key] in asks and (items.get(asks[b[key]].get("item")) or {}).get("part") != name:
+                    problems.append(f"{where}：{key} {b[key]} 是别的份的问题")
+            beats.append(b)
+        for g in part.get("noise", []):
+            g = copy.deepcopy(g)
+            where = f"{name}.json 噪音组 {g.get('id')}"
+            if not str(g.get("id", "")).startswith(prefix):
+                problems.append(f"{where}：组号要以 {prefix} 开头")
+            for owner, ch in sorted({((channels.get(x.get("ch")) or {}).get("noise_part"), x.get("ch")) for x in g.get("messages", [])},
+                                    key=str):
+                if owner and owner != name:
+                    problems.append(f"{where}：渠道 {ch} 的噪音归 {owner}，不归 {name}")
+            noise.append(g)
+        for group in part.get("beats", []) + part.get("noise", []):
+            for n, x in enumerate(group.get("messages", []), 1):
+                dup = x.get("dup_of")
+                if dup and dup.rsplit(".", 1)[0] not in ids:
+                    problems.append(f"{name}.json {group.get('id')}.{n}：dup_of {dup!r} 不在本份里")
+    for group in beats + noise:
+        if first_at(group) is None:
+            problems.append(f"{group.get('id')}：没有消息")
+        for x in group.get("messages", []):
+            if "from" not in x and alias_of(cast, x):
+                x["from"] = alias_of(cast, x)
+    def order(group: dict) -> tuple:
+        return first_at(group) or parse_time(doc["window"]["start"] + "T00:00:00+00:00"), str(group.get("id"))
+    doc["beats"], doc["noise"] = sorted(beats, key=order), sorted(noise, key=order)
+    return doc, problems, cast
 
 
 # ---------- render：节拍表 → 事件 ----------
@@ -240,7 +375,7 @@ def frame_label(doc: dict, at: str) -> str:
     return f"f{int(hours // 12) + 1:02d}" if 0 <= hours < end else "窗口外"
 
 
-def beats_md(doc: dict, events: list[dict]) -> str:
+def beats_md(doc: dict, events: list[dict], source: str = "beats.json") -> str:
     asks = {b["ask"]["id"]: (b, b["ask"]) for b in doc.get("beats", []) if b.get("ask")}
     fate = {}
     for b in doc.get("beats", []):
@@ -250,7 +385,7 @@ def beats_md(doc: dict, events: list[dict]) -> str:
                 fate[b[key]] = f"{word}（{b['id']}，{frame_label(doc, first)}）"
     count = collections.Counter(e["origin"].split(":", 1)[1].rsplit(".", 1)[0] for e in events)
     lines = [f"# {doc.get('title') or '创始人语料'}：节拍表（中文可读版）", "",
-             "状态：由 `scripts/founder_corpus.py render` 从 [beats.json](beats.json) 生成，不要手改。成品见 "
+             f"状态：由 `scripts/founder_corpus.py render` 从 [{source}]({source}) 生成，不要手改。成品见 "
              "[messages.json](messages.json)，方法见 [README.md](README.md)，设计见 [OUTLINE.md](OUTLINE.md)。", "",
              "“档”是这一拍之后 Fold 应给的关注（critical / high / normal / low / trace / none）；“问”是登记给他的问题，"
              "“答”与“失效”是它的去向；“错位”标出有意放进去的回错对象、答案先于问题或重复发送。", "",
@@ -312,7 +447,7 @@ def step_render(p: SimpleNamespace) -> list[dict]:
     p.messages.write_text(dump_lines({"source": doc.get("source", "founder"), "doc": "corpus/founder/README.md",
                                       "note": "作者编写的原创文本，由 beats.json 渲染；不要手改。", "events": events}) + "\n",
                           encoding="utf-8")
-    p.beats_md.write_text(beats_md(doc, events), encoding="utf-8")
+    p.beats_md.write_text(beats_md(doc, events, source_name(p)), encoding="utf-8")
     log(f"渲染 {len(events)} 条 → {shown(p.messages)}、{shown(p.beats_md)}")
     return events
 
@@ -429,11 +564,11 @@ def labels_of(doc: dict, scenario: dict, source: str = "beats.json") -> dict:
     }
 
 
-def labels_md(doc: dict, result: dict) -> str:
+def labels_md(doc: dict, result: dict, source: str = "beats.json") -> str:
     section = result["authored"]
     s = section["summary"]
     lines = ["# 作者标注", "",
-             "状态：由 `scripts/founder_corpus.py labels` 从 [beats.json](beats.json) 与本机的 frames.json 生成，不要手改；"
+             f"状态：由 `scripts/founder_corpus.py labels` 从 [{source}]({source}) 与本机的 frames.json 生成，不要手改；"
              "数据在 [labels.json](labels.json)。", "",
              "依据都是 authored：节拍表写定的应忽略、事项、关注档与问题，覆盖全部五条流。他本人的回复也是合成的，"
              "所以评测（`scripts/eval_judgment.py --free-run`）用它检验 Agent 与作者写定是否一致，不检验真实。规则见 labels.json 的 "
@@ -469,9 +604,9 @@ def labels_md(doc: dict, result: dict) -> str:
 def step_labels(p: SimpleNamespace) -> dict:
     doc = load_beats(p)
     scenario = load_json(p.frames, "先运行 build")
-    result = labels_of(doc, scenario, "beats.json" if p.beats.parent == p.root else shown(p.beats))
+    result = labels_of(doc, scenario, source_name(p))
     save(p.labels, result, lines=True)
-    p.labels_md.write_text(labels_md(doc, result), encoding="utf-8")
+    p.labels_md.write_text(labels_md(doc, result, source_name(p)), encoding="utf-8")
     s = result["authored"]["summary"]
     log(f"标注 → {shown(p.labels)}、{shown(p.labels_md)}：应忽略 {result['summary']['ignored']} 条（占他人发来 "
         f"{result['summary']['ignored_share']:.0%}），问题 {s.get('asks', 0)} 个")
@@ -689,13 +824,15 @@ def agent_texts(doc: dict) -> list[tuple[str, str]]:
     return out
 
 
-def reference_errors(doc: dict) -> list[str]:
+def reference_errors(doc: dict, whole: bool = True) -> list[str]:
+    """引用都存在、编号不重复。whole 为假时（check --part）只查一份，允许这一份还没有拍。"""
     out = []
-    for key in ("window", "people", "channels", "items", "beats"):
+    for key in ("window", "people", "channels", "items") + (("beats",) if whole else ()):
         if not doc.get(key):
             out.append(f"节拍表缺 {key}")
     if out:
         return out
+    doc.setdefault("beats", [])
     ids = collections.Counter(g["id"] for g in doc.get("beats", []) + doc.get("noise", []))
     out += [f"拍或噪音组的编号 {i} 用了 {n} 次" for i, n in ids.items() if n > 1]
     asks = collections.Counter(b["ask"]["id"] for b in doc["beats"] if b.get("ask"))
@@ -720,6 +857,9 @@ def reference_errors(doc: dict) -> list[str]:
             out.append(f"{ref}：dup_of {x['dup_of']!r} 不是节拍表里的消息")
         if not parent.get("item") and not parent.get("thread") and not x.get("thread"):
             out.append(f"{ref}：噪音组 {parent['id']} 没有 thread")
+        reasons = doc.get("ignore_reasons")
+        if reasons and x.get("ignore") and x["ignore"] not in reasons:
+            out.append(f"{ref}：ignore {x['ignore']!r} 不在 ignore_reasons 里（{'、'.join(reasons)}）")
     return out
 
 
@@ -770,23 +910,162 @@ def event_errors(events: list[dict], doc: dict, where: str) -> dict[str, list[st
     return errors
 
 
-def check(p: SimpleNamespace, quiet: bool = False) -> dict[str, list[str]]:
-    """返回 {规则: [问题]}；空表示通过。引用错到渲染不出来时只报 refs。"""
-    doc = load_beats(p)
+def self_key(doc: dict) -> str | None:
+    selves = [key for key, person in (doc.get("people") or {}).items() if person.get("author_kind") == "self"]
+    return selves[0] if len(selves) == 1 else None
+
+
+def ask_frames(doc: dict) -> dict:
+    """问题实际在哪一帧登记、回答或失效，口径与 labels 相同：登记看拍里第一条别人发来的消息，回答看本人的第一条
+    （没有就看最后一条），失效看第一条。返回 {问题: {"registered" | "answered" | "void": [(帧, 拍), ...]}}。"""
+    me = self_key(doc)
+    out = collections.defaultdict(lambda: {"registered": [], "answered": [], "void": []})
+    for b in doc.get("beats", []):
+        msgs = sorted((x for x in b.get("messages", []) if x.get("at")), key=lambda x: parse_time(x["at"]))
+        if not msgs:
+            continue
+        if b.get("ask"):
+            posed = next((x for x in msgs if x.get("who") != me), msgs[0])
+            out[b["ask"]["id"]]["registered"].append((frame_label(doc, posed["at"]), b["id"]))
+        if b.get("answers"):
+            done = next((x for x in msgs if x.get("who") == me), msgs[-1])
+            out[b["answers"]]["answered"].append((frame_label(doc, done["at"]), b["id"]))
+        if b.get("voids"):
+            out[b["voids"]]["void"].append((frame_label(doc, msgs[0]["at"]), b["id"]))
+    return out
+
+
+def plan_errors(doc: dict, cast: dict, part: str | None = None) -> list[str]:
+    """与大纲的对照：_cast.json 里每个问题的登记帧与去向（answered / void / open），每个事项写了 levels 的帧里的关注档。
+
+    levels 的值是一个档，或一串档：这一帧里这些档都要出现，帧末（这一帧最后一拍之后）是最后一个。
+    part 给定时只看这一份的问题与事项。
+    """
+    items = cast.get("items") or {}
+
+    def mine(item_key):
+        return part is None or (items.get(item_key) or {}).get("part") == part
+
+    def where(pairs):
+        return "、".join(f"{frame}（{beat}）" for frame, beat in pairs) or "无"
+
+    out = []
+    seen = ask_frames(doc)
+    for ask_id, ask in (cast.get("asks") or {}).items():
+        if not mine(ask.get("item")):
+            continue
+        got = seen.get(ask_id) or {"registered": [], "answered": [], "void": []}
+        reg = got["registered"]
+        if len(reg) != 1 or reg[0][0] != ask.get("frame"):
+            out.append(f"问题 {ask_id} 应在 {ask.get('frame')} 登记 1 次，现在登记在 {where(reg)}")
+        how = (ask.get("outcome") or {}).get("how", "open")
+        frame = (ask.get("outcome") or {}).get("frame")
+        if how == "open":
+            if got["answered"] or got["void"]:
+                out.append(f"问题 {ask_id} 到窗口结束应仍开着，现在回答于 {where(got['answered'])}，失效于 {where(got['void'])}")
+        else:
+            hit, other = (got["answered"], got["void"]) if how == "answered" else (got["void"], got["answered"])
+            if len(hit) != 1 or other or hit[0][0] != frame:
+                word = "回答" if how == "answered" else "失效"
+                out.append(f"问题 {ask_id} 应在 {frame} {word} 1 次，现在回答于 {where(got['answered'])}，失效于 {where(got['void'])}")
+    for key, item in items.items():
+        if not mine(key) or not item.get("levels"):
+            continue
+        own = sorted(((first_at(b), b) for b in doc.get("beats", []) if b.get("item") == key and first_at(b)),
+                     key=lambda t: t[0])
+        for frame, want in item["levels"].items():
+            want = [want] if isinstance(want, str) else list(want)
+            inside = [b["level"] for at, b in own if frame_label(doc, at.isoformat()) == frame]
+            if [lv for lv in want if lv not in inside] or not inside or inside[-1] != want[-1]:
+                out.append(f"{key}：{frame} 的档应为 {' → '.join(want)}（帧末 {want[-1]}），"
+                           f"现在是 {' → '.join(inside) or '这一帧没有拍'}")
+    return out
+
+
+def frame_span(doc: dict, index: int) -> str:
+    """第 index 帧（从 0 起）的时段，如“9/7 一 上午”。"""
+    day = dt.date.fromisoformat(doc["window"]["start"]) + dt.timedelta(days=index // 2)
+    return f"{day.month}/{day.day} {WEEKDAYS[day.weekday()]} {'上午' if index % 2 == 0 else '下午晚上'}"
+
+
+def deviation(actual: int, target: int, kind: str) -> tuple[str, bool]:
+    share, floor = TOLERANCE[kind]
+    ok = abs(actual - target) <= max(share * target, floor)
+    text = "—" if actual == target else (f"{(actual - target) / target:+.0%}" if target else f"+{actual}")
+    return text + ("" if ok else " ✗"), ok
+
+
+def budget_report(doc: dict, events: list[dict], cast: dict, part: str) -> tuple[str, list[str]]:
+    """一份的条数与预算（_cast.json 的 budget）并排：按渠道（第 5 节的行）与按帧，标出超出容差的。"""
+    budget = (cast.get("budget") or {}).get(part)
+    if not budget:
+        return f"（_cast.json 里没有 {part} 的预算）", []
+    nframes = len(frame_bounds(window_meta(doc), 12))
+    row_of = {c["channel"]: c.get("row") or c["channel"] for c in (doc.get("channels") or {}).values()}
+    actual = collections.defaultdict(lambda: {"n": [0] * nframes, "self": [0] * nframes})
+    for e in events:
+        label = frame_label(doc, e["at"])
+        if not label.startswith("f"):
+            continue
+        cell = actual[row_of.get(e["channel"], e["channel"])]
+        cell["n"][int(label[1:]) - 1] += 1
+        cell["self"][int(label[1:]) - 1] += e["author_kind"] == "self"
+    empty = {"n": [0] * nframes, "self": [0] * nframes}
+    problems = []
+    lines = [f"## {part}：按渠道（第 5 节的行）", "", "| 行 | 条数 目标 | 实际 | 偏差 | 本人 目标 | 实际 | 偏差 |",
+             "| --- | --- | --- | --- | --- | --- | --- |"]
+    for row in list(budget) + sorted(r for r in actual if r not in budget):
+        want, got = budget.get(row) or empty, actual.get(row) or empty
+        n, n_ok = deviation(sum(got["n"]), sum(want["n"]), "row")
+        me, me_ok = deviation(sum(got["self"]), sum(want["self"]), "row")
+        lines.append(f"| {row}{'' if row in budget else '（预算外）'} | {sum(want['n'])} | {sum(got['n'])} | {n} | "
+                     f"{sum(want['self'])} | {sum(got['self'])} | {me} |")
+        if not n_ok:
+            problems.append(f"{part} 在「{row}」写了 {sum(got['n'])} 条，预算 {sum(want['n'])}（容差 ±10%）")
+        if not me_ok:
+            problems.append(f"{part} 在「{row}」本人 {sum(got['self'])} 条，预算 {sum(want['self'])}（容差 ±10%）")
+    lines += ["", f"## {part}：按帧", "", "| 帧 | 时段 | 条数 目标 | 实际 | 偏差 | 本人 目标 | 实际 |",
+              "| --- | --- | --- | --- | --- | --- | --- |"]
+    totals = collections.Counter()
+    for i in range(nframes):
+        want = sum(v["n"][i] for v in budget.values())
+        want_self = sum(v["self"][i] for v in budget.values())
+        got = sum(v["n"][i] for v in actual.values())
+        got_self = sum(v["self"][i] for v in actual.values())
+        text, ok = deviation(got, want, "frame")
+        lines.append(f"| f{i + 1:02d} | {frame_span(doc, i)} | {want} | {got} | {text} | {want_self} | {got_self} |")
+        if not ok:
+            problems.append(f"{part} 在 f{i + 1:02d} 写了 {got} 条，预算 {want}（容差 ±15%）")
+        totals.update(want=want, got=got, want_self=want_self, got_self=got_self)
+    lines += ["", f"合计：条数 {totals['want']} / {totals['got']}，本人 {totals['want_self']} / {totals['got_self']}（目标 / 实际）。"
+              f"超出容差 {len(problems)} 处：渠道 ±10%（至少差 1 条）、帧 ±15%（至少差 2 条）以外才算。"]
+    return "\n".join(lines), problems
+
+
+def check(p: SimpleNamespace, quiet: bool = False, part: str | None = None, strict: bool = False) -> dict[str, list[str]]:
+    """返回 {规则: [问题]}；空表示通过。引用错到渲染不出来时只报 refs。
+
+    part 给定时只查拆开的节拍表里的这一份：不查成品是否过期、不查工作与生活之比，打印这一份与预算的偏差。
+    strict 时与大纲的对照（plan）与预算偏差（budget，只在 part 时）也算不通过；否则只打印。
+    """
+    if part and not p.beats.is_dir():
+        raise SystemExit(f"--part 只用于拆开的节拍表（目录），{shown(p.beats)} 是单个文件")
+    doc, merged, cast = load_source(p, part)
     errors: dict[str, list[str]] = collections.defaultdict(list)
-    errors["refs"] += reference_errors(doc)
+    errors["parts"] += merged
+    errors["refs"] += reference_errors(doc, whole=part is None)
     try:
         events = render(doc)
     except (SystemExit, KeyError, TypeError, ValueError) as failed:
         errors["refs"].append(f"渲染失败：{failed}")
         return {rule: problems for rule, problems in errors.items() if problems}
     sources = [("渲染结果", events)]
-    if p.messages.exists():
+    if part is None and p.messages.exists():
         stored = json.loads(p.messages.read_text(encoding="utf-8"))["events"]
         sources.append(("messages.json", stored))
         if stored != events:
-            errors["stale"].append("messages.json 与 beats.json 的渲染结果不一致，先运行 render")
-    if p.frames.exists():
+            errors["stale"].append(f"messages.json 与 {source_name(p)} 的渲染结果不一致，先运行 render")
+    if part is None and p.frames.exists():
         scenario = json.loads(p.frames.read_text(encoding="utf-8"))
         framed = [e for f in scenario["frames"] for e in f["events"]]
         sources.append(("frames.json", framed))
@@ -817,18 +1096,32 @@ def check(p: SimpleNamespace, quiet: bool = False) -> dict[str, list[str]]:
             errors["length"].append(f"{key} 的标签「{item.get('title')}」应在 1–{LABEL_MAX} 字")
         if not item.get("short") or len(item["short"]) > SHORT_NAME_MAX:
             errors["length"].append(f"{key} 的短名「{item.get('short')}」应在 1–{SHORT_NAME_MAX} 字")
-    sides = side_counts(events)
-    if sides["ratio"] is None or not RATIO[0] <= sides["ratio"] <= RATIO[1]:
-        errors["ratio"].append(f"工作侧 {sides['work']} : 生活侧 {sides['life']} = {sides['ratio']}，应在 {RATIO[0]}–{RATIO[1]}")
+    if part is None:
+        sides = side_counts(events)
+        if sides["ratio"] is None or not RATIO[0] <= sides["ratio"] <= RATIO[1]:
+            errors["ratio"].append(f"工作侧 {sides['work']} : 生活侧 {sides['life']} = {sides['ratio']}，应在 {RATIO[0]}–{RATIO[1]}")
+    report = [] if part else [f"## 各渠道与第 5 节\n\n{channel_table(doc, events)}\n"]
+    if cast is not None:
+        plan = plan_errors(doc, cast, part)
+        if part:
+            table, over = budget_report(doc, events, cast, part)
+            report.append(table + "\n")
+            if strict:
+                errors["budget"] += over
+        report.append("## 与大纲的对照\n\n" + ("\n".join(f"- {x}" for x in plan) if plan else
+                                              "问题的登记与去向、事项的关注档都与 _cast.json 一致。")
+                      + ("\n\n（加 --strict 时这些算不通过）" if plan and not strict else "") + "\n")
+        if strict:
+            errors["plan"] += plan
     if not quiet:
-        print(f"## 各渠道与第 5 节\n\n{channel_table(doc, events)}\n")
+        print("\n".join(report))
     return {rule: problems for rule, problems in errors.items() if problems}
 
 
-def step_check(p: SimpleNamespace) -> None:
-    errors = check(p)
+def step_check(p: SimpleNamespace, part: str | None = None, strict: bool = False) -> None:
+    errors = check(p, part=part, strict=strict)
     if not errors:
-        print(f"检查通过：{shown(p.beats)}")
+        print(f"检查通过：{shown(p.beats)}" + (f" 的 {part}" if part else "") + ("（--strict）" if strict else ""))
         return
     print("检查未通过：", file=sys.stderr)
     for rule, problems in errors.items():
@@ -901,6 +1194,132 @@ MUTATIONS = (
      _beats(lambda d: next(c for c in d["channels"].values() if c.get("row") == "飞书 · 机器人").update(stream="family", project=None))),
 )
 
+# 小样例拆成四份时的归属：事项按线（I–N 归 home），渠道的噪音按所在的项目（家里与生活的归 home）。
+PART_NAMES = ("main-customer", "main-ops", "side", "home")
+SPLIT_LINES = {"A": "main-customer", "C": "main-customer", "B": "main-ops", "D": "main-ops", "E": "main-ops",
+               "F": "side", "G": "side", "H": "side"}
+SPLIT_NOISE = {"fs-bailu": "main-customer", "wx-mengjie": "main-customer", "phone": "main-customer", "fs-bot": "main-ops",
+               "gh-saydone": "side", "discord": "side"}
+
+
+def split_fixture(doc: dict, directory: Path) -> None:
+    """把单文件的小样例拆成 _cast.json 加四份；问题的计划帧、事项的档与预算都取小样例本身的实际值。"""
+    directory.mkdir(parents=True)
+    cast = {k: copy.deepcopy(v) for k, v in doc.items() if k not in PART_KEYS}
+    cast["parts"] = {name: {"noise_prefix": "N-"} for name in PART_NAMES}
+    for item in cast["items"].values():
+        item["part"] = SPLIT_LINES.get(item["line"], "home")
+    for key, channel in cast["channels"].items():
+        channel["noise_part"] = SPLIT_NOISE.get(key, "home")
+    seen, cast["asks"] = ask_frames(doc), {}
+    parts = {name: {"beats": [], "noise": []} for name in PART_NAMES}
+    owner = {}
+    for b in copy.deepcopy(doc["beats"]):
+        item = cast["items"][b["item"]]
+        item.setdefault("levels", {})[frame_label(doc, first_at(b).isoformat())] = b["level"]
+        if b.get("ask"):
+            got = seen[b["ask"]["id"]]
+            done = got["answered"] or got["void"]
+            how = "answered" if got["answered"] else "void" if got["void"] else "open"
+            cast["asks"][b["ask"]["id"]] = {"item": b["item"], "frame": got["registered"][0][0],
+                                            **{k: b["ask"][k] for k in ASK_FIELDS[1:] if k in b["ask"]},
+                                            "outcome": {"how": how, **({"frame": done[0][0]} if done else {})}}
+            b["ask"] = b["ask"]["id"]
+        owner[b["id"]] = item["part"]
+        parts[item["part"]]["beats"].append(b)
+    for g in copy.deepcopy(doc.get("noise", [])):
+        owner[g["id"]] = cast["channels"][g["messages"][0]["ch"]]["noise_part"]
+        parts[owner[g["id"]]]["noise"].append(g)
+    nframes = len(frame_bounds(window_meta(doc), 12))
+    row_of = {c["channel"]: c.get("row") or c["channel"] for c in cast["channels"].values()}
+    cast["budget"] = {name: {} for name in PART_NAMES}
+    for e in render(doc):
+        cell = cast["budget"][owner[e["origin"].split(":", 1)[1].rsplit(".", 1)[0]]].setdefault(
+            row_of[e["channel"]], {"n": [0] * nframes, "self": [0] * nframes})
+        index = int(frame_label(doc, e["at"])[1:]) - 1
+        cell["n"][index] += 1
+        cell["self"][index] += e["author_kind"] == "self"
+    for name, value in [(CAST_FILE.removesuffix(".json"), cast)] + list(parts.items()):
+        (directory / f"{name}.json").write_text(json.dumps(value, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+
+
+def _parts(change):
+    """改拆开的节拍表（键是文件名去掉 .json，_cast 是共用的那份），再重跑 render 与 build。"""
+    def apply(p: SimpleNamespace) -> None:
+        data = {f.stem: json.loads(f.read_text(encoding="utf-8")) for f in sorted(p.beats.glob("*.json"))}
+        change(data)
+        for name, value in data.items():
+            (p.beats / f"{name}.json").write_text(json.dumps(value, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        for step in (step_render, step_build):
+            try:
+                step(p)
+            except SystemExit:
+                break  # 合并不了时 render 拒绝写，留给 check 报出来
+    return apply
+
+
+def _move(kind: str, group_id: str, to: str):
+    def change(data: dict) -> None:
+        for name, part in data.items():
+            for g in list(part.get(kind, []) if name != "_cast" else []):
+                if g["id"] == group_id:
+                    part[kind].remove(g)
+                    data[to][kind].append(g)
+                    return
+        raise KeyError(group_id)
+    return change
+
+
+def _double_budget(part: str, row: str):
+    def change(data: dict) -> None:
+        cell = data["_cast"]["budget"][part][row]
+        cell["n"] = [2 * n + 1 for n in cell["n"]]
+    return change
+
+
+# 拆开的写法：(规则, 说明, 注入, 只查哪一份, 是否 --strict)
+SPLIT_MUTATIONS = (
+    ("parts", "saydone 的一拍写进 main-customer（事项归 side）", _parts(_move("beats", "F01", "main-customer")), None, False),
+    ("parts", "同上，只查 main-customer 这一份", _parts(_move("beats", "F01", "main-customer")), "main-customer", False),
+    ("parts", "监控告警的噪音组写进 home（这个渠道的噪音归 main-ops）", _parts(_move("noise", "N-alerts-01", "home")), None, False),
+    ("plan", "_cast.json 里 i2 的登记帧写成 f21（实际在 f22）",
+     _parts(lambda d: d["_cast"]["asks"]["i2"].__setitem__("frame", "f21")), None, True),
+    ("budget", "side 的预算把 GitHub 一行每帧改成 2n+1", _parts(_double_budget("side", "GitHub · saydone/saydone")), "side", True),
+)
+
+
+def selftest_split(beats: Path, tmp: Path, base: Path) -> None:
+    """同一份小样例拆成 _cast.json 加四份：成品与单文件逐字节相同，各份单独检查通过，归属、计划与预算的错误都报得出。"""
+    split = tmp / "split"
+    split.mkdir()
+    split_fixture(json.loads(beats.read_text(encoding="utf-8")), split / "beats")
+    q = paths(split, None)
+    for step in (step_render, step_build, step_labels, step_noise):
+        step(q)
+    clean = check(q, quiet=True, strict=True)
+    if clean:
+        raise SystemExit(f"拆开的小样例没通过检查：{clean}")
+    same = all((base / name).read_bytes() == (split / name).read_bytes() for name in ("messages.json", "frames.json"))
+    for name in PART_NAMES:
+        errors = check(q, quiet=True, part=name, strict=True)
+        if errors:
+            raise SystemExit(f"拆开的小样例 {name} 单独检查没通过：{errors}")
+    print(f"拆成 _cast.json 加 {len(PART_NAMES)} 份：检查通过（--strict，整份与逐份）；成品与单文件逐字节相同：{same}")
+    if not same:
+        raise SystemExit("拆开的节拍表合并后渲染的成品与单文件不同")
+    failed = []
+    for n, (rule, what, mutate, part, strict) in enumerate(SPLIT_MUTATIONS, 1):
+        work = tmp / f"s{n:02d}"
+        shutil.copytree(split, work)
+        r = paths(work, None)
+        mutate(r)
+        errors = check(r, quiet=True, part=part, strict=strict)
+        fired = rule in errors
+        print(f"  {'✓' if fired else '✗'} [{rule}] {what} → " + (errors[rule][0] if fired else f"没有报出；报了 {sorted(errors)}"))
+        failed += [] if fired else [rule]
+    if failed:
+        raise SystemExit(f"拆开的写法里这些规则没有在注入的错误上报出：{failed}")
+
 
 def selftest(beats: Path) -> None:
     global QUIET
@@ -938,21 +1357,30 @@ def selftest(beats: Path) -> None:
             failed += [] if fired else [rule]
         if failed:
             raise SystemExit(f"这些规则没有在注入的错误上报出：{failed}")
-        print(f"注入 {len(MUTATIONS)} 种错误，check 的 {len({r for r, _, _ in MUTATIONS})} 条规则都报出了。")
+        selftest_split(beats, Path(tmp), base)
+        rules = {r for r, _, _ in MUTATIONS} | {r for r, *_ in SPLIT_MUTATIONS}
+        print(f"注入 {len(MUTATIONS) + len(SPLIT_MUTATIONS)} 种错误，check 的 {len(rules)} 条规则都报出了。")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("command", choices=("render", "build", "labels", "noise", "check", "all", "selftest"))
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT, help="读写的目录，默认 corpus/founder")
-    parser.add_argument("--beats", type=Path, help="节拍表，默认 <root>/beats.json")
+    parser.add_argument("--beats", type=Path, help="节拍表：文件或拆开的目录，默认 <root>/beats/，没有就用 <root>/beats.json")
+    parser.add_argument("--part", help="check 只查拆开的节拍表里的这一份（如 home），并打印与预算的偏差")
+    parser.add_argument("--strict", action="store_true", help="check 时与大纲的对照与预算偏差也算不通过")
     args = parser.parse_args()
     if args.command == "selftest":
         selftest(args.beats or FIXTURE)
         return 0
+    if (args.part or args.strict) and args.command != "check":
+        parser.error("--part 与 --strict 只用于 check")
     p = paths(args.root, args.beats)
+    if args.command == "check":
+        step_check(p, args.part, args.strict)
+        return 0
     steps = {"render": [step_render], "build": [step_build], "labels": [step_labels], "noise": [step_noise],
-             "check": [step_check], "all": [step_render, step_build, step_labels, step_noise, step_check]}
+             "all": [step_render, step_build, step_labels, step_noise, step_check]}
     for step in steps[args.command]:
         step(p)
     return 0
