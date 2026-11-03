@@ -1345,7 +1345,9 @@ def stream_breakdown(records: list[dict], corpus: dict) -> dict | None:
 
     def streams(item: dict) -> list[str]:
         refs = [s.get("ref", "") for s in item.get("sources") or []]
-        for child in item.get("children") or []:
+        # children is a sub-layer {budget, used, items}; older states may carry a plain list.
+        children = item.get("children") or []
+        for child in children.get("items") or [] if isinstance(children, dict) else children:
             refs += [s.get("ref", "") for s in child.get("sources") or []]
         found = [stream_of.get(r[6:]) for r in refs if r.startswith("event:")]
         return [s for s in found if s] or ["none"]
