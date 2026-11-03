@@ -4,11 +4,11 @@
 
 **当前阶段：首切片阶段 1 已实现；本地存储、产品 CLI 与概览渲染器尚未实现。** 首切片是 US-01 单 Agent 本地闭环：Agent 声明、注意力分配、文字简报与批注往返，并提供可选的静态状态概览，辅助 Agent 理解 JSON。内存内核、文字简报与用例运行器已就位。
 
-阶段之外，到 2026-10-15 有三条并行工作：
+阶段之外，到 2026-11-04 有三条并行工作：
 
-- **判断与评测。** [skill/SKILL.md](skill/SKILL.md) 已改到第二版，做过五次真实模型评测：手写情境上两次逐帧对比作者编排（换过模型与 Harness），混合语料上三次从空状态自由运行两周；第二次语料里加入了作者编写的家庭流，默认演示数据就依据这一次，第三次用第一次的背景重跑含家庭流的语料，用来区分家庭流与背景的影响。结论与局限见[评测索引](docs/evaluations/README.md)。
-- **真实语料。** 从公开渠道收集带噪音的真实输入，拼成化名人物 Jonas 的两周，再加上作者编写的家庭往来，共 3217 条（家庭流 388 条）；前四条流用当事人后来的行为推出弱标注，家庭流的标注由作者写定，见[真实语料](corpus/README.md)。
-- **原型与形式。** 第二次自由运行的结果经人工打磨（修正逐条记录）成原型的默认演示数据；同一份状态有十二种表达形式，共用一套回应组件，见[交互原型](prototype/README.md)。另一套手写情境的输入与判断预先编排，可切换。演示不代表真实 Agent 已经稳定达到其中的判断质量。
+- **判断与评测。** [skill/SKILL.md](skill/SKILL.md) 已改到第二版，做过六次真实模型评测：手写情境上两次逐帧对比作者编排（换过模型与 Harness），混合语料 composite 上三次从空状态自由运行两周（第二、三次含作者编写的家庭流，用来区分家庭流与背景的影响），作者编写的 founder 语料上一次自由运行（2026-11-03），现在的默认演示数据依据这一次。结论与局限见[评测索引](docs/evaluations/README.md)。
+- **语料。** 默认的 [founder](corpus/founder/README.md) 是作者编写的创业者陆晨的两周：一家 7 人 AI 小公司的产品技术负责人，主线是第一个大客户九家店上线，工作与生活约 3 : 1，共 2532 条，人物与每一条消息都不来自真实的人，噪音的量照真实数据定，标注由作者写定。旧语料 [composite](corpus/composite/MIX.md) 是化名人物 Jonas 的两周，从公开渠道收集的真实输入化名改写后拼成，加上作者编写的家庭往来，共 3217 条，前四条流用当事人后来的行为推出弱标注。两份的来源与许可见[语料说明](corpus/README.md)。
+- **原型与形式。** founder 上那次自由运行的结果经人工打磨（修正逐条记录）成原型的默认演示数据；composite 的演示数据与一套预先编排的手写情境仍可切换（`?data=composite`、`?data=story`）。同一份状态有十二种表达形式，共用一套回应组件，见[交互原型](prototype/README.md)。演示不代表真实 Agent 已经稳定达到其中的判断质量。
 
 想先弄清为什么做这件事，从头读[为什么要做 Fold](docs/why.md)；精确规则以下面的规范为准。各处撞到、还没决定的问题集中在[决策记录的未决问题](docs/decisions.md#未决问题)。
 
@@ -62,16 +62,18 @@ flowchart LR
 | 文件 | 内容 |
 | --- | --- |
 | [skill/SKILL.md](skill/SKILL.md) | 给使用 Fold 的 Agent 的判断指引，第二版 |
-| [docs/evaluations/README.md](docs/evaluations/README.md) | 五份评测报告的索引：各是什么设置、一句话结论与费用 |
+| [docs/evaluations/README.md](docs/evaluations/README.md) | 六份评测报告的索引：各是什么设置、一句话结论与费用 |
 
-### 真实语料
+### 语料
 
 | 文件 | 内容 |
 | --- | --- |
-| [corpus/README.md](corpus/README.md) | 来源调查、许可与入库范围、重建方法、弱标注 |
-| [corpus/composite/MIX.md](corpus/composite/MIX.md) | 化名人物 Jonas 的设定、五条流的来源与改写规则（家庭流见 [family/README.md](corpus/composite/family/README.md)） |
-| [corpus/composite/NOISE.md](corpus/composite/NOISE.md) | 噪音画像，与工作单流和手写情境并排 |
-| [corpus/composite/LABELS.md](corpus/composite/LABELS.md) | 从后续行为推出的弱标注：规则、覆盖与局限 |
+| [corpus/README.md](corpus/README.md) | 各份语料的来源、许可与入库范围、重建方法、标注 |
+| [corpus/founder/README.md](corpus/founder/README.md) | 默认语料：作者编写的陆晨两周，规模、渠道、写法与检查（设计见 [OUTLINE.md](corpus/founder/OUTLINE.md)） |
+| [corpus/founder/NOISE.md](corpus/founder/NOISE.md)、[LABELS.md](corpus/founder/LABELS.md) | founder 的噪音画像（与真实语料实测并排）与作者标注 |
+| [corpus/composite/MIX.md](corpus/composite/MIX.md) | 旧语料：化名人物 Jonas 的设定、五条流的来源与改写规则（家庭流见 [family/README.md](corpus/composite/family/README.md)） |
+| [corpus/composite/NOISE.md](corpus/composite/NOISE.md) | composite 的噪音画像，与工作单流和手写情境并排 |
+| [corpus/composite/LABELS.md](corpus/composite/LABELS.md) | composite 从后续行为推出的弱标注：规则、覆盖与局限 |
 
 ### 原型与形式
 
@@ -79,8 +81,10 @@ flowchart LR
 | --- | --- |
 | [prototype/README.md](prototype/README.md) | 运行方式、演示数据、十二种形式的场景与入口 |
 | [prototype/forms/CONCEPTS.md](prototype/forms/CONCEPTS.md) | 两轮形式的概念卡与结论、状态里缺的信息、打磨记录索引 |
-| [prototype/data/composite/POLISH.md](prototype/data/composite/POLISH.md) | 第二次自由运行怎样打磨成演示数据：与第一次的差别、9 处修正与几类常见错误 |
-| [prototype/data/composite/SOURCES.md](prototype/data/composite/SOURCES.md) | 演示数据各流的来源、许可与公开之前要决定的事 |
+| [prototype/data/founder/POLISH.md](prototype/data/founder/POLISH.md) | 默认演示数据：founder 上的自由运行怎样打磨成演示，38 处修正（f02 空帧的连带修正与措辞）与没有改的判断分歧 |
+| [prototype/data/founder/SOURCES.md](prototype/data/founder/SOURCES.md) | founder 演示数据的来源：全部由作者编写，没有第三方内容 |
+| [prototype/data/composite/POLISH.md](prototype/data/composite/POLISH.md) | 旧演示数据：composite 第二次自由运行怎样打磨成演示，9 处修正与几类常见错误 |
+| [prototype/data/composite/SOURCES.md](prototype/data/composite/SOURCES.md) | composite 演示数据各流的来源、许可与已知的署名缺口 |
 
 ## 工作环境
 
@@ -99,7 +103,7 @@ make prototype        # 本地原型，http://127.0.0.1:4173
 
 ## 文档与原型体验站
 
-在线体验：[fold.vibecoding.icu](https://fold.vibecoding.icu/)。首页是一页入口：首屏把同一刻 Agent 读过的 3051 条铺成一片点，一扇窗随处境改形（骑车、桌前、复盘），窗里重新编码、没用到的原地暗下；往下是为什么这是新问题（一个软件的通知有尽头，Agent 看见的没有）、六种处境按带宽从窄到宽、一种编码的例子（把注意力切成固定的份数：一轮整理的三拍与一张能按的演示卡）、六种处境的原型（各一段循环录像）与其余原型的轮播，所有数字都来自演示回放的第 26 轮；第三轮入口页曾用 `npm run deploy:v2` 先发到 fold-v2.vibecoding.icu，2026-11-03 换到主域；规格、选型与验收见 [site/landing/spec.md](site/landing/spec.md)。顶部菜单的“全部原型”是全部原型（含第三轮的概念动画）的画册网格（顺序与[合页](prototype/all.html)相同），点卡片在当前页的弹框里载入那个原型，可直接逐帧回放与就地回应，也可另开新标签页。默认演示数据与站内截图含化名改写的真实公开文本，2026-10-15 用户决定照现状公开，来源、许可与已知的署名缺口见 [SOURCES.md](prototype/data/composite/SOURCES.md#公开与许可)。
+在线体验：[fold.vibecoding.icu](https://fold.vibecoding.icu/)。首页是一页入口：首屏把同一刻 Agent 读过的全部输入铺成一片点，一扇窗随处境改形（骑车、桌前、复盘），窗里重新编码、没用到的原地暗下；往下是为什么这是新问题（一个软件的通知有尽头，Agent 看见的没有）、六种处境按带宽从窄到宽、一种编码的例子（把注意力切成固定的份数：一轮整理的三拍与一张能按的演示卡）、六种处境的原型（各一段循环录像）与其余原型的轮播，演示部分的数字来自默认演示回放的同一刻（f22）；第三轮入口页曾用 `npm run deploy:v2` 先发到 fold-v2.vibecoding.icu，2026-11-03 换到主域；规格、选型与验收见 [site/landing/spec.md](site/landing/spec.md)。顶部菜单的“全部原型”是全部原型（含第三轮的概念动画）的画册网格（顺序与[合页](prototype/all.html)相同），点卡片在当前页的弹框里载入那个原型，可直接逐帧回放与就地回应，也可另开新标签页。默认演示数据 founder 的人物与消息都由作者编写，没有第三方内容，见 [SOURCES.md](prototype/data/founder/SOURCES.md)；旧演示数据 composite 含化名改写的真实公开文本，仍随站点发布、可切换，2026-10-15 用户决定照现状公开，来源、许可与已知的署名缺口见 [composite 的 SOURCES.md](prototype/data/composite/SOURCES.md#公开与许可)。
 
 体验站使用 VitePress 构建文档导航、中文搜索、公式和流程图，在 `/prototype/` 提供完整原型，在 `/docs/why` 提供从头读起的一篇（旧小册子的地址 `/docs/brief/` 跳到这里）。原始 Markdown 和原型代码仍是内容源；构建时生成站点文件。
 

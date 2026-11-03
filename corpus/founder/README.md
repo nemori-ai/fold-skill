@@ -143,5 +143,5 @@
 
 ## 下游
 
-- **评测。** `scripts/eval_judgment.py --free-run --corpus corpus/founder/frames.json` 把 `persona.language` 与 `streams` 原样交给 Agent，不加 composite 的瑞典语说明；与 `labels.json` 的 `authored` 一节对照，见[工作环境说明](../../docs/development.md#真实语料)。
+- **评测。** `scripts/eval_judgment.py --free-run --corpus corpus/founder/frames.json` 把 `persona.language` 与 `streams` 原样交给 Agent，不加 composite 的瑞典语说明；与 `labels.json` 的 `authored` 一节对照，见[工作环境说明](../../docs/development.md#语料)。
 - **演示数据。** `scripts/build_demo_data.py founder` 已按数据集分开设置（全部流保留非消息的 `kind`、透传结构化的通话与转账、收款记为来源处的动作），但还没有运行可以导入；`prototype/data/select.mjs` 也还没登记 founder。

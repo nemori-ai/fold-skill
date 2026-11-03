@@ -10,7 +10,7 @@
 
 首切片阶段 1（内存内核、文字简报与用例运行器）已实现，本地存储、CLI 与概览渲染器待实现。首切片是 US-01 单 Agent 本地闭环，范围与实施顺序见 [docs/decisions.md](docs/decisions.md)。后续以用户的新任务为准。
 
-阶段之外有三条并行工作，到 2026-10-15 的进展记在决策记录的实施顺序表末尾：判断评测（SKILL.md 第二版，五次真实模型评测，含家庭流的自由运行已跑两次、可区分家庭流与背景的影响，见[评测索引](docs/evaluations/README.md)）；真实语料（[corpus/](corpus/README.md)，原文只在本机重建）；演示数据与十二种表达形式（[prototype/](prototype/README.md)）。各处撞到的问题集中在[未决问题](docs/decisions.md#未决问题)，改写文本的公开许可与家庭流的做法都已于 2026-10-15 由用户决定：照现状公开（署名缺口记在 SOURCES.md）；家庭流参考真实数据仿写、不用真实内容。[为什么要做 Fold](docs/why.md)是给人从头读到尾的说明，不是规范出处。
+阶段之外有三条并行工作，到 2026-11-04 的进展记在决策记录的实施顺序表末尾：判断评测（SKILL.md 第二版，六次真实模型评测：composite 上三次自由运行、可区分家庭流与背景的影响，founder 上一次，见[评测索引](docs/evaluations/README.md)）；语料（[corpus/](corpus/README.md)：默认的 [founder](corpus/founder/README.md) 是作者编写的创业者陆晨的两周，节拍表与成品入库；旧的 composite 由化名改写的真实公开数据拼成，原文只在本机重建）；演示数据与十二种表达形式（[prototype/](prototype/README.md)，默认数据集 founder，composite 与手写情境可切换）。各处撞到的问题集中在[未决问题](docs/decisions.md#未决问题)。用户已决定的几件：composite 改写文本照现状公开（2026-10-15，署名缺口记在它的 SOURCES.md）；家庭流参考真实数据仿写、不用真实内容（2026-10-15）；演示数据换成作者编写的 founder，工作与生活约 3 : 1、有主线、家里只写平常事（2026-11-03，见[决策记录](docs/decisions.md#演示数据换成-founder)）。[为什么要做 Fold](docs/why.md)是给人从头读到尾的说明，不是规范出处。
 
 开始工作时读 [README.md](README.md) 和 [docs/decisions.md](docs/decisions.md)，再按任务读取对应规范。用 [conformance/cases](conformance/cases) 检验实现；运行器通过部分内存断言，不代表产品 CLI 已完成。
 
@@ -62,8 +62,10 @@ node scripts/export-all.mjs --out ~/Downloads/fold-prototypes.html  # 全部原�
 python3 scripts/eval_judgment.py --dry-run --frames f01     # 生成判断评测提示，不调用模型
 python3 scripts/eval_judgment.py --frames f01,f05 --report  # 用真实模型评测，产生调用费用
 python3 scripts/eval_judgment.py --runner codex --frames f01 --report  # 改用 codex exec（默认 gpt-6.1-sol），用登录账号的额度
-python3 scripts/eval_judgment.py --free-run --corpus corpus/composite/frames.json --dry-run  # 真实语料自由运行：先估算费用，去掉 --dry-run 才调用模型；frames.json 只在本机重建
-.venv/bin/python scripts/build_demo_data.py composite --report  # 由自由运行批次与 edits.json 重放出演示数据
+.venv/bin/python scripts/founder_corpus.py all  # founder 语料：由节拍表生成成品、帧（本机）、作者标注与噪音画像并检查，见 corpus/founder/README.md
+python3 scripts/eval_judgment.py --free-run --corpus corpus/founder/frames.json --dry-run  # 语料上的自由运行：先估算费用，去掉 --dry-run 才调用模型；frames.json 只在本机重建，composite 同理
+.venv/bin/python scripts/build_demo_data.py founder --report    # 由自由运行批次与 edits.json 重放出默认演示数据
+.venv/bin/python scripts/build_demo_data.py composite --report  # 旧演示数据 composite，同上
 node scripts/shoot-forms.mjs --base http://127.0.0.1:4173   # 原型各形式截图与报错检查（需先启动原型服务与本机 Chrome）
 .venv/bin/python scripts/build_corpus.py all curl-bagder    # 真实语料切帧与噪音统计；需要本机 raw/，先用 fetch_corpus.py 抓取，见 corpus/README.md
 ```
