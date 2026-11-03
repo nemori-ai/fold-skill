@@ -1,10 +1,11 @@
 // docs/why.md（为什么要做 Fold）的配图，写进 docs/assets/why/（webp）：
 // - d-*.webp 是示意图：按入口页“印着刻度的纸”的语言（纸白、墨黑、灰；朱红只给等他回应的），数据由演示回放现算
-//   （只读原型的 variants/shared.mjs 与 variants/inflow.mjs，数据集 composite），画成 SVG 后用本机 Chrome 截成 2 倍图；
-// - 其余是原型截图：从在跑的原型服务（make prototype，默认 http://127.0.0.1:4173）按固定视口与裁切重拍，停在 f22（8 月 14 日零点），
-//   推后那张在 f22 推后一件再前进一轮。开头那张 phone-f22 沿用上一版，不在这里重拍。
+//   （只读原型的 variants/shared.mjs 与 variants/inflow.mjs；在 Node 里没有 ?data=，读的是默认数据集 founder，陆晨的两周），
+//   画成 SVG 后用本机 Chrome 截成 2 倍图；
+// - 其余是原型截图：从在跑的原型服务（make prototype，默认 http://127.0.0.1:4173）按固定视口与裁切重拍，停在 f22（9 月 18 日零点），
+//   推后那张在 f22 把一件推到 18:00 再前进一轮。开头那张 phone-f22 是手机首页（D）的第一屏，也在这里重拍。
 // 最后用 cwebp 转成 webp。图的宽高写在 docs/why.md 的 <img width height> 里，换图后核对；node scripts/check-why.mjs 会查数量与死文件。
-// 示意图里的文字（例子、标签）是照这份数据写的，演示数据改了要对着正文一起核对。
+// 示意图里的文字（例子、标签）是照这份数据写的，演示数据改了要对着正文一起核对；用到的数会打印出来，方便对照正文。
 //
 //   node scripts/why-figures.mjs                    # 全部重做（需要原型服务、本机 Chrome 与 cwebp）
 //   node scripts/why-figures.mjs --drawings         # 只画示意图，不需要原型服务
@@ -32,8 +33,12 @@ const { scenario, records, currentAsk } = await load('variants/shared.mjs?v=feed
 const { inputsOf } = await load('variants/inflow.mjs');
 const frames = scenario.frames;
 const FRAME = 22;
-const channelOf = e => String(e.channel || e.stream).split(' · ')[0];
+// The phone's headline at f22 (variants/d-view.mjs: open questions not yet answered); phone-f22 shows the same number.
+const PHONE_WAITING = 7;
 const rootOf = k => [...records[k].state.root.items].sort((a, b) => a.rank - b.rank).map(it => ({ id: it.id, share: it.share }));
+const askOf = (k, id) => currentAsk({ index: k, state: records[k].state }, id);
+// Month/day on the replay's clock, for the axes: "9/7".
+const monthDay = t => new Intl.DateTimeFormat('en-US', { timeZone: scenario.timeZone || 'Asia/Shanghai', month: 'numeric', day: 'numeric' }).format(new Date(t));
 const streamOf = {}; // item → the stream most of its inputs came from
 {
   const feed = {};
@@ -44,24 +49,38 @@ const asks = new Map();
 for (const f of frames) for (const a of Object.values(f.asks || {})) asks.set(a.id, a);
 const d = {
   total: frames.reduce((n, f) => n + f.events.length, 0),
-  sources: new Set(frames.flatMap(f => f.events.map(channelOf))).size,
+  channels: new Set(frames.flatMap(f => f.events.map(e => e.channel))).size,
   streamsTotal: frames.flatMap(f => f.events).reduce((n, e) => ({ ...n, [e.stream]: (n[e.stream] || 0) + 1 }), {}),
-  // Questions registered over the two weeks, and how many belong to a family item.
-  askFamily: [[...asks.values()].filter(a => streamOf[a.item] === 'family').length, asks.size],
+  // Questions registered over the two weeks, and how many belong to an item fed mostly by family or life.
+  askHome: [[...asks.values()].filter(a => ['family', 'life'].includes(streamOf[a.item])).length, asks.size],
   // [hours since frames[0].at, channel] for every input: the app rows of d-notifications.
-  stamps: frames.flatMap(f => f.events.map(e => [(Date.parse(e.at) - Date.parse(frames[0].at)) / 3600000, channelOf(e)])),
+  stamps: frames.flatMap(f => f.events.map(e => [(Date.parse(e.at) - Date.parse(frames[0].at)) / 3600000, e.channel])),
+  // The first and last day of the two weeks, for the axes.
+  days: [monthDay(frames[1].signal?.window?.from || frames[0].at), monthDay(Date.parse(frames.at(-1).at) - 1)],
   // One column per round, a digit per input: 0 not used, 1 used, 2 fed an item that had a question for him that round.
   fieldAll: frames.slice(1).map((f, j) => { const k = j + 1, st = records[k].state; return inputsOf(k, null).list.map(g => (!g.target ? 0 : currentAsk({ index: k, state: st }, g.target) ? 2 : 1)).join(''); }),
   // Root shares per round in rank order: [share, has a question, id].
   review: records.slice(1).map((r, j) => [...r.state.root.items].sort((a, b) => a.rank - b.rank).map(it => [it.share, currentAsk({ index: j + 1, state: r.state }, it.id) ? 1 : 0, it.id])),
   perFrame: frames.map(f => ({ n: f.events.length, s: f.events.reduce((n, e) => ({ ...n, [e.stream]: (n[e.stream] || 0) + 1 }), {}) })),
-  f22: (() => {
+  half: (() => {
     const f = frames[FRAME], from = Date.parse(f.signal.window.from);
     return { n: f.events.length, half: inputsOf(FRAME, null).list.map(g => ({ m: Math.round((Date.parse(f.events[g.k].at) - from) / 60000), stream: f.events[g.k].stream, disp: g.disp, target: g.target || null })) };
   })(),
-  // The two misjudged rounds as published (after the edits in prototype/data/composite/POLISH.md).
-  f20: rootOf(20), f24: rootOf(24),
+  // The two weights that differ from the author (prototype/data/founder/POLISH.md「没有改的判断分歧」): the dog's vaccine at f22,
+  // and the routine certificate reminder at f01, still on the page at f10.
+  r22: rootOf(FRAME), r01: rootOf(1), r10: rootOf(10),
+  // This moment: root items, open questions, and the watch's count (open questions due within a day, or weighted critical / high:
+  // prototype/forms/watch.mjs isUrgent).
+  now: (() => {
+    const k = FRAME, at = Date.parse(frames[k].at), items = records[k].state.root.items;
+    const open = items.filter(it => askOf(k, it.id));
+    const urgent = open.filter(it => { const due = Date.parse(askOf(k, it.id).due_at || it.due_at || ''); return (Number.isFinite(due) && due - at < 86400000) || ['critical', 'high'].includes(it.weight); });
+    return { items: items.length, asks: open.length, urgent: urgent.length };
+  })(),
 };
+
+console.log(`演示回放：${d.total} 条、${d.channels} 个渠道；f22 收到 ${d.half.n} 条，根层 ${d.now.items} 件、开着的问题 ${d.now.asks} 个、要紧 ${d.now.urgent} 件；`
+  + `两周登记问题 ${d.askHome[1]} 个，家里和生活 ${d.askHome[0]} 个；家里和生活的输入 ${d.streamsTotal.family + d.streamsTotal.life} 条`);
 
 // ---------- the drawings ----------
 const drawings = new Map();
@@ -115,12 +134,13 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
 {
   let s = '';
   s += T(0, 12, '以前 · 每个 App 只管自己的事', 'm');
-  const apps = [['幼儿园的 App', 'Förskoleappen'], ['银行的 App', 'Bankappen'], ['学校的 App', 'Skolappen'], ['天气提醒', '天气']];
+  // Each row is one sender with an end: the channels whose name starts with one of the prefixes.
+  const apps = [['学校的通知', ['家校通知']], ['银行', ['短信 · 云杉银行']], ['宠物医院', ['短信 · 禾木宠物医院', '微信 · 禾木宠物医院']], ['携程', ['携程']]];
   const x0 = 92, x1 = 392, span = 336;
   const X = h => x0 + (Math.max(0, Math.min(span, h)) / span) * (x1 - x0);
   let y = 30;
-  for (const [cn, key] of apps) {
-    const hits = d.stamps.filter(st => st[1] === key);
+  for (const [cn, keys] of apps) {
+    const hits = d.stamps.filter(st => keys.some(key => st[1].startsWith(key)));
     s += T(0, y + 13, cn, 't');
     s += L(x0, y + 16, x1, y + 16, 'lr');
     for (const [h] of hits) s += R(X(h) - 0.8, y + 3, 1.6, 13, 'ink2');
@@ -130,7 +150,7 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
   y += 18;
   s += L(0, y - 8, W, y - 8, 'lr');
   s += T(0, y + 12, '现在 · Agent 替你看着全部', 'm');
-  s += T(W, y + 12, `${d.total} 条 · ${d.sources} 个来源`, 'm', 'text-anchor="end"');
+  s += T(W, y + 12, `${d.total} 条 · ${d.channels} 个渠道`, 'm', 'text-anchor="end"');
   y += 24;
   // The field: one column per half day, one dot per input, arrival order bottom-up.
   const cols = d.fieldAll, n = cols.length, pitch = W / n, per = 5, dot = 2.1, step = 2.62;
@@ -144,12 +164,12 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
     });
   });
   y = fy + fh + 14;
-  s += T(0, y, '8/3', 'm3'); s += T(W / 2, y, '每半天一列 · 一点一条', 'm3', 'text-anchor="middle"'); s += T(W, y, '8/17', 'm3', 'text-anchor="end"');
+  s += T(0, y, d.days[0], 'm3'); s += T(W / 2, y, '每半天一列 · 一点一条', 'm3', 'text-anchor="middle"'); s += T(W, y, d.days[1], 'm3', 'text-anchor="end"');
   y += 22;
   // The window: what one glance holds.
   const cx = W - 36, cy = y + 34, rr = 32;
   s += `<circle cx="${cx}" cy="${cy}" r="${rr}" class="ln15" style="fill: var(--paper-2)"/>`;
-  s += T(cx, cy + 4, '2', 'serif', `text-anchor="middle" style="font-size:30px"`);
+  s += T(cx, cy + 4, String(d.now.urgent), 'serif', `text-anchor="middle" style="font-size:30px"`);
   s += T(cx, cy + 20, '件要紧', 'sm', 'text-anchor="middle" style="fill: var(--ver)"');
   s += T(0, cy - 8, '你在某一刻看得过来的：', 't');
   s += T(0, cy + 12, '抬腕看一眼，只有这么一小块。', 't');
@@ -163,20 +183,21 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
   page('d-notifications', y + 16, s);
 }
 
-// ---------- 02 half a day: 172 lines, two things ----------
+// ---------- 02 half a day: 169 lines, two things ----------
 {
   let s = '';
-  const f = d.f22, x0 = 44, x1 = W, X = m => x0 + (m / 720) * (x1 - x0);
-  s += T(0, 11, '8 月 13 日 中午 → 半夜', 'm');
+  const f = d.half, x0 = 44, x1 = W, X = m => x0 + (m / 720) * (x1 - x0);
+  s += T(0, 11, '9 月 17 日 中午 → 半夜', 'm');
   s += T(W, 11, `${f.n} 条`, 'm', 'text-anchor="end"');
   const lanes = ['work', 'community', 'subscription', 'life', 'family'];
-  const lh = 30, top = 24;
+  // The customer's inputs are all in the work lane (bracket above it), the dog's in the family lane (bracket below it).
+  const lh = 30, top = 58;
   lanes.forEach((st, i) => {
     const y = top + i * lh;
     s += T(0, y + 19, STREAM_CN[st], 't');
     s += L(x0, y + lh - 4, x1, y + lh - 4, 'lr');
   });
-  const two = new Set(['smilla-vet', 'mamma-stambyte']);
+  const CUSTOMER = 'tinglan-outage', DOG = 'tudou-ear', two = new Set([CUSTOMER, DOG]);
   const order = h => (two.has(h.target) ? 3 : h.target ? 2 : h.disp === 'noise' ? 0 : 1);
   for (const h of [...f.half].sort((a, b) => order(a) - order(b))) {
     const i = lanes.indexOf(h.stream), base = top + i * lh + lh - 4, x = X(h.m);
@@ -185,15 +206,13 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
     else if (h.disp === 'noise') s += R(x - 0.75, base - 4, 1.5, 4, 'fold');
     else s += R(x - 0.75, base - 16, 1.5, 16, 'ink3');
   }
-  // Brackets under the lanes for the two things.
+  const span = id => { const ms = f.half.filter(h => h.target === id).map(h => h.m); return [Math.min(...ms), Math.max(...ms)]; };
+  const label = (x, y, text) => T(x, y, text, 't', 'text-anchor="middle" style="fill: var(--ver); font-weight: 600"');
+  { const [a, b] = span(CUSTOMER), y = top - 10; // legs point down to the work lane
+    s += L(X(a), y, X(a), y + 6, 'lv') + L(X(a), y, X(b), y, 'lv') + L(X(b), y, X(b), y + 6, 'lv') + label((X(a) + X(b)) / 2, y - 9, '明早见客户：转接答不答应'); }
   const by = top + lanes.length * lh + 6;
-  const ms = f.half.filter(h => h.target === 'mamma-stambyte').map(h => h.m), cs = f.half.filter(h => h.target === 'smilla-vet').map(h => h.m);
-  const bracket = (a, b, label) => `${L(X(a), by, X(a), by + 6, 'lv')}${L(X(a), by + 6, X(b), by + 6, 'lv')}${L(X(b), by, X(b), by + 6, 'lv')}${T((X(a) + X(b)) / 2, by + 22, label, 't', 'text-anchor="middle" style="fill: var(--ver); font-weight: 600"')}`;
-  s += bracket(Math.min(...ms), Math.max(...ms), '母亲那六周住哪');
-  s += bracket(Math.min(...cs), Math.max(...cs), '猫的药量');
-  // The life-lane tick that belongs to the cat: a thin line down to its bracket.
-  const lifeCat = f.half.find(h => h.target === 'smilla-vet' && h.stream === 'life');
-  if (lifeCat) s += L(X(lifeCat.m), top + 4 * lh - 4, X(lifeCat.m), by, 'lv', 'stroke-width="0.8" stroke-dasharray="2 2"');
+  { const [a, b] = span(DOG); // legs point up to the family lane
+    s += L(X(a), by, X(a), by + 6, 'lv') + L(X(a), by + 6, X(b), by + 6, 'lv') + L(X(b), by, X(b), by + 6, 'lv') + label((X(a) + X(b)) / 2, by + 22, '明早狗打疫苗：谁带去'); }
   const ay = by + 44;
   for (const [m, lab] of [[0, '12:00'], [180, '15:00'], [360, '18:00'], [540, '21:00'], [720, '24:00']]) {
     s += L(X(m), ay - 12, X(m), ay - 8, 'l3');
@@ -203,38 +222,48 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
   s += R(0, ly - 10, 1.5, 12, 'ink') + T(7, ly, '用上', 'sm');
   s += R(46, ly - 10, 1.5, 12, 'ink3') + T(53, ly, '先放下', 'sm');
   s += R(104, ly - 3, 1.5, 4, 'fold') + T(111, ly, '噪音', 'sm');
-  s += R(150, ly - 12, 2.4, 14, 'ver') + T(158, ly, '跟那两件急事有关的几条', 'sm');
+  s += R(150, ly - 12, 2.4, 14, 'ver') + T(158, ly, '跟那两件事有关的', 'sm');
   page('d-half-day', ly + 4, s);
 }
 
-// ---------- 03 the front page of 8/14 00:00 ----------
+// ---------- 03 the front page of 9/18 00:00 ----------
+// The 8 × 8 grid follows the shares of f22 (d.r22): 24 at the top left, four 6s at the top right, two 3s and ten 1s below.
 {
   let s = '';
   s += L(0, 1, W, 1, 'ln', 'stroke-width="2"');
   s += L(0, 5, W, 5, 'ln', 'stroke-width="0.75"');
-  s += T(W / 2, 36, 'Jonas 的头版', 'serif', 'text-anchor="middle" style="font-size:24px"');
-  s += T(0, 56, '8 月 14 日 周五 · 零点', 'm');
-  s += T(W, 56, '11 件 · 5 件等你', 'm', 'text-anchor="end"');
+  s += T(W / 2, 36, `${scenario.persona?.short || '他'}的头版`, 'serif', 'text-anchor="middle" style="font-size:24px"');
+  s += T(0, 56, '9 月 18 日 周五 · 零点', 'm');
+  s += T(W, 56, `${d.now.items} 件 · ${d.now.asks} 件等你`, 'm', 'text-anchor="end"');
   const gy = 64, cw = W / 8, ch = 44;
   s += L(0, gy, W, gy, 'ln');
   const box = (c, r, w, h) => [c * cw, gy + r * ch, w * cw, h * ch];
   const frame = (c, r, w, h) => { const [x, y, ww, hh] = box(c, r, w, h); return R(x, y, ww, hh, 'lr', 'style="fill:none"'); };
-  // Lead stories.
-  const lead = (c, kick, head, body) => {
-    const [x, y] = box(c, 0, 4, 6); let o = frame(c, 0, 4, 6);
-    o += T(x + 12, y + 22, kick, 'mv');
-    head.forEach((ln, i) => { o += T(x + 12, y + 50 + i * 25, ln, 'serif', 'style="font-size:18px"'); });
-    body.forEach((ln, i) => { o += T(x + 12, y + 56 + head.length * 25 + 6 + i * 19, ln, 's'); });
-    o += T(x + 4 * cw - 10, y + 6 * ch - 10, '24 份', 'm3', 'text-anchor="end"');
-    return o;
-  };
-  s += lead(0, '● 等你选 · 今晚截止', ['母亲楼里换水管，', '那六周住哪？'], ['今天 23:59 前要答复：', '住我们家、去临时公寓，', '还是各住一段。', '昨晚已经通过电话。']);
-  s += lead(4, '● 等你选 · 八点前', ['猫可能多吃了药：', '打给诊所，', '还是先观察？'], ['一天约 7 毫克每公斤，', '有说法超过 5 就可能失明。', '伴侣要你八点整打。']);
-  // Second row.
-  { const [x, y] = box(0, 6, 3, 2); s += frame(0, 6, 3, 2); s += T(x + 12, y + 20, '● 等你批准', 'mv'); s += T(x + 12, y + 44, '同事修好一个漏洞，', 'serif', 'style="font-size:14.5px"'); s += T(x + 12, y + 64, '等你评审', 'serif', 'style="font-size:14.5px"'); s += T(x + 3 * cw - 8, y + 2 * ch - 8, '6 份', 'm3', 'text-anchor="end"'); }
-  { const [x, y] = box(3, 6, 3, 1); s += frame(3, 6, 3, 1); s += T(x + 10, y + 17, '● 等你去做', 'mv'); s += T(x + 10, y + 35, '儿子退烧了，记得报护理假', 's', 'style="font-size:11.5px; fill: var(--ink)"'); }
-  const briefs = [[6, 6, ['开学', '同意书'], true], [7, 6, ['女儿的', '漫画'], false], [3, 7, ['车道', '潮湿'], false], [4, 7, ['测试', '仍没过'], false], [5, 7, ['漏洞', '补丁'], false], [6, 7, ['新车', '刹车'], false], [7, 7, ['测试版', '已发'], false]];
-  for (const [c, r, lines, ask] of briefs) {
+  // The lead story: 4 × 6.
+  { const [x, y] = box(0, 0, 4, 6); s += frame(0, 0, 4, 6);
+    s += T(x + 12, y + 22, '● 等你选 · 明早十点', 'mv');
+    ['明早见客户：', '国庆前能不能答应', '把电话转到店里？'].forEach((ln, i) => { s += T(x + 12, y + 50 + i * 25, ln, 'serif', 'style="font-size:18px"'); });
+    ['周三晚有一阵电话没接起来，', '客户要个准话。', '转接要做四个工作日，', '九点先和合伙人对一下。'].forEach((ln, i) => { s += T(x + 12, y + 56 + 3 * 25 + 6 + i * 19, ln, 's'); });
+    s += T(x + 4 * cw - 10, y + 6 * ch - 10, '24 份', 'm3', 'text-anchor="end"'); }
+  // Four 6s: 2 × 3 each, in rank order.
+  const sixes = [[4, 0, '● 等你签 · 7:50', ['女儿的', '秋游回执']], [6, 0, '● 等你选 · 中午', ['赞助商要', '上台 15 分钟']],
+    [4, 3, '● 等你选', ['开源库的', '新版本', '周五发吗']], [6, 3, '● 等你选 · 9:30', ['狗打疫苗，', '谁带去？']]];
+  for (const [c, r, kick, head] of sixes) {
+    const [x, y] = box(c, r, 2, 3); s += frame(c, r, 2, 3);
+    s += T(x + 10, y + 20, kick, 'mv', 'style="font-size:11px"');
+    head.forEach((ln, i) => { s += T(x + 10, y + 44 + i * 20, ln, 'serif', 'style="font-size:14.5px"'); });
+    s += T(x + 2 * cw - 8, y + 3 * ch - 8, '6 份', 'm3', 'text-anchor="end"');
+  }
+  // Two 3s, no question registered on either.
+  for (const [c, text] of [[0, '海外公司问付费支持'], [3, '九家店两天接起 401 通']]) {
+    const [x, y] = box(c, 6, 3, 1); s += frame(c, 6, 3, 1);
+    s += T(x + 10, y + 19, text, 's', 'style="font-size:12.5px; fill: var(--ink)"');
+    s += T(x + 3 * cw - 8, y + ch - 7, '3 份', 'm3', 'text-anchor="end"');
+  }
+  // Ten 1s; the two with a question carry the dot.
+  const ones = [[6, 6, ['深圳', '请演讲'], true], [7, 6, ['模型', '涨价'], true], [0, 7, ['开放日', '接龙'], false], [1, 7, ['小店', '接通率'], false],
+    [2, 7, ['快递', '待取'], false], [3, 7, ['报销', '待批'], false], [4, 7, ['物业费'], false], [5, 7, ['小店', '发票'], false], [6, 7, ['证书', '续期'], false], [7, 7, ['爸的', '付款码'], false]];
+  for (const [c, r, lines, ask] of ones) {
     const [x, y] = box(c, r, 1, 1); s += frame(c, r, 1, 1);
     lines.forEach((ln, i) => { s += T(x + 7 + (ask && i === 0 ? 8 : 0), y + 18 + i * 15, ln, 'sm', `style="fill: var(--ink)"`); });
     if (ask) s += `<circle cx="${x + 10}" cy="${y + 14}" r="2.6" class="ver"/>`;
@@ -272,7 +301,7 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
   s += fill(fixed, xs[2]) + R(xs[2], top, pw, pw, 'ln15');
   // arrows
   for (const ax of [xs[0] + pw + 26, xs[1] + pw + 26]) s += `<path d="M${ax} ${top + pw / 2} h26 m-6 -5 l6 5 l-6 5" class="ln"/>`;
-  const labels = [['它交上来：', '评审放大一倍，', '超出版面 6 份'], ['规则只检查：', '一份也不替它挪，', '写明超了多少'], ['它自己定：', '撤下 6 件小事，', '再交，收下']];
+  const labels = [['它交上来：', '新版本放大一倍，', '超出版面 6 份'], ['规则只检查：', '一份也不替它挪，', '写明超了多少'], ['它自己定：', '撤下 6 件小事，', '再交，收下']];
   labels.forEach((ls, i) => ls.forEach((ln, j) => { s += T(xs[i], top + pw + 22 + j * 18, ln, j ? 's' : 't', j ? '' : 'style="font-weight:600"'); }));
   const ly = top + pw + 22 + 3 * 18 + 8;
   s += R(0, ly - 9, 9, 9, 'versoft') + T(13, ly, '等他回应的', 'sm');
@@ -285,7 +314,7 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
 // ---------- 04 two weeks, five streams ----------
 {
   let s = '';
-  const streams = [['family', '家里', '伴侣、孩子、母亲、邻居，照真实的语气写成', 'ink'], ['life', '生活', '生活问答站上的真实提问', 'ink2'], ['work', '工作', '一位开源维护者两周的公开往来', 'ink3'], ['community', '社区', '一个自然观察论坛', 'agent'], ['subscription', '订阅', '周刊、天气提醒', 'rulef']];
+  const streams = [['family', '家里', '妻子、孩子、父母、学校、宠物医院', 'ink'], ['life', '生活', '快递、银行、物业、订单与出行', 'ink2'], ['work', '工作', '公司和客户，开源库与聚会', 'ink3'], ['community', '社区', '开源库的用户、同行群、聚会大群', 'agent'], ['subscription', '订阅', '订阅号、周刊、App 推送', 'rulef']];
   streams.forEach(([key, cn, desc, cls], i) => {
     const y = i * 21;
     s += R(0, y + 3, 10, 10, cls) + T(16, y + 12, cn, 't', 'style="font-weight:600"') + T(48, y + 12, desc, 's');
@@ -299,75 +328,83 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
   });
   s += L(0, top + ch + 0.5, W, top + ch + 0.5, 'ln');
   const ay = top + ch + 15;
-  s += T(0, ay, '8/3', 'm3'); s += T(W / 2, ay, '每半天一列', 'm3', 'text-anchor="middle"'); s += T(W, ay, '8/17', 'm3', 'text-anchor="end"');
-  // Composition: what comes in, against what asks him.
-  const fam = d.streamsTotal.family / d.total, askShare = d.askFamily[0] / d.askFamily[1];
+  s += T(0, ay, d.days[0], 'm3'); s += T(W / 2, ay, '每半天一列', 'm3', 'text-anchor="middle"'); s += T(W, ay, d.days[1], 'm3', 'text-anchor="end"');
+  // Composition: what comes in, against what asks him. Home = family + life.
+  const home = (d.streamsTotal.family + d.streamsTotal.life) / d.total, askShare = d.askHome[0] / d.askHome[1];
   const by = ay + 26, bx = 116, bw2 = W - bx;
   const bar = (y, label, share, note) => `${T(0, y + 11, label, 't')}${R(bx, y, bw2 * share, 14, 'ink')}${R(bx + bw2 * share, y, bw2 * (1 - share), 14, 'agent')}${T(bx + bw2 * share + 6, y + 11, note, 'sm', 'style="fill: var(--ink)"')}`;
-  s += bar(by, '进来的消息', fam, '家里约占八分之一');
-  s += bar(by + 26, '要他回答的问题', askShare, '家里占一半');
+  s += bar(by, '进来的消息', home, '家里和生活约占五分之一');
+  s += bar(by + 26, '要他回答的问题', askShare, '家里和生活占一半');
   page('d-two-weeks', by + 26 + 16, s);
 }
 
-// ---------- 05 three runs ----------
+// ---------- 05 one run ----------
+// The run behind the demo (free-20261103-225347, prototype/data/founder/POLISH.md): 28 rounds all accepted, round 2 nearly blank;
+// against the author's ignore labels, precision 0.945 and recall 0.553.
 {
   let s = '';
   s += T(0, 12, '从一张白纸开始，每半天整理一次，连跑两周', 't', 'style="font-weight:600"');
-  const runs = [['第一遍', 4], ['第二遍', 3], ['第三遍', 3]];
-  const x0 = 54, sq = 11.2, gap = 2.6, top = 30;
-  runs.forEach(([name, again], i) => {
-    const y = top + i * 22;
-    s += T(0, y + 10, name, 't');
-    for (let k = 0; k < 28; k += 1) s += R(x0 + k * (sq + gap), y, sq, sq, 'ink');
-  });
-  let y = top + 3 * 22 + 12;
-  s += T(0, y, '每一轮都交上了一份合规的头版。', 's');
-  s += T(0, y + 18, '偶尔第一次超了字数，看到退回的说明，下一次就改对了。', 's');
-  y += 46;
+  const x0 = 0, sq = 12.6, gap = 3.1, top = 30, BLANK = 1;
+  for (let k = 0; k < 28; k += 1) s += k === BLANK ? R(x0 + k * (sq + gap) + 0.75, top + 0.75, sq - 1.5, sq - 1.5, '', 'style="fill: var(--paper-2); stroke: var(--ink); stroke-width: 1.5"') : R(x0 + k * (sq + gap), top, sq, sq, 'ink');
+  { const bx = x0 + BLANK * (sq + gap) + sq / 2; s += L(bx, top + sq + 4, bx, top + sq + 14, 'l3') + T(bx - 4, top + sq + 28, '第 2 轮：几乎白卷，也收下了', 'sm'); }
+  let y = top + sq + 52;
+  s += T(0, y, '28 轮都交上了一份合规的头版，一次也没被退回。', 's');
+  y += 28;
   s += L(0, y, W, y, 'lr');
   y += 24;
+  const dots = (yy, full, half, note, sub) => {
+    let o = '';
+    for (let k = 0; k < 10; k += 1) {
+      const cx = 12 + k * 26, cy = yy + 12;
+      if (k < full) o += `<circle cx="${cx}" cy="${cy}" r="9" class="ink"/>`;
+      else { o += `<circle cx="${cx}" cy="${cy}" r="9" style="fill: var(--paper-2); stroke: var(--ink); stroke-width: 1.5"/>`;
+        if (k === full && half) o += `<path d="M${cx} ${cy - 9} a9 9 0 0 0 0 18 z" class="ink"/>`; }
+    }
+    return o + T(274, yy + 8, note, 'sm', 'style="fill: var(--ink)"') + T(274, yy + 24, sub, 'sm');
+  };
   s += T(0, y, '它判成噪音的，十条里：', 't', 'style="font-weight:600"');
-  y += 18;
-  for (let k = 0; k < 10; k += 1) s += `<circle cx="${12 + k * 26}" cy="${y + 12}" r="9" class="${k < 9 ? 'ink' : ''}" ${k < 9 ? '' : 'style="fill: var(--paper-2); stroke: var(--ink); stroke-width: 1.5"'}/>`;
-  s += T(274, y + 8, '九条，他后来确实没理会', 'sm', 'style="fill: var(--ink)"');
-  s += T(274, y + 24, '一条，后来又理了', 'sm');
-  page('d-runs', y + 26, s);
+  s += dots(y + 18, 9, true, '九条多，作者也判成噪音', '剩下不到一条，作者没当噪音');
+  y += 70;
+  s += T(0, y, '作者判成噪音的，十条里：', 't', 'style="font-weight:600"');
+  s += dots(y + 18, 5, true, '五条多，它也认了出来', '其余的，它大多留了下来');
+  page('d-runs', y + 44, s);
 }
 
-// ---------- 06 two mistakes ----------
+// ---------- 06 two weights ----------
+// Both are left as the Agent gave them (POLISH.md「没有改的判断分歧」): the dog's vaccine at f22 (author: high, i.e. 12),
+// and the routine certificate reminder, 12 in round 1 and still 3 in round 10 (author: routine, nothing to show).
 {
   let s = '';
   const x0 = 50, rw = W - x0, cw = rw / 64, rh = 16;
-  const ruler = (y, shares, hi, note, noteCls = 'sm') => {
+  const ruler = (y, shares, hi, note, { only = false } = {}) => {
     let o = '', x = x0;
-    for (const [sh, id] of shares) { o += R(x + 0.5, y + 0.5, sh * cw - 1, rh - 1, id === hi ? 'ink' : 'agent'); x += sh * cw; }
+    shares.forEach(([sh, id], i) => { if (!only || id === hi || i === 0) o += R(x + 0.5, y + 0.5, sh * cw - 1, rh - 1, id === hi ? 'ink' : 'agent'); x += sh * cw; });
     o += R(x0, y, rw, rh, 'ln');
     for (let k = 0; k <= 64; k += 8) o += L(x0 + k * cw, y + rh, x0 + k * cw, y + rh + 4, 'l3');
-    o += T(x0, y + rh + 17, note, noteCls, 'style="fill: var(--ink)"');
+    o += T(x0, y + rh + 17, note, 'sm', 'style="fill: var(--ink)"');
     return o;
   };
   const byRank = rows => rows.map(r => [r.share, r.id]);
-  // Case A, f20: the Agent gave the boy 1 share at the tail; the edit made it 3 and dropped one 1-share item.
-  const a20 = byRank(d.f20);
-  const aGiven = [...a20.filter(([, id]) => id !== 'ture-pickup-0812'), [1, 'benchmark'], [1, 'ture-pickup-0812']];
-  const aFixed = a20;
+  // Case A, f22: the dog got 6, level with the receipt, the sponsor and the release; the author's level is one step up.
+  const a22 = byRank(d.r22), DOG = 'tudou-ear';
   let y = 0;
-  s += T(0, y + 14, '儿子发烧，伴侣在手术室走不开', 'b');
+  s += T(0, y + 14, '妻子出差回不来，狗明早九点半打疫苗', 'b');
   y += 26;
-  s += T(0, y + 12, '它给的', 's') + ruler(y, aGiven, 'ture-pickup-0812', '只有 1 份，排在最后；手机首页会把它收进“其余”里');
+  s += T(0, y + 12, '它给的', 's') + ruler(y, a22, DOG, '6 份，和回执、赞助、新版本一样大');
   y += 44;
-  s += T(0, y + 12, '改成', 's') + ruler(y, aFixed, 'ture-pickup-0812', '3 份');
+  // The author's level: only the customer's 24 and this item, drawn where a 12 would sit (second); the rest is left blank.
+  const authored = [[a22[0][0], a22[0][1]], [12, DOG]];
+  s += T(0, y + 12, '作者', 's') + ruler(y, authored, DOG, '高一档：12 份，仅次于见客户', { only: true });
   y += 52;
-  // Case B, f24: the misdirected ride got 12 and the top rank; the edit made it 3.
-  const b24 = byRank(d.f24);
-  const bGiven = [[12, 'joakim-ride-16'], ...b24.filter(([, id]) => id !== 'joakim-ride-16')];
-  s += T(0, y + 14, '朋友把“明早九点骑车”发错了群', 'b');
+  // Case B: the certificate reminder in round 1 and round 10.
+  const CERT = 'api-cert';
+  s += T(0, y + 14, '一条每天早上都来的证书到期提醒', 'b');
   y += 26;
-  s += T(0, y + 12, '它给的', 's') + ruler(y, bGiven, 'joakim-ride-16', '12 份，排在第一');
+  s += T(0, y + 12, '第一轮', 's') + ruler(y, byRank(d.r01), CERT, `${d.r01.find(r => r.id === CERT).share} 份，排在第二`);
   y += 44;
-  s += T(0, y + 12, '改成', 's') + ruler(y, b24, 'joakim-ride-16', '3 份，仍等他回一句');
+  s += T(0, y + 12, '第十轮', 's') + ruler(y, byRank(d.r10), CERT, `还占着 ${d.r10.find(r => r.id === CERT).share} 份；作者觉得看一眼就够`);
   y += 56;
-  s += T(0, y + 4, '一条框是那一轮的整份头版：黑的是这件事，灰的是其余各件。', 'sm');
+  s += T(0, y + 4, '一条框是那一轮的整份头版：黑的是这件事，灰的是别的；作者那条只画两件。', 'sm');
   page('d-mistakes', y + 8, s);
 }
 
@@ -379,26 +416,27 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
   // Watch: a circle.
   { const r = 50, cx = r + 2, cy = bottom - r;
     s += `<circle cx="${cx}" cy="${cy}" r="${r}" class="ln15" style="fill: var(--paper-2)"/>`;
-    s += T(cx, cy + 2, '2', 'serif', 'text-anchor="middle" style="font-size:34px"');
+    s += T(cx, cy + 2, String(d.now.urgent), 'serif', 'text-anchor="middle" style="font-size:34px"');
     s += T(cx, cy + 18, '件要紧', 'sm', 'text-anchor="middle" style="fill: var(--ver)"');
-    s += T(cx, cy + 33, '猫：打诊所？', 'sm', 'text-anchor="middle" style="fill: var(--ink); font-size:10px"');
+    s += T(cx, cy + 33, '转接：答应吗？', 'sm', 'text-anchor="middle" style="fill: var(--ink); font-size:10px"');
     s += T(0, bottom + 22, '抬腕', 'b') + T(38, bottom + 22, '两秒', 'm');
   }
   // Phone: a tall rounded window with two question cards.
   { const x = 118, w = 116, h = 204, y = bottom - h;
     s += R(x, y, w, h, 'ln15', 'rx="18" style="fill: var(--paper-2)"');
-    s += T(x + 12, y + 26, '5 件等你', 'b', 'style="font-size:13px"');
+    s += T(x + 12, y + 26, `${PHONE_WAITING} 件等你`, 'b', 'style="font-size:13px"');
+    // The phone's first two cards at f22: the customer (three choices) and the receipt (one button to say it is signed).
     const card = (cy, title, nBtn) => {
-      let o = R(x + 8, cy, w - 16, nBtn === 2 ? 66 : 62, '', 'rx="7" style="fill: #fff; stroke: var(--rule)"');
+      let o = R(x + 8, cy, w - 16, 62, '', 'rx="7" style="fill: #fff; stroke: var(--rule)"');
       o += T(x + 15, cy + 16, title, 'sm', 'style="fill: var(--ink); font-size:10.5px; font-weight:600"');
       o += R(x + 15, cy + 24, w - 40, 3, 'rulef') + R(x + 15, cy + 31, w - 54, 3, 'rulef');
       const bw = (w - 30 - (nBtn - 1) * 4) / nBtn;
-      for (let k = 0; k < nBtn; k += 1) o += R(x + 15 + k * (bw + 4), cy + 42, bw, 14, k === 0 && nBtn === 2 ? 'ver' : '', `rx="7" ${k === 0 && nBtn === 2 ? '' : 'style="fill: #fff; stroke: var(--ver)"'}`);
+      for (let k = 0; k < nBtn; k += 1) o += R(x + 15 + k * (bw + 4), cy + 42, bw, 14, nBtn === 1 ? 'ver' : '', `rx="7" ${nBtn === 1 ? '' : 'style="fill: #fff; stroke: var(--ver)"'}`);
       return o;
     };
-    s += card(y + 38, '猫：打诊所？', 2);
-    s += card(y + 112, '母亲住哪？', 3);
-    s += T(x + 12, y + h - 12, '另有 3 件 ›', 'sm', 'style="font-size:10px"');
+    s += card(y + 38, '客户：转接答应吗？', 3);
+    s += card(y + 112, '女儿的秋游回执', 1);
+    s += T(x + 12, y + h - 12, `另有 ${PHONE_WAITING - 2} 件 ›`, 'sm', 'style="font-size:10px"');
     s += T(x, bottom + 22, '掏手机', 'b') + T(x + 54, bottom + 22, '一分钟', 'm');
   }
   // Desk: the whole front page as areas.
@@ -406,9 +444,11 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
     s += R(x, y, w, h, 'ln15', 'rx="6" style="fill: var(--paper-2)"');
     const ix = x + 5, iy = y + 5, iw = w - 10, ih = h - 10, cw = iw / 8, chh = ih / 8;
     const cell = (c, r, ww, hh, cls, label, lc) => `${R(ix + c * cw + 0.75, iy + r * chh + 0.75, ww * cw - 1.5, hh * chh - 1.5, cls, 'rx="2.5"')}${label ? T(ix + c * cw + 6, iy + r * chh + 15, label, 'sm', `style="font-size:10.5px; font-weight:600; fill:${lc}"`) : ''}`;
-    s += cell(0, 0, 4, 6, 'ver', '母亲', '#fff') + cell(4, 0, 4, 6, 'ver', '猫', '#fff');
-    s += cell(0, 6, 3, 2, 'versoft', '评审', 'var(--ink)') + cell(3, 6, 3, 1, 'versoft', '', '');
-    for (const [c, r, cls] of [[6, 6, 'versoft'], [7, 6, 'agent'], [3, 7, 'agent'], [4, 7, 'agent'], [5, 7, 'agent'], [6, 7, 'agent'], [7, 7, 'agent']]) s += cell(c, r, 1, 1, cls, '', '');
+    // Same grid as d-front-page: the customer, four 6s with a question each, two 3s and ten 1s (two with a question).
+    s += cell(0, 0, 4, 6, 'ver', '客户', '#fff');
+    for (const [c, r, label] of [[4, 0, '回执'], [6, 0, '赞助'], [4, 3, '新版本'], [6, 3, '打针']]) s += cell(c, r, 2, 3, 'versoft', label, 'var(--ink)');
+    s += cell(0, 6, 3, 1, 'agent', '', '') + cell(3, 6, 3, 1, 'agent', '', '');
+    for (const [c, r, cls] of [[6, 6, 'versoft'], [7, 6, 'versoft'], ...[0, 1, 2, 3, 4, 5, 6, 7].map(c => [c, 7, 'agent'])]) s += cell(c, r, 1, 1, cls, '', '');
     s += T(x, bottom + 22, '坐到桌前', 'b') + T(x + 69, bottom + 22, '几分钟', 'm');
   }
   // Review: two weeks of rounds as bars, the last one is this moment.
@@ -424,7 +464,7 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
         yy -= hh;
       });
     });
-    s += T(ix, y0 + h - 8, '8/3', 'm3') + T(ix + iw, y0 + h - 8, '此刻', 'm3', 'text-anchor="end"');
+    s += T(ix, y0 + h - 8, d.days[0], 'm3') + T(ix + iw, y0 + h - 8, '此刻', 'm3', 'text-anchor="end"');
     s += T(0, y0 + h + 22, '周末复盘', 'b') + T(69, y0 + h + 22, '半小时', 'm');
     page('d-windows', y0 + h + 26, s);
   }
@@ -436,10 +476,11 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
   // The question.
   const qh = 104;
   s += R(0.75, 0.75, W - 1.5, qh, '', 'rx="12" style="fill:#fff; stroke: var(--ver); stroke-width: 1.5"');
-  s += T(16, 24, '等你选 · 八点前', 'mv');
-  s += T(16, 48, '猫可能多吃了药：打给诊所，还是先观察？', 'bb');
-  s += R(16, 64, 150, 30, 'ver', 'rx="15"') + T(91, 84, '打给诊所', 't', 'text-anchor="middle" style="fill:#fff; font-weight:600"');
-  s += R(176, 64, 150, 30, '', 'rx="15" style="fill:#fff; stroke: var(--ver); stroke-width: 1.2"') + T(251, 84, '先观察', 't', 'text-anchor="middle" style="fill: var(--ver); font-weight:600"');
+  s += T(16, 24, '等你选 · 十点前', 'mv');
+  s += T(16, 48, '明早见客户：国庆前答应加转接吗？', 'bb');
+  s += R(16, 64, 128, 30, 'ver', 'rx="15"') + T(80, 84, '28日前上线', 't', 'text-anchor="middle" style="fill:#fff; font-weight:600"');
+  s += R(154, 64, 128, 30, '', 'rx="15" style="fill:#fff; stroke: var(--ver); stroke-width: 1.2"') + T(218, 84, '国庆后上线', 't', 'text-anchor="middle" style="fill: var(--ver); font-weight:600"');
+  s += R(292, 64, 128, 30, '', 'rx="15" style="fill:#fff; stroke: var(--ver); stroke-width: 1.2"') + T(356, 84, '不答应', 't', 'text-anchor="middle" style="fill: var(--ver); font-weight:600"');
   let y = qh + 10;
   const step = (label) => { const o = `${L(28, y, 28, y + 26, 'l3')}<path d="M24 ${y + 21} l4 5 l4 -5" class="l3"/>${T(42, y + 18, label, 'm')}`; y += 34; return o; };
   const receipt = (icon, title, line, extra = [], dashed = false) => {
@@ -455,13 +496,14 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
   const ring = (cx, cy) => `<circle cx="${cx}" cy="${cy}" r="11" class="ln15"/><path d="M${cx - 5} ${cy} l3.5 3.5 l6.5 -7" class="ln15"/>`;
   const filled = (cx, cy) => `<circle cx="${cx}" cy="${cy}" r="11" class="ink"/><path d="M${cx - 5} ${cy} l3.5 3.5 l6.5 -7" style="stroke:#fff; stroke-width:1.8; fill:none"/>`;
   const flag = (cx, cy) => `<circle cx="${cx}" cy="${cy}" r="11" style="fill: var(--paper-2); stroke: var(--ink); stroke-width:1.5; stroke-dasharray: 3 2.4"/><path d="M${cx - 5} ${cy} l3.5 3.5 l6.5 -7" class="ln15"/>`;
-  s += step('① 他在手机上按下「打给诊所」');
+  s += step('① 他在手机上按下「28日前上线」');
   s += receipt(ring, '已保存', '只记在这一页。头版还没变，Agent 还不知道。');
   y += 0;
   s += step('② 12:00 下一轮整理');
   s += receipt(filled, '已收到', 'Agent 读到了这个回答，写进这一轮的回执。');
   s += step('③ 同一轮，它还读到了这两条消息');
-  s += receipt(flag, '办成', '事情真的变了，要从之后的消息里看出来：', ['08:02 打给动物诊所，通话 6 分钟', '08:15 诊所短信：药量减到四分之一片，24 日复诊', '猫这件从 24 份缩到 12 份，改为“已减量”'], true);
+  // f23: 11:30 孟洁's WeChat and 11:53 his note to the whole team; the item goes from 24 to 12, retitled 白鹭年单谈成，周一盖章.
+  s += receipt(flag, '办成', '事情真的变了，要从之后的消息里看出来：', ['11:30 客户：合同加一条，28 日前上线转接', '11:53 他在全公司群里说：谈下来了，下周一盖章', `这件从 ${d.r22.find(r => r.id === 'tinglan-outage').share} 份缩到 ${rootOf(FRAME + 1).find(r => r.id === 'tinglan-outage').share} 份，改为“年单谈成”`], true);
   page('d-receipts', y + 2, s);
 }
 
@@ -471,8 +513,8 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
   const rungs = [
     ['让真人来读、来用', '离开半天回来，能不能很快认出要自己处理的事', '还没有做 · 最后要回答的问题', false],
     ['同样的条件多跑几遍', '看结果稳不稳，换个写法会不会变', '还没有做', false],
-    ['真实的两周跑下来', '三遍，每一轮都交上了合规的头版', '已经有', true],
-    ['逐帧对照作者的答案', '该不该用，十条里九条一样', '已经有', true],
+    ['两份数据跑下来', '四遍，每一轮都交上了合规的头版；有一轮是白卷', '已经有', true],
+    ['逐帧对照作者的答案', '它判成噪音的，十条里九条和作者一样', '已经有', true],
     ['规则守得住', '超了就整份退回；用例逐条检查', '已经有', true],
   ];
   const rh = 62;
@@ -491,9 +533,11 @@ const STREAM_CN = { work: '工作', community: '社区', life: '生活', family:
 // ---------- the prototype pictures ----------
 // clip is in CSS pixels; scale is the device pixel ratio; resize is the webp's width when it differs from the capture.
 const reply = "(() => { const b = document.querySelector('.d-card [data-rs-act]'); b.click(); return 1; })()";
-const deferThenNext = `(async () => { window.foldC.defer('ture-pickup-0812', Date.parse('2026-08-14T18:00:00+02:00'));
+// The deferred one: the overseas company asking about paid support (3 shares, no question), pushed to 18:00 that day.
+const deferThenNext = `(async () => { window.foldC.defer('saydone-harborline', Date.parse('2026-09-18T18:00:00+08:00'));
   await new Promise(r => setTimeout(r, 800)); [...document.querySelectorAll('button')].find(b => b.getAttribute('aria-label') === '下一次整理').click(); return 1; })()`;
 const shots = [
+  { name: 'phone-f22', url: '/index.html?variant=d&frame=22', size: [390, 844], mobile: true, scale: 3, clip: [0, 68, 390, 417], resize: 640 },
   { name: 'watch-face-f22', url: '/forms/watch.html?frame=22', size: [1440, 900], scale: 3, clip: [50, 188, 304, 368], resize: 700 },
   { name: 'watch-reply-f22', url: '/forms/watch.html?frame=22', size: [1440, 900], scale: 3, clip: [746, 188, 304, 368], resize: 700 },
   { name: 'desk-f22', url: '/index.html?frame=22', size: [1024, 820], scale: 2, clip: [255, 196, 434, 458], eval: "document.documentElement.classList.add('is-embedded'); document.querySelector('[data-card]')?.click(); 1" },
