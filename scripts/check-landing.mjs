@@ -6,7 +6,7 @@
 //    铺点的盖板都不留残渣，三个处境按钮切得动；
 // 4. 画廊块数等于原型总数减六，Top 6 不在其中，其余一个不少；第 3 节六个处境按 LADDER 从窄到宽，各链到它的卡（没有卡的链到原型本身）；
 // 5. 三拍按阅读线切换（1 → 2 → 3 → 回流），演示卡的按钮真的作答、撤回；第 2 拍演完后尺上没有残留的点；
-// 6. 导航“全部原型”的画册面板与查看弹框照常可用；
+// 6. 导航是“处境 · 全部原型 · 从头读起 · 文档”（没有“为什么”，#why 锚点与首屏按钮仍在），“全部原型”的画册面板与查看弹框照常可用；
 // 7. 首屏标题的字都在字体子集里，六张卡与画廊的录像文件都在；
 // 8. 第 2 节的三幕：第 1 幕按最大的单个来源定比例、消息类的大群那行最长；第 3 幕终态“全部加起来”那根正好顶满整宽，
 //    每个单独来源只剩一点点（> 0、远小于整宽），减弱动态时一打开就是这个终态；三幕演的整个过程页面不横向溢出；
@@ -339,6 +339,12 @@ try {
   await wait(500);
   const closed = await desk.evaluate(`!document.querySelector('dialog[open]')`);
   check(`导航“全部原型”：面板铺开 ${prototypes.length} 张卡，点一张在弹框里打开，Esc 收回`, panel.open && panel.cards === prototypes.length && viewer.open && Boolean(viewer.frame) && closed, { panel, viewer, closed });
+  // The nav lost “为什么” (2026-11-03): “从头读起” (/docs/why) says the same; the first screen's button and #why stay.
+  // Each item's own label: a link's text, a dropdown's button (not its menu); the screen-reader heading is skipped.
+  const nav = await desk.evaluate(`({ items: [...document.querySelectorAll('.VPNavBarMenu > :not(.visually-hidden)')].map(e => (e.querySelector(':scope button') || e).textContent.replace(/\\s+/g, '')).filter(Boolean),
+    why: Boolean(document.querySelector('section#why')), cta: [...document.querySelectorAll('.fl a[href="#why"]')].map(a => a.textContent.trim()) })`);
+  check('导航是“处境 · 全部原型 · 从头读起 · 文档”，没有“为什么”；首屏“为什么是新问题 ↓”与 #why 锚点仍在',
+    nav.items.join('|') === '处境|全部原型|从头读起|文档' && nav.why && nav.cta.some(t => t.startsWith('为什么是新问题')), nav);
   await desk.evaluate(`document.querySelector('.fl-show .fl-btn.solid').click(), 1`);
   await wait(700);
   const fromCard = await desk.evaluate(`document.querySelector('dialog[open] iframe')?.getAttribute('src') || null`);

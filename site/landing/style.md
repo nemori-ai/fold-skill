@@ -115,7 +115,7 @@
 - **括线与竖线。** 卡和它那一段之间不画斜线（斜的细线在窄屏上几乎看不见），用段下的一道括线和一根竖线，都是 1.5px 朱红；答过后转 `--ink-3`。
 - **showcase 卡。** 顶部 1px 墨线；录像框圆角 18px、`--rule` 描边；右上处境标签用等宽小字；“打开原型 ↗”是墨黑实心胶囊按钮。设备只画一条细轮廓线，不画机身与反光（E 折叠屏的录像里自带它自己的机身，那是原型的内容）。
 - **gallery 块。** 16:10，圆角 10px，`--rule` 描边；右上可选小标“桌面”“第一轮”。手机 176px 宽、iPad 260px、桌面 300px。
-- **导航。** 沿用 VitePress 的导航（高 64px），纸色底、底部一条 `--rule`；左边 Fold 字标（Instrument Serif 28px），右边：一轮整理、六种处境、全部原型 ▾（画册面板）、小册子、文档 ▾（按读者分六组）。
+- **导航。** 沿用 VitePress 的导航（高 64px），纸色底、底部一条 `--rule`；左边 Fold 字标（Instrument Serif 28px），右边：处境、全部原型 ▾（画册面板）、从头读起（/docs/why）、文档 ▾（按读者分六组）。
 
 ## 文档页（VitePress 默认主题）怎样跟上
 
@@ -123,10 +123,10 @@
 
 1. `theme/style.css` 的 `:root` 改映射：`--vp-c-bg` → `--paper`，`--vp-c-bg-alt` → `oklch(0.958 0.007 95)`，`--vp-c-text-1/2/3` → `--ink / --ink-2 / --ink-3`，`--vp-c-divider` → `--rule`，`--vp-c-brand-1/2/3` → 墨黑（`--ink` 与它的悬停色 `--ink-2`），`--vp-c-brand-soft` → `oklch(0.9 0.008 95 / .6)`。链接因此是墨黑加下划线，不再是品牌绿。
 2. 字体：`--vp-font-family-base` 设为上面的系统中文栈；`--vp-font-family-mono` 设为系统等宽；文档 h1 用 Noto Serif SC 子集（只覆盖站内各篇 h1 用到的字，构建时一起收集），h2 以下保持系统字。
-3. 导航：站名换成 Instrument Serif 的 Fold 字标（`.VPNavBarTitle .title` 的字体与字号）；链接改成“一轮整理”“六种处境”“全部原型 ▾”“小册子”“文档 ▾”，其中“全部原型”仍是原来的画册面板（PrototypeMenu），“文档”下拉按读者分组，与入口页文档区同一份清单（`landing.mjs` 的 `DOC_GROUPS`，`config.mts` 读它）。主题从 `vitepress/theme-without-fonts` 继承，去掉自带的 Inter。
+3. 导航：站名换成 Instrument Serif 的 Fold 字标（`.VPNavBarTitle .title` 的字体与字号）；链接改成“处境”“全部原型 ▾”“从头读起”“文档 ▾”（2026-11-03 起；“从头读起”指向 /docs/why），其中“全部原型”仍是原来的画册面板（PrototypeMenu），“文档”下拉按读者分组，与入口页文档区同一份清单（`landing.mjs` 的 `DOC_GROUPS`，`config.mts` 读它）。主题从 `vitepress/theme-without-fonts` 继承，去掉自带的 Inter。
 4. 深色：`.dark` 下用墨底纸字（见上），去掉现在的绿色调深底。
 5. 文档里的配图、Mermaid、公式样式不动；代码块底色跟 `--vp-c-bg-alt`。
-6. 原型说明页、小册子、原型本身都不改。
+6. 原型说明页、从头读起那一页（/docs/why）、原型本身都不改。
 
 ## 静帧（第一段）
 
