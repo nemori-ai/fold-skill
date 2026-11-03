@@ -882,10 +882,10 @@
     {"at": "2026-09-15T07:02:10+08:00", "ch": "wx-family", "who": "dad", "text": "[强]", "ignore": "emoji"}]},
   {"id": "Nh-sms-0915", "thread": "fd:n-sms-code", "topic": "验证码",
    "messages": [
-    {"at": "2026-09-15T07:40:12+08:00", "ch": "sms-misc", "who": "sms-code", "template": "verify_code", "kind": "notification", "ignore": "notification", "params": {"app": "随行出行", "code": "4096", "minutes": 5}}]},
+    {"at": "2026-09-15T07:40:12+08:00", "ch": "sms-misc", "who": "sms-code", "template": "verify_code", "kind": "notification", "ignore": "notification", "params": {"app": "万象购", "code": "4096", "minutes": 5}}]},
   {"id": "Nh-push-0915a", "thread": "fd:n-push-ride-w2", "topic": "打车 App 推送",
    "messages": [
-    {"at": "2026-09-15T07:41:02+08:00", "ch": "push-ride", "who": "ride-app", "text": "你的行程已开始，祝出行愉快", "kind": "notification", "ignore": "notification"}]},
+    {"at": "2026-09-15T07:41:02+08:00", "ch": "push-ride", "who": "ride-app", "text": "早高峰打车券 3 张已到账，今天 10:00 前有效", "kind": "notification", "ignore": "notification"}]},
   {"id": "Nh-owners-0915a", "thread": "fd:n-owners-quarrel", "topic": "业主群：遛狗不牵绳吵起来",
    "messages": [
     {"at": "2026-09-15T07:48:30+08:00", "ch": "wx-owners", "who": "owners-05", "text": "早上又有人遛狗不牵绳 小孩被吓哭了 能不能自觉点[发怒]", "ignore": "chatter"},
@@ -930,13 +930,13 @@
     {"at": "2026-09-15T18:20:13+08:00", "ch": "wx-owners", "who": "owners-27", "text": "我还能加一份吗", "ignore": "chatter"}]},
   {"id": "Nh-sms-0915b", "thread": "fd:n-sms-code", "topic": "验证码",
    "messages": [
-    {"at": "2026-09-15T18:39:55+08:00", "ch": "sms-misc", "who": "sms-code", "template": "verify_code", "kind": "notification", "ignore": "notification", "params": {"app": "饭点外卖", "code": "8803", "minutes": 5}}]},
-  {"id": "Nh-food-0915", "thread": "fd:n-food", "topic": "晚饭外卖",
+    {"at": "2026-09-15T12:05:55+08:00", "ch": "sms-misc", "who": "sms-code", "template": "verify_code", "kind": "notification", "ignore": "notification", "params": {"app": "饭点外卖", "code": "8803", "minutes": 5}}]},
+  {"id": "Nh-food-0915", "thread": "fd:n-food", "topic": "午饭外卖",
    "messages": [
-    {"at": "2026-09-15T18:40:31+08:00", "ch": "app-food", "who": "food-app", "template": "food_status", "kind": "notification", "ignore": "notification", "params": {"shop": "一碗牛肉面（科技园店）", "status": "商家已接单", "eta": "19:15"}}]},
+    {"at": "2026-09-15T12:06:31+08:00", "ch": "app-food", "who": "food-app", "template": "food_status", "kind": "notification", "ignore": "notification", "params": {"shop": "一碗牛肉面（科技园店）", "status": "商家已接单", "eta": "12:40"}}]},
   {"id": "Nh-bank-0915b", "thread": "fd:n-bank-w2", "topic": "外卖扣款",
    "messages": [
-    {"at": "2026-09-15T18:40:32+08:00", "ch": "sms-bank", "who": "bank", "template": "bank_card_spend", "kind": "notification", "ignore": "notification", "params": {"card": "6612", "time": "09月15日18:40", "amount": "31.00", "merchant": "饭点外卖"}}]},
+    {"at": "2026-09-15T12:06:32+08:00", "ch": "sms-bank", "who": "bank", "template": "bank_card_spend", "kind": "notification", "ignore": "notification", "params": {"card": "6612", "time": "09月15日12:06", "amount": "31.00", "merchant": "饭点外卖"}}]},
   {"id": "Nh-class-0915", "thread": "fd:n-class-autumn-q", "topic": "家长问不去秋游的孩子怎么安排",
    "messages": [
     {"at": "2026-09-15T19:12:02+08:00", "ch": "wx-class", "who": "class-36", "text": "王老师", "fragment": true, "ignore": "fragment"},

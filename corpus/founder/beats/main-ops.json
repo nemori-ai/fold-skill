@@ -140,7 +140,7 @@
      "at": "2026-09-09T11:14:52+08:00",
      "ch": "gh-frontdesk",
      "who": "songyue",
-     "text": "剪约造型 9/4 周六 15:00 那单，是店员账号周五 21:47 在后台删的。日志里能看到，但预约表只记了 status=cancelled，看不出是 AI 取消的还是人删的，查了一天半…\n\n建议：\n1. 删除时记录操作账号和门店\n2. 后台删除前弹二次确认\n\n相关：剪约王姐反馈“预约丢了”",
+     "text": "剪约造型 9/5 周六 15:00 那单，是店员账号周五 21:47 在后台删的。日志里能看到，但预约表只记了 status=cancelled，看不出是 AI 取消的还是人删的，查了一天半…\n\n建议：\n1. 删除时记录操作账号和门店\n2. 后台删除前弹二次确认\n\n相关：剪约王姐反馈“预约丢了”",
      "kind": "issue_opened",
      "subject": "[lingyu-ai/frontdesk] 后台删除预约没有记录操作人 (Issue #210)",
      "url": "https://github.com/lingyu-ai/frontdesk/issues/210",
@@ -2913,7 +2913,7 @@
      "at": "2026-09-17T09:22:05+08:00",
      "ch": "fs-bailu",
      "who": "hejia",
-     "text": "1. 19:41–20:31 白鹭九店进来的电话 46 通\n2. 其中挂断 11 通（和小罗昨晚拉的对得上）\n3. 其余 35 通：AI 多问了一轮接下来的，或者转到店里座机接了",
+     "text": "1. 19:41–20:31 白鹭九店进来的电话 46 通\n2. 其中挂断 11 通（和小罗昨晚拉的对得上）\n3. 其余 35 通：AI 多问一两遍听清了，或者 20:03 以后转门店座机接了",
      "edited": true
     },
     {
@@ -3461,8 +3461,8 @@
      "who": "hejia",
      "text": "白鹭试点 150 条 + 小店 200 条（店里口头同意过的，名单在飞书）。结果表在《模型对比》，这里放脚本和原始输出。\n\n## 怎么跑的\n- 同一套 prompt，只换 provider；temperature 0\n- 每条跑 3 次取多数，意图按 v3 标注规范判，字段要日期、时间、项目、门店四个全对才算对\n- 首字延迟在 staging 上测，杭州机房，单并发\n\n## 结果（按类别）\n| 类别 | 条数 | 云阶标准版 意图 | 云阶标准版 字段 | 云阶轻量版 意图 | 云阶轻量版 字段 | 青穹 pro 意图 | 青穹 pro 字段 |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 预约 | 112 | 95.5% | 91.1% | 92.0% | 85.7% | 95.5% | 90.2% |\n| 改约 | 58 | 93.1% | 87.9% | 87.9% | 79.3% | 91.4% | 86.2% |\n| 取消 | 31 | 96.8% | 93.5% | 93.5% | 87.1% | 96.8% | 90.3% |\n| 问价 | 64 | 93.8% | 88.0% | 90.6% | 81.3% | 93.8% | 87.5% |\n| 问路与营业时间 | 39 | 97.4% | 94.9% | 94.9% | 89.7% | 97.4% | 94.9% |\n| 问医生与排班 | 22 | 90.9% | 86.4% | 86.4% | 77.3% | 90.9% | 81.8% |\n| 投诉与转人工 | 14 | 85.7% | 78.6% | 78.6% | 64.3% | 78.6% | 71.4% |\n| 其他 | 10 | 80.0% | 70.0% | 70.0% | 60.0% | 80.0% | 70.0% |\n\n## 首字延迟（ms）\n| 模型 | p50 | p90 | p99 |\n| --- | --- | --- | --- |\n| 云阶标准版 | 1080 | 1460 | 2210 |\n| 云阶轻量版 | 690 | 940 | 1380 |\n| 青穹 pro | 1370 | 1890 | 2940 |\n\n## 典型错误\n1. 轻量版：改约时把“下周三”算成本周三（11 条），问价时把“种植”和“种植牙套餐”混了（6 条）\n2. 青穹：投诉类倾向于直接道歉不转人工（3 条）；方言多的录音首字更慢\n3. 三家都错的：客人一句话里改了两次时间（“周四吧，不对，周五下午”）\n\n## 错例节选（✓ 是对的，其余写模型理解成了什么）\n| 编号 | 类别 | 客人原话（转写） | 标准版 | 轻量版 | 青穹 pro |\n| --- | --- | --- | --- | --- | --- |\n| bl-0412 | 改约 | 下周三下午那个能不能挪到周四 | ✓ | 本周四 | ✓ |\n| bl-0437 | 问价 | 种植的话大概多少钱 包不包牙冠 | ✓ | 报了套餐价 | ✓ |\n| bl-0519 | 预约 | 我想约个洗牙 最好周六上午 九点以后 | ✓ | 周六 9:00 | ✓ |\n| bl-0544 | 改约 | 周四吧 不对 周五下午 | 周四 | 周四 | 周四 |\n| bl-0601 | 投诉 | 上次补的牙又掉了 你们找个人跟我说 | ✓ | 直接约了复诊 | 只道歉没转人工 |\n| bl-0618 | 问医生 | 孙医生这周哪天在 | ✓ | 回答了另一位医生 | ✓ |\n| sh-0107 | 预约 | 剪个头 两个人 七点左右 | ✓ | 一个人 | ✓ |\n| sh-0142 | 取消 | 明天那个不来了 帮我取消掉 | ✓ | ✓ | 改成了改约 |\n| sh-0188 | 问路 | 你们是不是在地铁站那边 哪个口 | ✓ | ✓ | ✓（首字 2.6s） |\n| sh-0203 | 其他 | 我是送快递的 店里有人吗 | ✓ | 当成了预约 | ✓ |\n\n方言多的录音（杭州话 41 条）单独看：标准版意图 90.2%，轻量版 82.9%，青穹 87.8%。\n\n## 成本估算（按 8 月用量，10 月新价）\n- 云阶标准版 ¥23,693 / 月；开 prompt 缓存约 ¥21,400 / 月\n- 云阶轻量版 约 ¥7,900 / 月\n- 青穹 pro 约 ¥21,300 / 月\n\n## 下一步\n1. 下周加 100 条杭州话多的录音再跑一轮\n2. 轻量版只用在问路、营业时间这类简单的意图上试试：先分类，再按类别选模型\n3. prompt 缓存先在 staging 开，看一周命中率\n\n还没下结论。",
      "kind": "pr_opened",
-     "subject": "[lingyu-ai/frontdesk] eval: 两家备选模型第一轮结果 (PR #226)",
-     "url": "https://github.com/lingyu-ai/frontdesk/pull/226",
+     "subject": "[lingyu-ai/frontdesk] eval: 两家备选模型第一轮结果 (PR #227)",
+     "url": "https://github.com/lingyu-ai/frontdesk/pull/227",
      "edited": true
     },
     {
@@ -3470,8 +3470,8 @@
      "ch": "gh-frontdesk",
      "who": "codecov",
      "kind": "comment",
-     "subject": "Re: [lingyu-ai/frontdesk] eval: 两家备选模型第一轮结果 (PR #226)",
-     "url": "https://github.com/lingyu-ai/frontdesk/pull/226",
+     "subject": "Re: [lingyu-ai/frontdesk] eval: 两家备选模型第一轮结果 (PR #227)",
+     "url": "https://github.com/lingyu-ai/frontdesk/pull/227",
      "template": "gh_codecov",
      "params": {
       "direction": "increased",
@@ -3968,7 +3968,7 @@
   },
   {
    "id": "No-fd-0907c",
-   "thread": "fd:n-frontdesk-207",
+   "thread": "fd:n-frontdesk-208",
    "topic": "宋悦的门店筛选改动",
    "messages": [
     {
@@ -3991,8 +3991,8 @@
      "who": "songyue",
      "text": "白鹭这种多家店的店长要按店看预约～\n\n- 列表顶部加门店下拉，默认全部\n- 只有一家店的账号不显示下拉\n- 筛选结果跟着账号存，下次打开还在\n\n[截图] 预约列表 · 门店筛选",
      "kind": "pr_opened",
-     "subject": "[lingyu-ai/frontdesk] feat(miniapp): 预约列表按门店筛选 (PR #207)",
-     "url": "https://github.com/lingyu-ai/frontdesk/pull/207",
+     "subject": "[lingyu-ai/frontdesk] feat(miniapp): 预约列表按门店筛选 (PR #208)",
+     "url": "https://github.com/lingyu-ai/frontdesk/pull/208",
      "edited": true
     },
     {
@@ -4000,8 +4000,8 @@
      "ch": "gh-frontdesk",
      "who": "codecov",
      "kind": "comment",
-     "subject": "Re: [lingyu-ai/frontdesk] feat(miniapp): 预约列表按门店筛选 (PR #207)",
-     "url": "https://github.com/lingyu-ai/frontdesk/pull/207",
+     "subject": "Re: [lingyu-ai/frontdesk] feat(miniapp): 预约列表按门店筛选 (PR #208)",
+     "url": "https://github.com/lingyu-ai/frontdesk/pull/208",
      "template": "gh_codecov",
      "params": {
       "direction": "decreased",
@@ -4019,8 +4019,8 @@
      "who": "luchen",
      "text": "切到别的页再回来 筛选条件会丢 存 query 里吧",
      "kind": "review_comment",
-     "subject": "Re: [lingyu-ai/frontdesk] feat(miniapp): 预约列表按门店筛选 (PR #207)",
-     "url": "https://github.com/lingyu-ai/frontdesk/pull/207"
+     "subject": "Re: [lingyu-ai/frontdesk] feat(miniapp): 预约列表按门店筛选 (PR #208)",
+     "url": "https://github.com/lingyu-ai/frontdesk/pull/208"
     }
    ]
   },
@@ -4260,7 +4260,7 @@
   },
   {
    "id": "No-fd-0908a",
-   "thread": "fd:n-frontdesk-207",
+   "thread": "fd:n-frontdesk-208",
    "topic": "门店筛选改动的来回",
    "messages": [
     {
@@ -4269,8 +4269,8 @@
      "who": "songyue",
      "text": "筛选条件存到 query 里了 再看下～",
      "kind": "comment",
-     "subject": "Re: [lingyu-ai/frontdesk] feat(miniapp): 预约列表按门店筛选 (PR #207)",
-     "url": "https://github.com/lingyu-ai/frontdesk/pull/207"
+     "subject": "Re: [lingyu-ai/frontdesk] feat(miniapp): 预约列表按门店筛选 (PR #208)",
+     "url": "https://github.com/lingyu-ai/frontdesk/pull/208"
     },
     {
      "at": "2026-09-08T10:11:26+08:00",
@@ -4278,7 +4278,7 @@
      "who": "gha",
      "kind": "ci_failure",
      "subject": "[lingyu-ai/frontdesk] Run failed: CI - feat/miniapp-shop-filter (9be41f0)",
-     "url": "https://github.com/lingyu-ai/frontdesk/pull/207",
+     "url": "https://github.com/lingyu-ai/frontdesk/pull/208",
      "template": "gh_ci_failure",
      "params": {
       "workflow": "CI",
@@ -4297,8 +4297,8 @@
      "who": "songyue",
      "text": "lint 修了 不好意思…",
      "kind": "comment",
-     "subject": "Re: [lingyu-ai/frontdesk] feat(miniapp): 预约列表按门店筛选 (PR #207)",
-     "url": "https://github.com/lingyu-ai/frontdesk/pull/207"
+     "subject": "Re: [lingyu-ai/frontdesk] feat(miniapp): 预约列表按门店筛选 (PR #208)",
+     "url": "https://github.com/lingyu-ai/frontdesk/pull/208"
     },
     {
      "at": "2026-09-08T11:43:30+08:00",
@@ -4306,8 +4306,8 @@
      "who": "luchen",
      "text": "可以",
      "kind": "review",
-     "subject": "Re: [lingyu-ai/frontdesk] feat(miniapp): 预约列表按门店筛选 (PR #207)",
-     "url": "https://github.com/lingyu-ai/frontdesk/pull/207"
+     "subject": "Re: [lingyu-ai/frontdesk] feat(miniapp): 预约列表按门店筛选 (PR #208)",
+     "url": "https://github.com/lingyu-ai/frontdesk/pull/208"
     }
    ]
   },
@@ -4417,11 +4417,11 @@
      "ch": "gh-frontdesk",
      "who": "songyue",
      "kind": "state_merged",
-     "subject": "Re: [lingyu-ai/frontdesk] feat(miniapp): 预约列表按门店筛选 (PR #207)",
-     "url": "https://github.com/lingyu-ai/frontdesk/pull/207",
+     "subject": "Re: [lingyu-ai/frontdesk] feat(miniapp): 预约列表按门店筛选 (PR #208)",
+     "url": "https://github.com/lingyu-ai/frontdesk/pull/208",
      "template": "gh_merged",
      "params": {
-      "number": 207,
+      "number": 208,
       "base": "main"
      },
      "ignore": "bot"
@@ -4476,7 +4476,7 @@
   },
   {
    "id": "No-deploy-0908",
-   "thread": "fd:n-deploy-207",
+   "thread": "fd:n-deploy-208",
    "topic": "门店筛选上线，第一次迁移失败",
    "messages": [
     {
@@ -4506,7 +4506,7 @@
       "env": "prod",
       "version": "2026.09.08-3",
       "commit": "e07b5d3",
-      "summary": "预约列表按门店筛选（#207）",
+      "summary": "预约列表按门店筛选（#208）",
       "who": "宋悦"
      },
      "ignore": "bot"
@@ -7527,7 +7527,7 @@
   },
   {
    "id": "No-fd-0918a",
-   "thread": "fd:n-frontdesk-224",
+   "thread": "fd:n-frontdesk-225",
    "topic": "高翔续了证书",
    "messages": [
     {
@@ -7536,8 +7536,8 @@
      "who": "gaoxiang",
      "text": "证书还剩 4 天 续了一年\n提醒从 15 天改成 30 天，一天只报一次",
      "kind": "pr_opened",
-     "subject": "[lingyu-ai/frontdesk] chore: 续 api.lingyu.example 证书，到期前 30 天提醒 (PR #224)",
-     "url": "https://github.com/lingyu-ai/frontdesk/pull/224"
+     "subject": "[lingyu-ai/frontdesk] chore: 续 api.lingyu.example 证书，到期前 30 天提醒 (PR #225)",
+     "url": "https://github.com/lingyu-ai/frontdesk/pull/225"
     },
     {
      "at": "2026-09-18T15:12:40+08:00",
@@ -7545,19 +7545,19 @@
      "who": "luchen",
      "text": "👍",
      "kind": "review",
-     "subject": "Re: [lingyu-ai/frontdesk] chore: 续 api.lingyu.example 证书，到期前 30 天提醒 (PR #224)",
-     "url": "https://github.com/lingyu-ai/frontdesk/pull/224"
+     "subject": "Re: [lingyu-ai/frontdesk] chore: 续 api.lingyu.example 证书，到期前 30 天提醒 (PR #225)",
+     "url": "https://github.com/lingyu-ai/frontdesk/pull/225"
     },
     {
      "at": "2026-09-18T15:21:05+08:00",
      "ch": "gh-frontdesk",
      "who": "gaoxiang",
      "kind": "state_merged",
-     "subject": "Re: [lingyu-ai/frontdesk] chore: 续 api.lingyu.example 证书，到期前 30 天提醒 (PR #224)",
-     "url": "https://github.com/lingyu-ai/frontdesk/pull/224",
+     "subject": "Re: [lingyu-ai/frontdesk] chore: 续 api.lingyu.example 证书，到期前 30 天提醒 (PR #225)",
+     "url": "https://github.com/lingyu-ai/frontdesk/pull/225",
      "template": "gh_merged",
      "params": {
-      "number": 224,
+      "number": 225,
       "base": "main"
      },
      "ignore": "bot"
@@ -7580,7 +7580,7 @@
       "env": "prod",
       "version": "2026.09.18-2",
       "commit": "4af8d21",
-      "summary": "续 api.lingyu.example 证书（#224）",
+      "summary": "续 api.lingyu.example 证书（#225）",
       "who": "高翔"
      },
      "ignore": "bot"

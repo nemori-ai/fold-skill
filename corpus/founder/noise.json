@@ -9,8 +9,8 @@
    "median": 92.5,
    "max": 211,
    "empty_frames": 0,
-   "text_chars_p50": 7868.0,
-   "text_chars_max": 15352
+   "text_chars_p50": 7867.0,
+   "text_chars_max": 15359
   },
   "channels": {
    "微信": 943,
@@ -51,7 +51,7 @@
   "duplicates": {
    "exact_core_text": 205,
    "exact_core_text_30plus": 27,
-   "near_30plus": 221,
+   "near_30plus": 220,
    "share_exact": 0.081,
    "share_near": 0.087
   },
@@ -70,14 +70,14 @@
    "p90": 119.0,
    "max": 8469,
    "over_limit": 49,
-   "under_20": 1026
+   "under_20": 1025
   },
   "gaps_minutes": {
    "p10": 0.3,
    "p50": 3.3,
    "p90": 19.3,
    "max": 141.5,
-   "same_minute": 729
+   "same_minute": 727
   },
   "local_hours": {
    "night_00_07": 223,
@@ -94,13 +94,13 @@
     227,
     226,
     207,
-    59,
+    62,
     91,
     121,
     179,
     190,
     118,
-    87,
+    84,
     86,
     185,
     117,
@@ -179,7 +179,7 @@
     "p50": 4.5,
     "p90": 34.6,
     "max": 206.5,
-    "same_minute": 376
+    "same_minute": 373
    },
    "local_hours": {
     "night_00_07": 124,
@@ -345,9 +345,9 @@
    "duplicates": {
     "exact_core_text": 0,
     "exact_core_text_30plus": 0,
-    "near_30plus": 35,
+    "near_30plus": 34,
     "share_exact": 0.0,
-    "share_near": 0.186
+    "share_near": 0.181
    },
    "threads": {
     "distinct": 33,
@@ -388,13 +388,13 @@
      21,
      15,
      11,
-     8,
+     11,
      5,
      8,
      15,
      4,
      11,
-     18,
+     15,
      9,
      14,
      7,
@@ -555,7 +555,7 @@
     "p90": 2583.3999999999996,
     "max": 3579,
     "over_limit": 33,
-    "under_20": 38
+    "under_20": 37
    },
    "gaps_minutes": {
     "p10": 39.6,

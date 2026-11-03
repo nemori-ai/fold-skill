@@ -603,7 +603,7 @@
        {"thread": "fd:n-dm-songyue-filter", "level": "none", "high": false, "tier": "untouched", "events": ["fd-27566031", "fd-75af4643"], "basis": ["authored", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-express-w1", "level": "none", "high": false, "tier": "noise", "events": ["fd-af38921a", "fd-3935f341"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-food", "level": "none", "high": false, "tier": "noise", "events": ["fd-fd96c8ab", "fd-bef03d39"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
-       {"thread": "fd:n-frontdesk-207", "level": "none", "high": false, "tier": "engaged", "events": ["fd-0c093769", "fd-0e7beac0", "fd-e713615a"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-09-07T22:36:18+08:00", "who": "self", "action": "review_comment", "ref": "fd-887f631a"}, {"at": "2026-09-08T11:43:30+08:00", "who": "self", "action": "review", "ref": "fd-aa80b7cc"}]},
+       {"thread": "fd:n-frontdesk-208", "level": "none", "high": false, "tier": "engaged", "events": ["fd-0c093769", "fd-0e7beac0", "fd-e713615a"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-09-07T22:36:18+08:00", "who": "self", "action": "review_comment", "ref": "fd-887f631a"}, {"at": "2026-09-08T11:43:30+08:00", "who": "self", "action": "review", "ref": "fd-aa80b7cc"}]},
        {"thread": "fd:n-hzai-asr-price", "level": "none", "high": false, "tier": "noise", "events": ["fd-42b62e9f", "fd-32d1766a", "fd-0d1c59e5"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-hzai-meetup-ad", "level": "none", "high": false, "tier": "noise", "events": ["fd-09a80394"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-kinder-family-photo", "level": "none", "high": false, "tier": "engaged", "events": ["fd-5ca976a6"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-09-07T20:05:12+08:00", "who": "self", "action": "message", "ref": "fd-50b0422d"}]},
@@ -619,7 +619,7 @@
        {"thread": "fd:n-sub-night-1", "level": "none", "high": false, "tier": "noise", "events": ["fd-ee871e5d"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-x-stack", "level": "none", "high": false, "tier": "noise", "events": ["fd-64567772"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "gh:saydone#42", "level": "none", "high": false, "tier": "noise", "events": ["fd-c99ca713"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
-       {"thread": "gh:saydone#55", "level": "none", "high": false, "tier": "later", "events": ["fd-8b1953a9", "fd-c28c516b"], "basis": ["authored", "self_acted_within_7d"], "evidence": [{"at": "2026-09-10T23:41:30+08:00", "who": "self", "action": "comment", "ref": "fd-3f242ee3"}]},
+       {"thread": "gh:saydone#55", "level": "none", "high": false, "tier": "later", "events": ["fd-8b1953a9", "fd-c28c516b"], "basis": ["authored", "self_acted_within_7d"], "evidence": [{"at": "2026-09-10T23:47:52+08:00", "who": "self", "action": "comment", "ref": "fd-3f242ee3"}]},
        {"thread": "gh:saydone#57", "level": "none", "high": false, "tier": "engaged", "events": ["fd-e1047371"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-09-07T23:47:55+08:00", "who": "self", "action": "comment", "ref": "fd-21005b83"}, {"at": "2026-09-08T08:16:42+08:00", "who": "self", "action": "comment", "ref": "fd-c69224de"}]},
        {"thread": "gh:saydone#60", "level": "none", "high": false, "tier": "noise", "events": ["fd-2272bef7"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []}
       ]
@@ -697,7 +697,7 @@
        {"thread": "fd:n-dm-dengyifan-account", "level": "none", "high": false, "tier": "noise", "events": ["fd-f3a81357"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-express-w1", "level": "none", "high": false, "tier": "noise", "events": ["fd-2aa11893"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-family-forward", "level": "none", "high": false, "tier": "noise", "events": ["fd-3ebce2df"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
-       {"thread": "fd:n-frontdesk-207", "level": "none", "high": false, "tier": "engaged", "events": ["fd-7dda2e88", "fd-ea2f3212", "fd-86dc70fd"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-09-08T11:43:30+08:00", "who": "self", "action": "review", "ref": "fd-aa80b7cc"}]},
+       {"thread": "fd:n-frontdesk-208", "level": "none", "high": false, "tier": "engaged", "events": ["fd-7dda2e88", "fd-ea2f3212", "fd-86dc70fd"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-09-08T11:43:30+08:00", "who": "self", "action": "review", "ref": "fd-aa80b7cc"}]},
        {"thread": "fd:n-hzai-rules", "level": "none", "high": false, "tier": "noise", "events": ["fd-f93af13f", "fd-d843ea95"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-kinder-family-photo", "level": "none", "high": false, "tier": "noise", "events": ["fd-61c6ddf3"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-llmdev-json", "level": "none", "high": false, "tier": "noise", "events": ["fd-3806d1e1", "fd-546b3ac7"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
@@ -714,7 +714,7 @@
        {"thread": "fd:n-sub-turn-1", "level": "none", "high": false, "tier": "noise", "events": ["fd-8e2bb295"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "gh:saydone#45", "level": "none", "high": false, "tier": "later", "events": ["fd-3dd970e5"], "basis": ["authored", "self_acted_within_7d"], "evidence": [{"at": "2026-09-13T22:54:37+08:00", "who": "self", "action": "comment", "ref": "fd-2ce38078"}]},
        {"thread": "gh:saydone#54", "level": "none", "high": false, "tier": "noise", "events": ["fd-2efebd96"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
-       {"thread": "gh:saydone#55", "level": "none", "high": false, "tier": "later", "events": ["fd-3241cb07", "fd-41442587"], "basis": ["authored", "self_acted_within_7d"], "evidence": [{"at": "2026-09-10T23:41:30+08:00", "who": "self", "action": "comment", "ref": "fd-3f242ee3"}]},
+       {"thread": "gh:saydone#55", "level": "none", "high": false, "tier": "later", "events": ["fd-3241cb07", "fd-41442587"], "basis": ["authored", "self_acted_within_7d"], "evidence": [{"at": "2026-09-10T23:47:52+08:00", "who": "self", "action": "comment", "ref": "fd-3f242ee3"}]},
        {"thread": "gh:saydone#59", "level": "none", "high": false, "tier": "engaged", "events": ["fd-fba692b4", "fd-5a07a9a9", "fd-2d9fbe8b", "fd-7d069426"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-09-08T07:43:26+08:00", "who": "self", "action": "comment", "ref": "fd-bb768cc4"}, {"at": "2026-09-08T22:36:45+08:00", "who": "self", "action": "comment", "ref": "fd-22eebb9a"}, {"at": "2026-09-08T22:42:08+08:00", "who": "self", "action": "state_merged", "ref": "fd-9a032fef"}]}
       ]
     },
@@ -790,7 +790,7 @@
        {"thread": "fd:n-big-left-0908", "level": "none", "high": false, "tier": "noise", "events": ["fd-2509c1db", "fd-671100d8", "fd-30a9ab72"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-class-homework", "level": "none", "high": false, "tier": "noise", "events": ["fd-87bb411e"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-dc-cpu-latency", "level": "none", "high": false, "tier": "engaged", "events": ["fd-be49566f", "fd-6dcc2f76"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-09-08T22:51:27+08:00", "who": "self", "action": "message", "ref": "fd-293f5a3b"}]},
-       {"thread": "fd:n-deploy-207", "level": "none", "high": false, "tier": "untouched", "events": ["fd-6c4f2877", "fd-59036101"], "basis": ["authored", "no_action_7d"], "evidence": []},
+       {"thread": "fd:n-deploy-208", "level": "none", "high": false, "tier": "untouched", "events": ["fd-6c4f2877", "fd-59036101"], "basis": ["authored", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-dj-xiaoshan-phone", "level": "none", "high": false, "tier": "untouched", "events": ["fd-63e96250", "fd-4d9c9893"], "basis": ["authored", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-dm-gaoxiang-staging", "level": "none", "high": false, "tier": "untouched", "events": ["fd-0028e389"], "basis": ["authored", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-docs-prompt", "level": "none", "high": false, "tier": "noise", "events": ["fd-22c8c118"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
@@ -1214,7 +1214,7 @@
        {"thread": "fd:n-x-writeup", "level": "none", "high": false, "tier": "noise", "events": ["fd-73d98d8f"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "gh:saydone#46", "level": "none", "high": false, "tier": "noise", "events": ["fd-20f305e9"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "gh:saydone#54", "level": "none", "high": false, "tier": "noise", "events": ["fd-78dca393"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
-       {"thread": "gh:saydone#55", "level": "none", "high": false, "tier": "engaged", "events": ["fd-42a3b1ed"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-09-10T23:41:30+08:00", "who": "self", "action": "comment", "ref": "fd-3f242ee3"}]}
+       {"thread": "gh:saydone#55", "level": "none", "high": false, "tier": "engaged", "events": ["fd-42a3b1ed"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-09-10T23:47:52+08:00", "who": "self", "action": "comment", "ref": "fd-3f242ee3"}]}
       ]
     },
     {
@@ -3097,7 +3097,7 @@
        {"thread": "fd:n-dj-holiday-notice", "level": "none", "high": false, "tier": "noise", "events": ["fd-21825d40", "fd-4f33653b", "fd-ee3a73eb"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-family-chat", "level": "none", "high": false, "tier": "noise", "events": ["fd-6d8fdd87"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-food", "level": "none", "high": false, "tier": "noise", "events": ["fd-2b9c242f"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
-       {"thread": "fd:n-frontdesk-224", "level": "none", "high": false, "tier": "engaged", "events": ["fd-22da6fcb", "fd-f9a68419"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-09-18T15:12:40+08:00", "who": "self", "action": "review", "ref": "fd-6d0e07c8"}]},
+       {"thread": "fd:n-frontdesk-225", "level": "none", "high": false, "tier": "engaged", "events": ["fd-22da6fcb", "fd-f9a68419"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-09-18T15:12:40+08:00", "who": "self", "action": "review", "ref": "fd-6d0e07c8"}]},
        {"thread": "fd:n-hanmin-back", "level": "none", "high": false, "tier": "engaged", "events": ["fd-5449867b", "fd-ed546ee6"], "basis": ["authored", "self_acted_within_24h"], "evidence": [{"at": "2026-09-18T13:35:06+08:00", "who": "self", "action": "message", "ref": "fd-ad3554a6"}]},
        {"thread": "fd:n-hzai-expo-review", "level": "none", "high": false, "tier": "noise", "events": ["fd-448a80b0", "fd-90d7a710"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
        {"thread": "fd:n-hzai-teaparty", "level": "none", "high": false, "tier": "noise", "events": ["fd-209c52db"], "basis": ["authored", "authored_ignore", "no_action_7d"], "evidence": []},
