@@ -146,45 +146,234 @@
       "value": [
         {
           "name": "Discord 社区",
-          "kind": "消息",
-          "n": 500,
+          "kind": "群聊",
+          "n": 150,
           "basis": "估计",
-          "note": "一个几千人的活跃社区服务器。参照：3,167 个公开服务器 2015–2024 年共 20.5 亿条消息，平均每个约 65 万条（Discord Unveiled，https://arxiv.org/abs/2502.00627）；一个约千名活跃成员的开发者服务器平均每天约 100 条（Raglianti 等 2021，https://discordance.si.usi.ch/files/Raglianti2021a.pdf）"
+          "note": "一个几千人的开源项目 Discord 服务器。参照：3,167 个公开服务器 2015–2024 年共 20.5 亿条消息（Discord Unveiled，https://arxiv.org/abs/2502.00627）；一个约千名活跃成员的开发者服务器平均每天约 100 条（Raglianti 等 2021，https://discordance.si.usi.ch/files/Raglianti2021a.pdf）"
         },
         {
           "name": "业主群",
-          "kind": "消息",
-          "n": 300,
-          "basis": "估计",
-          "note": "几百人的小区业主微信群（微信群上限 500 人）：报修、团购、闲聊"
-        },
-        {
-          "name": "行业群",
-          "kind": "消息",
-          "n": 200,
-          "basis": "估计",
-          "note": "一两个几百人的同行交流群"
-        },
-        {
-          "name": "工作消息",
-          "kind": "消息",
+          "kind": "群聊",
           "n": 150,
-          "basis": "https://www.microsoft.com/en-us/worklab/work-trend-index/breaking-down-infinite-workday",
-          "note": "微软 Work Trend Index 2025：平均每个工作日收到 153 条 Teams 消息，取整"
+          "basis": "估计",
+          "note": "几百人的小区业主微信群（微信群上限 500 人）：报修、物业通知、闲聊"
+        },
+        {
+          "name": "小区团购群",
+          "kind": "群聊",
+          "n": 150,
+          "basis": "估计",
+          "note": "团长一天发几十个商品，邻居接龙下单"
+        },
+        {
+          "name": "行业交流群",
+          "kind": "群聊",
+          "n": 120,
+          "basis": "估计",
+          "note": "几百人的同行交流群"
+        },
+        {
+          "name": "炒股群",
+          "kind": "群聊",
+          "n": 120,
+          "basis": "估计",
+          "note": "开盘时间最热闹"
+        },
+        {
+          "name": "技术交流群",
+          "kind": "群聊",
+          "n": 120,
+          "basis": "估计",
+          "note": "几百人的技术群：提问、转发、讨论"
+        },
+        {
+          "name": "游戏 Discord",
+          "kind": "群聊",
+          "n": 100,
+          "basis": "估计",
+          "note": "一个游戏社区的 Discord 服务器"
+        },
+        {
+          "name": "家长群",
+          "kind": "群聊",
+          "n": 100,
+          "basis": "估计",
+          "note": "班级家长群：老师的通知、接龙、一串“收到”"
+        },
+        {
+          "name": "AI 工具 Discord",
+          "kind": "群聊",
+          "n": 80,
+          "basis": "估计",
+          "note": "一个 AI 工具的用户社区服务器"
+        },
+        {
+          "name": "大学同学群",
+          "kind": "群聊",
+          "n": 80,
+          "basis": "估计",
+          "note": "近况、聚会、转发"
+        },
+        {
+          "name": "小区闲置群",
+          "kind": "群聊",
+          "n": 80,
+          "basis": "估计",
+          "note": "二手转让、拼车、求助"
+        },
+        {
+          "name": "家族群",
+          "kind": "群聊",
+          "n": 60,
+          "basis": "估计",
+          "note": "转发的文章、节日问候、家里的事"
+        },
+        {
+          "name": "公司大群",
+          "kind": "群聊",
+          "n": 60,
+          "basis": "估计",
+          "note": "全员通知与闲聊。四个工作群（公司大群、部门群、两个项目群）合计 150 条，与微软 Work Trend Index 2025 统计的每个工作日 153 条 Teams 消息相当（https://www.microsoft.com/en-us/worklab/work-trend-index/breaking-down-infinite-workday）"
+        },
+        {
+          "name": "跑步群",
+          "kind": "群聊",
+          "n": 60,
+          "basis": "估计",
+          "note": "打卡、约跑"
+        },
+        {
+          "name": "店铺福利群",
+          "kind": "群聊",
+          "n": 60,
+          "basis": "估计",
+          "note": "奶茶店、超市拉的群：优惠券、秒杀"
+        },
+        {
+          "name": "车友群",
+          "kind": "群聊",
+          "n": 50,
+          "basis": "估计",
+          "note": "同一款车的车主群"
+        },
+        {
+          "name": "部门群",
+          "kind": "群聊",
+          "n": 40,
+          "basis": "估计",
+          "note": "见公司大群：四个工作群（公司大群、部门群、两个项目群）合计 150 条，与微软 Work Trend Index 2025 统计的每个工作日 153 条 Teams 消息相当（https://www.microsoft.com/en-us/worklab/work-trend-index/breaking-down-infinite-workday）"
+        },
+        {
+          "name": "前同事群",
+          "kind": "群聊",
+          "n": 40,
+          "basis": "估计",
+          "note": "上一家公司的同事"
+        },
+        {
+          "name": "校友会群",
+          "kind": "群聊",
+          "n": 40,
+          "basis": "估计",
+          "note": "同城校友：活动、招聘、转发"
+        },
+        {
+          "name": "项目群",
+          "kind": "群聊",
+          "n": 30,
+          "basis": "估计",
+          "note": "见公司大群：四个工作群（公司大群、部门群、两个项目群）合计 150 条，与微软 Work Trend Index 2025 统计的每个工作日 153 条 Teams 消息相当（https://www.microsoft.com/en-us/worklab/work-trend-index/breaking-down-infinite-workday）"
+        },
+        {
+          "name": "兴趣班家长群",
+          "kind": "群聊",
+          "n": 30,
+          "basis": "估计",
+          "note": "孩子的游泳课、画画课"
+        },
+        {
+          "name": "高中同学群",
+          "kind": "群聊",
+          "n": 30,
+          "basis": "估计",
+          "note": "近况、聚会"
+        },
+        {
+          "name": "读书群",
+          "kind": "群聊",
+          "n": 30,
+          "basis": "估计",
+          "note": "打卡、讨论"
+        },
+        {
+          "name": "羽毛球群",
+          "kind": "群聊",
+          "n": 30,
+          "basis": "估计",
+          "note": "约场地、接龙"
+        },
+        {
+          "name": "养猫群",
+          "kind": "群聊",
+          "n": 25,
+          "basis": "估计",
+          "note": "猫粮团购、看病经验"
+        },
+        {
+          "name": "另一个项目群",
+          "kind": "群聊",
+          "n": 20,
+          "basis": "估计",
+          "note": "见公司大群：四个工作群（公司大群、部门群、两个项目群）合计 150 条，与微软 Work Trend Index 2025 统计的每个工作日 153 条 Teams 消息相当（https://www.microsoft.com/en-us/worklab/work-trend-index/breaking-down-infinite-workday）"
+        },
+        {
+          "name": "同乡群",
+          "kind": "群聊",
+          "n": 20,
+          "basis": "估计",
+          "note": "老乡：转发、互助"
+        },
+        {
+          "name": "楼栋群",
+          "kind": "群聊",
+          "n": 20,
+          "basis": "估计",
+          "note": "同一栋楼的邻居：停水停电、快递放错"
+        },
+        {
+          "name": "旅行群",
+          "kind": "群聊",
+          "n": 20,
+          "basis": "估计",
+          "note": "一次出游临时拉的群"
+        },
+        {
+          "name": "健身群",
+          "kind": "群聊",
+          "n": 20,
+          "basis": "估计",
+          "note": "健身房的课程与打卡"
+        },
+        {
+          "name": "室友群",
+          "kind": "群聊",
+          "n": 15,
+          "basis": "估计",
+          "note": "大学室友"
+        },
+        {
+          "name": "公司兴趣群",
+          "kind": "群聊",
+          "n": 15,
+          "basis": "估计",
+          "note": "公司里的运动、读书小组"
         },
         {
           "name": "工作邮件",
           "kind": "邮件",
           "n": 120,
           "basis": "https://www.microsoft.com/en-us/worklab/work-trend-index/breaking-down-infinite-workday",
-          "note": "同上：平均每天收到 117 封邮件，取整"
-        },
-        {
-          "name": "家长群",
-          "kind": "消息",
-          "n": 100,
-          "basis": "估计",
-          "note": "班级家长群：通知、接龙、一串“收到”"
+          "note": "微软 Work Trend Index 2025：平均每天收到 117 封邮件，取整"
         },
         {
           "name": "新闻订阅",
@@ -278,18 +467,18 @@
           "note": "班级通知、照片、入园离园签到"
         }
       ],
-      "source": "第 2 节：一个人一天各个来源进来的条数，示意的量级，不是演示数据；basis 是出处链接或“估计”，note 写怎么得来（scripts/landing-data.mjs DAY_SOURCES）"
+      "source": "第 2 节：一个人一天各个来源进来的条数，示意的量级，不是演示数据；先是群（kind 群聊，一个群一行），再是其余来源，各自从多到少，这也是图里行的顺序；basis 是出处链接或“估计”，note 写怎么得来（scripts/landing-data.mjs DAY_SOURCES）"
     },
     "total": {
-      "value": 1850,
+      "value": 2565,
       "source": "Σ why.day[].n：Agent 替这个人看着全部来源，一天要读的条数"
     },
     "widest": {
-      "value": 500,
+      "value": 150,
       "source": "why.day 里最多的一项：第 1 幕的比例按它定（它占满一行）"
     },
     "oneApp": {
-      "value": 18,
+      "value": 45,
       "source": "标“← 一个软件”的那一行在 why.day 里的下标（幼儿园 App）"
     },
     "demoPerDay": {

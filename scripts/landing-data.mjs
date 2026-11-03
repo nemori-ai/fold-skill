@@ -94,16 +94,48 @@ const byChannel = Object.entries(seenEvents.reduce((n, e) => ({ ...n, [channelOf
 
 // ---------- 第 2 节：一个人一天的量级（示意，不是演示数据） ----------
 // 第 2 节讲的是一般的问题，不用演示回放：一个普通人一天各个来源进来的条数。能找到公开统计的按统计取整（basis 写链接），
-// 找不到的用保守的整数估计（basis 写“估计”，note 写怎么估的、参照了什么）。按条数从多到少；消息类的大群必须明显最多。
+// 找不到的用保守的整数估计（basis 写“估计”，note 写怎么估的、参照了什么）。
+// 每个群是一个单独的来源，Agent 每个都要读，所以群一个一行（kind 群聊）：一个人往往加了几十个群，这里按三十来个
+// 活跃的群估计（不说话的群不算），每个一天几十到一百多条。人均加多少个群，没有找到可靠的公开统计。
+// 行的顺序就是图里的顺序：先是群，再是其余来源，各自从多到少；最多的一项是群，所有群加起来远多于其余来源。
+// 全部加起来至少是最多那一项的 15 倍：第 3 幕按总和换比例后，最长的单行不到整宽的 7%。逐笔行情、传感器读数不算。
 // 出处表见 site/landing/story.md「第 2 节 · 为什么是新问题」。
 const WTI = 'https://www.microsoft.com/en-us/worklab/work-trend-index/breaking-down-infinite-workday';
+const WORK_GROUPS = `四个工作群（公司大群、部门群、两个项目群）合计 150 条，与微软 Work Trend Index 2025 统计的每个工作日 153 条 Teams 消息相当（${WTI}）`;
 const DAY_SOURCES = [
-  ['Discord 社区', '消息', 500, '估计', '一个几千人的活跃社区服务器。参照：3,167 个公开服务器 2015–2024 年共 20.5 亿条消息，平均每个约 65 万条（Discord Unveiled，https://arxiv.org/abs/2502.00627）；一个约千名活跃成员的开发者服务器平均每天约 100 条（Raglianti 等 2021，https://discordance.si.usi.ch/files/Raglianti2021a.pdf）'],
-  ['业主群', '消息', 300, '估计', '几百人的小区业主微信群（微信群上限 500 人）：报修、团购、闲聊'],
-  ['行业群', '消息', 200, '估计', '一两个几百人的同行交流群'],
-  ['工作消息', '消息', 150, WTI, '微软 Work Trend Index 2025：平均每个工作日收到 153 条 Teams 消息，取整'],
-  ['工作邮件', '邮件', 120, WTI, '同上：平均每天收到 117 封邮件，取整'],
-  ['家长群', '消息', 100, '估计', '班级家长群：通知、接龙、一串“收到”'],
+  ['Discord 社区', '群聊', 150, '估计', '一个几千人的开源项目 Discord 服务器。参照：3,167 个公开服务器 2015–2024 年共 20.5 亿条消息（Discord Unveiled，https://arxiv.org/abs/2502.00627）；一个约千名活跃成员的开发者服务器平均每天约 100 条（Raglianti 等 2021，https://discordance.si.usi.ch/files/Raglianti2021a.pdf）'],
+  ['业主群', '群聊', 150, '估计', '几百人的小区业主微信群（微信群上限 500 人）：报修、物业通知、闲聊'],
+  ['小区团购群', '群聊', 150, '估计', '团长一天发几十个商品，邻居接龙下单'],
+  ['行业交流群', '群聊', 120, '估计', '几百人的同行交流群'],
+  ['炒股群', '群聊', 120, '估计', '开盘时间最热闹'],
+  ['技术交流群', '群聊', 120, '估计', '几百人的技术群：提问、转发、讨论'],
+  ['游戏 Discord', '群聊', 100, '估计', '一个游戏社区的 Discord 服务器'],
+  ['家长群', '群聊', 100, '估计', '班级家长群：老师的通知、接龙、一串“收到”'],
+  ['AI 工具 Discord', '群聊', 80, '估计', '一个 AI 工具的用户社区服务器'],
+  ['大学同学群', '群聊', 80, '估计', '近况、聚会、转发'],
+  ['小区闲置群', '群聊', 80, '估计', '二手转让、拼车、求助'],
+  ['家族群', '群聊', 60, '估计', '转发的文章、节日问候、家里的事'],
+  ['公司大群', '群聊', 60, '估计', `全员通知与闲聊。${WORK_GROUPS}`],
+  ['跑步群', '群聊', 60, '估计', '打卡、约跑'],
+  ['店铺福利群', '群聊', 60, '估计', '奶茶店、超市拉的群：优惠券、秒杀'],
+  ['车友群', '群聊', 50, '估计', '同一款车的车主群'],
+  ['部门群', '群聊', 40, '估计', `见公司大群：${WORK_GROUPS}`],
+  ['前同事群', '群聊', 40, '估计', '上一家公司的同事'],
+  ['校友会群', '群聊', 40, '估计', '同城校友：活动、招聘、转发'],
+  ['项目群', '群聊', 30, '估计', `见公司大群：${WORK_GROUPS}`],
+  ['兴趣班家长群', '群聊', 30, '估计', '孩子的游泳课、画画课'],
+  ['高中同学群', '群聊', 30, '估计', '近况、聚会'],
+  ['读书群', '群聊', 30, '估计', '打卡、讨论'],
+  ['羽毛球群', '群聊', 30, '估计', '约场地、接龙'],
+  ['养猫群', '群聊', 25, '估计', '猫粮团购、看病经验'],
+  ['另一个项目群', '群聊', 20, '估计', `见公司大群：${WORK_GROUPS}`],
+  ['同乡群', '群聊', 20, '估计', '老乡：转发、互助'],
+  ['楼栋群', '群聊', 20, '估计', '同一栋楼的邻居：停水停电、快递放错'],
+  ['旅行群', '群聊', 20, '估计', '一次出游临时拉的群'],
+  ['健身群', '群聊', 20, '估计', '健身房的课程与打卡'],
+  ['室友群', '群聊', 15, '估计', '大学室友'],
+  ['公司兴趣群', '群聊', 15, '估计', '公司里的运动、读书小组'],
+  ['工作邮件', '邮件', 120, WTI, '微软 Work Trend Index 2025：平均每天收到 117 封邮件，取整'],
   ['新闻订阅', '新闻', 100, '估计', '几个新闻 App 与 RSS 订阅一天的新文章'],
   ['自选股', '行情', 100, '估计', '二三十只自选股的异动、公告与到价提醒'],
   ['智能家居', '家里', 60, '估计', '门锁、摄像头的移动侦测、温湿度与漏水传感器'],
@@ -118,20 +150,26 @@ const DAY_SOURCES = [
   ['日历', '生活', 5, '估计', '会议与日程提醒'],
   ['幼儿园 App', '家里', 5, '估计', '班级通知、照片、入园离园签到'],
 ].map(([name, kind, n, basis, note]) => ({ name, kind, n, basis, note }));
-// The one app the section points at (“← 一个软件”).
+// The one app the section points at (“← 一个软件”): the last row, so it is named at the bottom of the figure.
 const ONE_APP = '幼儿园 App';
+const dayTotal = sum(DAY_SOURCES.map(s => s.n));
 {
-  const top = DAY_SOURCES[0], firstOther = DAY_SOURCES.find(s => s.kind !== '消息');
+  const isGroup = s => s.kind === '群聊';
+  const groups = DAY_SOURCES.filter(isGroup), rest = DAY_SOURCES.filter(s => !isGroup(s));
+  const desc = list => list.every((s, i) => !i || s.n <= list[i - 1].n);
+  const widest = Math.max(...DAY_SOURCES.map(s => s.n)), groupSum = sum(groups.map(s => s.n));
   const problems = [
-    DAY_SOURCES.some((s, i) => i && s.n > DAY_SOURCES[i - 1].n) && 'why.day 没按条数从多到少排',
-    top.kind !== '消息' && '最多的一项不是消息类的大群',
-    firstOther.n * 2 > top.n && `消息类的大群不够明显地最多（${top.name} ${top.n}，${firstOther.name} ${firstOther.n}）`,
-    !DAY_SOURCES.some(s => s.name === ONE_APP) && `why.day 里没有 ${ONE_APP}`,
+    DAY_SOURCES.some((s, i) => i && isGroup(s) && !isGroup(DAY_SOURCES[i - 1])) && 'why.day 要先列完所有的群，再列其余来源',
+    !(desc(groups) && desc(rest)) && 'why.day 的群与其余来源各自要按条数从多到少排',
+    DAY_SOURCES[0].n !== widest && '最多的一项不是群',
+    groupSum < 2 * (dayTotal - groupSum) && `群加起来（${groupSum}）不到其余来源（${dayTotal - groupSum}）的两倍`,
+    dayTotal < 15 * widest && `全部加起来（${dayTotal}）不到最多那一项（${widest}）的 15 倍：第 3 幕里每一行缩不到一点点`,
+    DAY_SOURCES.at(-1).name !== ONE_APP && `why.day 的最后一行不是 ${ONE_APP}`,
     DAY_SOURCES.some(s => s.basis !== '估计' && !/^https:\/\//.test(s.basis)) && 'basis 只能是出处链接或“估计”',
+    new Set(DAY_SOURCES.map(s => s.name)).size !== DAY_SOURCES.length && 'why.day 里有重名的行',
   ].filter(Boolean);
   if (problems.length) throw new Error(problems.join('；'));
 }
-const dayTotal = sum(DAY_SOURCES.map(s => s.n));
 
 // ---------- 入口页的白话说法 ----------
 // 用户 2026-11-03：“你要举例，举一点不拗口的，一眼就知道什么意思的。”入口页不直接搬演示原文（瑞典人名、#编号、PR、
@@ -212,7 +250,7 @@ const data = {
       '复盘那扇窗：f01…f26 每轮一项 [帧号, 已用份数, 根层各件的份额（按 rank）]，records[k].state.root'),
   },
   why: {
-    day: v(DAY_SOURCES, '第 2 节：一个人一天各个来源进来的条数，示意的量级，不是演示数据；basis 是出处链接或“估计”，note 写怎么得来（scripts/landing-data.mjs DAY_SOURCES）'),
+    day: v(DAY_SOURCES, '第 2 节：一个人一天各个来源进来的条数，示意的量级，不是演示数据；先是群（kind 群聊，一个群一行），再是其余来源，各自从多到少，这也是图里行的顺序；basis 是出处链接或“估计”，note 写怎么得来（scripts/landing-data.mjs DAY_SOURCES）'),
     total: v(dayTotal, 'Σ why.day[].n：Agent 替这个人看着全部来源，一天要读的条数'),
     widest: v(DAY_SOURCES[0].n, 'why.day 里最多的一项：第 1 幕的比例按它定（它占满一行）'),
     oneApp: v(DAY_SOURCES.findIndex(s => s.name === ONE_APP), `标“← 一个软件”的那一行在 why.day 里的下标（${ONE_APP}）`),

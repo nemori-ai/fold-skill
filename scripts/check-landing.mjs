@@ -8,10 +8,12 @@
 // 5. 三拍按阅读线切换（1 → 2 → 3 → 回流），演示卡的按钮真的作答、撤回；第 2 拍演完后尺上没有残留的点；
 // 6. 导航是“处境 · 全部原型 · 从头读起 · 文档”（没有“为什么”，#why 锚点与首屏按钮仍在），“全部原型”的画册面板与查看弹框照常可用；
 // 7. 首屏标题的字都在字体子集里，六张卡与画廊的录像文件都在；
-// 8. 第 2 节的三幕：第 1 幕按最大的单个来源定比例、消息类的大群那行最长；第 3 幕终态“全部加起来”那根正好顶满整宽，
-//    每个单独来源只剩一点点（> 0、远小于整宽），减弱动态时一打开就是这个终态；三幕演的整个过程页面不横向溢出；
+// 8. 第 2 节的三幕：第 1 幕按最大的单个来源定比例、占满一行的都是群，一个群一行，没写名字的行由括号数清；第 2 幕每段先竖直落、
+//    再水平滑，任何时刻在路上的不超过两批，第 1 幕 ≤ 1.5 秒、第 2 幕 ≤ 2 秒；第 3 幕终态“全部加起来”那根正好顶满整宽，
+//    每个单独来源都缩成一点点（≤ 整宽的 8%、≥ 1px），减弱动态时一打开就是这个终态；三幕演的整个过程页面不横向溢出；
 // 9. 白话：入口页正文（不含六张原型卡、画廊、弹框）只用白话，不出现 #数字、PR、CI、master、演示里的人名与瑞典语，
-//    也不出现演示原文的标题、问题与选项（白话与 data.json 的 plain 字段由第 1 项逐个核对）。
+//    也不出现演示原文的标题、问题与选项（白话与 data.json 的 plain 字段由第 1 项逐个核对）；正文与页面描述是平常的书面语，
+//    不出现改掉的别扭说法（接得住、交出、落进、暗下、舍掉、让位、一摊……）。
 //
 //   npm run site:build && node scripts/check-landing.mjs            # 自己起服务读 dist/
 //   node scripts/check-landing.mjs --base http://127.0.0.1:4174      # 或检查已在跑的站点
@@ -249,7 +251,8 @@ try {
   for (const size of [[390, 844], [1440, 900]]) {
     const p = await open(size);
     await wait(400);
-    // Bring the figure into view (its observer adds .in), then hold every animation of it at the end of act 1.
+    // Bring the figure into view (its observer adds .in), then hold every animation of it at chosen times: the end of
+    // act 1, then every 40 ms through act 2, then just before act 3 (where every piece of the sum is at rest).
     await p.evaluate(`(() => { const f = document.querySelector('#why .fl-src'); window.scrollTo(0, f.getBoundingClientRect().top + scrollY - 80); return 1; })()`);
     for (let i = 0; i < 40 && !(await p.evaluate(`document.querySelector('#why .fl-src').classList.contains('in')`)); i += 1) await wait(50);
     const act1At = WHY.pour[0] - 60;
@@ -258,13 +261,33 @@ try {
       for (const a of anims) { a.pause(); a.currentTime = ${act1At}; }
       const W = f.querySelector('.row .bar').getBoundingClientRect().width;
       const rows = [...f.querySelectorAll('.row:not(.all)')].map(r => r.querySelector('.b').getBoundingClientRect().width);
-      for (const a of anims) a.play();
-      return { in: f.classList.contains('in'), anims: anims.length, W, rows }; })()`);
-    const longest = act1.rows.indexOf(Math.max(...act1.rows));
+      const named = [...f.querySelectorAll('.row:not(.all) .nm')].filter(e => e.textContent.trim()).length;
+      const brackets = [...f.querySelectorAll('.brk')].map(e => [Number(getComputedStyle(e).getPropertyValue('--c')), Number(e.querySelector('b').textContent.match(/\\d+/)?.[0])]);
+      return { in: f.classList.contains('in'), anims: anims.length, W, rows, named, brackets }; })()`);
+    const full = act1.rows.map((w, r) => [w, r]).filter(([w]) => Math.abs(w - act1.W) <= 1.5).map(([, r]) => r);
     const scaled = act1.rows.every((w, r) => Math.abs(w - day[r].n / widest * act1.W) <= 1.5);
-    check(`${size.join(' × ')} 第 2 节第 1 幕：按最大的单个来源定比例（同一比例），最长的是消息类的大群“${day[0].name}”，占满一行`,
-      act1.in && act1.anims > 40 && longest === 0 && day[0].kind === '消息' && Math.abs(act1.rows[0] - act1.W) <= 1.5 && scaled, { ...act1, longest, scaled });
-    // Let the acts play out for real, watching the page's horizontal overflow all the way through.
+    const bracketsOk = act1.brackets.every(([c, said]) => c === said) && act1.named + act1.brackets.reduce((a, [c]) => a + c, 0) === day.length;
+    check(`${size.join(' × ')} 第 2 节第 1 幕：按最大的单个来源定比例（同一比例），占满一行的都是群（第一行“${day[0].name}”）；一个群一行，没写名字的行由括号数清`,
+      act1.in && act1.anims > 40 && full[0] === 0 && full.every(r => day[r].kind === '群聊') && scaled && bracketsOk, { ...act1, rows: undefined, full, scaled, bracketsOk });
+    const act2 = await p.evaluate(`(() => { const f = document.querySelector('#why .fl-src'), anims = document.getAnimations().filter(a => f.contains(a.effect?.target));
+      const segs = [...f.querySelectorAll('.sg')], bar = f.querySelector('.row.all .bar').getBoundingClientRect();
+      const at = t => { for (const a of anims) a.currentTime = t; return segs.map(e => { const r = e.getBoundingClientRect();
+        return { l: r.left, cy: r.top + r.height / 2, h: r.height, o: Number(getComputedStyle(e).opacity), b: Number(getComputedStyle(e).getPropertyValue('--b')) }; }); };
+      const rest = at(${WHY.rescale[0]} - 1), sumY = rest[0].cy, samples = [];
+      for (let t = ${WHY.pour[0]}; t < ${WHY.rescale[0]}; t += 40) {
+        const moving = at(t).map((s, i) => ({ ...s, i })).filter(s => s.o > 0.5 && (Math.abs(s.l - rest[s.i].l) > 0.5 || Math.abs(s.cy - rest[s.i].cy) > 0.5 || Math.abs(s.h - rest[s.i].h) > 0.5));
+        const diagonal = moving.filter(s => Math.abs(s.l - bar.left) > 1 && Math.abs(s.cy - sumY) > 1).map(s => s.i);
+        samples.push({ t, moving: moving.length, batches: new Set(moving.map(s => s.b)).size, diagonal });
+      }
+      for (const a of anims) a.currentTime = 0;
+      for (const a of anims) a.play();
+      return { samples, rows: f.querySelectorAll('.row:not(.all)').length, batches: Math.max(...segs.map(e => Number(getComputedStyle(e).getPropertyValue('--b')))) + 1 }; })()`);
+    const act1Ms = WHY.grow[0] + (act2.rows - 1) * WHY.grow[1] + WHY.grow[2], act2Ms = (act2.batches - 1) * WHY.pour[1] + WHY.pour[2];
+    const crowded = act2.samples.filter(s => s.batches > 2 || s.diagonal.length);
+    check(`${size.join(' × ')} 第 2 节第 2 幕有秩序：每段先竖直落、再水平滑（没有斜飞），任何时刻在路上的不超过两批；第 1 幕 ≤ 1.5 秒（${act1Ms} ms）、第 2 幕 ≤ 2 秒（${act2Ms} ms）`,
+      act2.samples.some(s => s.moving) && !crowded.length && act1Ms <= 1500 && act2Ms <= 2000,
+      { crowded: crowded.slice(0, 4), most: Math.max(...act2.samples.map(s => s.batches)), act1Ms, act2Ms });
+    // Then the acts play out for real from the start, watching the page's horizontal overflow all the way through.
     let overflow = -Infinity;
     const until = Date.now() + WHY.end + 900;
     while (Date.now() < until) { overflow = Math.max(overflow, await p.evaluate('document.documentElement.scrollWidth - innerWidth')); await wait(90); }
@@ -276,9 +299,10 @@ try {
       return { W: b.width, left: Math.min(...segs.map(r => r.left)) - b.left, right: Math.max(...segs.map(r => r.right)) - b.left, rows,
         running: document.getAnimations().filter(a => f.contains(a.effect?.target) && a.playState === 'running').length }; })()`);
     const sumOk = Math.abs(end.left) <= 1 && Math.abs(end.right - end.W) <= Math.max(2, end.W * 0.01);
-    const rowsOk = end.rows.every(r => r.w >= 1 && r.w <= end.W * 0.35 && r.o > 0.9);
-    check(`${size.join(' × ')} 第 2 节第 3 幕终态：“全部加起来”那根正好顶满整宽（${Math.round(end.W)}px），每个单独来源只剩一点点（≥ 1px、≤ 整宽的 35%）`,
-      sumOk && rowsOk && !end.running, { W: end.W, left: end.left, right: end.right, running: end.running, rows: end.rows.filter(r => !(r.w >= 1 && r.w <= end.W * 0.35 && r.o > 0.9)) });
+    const sliver = r => r.w >= 1 && r.w <= end.W * 0.08 && r.o > 0.9;
+    const longestEnd = Math.max(...end.rows.map(r => r.w));
+    check(`${size.join(' × ')} 第 2 节第 3 幕终态：“全部加起来”那根正好顶满整宽（${Math.round(end.W)}px），每个单独来源都缩成一点点（最长的 ${(longestEnd / end.W * 100).toFixed(1)}% ≤ 整宽的 8%，最短的 ≥ 1px）`,
+      sumOk && end.rows.every(sliver) && !end.running, { W: end.W, left: end.left, right: end.right, running: end.running, rows: end.rows.filter(r => !sliver(r)) });
     check(`${size.join(' × ')} 第 2 节三幕演的整个过程中页面不横向溢出`, overflow <= 0, overflow);
     await p.close();
     if (size[0] === 390) {
@@ -307,6 +331,11 @@ try {
   const originals = [...data.beat2.segments.value.map(x => x.title), ...data.beat3.asks.value.map(x => x.short), data.beat3.lead.value.prompt, ...data.beat3.lead.value.actions,
     data.beat3.loop.example.value.ask, data.beat3.loop.example.value.response.text].filter(t => body.includes(t));
   check('白话：入口页正文（不含原型卡、画廊、弹框）没有 #数字、PR、CI、master、演示里的人名与瑞典语，也没有演示原文的标题、问题与选项', !hits.length && !originals.length, { hits, originals });
+  // Plain written Chinese (the user, 2026-11-03): the contrived phrasings that were rewritten stay out of the body and the description.
+  const description = await plain.evaluate(`document.querySelector('meta[name="description"]')?.content || ''`);
+  const stiff = ['接得住', '交出', '落进', '暗下', '舍掉', '让位', '让出', '一摊', '开口', '涌入', '摊开', '回话', '刻痕', '回流', '折掉']
+    .filter(w => body.includes(w) || description.includes(w));
+  check('平常的书面语：入口页正文与页面描述里没有“接得住、交出、落进、暗下、舍掉、让位、一摊”这类别扭的说法', description.length > 20 && !stiff.length, { stiff, description });
   await plain.close();
 
   // ---- 2. seven sizes: scroll top to bottom; no errors, no failed requests, no horizontal scroll ----

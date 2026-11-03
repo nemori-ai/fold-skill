@@ -134,7 +134,7 @@ export const SITUATIONS = [
 ]
 // When things happen on the first screen, in ms from first paint (it plays once and stops on 复盘):
 //   sweep  the two weeks are laid in, a round a column, left to right
-//   s1–s3  the window takes the situation's shape; what it was not made from dims in place; its content re-encodes
+//   s1–s3  the window takes the situation's shape; what it was not made from dims; its content re-encodes
 export const MOMENT = { sweep: [100, 900], s: [1200, 3900, 6900], open: 420, morph: 650, fade: 140, dim: 450, lit: 300, rise: [450, 24] }
 const PER = 5          // dots per row in a column
 const STRIDE = PER + 1 // a column and its gap, in dots
@@ -253,33 +253,72 @@ export function momentCSS() {
 }
 
 // ---------- why it is a new problem: one app against everything the Agent reads in a day ----------
-// The figure is a day of one person (data.json why.day, an order of magnitude, not the replay). It plays once when it
-// comes into view, in three acts (ms from then):
+// The figure is a day of one person (data.json why.day, an order of magnitude, not the replay): one row per source, the
+// groups first (a group is a source of its own), then the rest, each block from most to fewest. Only a few rows are
+// named: the biggest groups, the biggest of the rest and the one app at the bottom; the other rows are thin, and each
+// run of them shares a bracket (“还有 29 个群”). It plays once when it comes into view, in three acts (ms from then):
 //   grow     each source on its own, at the scale of the largest one: the bars grow from the left, top row first
 //            [start, gap, duration]
-//   pour     all of them added up: each bar's copy drops into the last row, end to end, the bottom row first, and the
-//            sum runs far past the right edge [start, gap, duration]
+//   pour     all of them added up, in batches from the bottom: a named row alone, a bracket's rows together. A row's
+//            copy drops straight down to the last row, then slides right into its place, end to end, so nothing flies
+//            across and at most two batches are on the way at once; the sum runs far past the right edge
+//            [start, batch gap, duration]
 //   rescale  the scale shrinks until the sum just fills the row; every source shrinks with it, to a sliver (never
 //            under a 1.5 px mark) [start, duration]
 //   end      the closing line comes in
 // Only transform and opacity move; the CSS reads these as custom properties on the figure (whyModel().vars).
-export const WHY = { grow: [0, 45, 420], pour: [1550, 55, 560], rescale: [3500, 1400], end: 5050 }
+export const WHY = { grow: [0, 18, 360], pour: [1400, 240, 520], rescale: [3450, 1400], end: 4950 }
+const WHY_BLOCKS = [
+  { named: 3, more: c => `还有 ${c} 个群`, eg: ['公司、家长', '同学、家族……'] },
+  { named: 1, more: c => `还有 ${c} 个来源`, eg: ['新闻、股票', '私聊、快递……'] },
+]
 
-/** The second section's figure: its rows, the sum's segments (end to end, bottom row first) and the timing variables. */
+/**
+ * The second section's figure. rows: in data order, each with its block, whether it is named, the bracket that starts
+ * on it (a run of thin rows) and its batch in act 2. segments: the sum's pieces, end to end from the left in
+ * pour order (bottom row first); each knows how many named and thin rows lie below its row (and whether the gap
+ * between the blocks does), which is how far it drops.
+ */
 export function whyModel(d) {
   const day = v(d.why.day)
-  const widest = v(d.why.widest), total = v(d.why.total)
-  let at = 0
-  const segments = day.map((s, row) => ({ row, n: s.n })).reverse().map(s => { const seg = { ...s, x: r(at / widest, 5), w: r(s.n / widest, 5) }; at += s.n; return seg })
+  const widest = v(d.why.widest), total = v(d.why.total), oneApp = v(d.why.oneApp)
+  const seen = [0, 0]
+  const rows = day.map((s, at) => {
+    const block = s.kind === '群聊' ? 0 : 1, i = seen[block]++
+    return { name: s.name, n: s.n, r: at, w: r5(s.n / widest), block, gap: block === 1 && i === 0, named: i < WHY_BLOCKS[block].named || at === oneApp, one: at === oneApp }
+  })
+  const runs = (a, b) => !a.named && !b.named && a.block === b.block
+  rows.forEach((row, q) => {
+    if (row.named || (q && runs(rows[q - 1], row))) return
+    let c = 1
+    while (rows[q + c] && runs(rows[q + c - 1], rows[q + c])) c += 1
+    row.brk = { c, text: WHY_BLOCKS[row.block].more(c), eg: WHY_BLOCKS[row.block].eg }
+  })
+  let cum = 0, batch = -1, named = 0, thin = 0, gaps = 0
+  const segments = []
+  for (let q = rows.length - 1; q >= 0; q -= 1) {
+    const row = rows[q]
+    if (!(rows[q + 1] && runs(row, rows[q + 1]))) batch += 1
+    row.b = batch
+    segments.push({ row: q, t: !row.named, x: r5(cum / widest), w: row.w, b: batch, an: named, at: thin, ab: gaps })
+    cum += row.n
+    if (row.named) named += 1; else thin += 1
+    if (row.gap) gaps += 1
+  }
   const { grow, pour, rescale, end } = WHY
+  const poured = pour[0] + batch * pour[1] + pour[2]
+  if (grow[0] + (rows.length - 1) * grow[1] + grow[2] > pour[0]) throw new Error('第 2 节第 1 幕还没长完，第 2 幕就开始了')
+  if (poured > rescale[0]) throw new Error('第 2 节第 2 幕还没落完，第 3 幕就开始了')
   const vars = {
-    '--n': day.length, '--k': r(widest / total, 5),
+    '--n': rows.length, '--k': r(widest / total, 5),
     '--g0': `${grow[0]}ms`, '--gg': `${grow[1]}ms`, '--gd': `${grow[2]}ms`,
     '--p0': `${pour[0]}ms`, '--pg': `${pour[1]}ms`, '--pd': `${pour[2]}ms`,
     '--s0': `${rescale[0]}ms`, '--sd': `${rescale[1]}ms`, '--e0': `${end}ms`,
   }
-  return { day, widest, total, oneApp: v(d.why.oneApp), segments, vars }
+  const groups = rows.filter(x => x.block === 0).length
+  return { day, rows, widest, total, oneApp, groups, others: rows.length - groups, segments, batches: batch + 1, vars }
 }
+const r5 = x => r(x, 5)
 
 // ---------- the situations, by how much room each one gives (the third section) ----------
 
@@ -288,12 +327,12 @@ export function whyModel(d) {
 // rather than read off the showcase (its make-up and order are its own): a row links to its card when the showcase has
 // one, else to the prototype itself. `fig` is at most one number, in plain words: [number | null, words, data-k | null].
 export const LADDER = [
-  { id: 'watch', name: '腕上一瞥', size: 56, when: '抬腕两秒', room: '只读得了一个数', fig: d => [v(d.beat3.urgent).length, '件要紧', 'beat3.urgent.length'], ver: true },
-  { id: 'trays', name: '回应托盘', size: 64, when: '通勤几分钟', room: '只有一只拇指', fig: d => [v(d.beat3.taps), '下答完全部问题', 'beat3.taps'] },
-  { id: 'b', name: '时间展开', size: 76, when: 'iPad 前几分钟', room: '看谁的期限先到', fig: d => [v(d.dueAhead)[0].hours, '小时后，最近的期限到', 'dueAhead.0.hours'] },
-  { id: 'duo', name: '折叠屏', size: 88, when: '翻开折叠屏', room: '屏幕大了一倍，摊开原话', fig: d => [v(d.beat1.n), '条原话摊在左页', 'beat1.n'] },
-  { id: 'a', name: '空间排布', size: 100, when: '坐在电脑前', room: '整块屏幕，事情按分量占地方', fig: d => [v(d.beat2.account).items, '件事铺成一块块纸片', 'beat2.account.items'] },
-  { id: 'multiples', name: '两周小倍数', size: 108, when: '周末复盘', room: '不作答，只看走向', fig: () => [null, '一轮一张小方阵，看两周怎么走过来', null] },
+  { id: 'watch', name: '腕上一瞥', size: 56, when: '抬腕两秒', room: '只看得清一个数字', fig: d => [v(d.beat3.urgent).length, '件要紧', 'beat3.urgent.length'], ver: true },
+  { id: 'trays', name: '回应托盘', size: 64, when: '通勤几分钟', room: '只能单手操作', fig: d => [v(d.beat3.taps), '次点按，答完所有问题', 'beat3.taps'] },
+  { id: 'b', name: '时间展开', size: 76, when: '拿起 iPad 几分钟', room: '看哪件事的期限先到', fig: d => [v(d.dueAhead)[0].hours, '小时后到最近的期限', 'dueAhead.0.hours'] },
+  { id: 'duo', name: '折叠屏', size: 88, when: '翻开折叠屏', room: '屏幕大了一倍，能看原始消息', fig: d => [v(d.beat1.n), '条原始消息排在左页', 'beat1.n'] },
+  { id: 'a', name: '空间排布', size: 100, when: '坐在电脑前', room: '整块屏幕，每件事按轻重占大小不同的面积', fig: d => [v(d.beat2.account).items, '件事，各占一块', 'beat2.account.items'] },
+  { id: 'multiples', name: '两周小倍数', size: 108, when: '周末复盘', room: '不回复，只看变化趋势', fig: () => [null, '每轮整理一张小图，看两周的变化', null] },
 ]
 
 // ---------- the stage: five lanes of real ticks over a 64-cell ruler, sharing one x-span ----------
@@ -423,10 +462,10 @@ export function stageHTML(d, mode) {
   const deltas = `<div class="up">${m.deltas.filter(x => x.delta > 0).map(delta).join('')}</div>`
     + `<div class="down">${m.deltas.filter(x => x.delta < 0).map(delta).join('')}<span class="dl blank" style="--x:100">空余</span></div>`
   const lead = m.segments.find(s => s.lead)
-  return `<div class="fl-gutter" aria-hidden="true" style="${times}">${lab}<span class="fl-lab-r">64 份</span><span class="fl-lab-d up">涨</span><span class="fl-lab-d down">让</span></div>`
+  return `<div class="fl-gutter" aria-hidden="true" style="${times}">${lab}<span class="fl-lab-r">64 份</span><span class="fl-lab-d up">增</span><span class="fl-lab-d down">减</span></div>`
     + `<div class="fl-plot" style="${times};--lx:${r(lead.x)};--lw:${r(lead.w)}"><div class="fl-lanes">${lanes}${sweep}</div><div class="fl-axis" aria-hidden="true">${axis}</div>${ruler}<div class="fl-dots">${dots}</div>`
     + `<div class="fl-deltas" aria-hidden="true">${deltas}</div>`
-    + '<div class="fl-prev" aria-hidden="true">上一轮的分法</div>'
+    + '<div class="fl-prev" aria-hidden="true">上一轮的分配</div>'
     + '<i class="fl-lead brace"></i><i class="fl-lead stem"></i><i class="fl-ret b"></i><i class="fl-ret v"></i><i class="fl-ret t"></i>'
     + '</div>'
 }
