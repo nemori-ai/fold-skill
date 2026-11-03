@@ -10,20 +10,20 @@ const v = field => field.value
 // The six played live in the fifth section (#forms), in the order the user set (2026-11-03): the desk's attention
 // squares, the trays for one thumb, the wrist, the folding phone, the timeline, the weekend review. Each card says one
 // plain sentence and no figures. `view` is the size the prototype is laid out at ([width, height], CSS px): the block
-// keeps that shape and scales the page into it (A and B wide, the watch small, the trays tall). `better`: shown
-// under the button on a phone, for the ones laid out for a bigger screen.
+// keeps that shape and scales the page into it (A and B wide, the watch small, the trays tall). Which blocks say they
+// read better on a computer is not listed here: it follows from the scale a block actually gets (LEGIBLE below).
 export const TOP = [
-  { id: 'a', name: '空间排布', where: '电脑 · 坐下几分钟', view: [1180, 580], better: '在电脑上查看效果更好',
+  { id: 'a', name: '空间排布', where: '电脑 · 坐下几分钟', view: [1180, 580],
     line: '适合坐在电脑前时使用：每件事占用的面积代表它分到的注意力，需要你回复的问题排在左侧，可以直接作答。' },
   { id: 'trays', name: '回应托盘', where: '手机 · 通勤几分钟', view: [390, 800],
     line: '适合通勤时单手操作：每个问题一个托盘，需要点几下就叠几层，每点一下少一层，几分钟内可以全部答完。' },
   { id: 'watch', name: '腕上一瞥', where: '手表 · 抬腕两秒', view: [390, 520],
     line: '抬腕时只显示一个数字：表圈每格代表一份注意力，紧急事项标为红色，用来判断现在是否需要拿出手机。' },
-  { id: 'duo', name: '折叠屏', where: '折叠屏 · 展开后几分钟', view: [1180, 760], better: '在横屏平板或电脑上查看效果更好',
+  { id: 'duo', name: '折叠屏', where: '折叠屏 · 展开后几分钟', view: [1180, 760],
     line: '展开后屏幕面积加倍：左页列出这一轮收到的原始消息，并用连线把它们接到右页对应的卡片上。' },
-  { id: 'b', name: '时间展开', where: '平板 · 几分钟', view: [1180, 660], better: '在电脑上查看效果更好',
+  { id: 'b', name: '时间展开', where: '平板 · 几分钟', view: [1180, 660],
     line: '以时间为横轴：竖线代表此刻，每件事是一条色带，期限标在竖线右侧，可以看出哪件事最先到期。' },
-  { id: 'multiples', name: '两周小倍数', where: '大屏 · 周末复盘', view: [1180, 800], better: '在电脑上查看效果更好',
+  { id: 'multiples', name: '两周小倍数', where: '大屏 · 周末复盘', view: [1180, 800],
     line: '用于周末复盘，不需要作答：每一轮整理画成一个小方阵并排排列，可以看出两周内注意力的变化。' },
 ]
 
@@ -35,6 +35,16 @@ export const TOP = [
 // throttle) play there as stills that follow the clock. None over f16–f22 (E 折叠屏 peaks at 107 ms); E was one while
 // the six played f20–f26 (259 ms at f23).
 export const LIVE = { frames: [16, 17, 18, 19, 20, 21, 22], dwell: 3400, hold: 7000, settle: 1100, phoneStill: [] }
+
+// A page shown smaller than it is laid out (a block of the fifth section, or the viewer on a phone where a desk page
+// lays out wider than the screen): on a phone (narrower than `phone`), below `scale` the block or the viewer says so
+// in one quiet line. The pages' common text is 11–15 px (median 12), so below half size it reads at under 6 px; on a
+// 390 phone A, E, B and the small multiples sit at 0.30, the trays at 0.58, the watch at 0.66 (spec.md「第五轮」).
+export const LEGIBLE = { scale: 0.5, phone: 700, hint: '在电脑上看更清楚' }
+
+// The site as it was before the 2026-11-03 switch, served under /legacy/ on the same site (built apart): one quiet
+// link in a corner of the first screen, nowhere else on the site.
+export const LEGACY = '/legacy/'
 
 /** The page a block plays: the prototype's own address with ?embed=show (prototype/embed.mjs) at that frame. */
 export function liveSrc(prototype, frame) {

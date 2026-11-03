@@ -12,6 +12,11 @@
 // the blocks show the same round. A page that falls behind (paused off screen, or loaded while the clock moved) is
 // covered by its still, sent to the clock's frame, and shown again once its own transition has played.
 //
+// Never an empty block: under each still the markup has a tiny inline thumbnail of the first one (FoldLanding.vue), and
+// once the section is within reach (well before the clock starts) every block is given the clock's still at once,
+// not when the browser's lazy loading gets to it; a still that has loaded stays on screen until the next one has. A
+// page goes on top only after it has posted 'shown' and is on the clock's frame (until then it is transparent).
+//
 // What it costs: no frame exists before the section is near the viewport. Only blocks on or near the screen get a
 // page, at most cap() at once (2 on a phone), loaded one after another; a page that leaves the screen stops following
 // (paused) and is unloaded once it is far away or a block on screen needs its place. The clock stops while the section
@@ -163,14 +168,16 @@ export function playLive(section, { frames, dwell, hold, settle, phoneStill, src
     }
     pump()
   }
-  // One page loads at a time, for a block that has stayed wanted a moment (not one scrolled straight past).
-  let pumpTimer = 0
+  // One page loads at a time, for a block that has stayed wanted a moment (not one scrolled straight past) and only
+  // once the page has stopped scrolling: a fast fling keeps a tall block wanted for longer than that moment, and a page
+  // loaded then was gone again a fifth of a second later, its second of work taken from the scroll.
+  let pumpTimer = 0, scrolled = 0
   function pump() {
     clearTimeout(pumpTimer)
     if (loading || !active()) return
     const next = blocks.filter(b => b.wanted && !b.iframe).sort((x, y) => y.seen - x.seen)[0]
     if (!next || blocks.filter(b => b.iframe).length >= cap()) return
-    const wait = next.wantedAt + 220 - performance.now()
+    const wait = Math.max(next.wantedAt + 220, scrolled + 180) - performance.now()
     if (wait > 0) pumpTimer = setTimeout(plan, wait)
     else load(next)
   }
@@ -218,15 +225,20 @@ export function playLive(section, { frames, dwell, hold, settle, phoneStill, src
 
   // ---------- watching ----------
   let raf = 0
-  const onScroll = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; plan() }) }
+  const onScroll = () => { scrolled = performance.now(); if (!raf) raf = requestAnimationFrame(() => { raf = 0; plan() }) }
   const onVisibility = () => (document.hidden ? pause() : resume())
   const io = new IntersectionObserver(([entry]) => {
     near = entry.isIntersecting
     if (near) { addEventListener('scroll', onScroll, { passive: true }); addEventListener('resize', onScroll); resume() }
     else { removeEventListener('scroll', onScroll); removeEventListener('resize', onScroll); pause() }
   }, { rootMargin: '40% 0px 40% 0px' })
-  // Far away (a screen beyond the near margin): every page goes.
-  const far = new IntersectionObserver(([entry]) => { if (!entry.isIntersecting) blocks.forEach(unload) }, { rootMargin: '140% 0px 140% 0px' })
+  // Within reach (a screen beyond the near margin): every block takes the clock's still now, eagerly, so one scrolled
+  // into view fast already has its picture (six stills, once per approach; the clock's later rounds still fetch only
+  // the near ones). Far away: every page goes.
+  const far = new IntersectionObserver(([entry]) => {
+    if (!entry.isIntersecting) { blocks.forEach(unload); return }
+    for (const b of blocks) { b.img.loading = 'eager'; if (!b.synced) setStill(b, frames[k]) }
+  }, { rootMargin: '140% 0px 140% 0px' })
   io.observe(section)
   far.observe(section)
   document.addEventListener('visibilitychange', onVisibility)

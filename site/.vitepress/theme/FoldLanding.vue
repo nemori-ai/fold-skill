@@ -14,9 +14,12 @@ import { createStaticVNode, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import data from '../../landing/data.json'
 // Written by scripts/prepare-site.mjs: the recordings in site/media (a prototype without one shows its preview).
 import media from '../../.generated/landing-media.json'
+// Written by scripts/record-landing.mjs: a tiny thumbnail of each block's first still and each prototype's preview,
+// inlined under them, so a block is never an empty frame while its picture is on the way.
+import { gallery as tileThumbs, live as liveThumbs } from '../../landing/placeholders.json'
 import { combinedPage, datasetNotice, openPrototype, prototypes } from './prototypes.mjs'
 import { gallery as overlay } from './prototypes.mjs'
-import { DESK_ONLY, DOC_GROUPS, LIVE, SITUATIONS, TIMING, deskHTML, directHref, fieldBox, fieldSVG, galleryOf, ladderOf, liveLabel, liveSrc, momentCSS, reviewSVG, showcaseOf, stageHTML, stageModel, stillOf, whyModel } from './landing.mjs'
+import { DESK_ONLY, DOC_GROUPS, LEGACY, LEGIBLE, LIVE, SITUATIONS, TIMING, deskHTML, directHref, fieldBox, fieldSVG, galleryOf, ladderOf, liveLabel, liveSrc, momentCSS, reviewSVG, showcaseOf, stageHTML, stageModel, stillOf, whyModel } from './landing.mjs'
 import { playLive } from './live.mjs'
 
 const v = field => field.value
@@ -72,6 +75,7 @@ const gallery = galleryOf(prototypes)
 const rows = [0, 1, 2].map(r => gallery.filter((_, i) => i % 3 === r))
 const recorded = new Set(media)
 const clip = id => recorded.has(`${id}.mp4`) ? `/media/${id}.mp4` : null
+const thumb = (thumbs, id) => (thumbs[id] ? { '--ph': `url(${thumbs[id]})` } : null)
 const example = v(n.loop.example)
 // Scrolled past unanswered, the card folds as if you had picked what really happened next: the call (beat3.loop).
 const demoChoice = lead.actions[0]
@@ -197,13 +201,32 @@ function startLive() {
   cleanups.push(() => { stopWatch(); player.stop() })
 }
 
+// A block shows its prototype at the scale its width allows. On a phone, the ones below LEGIBLE.scale (the wide
+// prototypes, at about 0.3) say in one quiet line that they read better on a computer; the narrow ones do not.
+function watchLegible() {
+  const phone = window.matchMedia(`(max-width: ${LEGIBLE.phone - 0.02}px)`)
+  const frames = [...showEl.value.querySelectorAll('[data-live]')]
+  const update = () => {
+    for (const f of frames) {
+      const scale = f.clientWidth / Number(f.dataset.w)
+      f.closest('.lv-card').classList.toggle('is-small', phone.matches && scale > 0 && scale < LEGIBLE.scale)
+    }
+  }
+  const resized = new ResizeObserver(update)
+  frames.forEach(f => resized.observe(f))
+  phone.addEventListener('change', update)
+  cleanups.push(() => { resized.disconnect(); phone.removeEventListener('change', update) })
+}
+
 // ---------- gallery recordings: only the ones in view play; nothing loads before it is needed ----------
 
 function play(video) {
   if (reduced) return
   if (!video.src) {
-    // Shown over its poster only once it has a frame to show.
+    // Shown over its poster (the preview under it, and under that the inline thumbnail) only once it has a frame to
+    // show. The video's own poster is the same preview, set only now so the page does not fetch every preview at once.
     video.addEventListener('playing', () => video.classList.add('on'), { once: true })
+    video.poster = video.dataset.poster
     video.src = video.dataset.src
     video.load()
   }
@@ -332,6 +355,7 @@ onMounted(() => {
   drawOnce(whyEl.value, 0.3)
   drawOnce(ladderEl.value, 0.2)
   startLive()
+  watchLegible()
   watchGallery()
 })
 onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).forEach(fn => fn()) })
@@ -372,6 +396,9 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
         </p>
       </div>
       <p class="fl-cue"><a href="#why">为什么是新问题 ↓</a></p>
+      <!-- 旧版：2026-11-03 换版前的网站，在同一站点的 /legacy/ 下；整站只有这一处入口，放在首屏一角，绝对定位，不挤动首屏。
+           target="_self"：同一标签页打开，VitePress 的路由不拦截（/legacy/ 不是这个站的页面）。 -->
+      <a class="fl-legacy" :href="LEGACY" target="_self">旧版<span aria-hidden="true"> ↗</span></a>
     </section>
 
     <!-- 为什么是新问题：一个软件的通知有尽头；Agent 读的是所有来源加在一起。图是一个人一天的量级（示意）：一个群一行，三幕：各自 → 加在一起 → 换比例。 -->
@@ -495,14 +522,14 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
       <div class="lv-grid">
         <div v-for="(row, r) in showRows" :key="r" class="lv-row">
         <article v-for="c in row" :id="`form-${c.id}`" :key="c.id" class="lv-card" :class="`lv-${c.id}`" :style="{ '--ar': (c.view[0] / c.view[1]).toFixed(4) }">
-          <a class="lv-frame" :href="c.href" target="_self" rel="noreferrer" tabindex="-1" aria-hidden="true" :data-live="c.id" :data-w="c.view[0]" :data-h="c.view[1]" :data-title="`${c.name}（播放中）`" @click="open($event, c.prototype)">
+          <a class="lv-frame" :href="c.href" target="_self" rel="noreferrer" tabindex="-1" aria-hidden="true" :style="thumb(liveThumbs, c.id)" :data-live="c.id" :data-w="c.view[0]" :data-h="c.view[1]" :data-title="`${c.name}（播放中）`" @click="open($event, c.prototype)">
             <picture><source media="(prefers-reduced-motion: reduce)" :srcset="stillOf(c.id, liveLast)"><img :src="stillOf(c.id, LIVE.frames[0])" alt="" loading="lazy" decoding="async" :width="c.view[0]" :height="c.view[1]"></picture>
           </a>
-          <p class="lv-at" aria-hidden="true"><span class="lv-ticks" data-live-ticks><i v-for="(f, i) in LIVE.frames" :key="f" :class="{ on: i === 0 }" /></span><span data-live-at>{{ liveLabel(data, LIVE.frames[0]) }}</span></p>
+          <p class="lv-at" aria-hidden="true"><span class="lv-ticks" data-live-ticks><i v-for="(f, i) in LIVE.frames" :key="f" :class="{ on: i === 0 }" /></span><span data-live-at>{{ liveLabel(data, LIVE.frames[0]) }}</span><span class="lv-small">{{ LEGIBLE.hint }}</span></p>
           <div class="lv-txt">
             <h3>{{ c.name }}<span class="where">{{ c.where }}</span></h3>
             <p class="line">{{ c.line }}</p>
-            <p class="go"><a class="fl-btn" :href="c.href" target="_self" rel="noreferrer" @click="open($event, c.prototype)">打开原型 ↗</a><small v-if="c.better" class="better">{{ c.better }}</small></p>
+            <p class="go"><a class="fl-btn" :href="c.href" target="_self" rel="noreferrer" @click="open($event, c.prototype)">打开原型 ↗</a></p>
           </div>
         </article>
         </div>
@@ -520,9 +547,9 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
         <div class="fl-track">
           <template v-for="copy in 2" :key="copy">
             <a v-for="p in row" :key="`${copy}-${p.id}`" class="fl-tile" :href="directHref(p)" target="_self" rel="noreferrer" :aria-hidden="copy === 2 ? 'true' : null" :tabindex="copy === 2 ? -1 : null" :data-id="copy === 1 ? p.id : null" draggable="false" @click="open($event, p)">
-              <span class="im">
+              <span class="im" :style="thumb(tileThumbs, p.id)">
                 <img :src="p.preview" alt="" loading="lazy" decoding="async" draggable="false">
-                <video v-if="clip(p.id)" :data-src="clip(p.id)" muted playsinline loop preload="none" />
+                <video v-if="clip(p.id)" :data-src="clip(p.id)" :data-poster="p.preview" muted playsinline loop preload="none" />
                 <span v-if="DESK_ONLY.has(p.id)" class="chip">桌面</span>
                 <span v-else-if="p.withdrawn" class="chip">第一轮</span>
               </span>
@@ -560,7 +587,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
       <div class="fl-sheet" role="dialog" aria-modal="true" :aria-label="sheet.name">
         <p class="fl-kick">桌面形式</p>
         <h3>{{ sheet.name }}</h3>
-        <p>这个形式按电脑宽度排版，在手机上会缩到三成左右，字读不清。先看上面的录像，或者把链接带到电脑上打开。</p>
+        <p>这个形式按电脑宽度排版，在手机上会缩到三成左右，字读不清，{{ LEGIBLE.hint }}。先看上面的录像，或者把链接带到电脑上打开。</p>
         <p class="acts">
           <button type="button" class="fl-btn solid" @click="share(sheet)">{{ copied ? '已复制链接' : '分享 / 复制链接' }}</button>
           <a class="fl-btn" :href="directHref(sheet)" target="_self" rel="noreferrer">仍然打开</a>
@@ -670,7 +697,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .dt.gone { --yl: calc(var(--R) - 5px); }
 
 /* ===== the first screen: one field of everything read, a window that takes the situation's shape ===== */
-.fl-hero { max-width: calc(var(--maxw) + 2 * var(--m)); margin: 0 auto; padding: 14px var(--m) 0; }
+.fl-hero { position: relative; max-width: calc(var(--maxw) + 2 * var(--m)); margin: 0 auto; padding: 14px var(--m) 0; }
 .fl-hero h1 { margin-top: 6px; font-size: 28px; line-height: 1.3; }
 .fl-sub { display: none; margin: 14px 0 0; color: var(--ink-2); font-size: 15px; line-height: 1.7; }
 .fl-sub-m { margin-top: 8px; color: var(--ink-2); font-size: 14.5px; line-height: 1.6; }
@@ -750,6 +777,11 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 @keyframes h2-23 { from { width: var(--w2); height: var(--h2); border-radius: var(--r2); } to { width: var(--w3); height: var(--h3); border-radius: var(--r3); } }
 @keyframes h2-rise { from { transform: scaleY(0); } }
 .fl-cue { margin-top: 8px; padding: 12px 0; border-top: 1px solid var(--rule); font: 12px/1.5 var(--mono); }
+/* the site before 2026-11-03: small and pale in a corner of the first screen, out of the flow so nothing moves. On a
+   phone or a pad, the top right, on the line of the small type above the title; on a desk (where the stage's caption
+   takes the top right) the bottom left, under the text column's empty end. The padding makes it a 44px target. */
+.fl .fl-legacy { position: absolute; right: var(--m); top: 0; padding: 14px 0 14px 20px; font: 11px/1.4 var(--mono); letter-spacing: 0.06em; color: var(--ink-3); white-space: nowrap; }
+@media (hover: hover) { .fl .fl-legacy:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; } }
 
 /* ===== why it is new, the situations' ladder, the example's heading ===== */
 .fl-why, .fl-band, .fl-ex { max-width: calc(var(--maxw) + 2 * var(--m)); margin: 0 auto; padding: 64px var(--m) 0; }
@@ -1028,7 +1060,8 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .lv-row { display: contents; }
 .lv-card { min-width: 0; }
 /* the frame keeps the page's shape; the still fills it, the live page goes on top only while it shows the same frame */
-.lv-frame { position: relative; display: block; overflow: hidden; aspect-ratio: var(--ar); border: 1px solid var(--rule); border-radius: 14px; background: var(--paper-2); -webkit-tap-highlight-color: transparent; }
+/* under the still, the inline thumbnail of the first one (--ph): never an empty frame while a still is on the way */
+.lv-frame { position: relative; display: block; overflow: hidden; aspect-ratio: var(--ar); border: 1px solid var(--rule); border-radius: 14px; background: var(--paper-2) var(--ph, none) center / cover no-repeat; -webkit-tap-highlight-color: transparent; }
 .lv-frame picture, .lv-frame img { display: block; width: 100%; height: 100%; }
 .lv-frame img { object-fit: cover; }
 .lv-live { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; opacity: 0; pointer-events: none; transition: opacity 260ms ease-out; }
@@ -1041,11 +1074,13 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .lv-ticks { display: flex; gap: 3px; }
 .lv-ticks i { width: 7px; height: 2px; background: var(--rule); transition: background-color 300ms; }
 .lv-ticks i.on { background: var(--ink-2); }
+/* on a phone, a block shown below LEGIBLE.scale says so at the end of its line (watchLegible) */
+.lv-small { display: none; margin-left: auto; color: var(--ink-2); }
+.lv-card.is-small .lv-small { display: inline; }
 .lv-txt h3 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin: 10px 0 4px; font: 700 19px/1.3 var(--cjk); }
 .lv-txt .where { font: 11px/1.3 var(--mono); font-weight: 400; color: var(--ink-2); }
 .lv-txt .line { color: var(--ink-2); font-size: 14px; line-height: 1.65; }
 .lv-txt .go { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; }
-.lv-txt .better { font: 11px/1.4 var(--mono); color: var(--ink-3); }
 @media (min-width: 700px) { .lv-txt .fl-btn { min-height: 36px; padding: 0 14px; font-size: 13px; } }
 @media (hover: hover) { .lv-frame:hover { border-color: var(--ink-3); } }
 
@@ -1056,7 +1091,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .fl-row { overflow: hidden; margin-bottom: 14px; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .fl-track { display: flex; gap: 12px; width: max-content; padding-left: 12px; }
 .fl-tile { flex: none; width: 176px; -webkit-touch-callout: none; }
-.fl-tile .im { position: relative; display: grid; overflow: hidden; aspect-ratio: 16 / 10; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper-2); }
+.fl-tile .im { position: relative; display: grid; overflow: hidden; aspect-ratio: 16 / 10; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper-2) var(--ph, none) center top / cover no-repeat; }
 .fl-tile .im img, .fl-tile .im video { grid-area: 1 / 1; display: block; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
 .fl-tile .im video { opacity: 0; transition: opacity 300ms; }
 .fl-tile .im video.on { opacity: 1; }
@@ -1130,7 +1165,8 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
   .lv-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 44px 28px; }
   .lv-trays .lv-frame, .lv-trays .lv-at { width: min(100%, 230px); }
   .lv-watch .lv-frame, .lv-watch .lv-at { width: min(100%, 280px); }
-  .lv-txt .better { display: none; }
+  .lv-card.is-small .lv-small { display: none; }
+  .fl .fl-legacy { top: 18px; }
   .fl-tile { width: 260px; }
   .fl-docs .groups { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 32px; }
 }
@@ -1146,6 +1182,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
   .fl-sub { font-size: 16px; line-height: 1.75; }
   .fl-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
   .fl-cue { display: none; }
+  .fl .fl-legacy { top: auto; right: auto; bottom: 0; left: var(--m); padding: 14px 20px 14px 0; }
   .h2-ledger { min-height: 30px; font-size: 14px; }
 
   .fl-why { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); column-gap: 32px; padding-top: 112px; }

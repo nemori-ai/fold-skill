@@ -2,6 +2,7 @@
 import { useRoute } from 'vitepress'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import PrototypeGallery from './PrototypeGallery.vue'
+import { LEGIBLE } from './landing.mjs'
 import { closePrototype, combinedPage, datasetLabel, gallery, prototypes } from './prototypes.mjs'
 
 // Mounted once in the layout: the gallery panel opened from the nav, and the viewer that loads a
@@ -13,6 +14,10 @@ const dialog = ref(null)
 const frame = ref(null)
 const rendered = ref(false)   // the panel's images load only once it has been opened
 const loaded = ref(false)
+// On a phone, a page laid out for a desk overflows the viewer to two or three times its width (a third of it shows):
+// the bar says it reads better on a computer, by the same rule as the landing's blocks (landing.mjs LEGIBLE).
+const cramped = ref(false)
+let fitTimers = []
 let returnFocus = null
 let pressedBackdrop = false
 
@@ -40,7 +45,7 @@ watch(() => gallery.current, async (current, previous) => {
   const element = dialog.value
   if (!element) return
   if (current) {
-    if (current !== previous) loaded.value = false
+    if (current !== previous) { loaded.value = false; cramped.value = false; fitTimers.forEach(clearTimeout) }
     if (!element.open) {
       returnFocus = document.activeElement
       await nextTick()
@@ -76,6 +81,21 @@ function frameLoaded() {
     view.focus()
   } catch {}
   setTimeout(() => { loaded.value = true }, 60)
+  // The pages build their view after load: measure then and again as it settles.
+  fitTimers.forEach(clearTimeout)
+  fitTimers = [0, 400, 1200, 2500].map(ms => setTimeout(measureFit, ms))
+}
+
+// How much of the page's width the viewer shows: its width over the page's laid-out width (1 when it fits).
+function measureFit() {
+  const element = frame.value
+  if (!element || !gallery.current) return
+  let fit = 1
+  try {
+    const page = element.contentDocument
+    fit = element.clientWidth / Math.max(page.documentElement.scrollWidth, page.body?.scrollWidth || 0, 1)
+  } catch {}
+  cramped.value = window.innerWidth < LEGIBLE.phone && fit < LEGIBLE.scale
 }
 
 // Continue in a new tab where the viewer stands now: same frame, version switcher and concept card back.
@@ -114,10 +134,13 @@ watch(() => route.path, () => {
 onMounted(() => {
   watch(() => gallery.open || Boolean(gallery.current), lockScroll, { immediate: true })
   document.addEventListener('keydown', keydown)
+  window.addEventListener('resize', measureFit)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', keydown)
+  window.removeEventListener('resize', measureFit)
+  fitTimers.forEach(clearTimeout)
   lockScroll(false)
 })
 </script>
@@ -167,7 +190,10 @@ onBeforeUnmount(() => {
     <div v-if="gallery.current" class="fold-viewer-box">
       <header class="fold-viewer-bar">
         <span class="fold-viewer-no">{{ gallery.current.no }}</span>
-        <h2 id="fold-viewer-title">{{ gallery.current.name }}</h2>
+        <div class="fold-viewer-name">
+          <h2 id="fold-viewer-title">{{ gallery.current.name }}</h2>
+          <p v-if="cramped" class="fold-viewer-hint">{{ LEGIBLE.hint }}</p>
+        </div>
         <p class="fold-viewer-line">{{ gallery.current.line }}</p>
         <a class="fold-viewer-open" :href="gallery.current.href" target="_blank" rel="noopener" @click="openInTab">
           新标签页<span class="fold-viewer-open-long">打开</span><span aria-hidden="true">↗</span>
@@ -449,6 +475,22 @@ onBeforeUnmount(() => {
   font-size: 12px;
 }
 
+.fold-viewer-name {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* a second line under the name, inside the bar's own height (the page under it is not moved) */
+.fold-viewer-hint {
+  margin: 0;
+  color: var(--vp-c-text-2);
+  font-size: 11.5px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
 .fold-viewer-bar h2 {
   flex: none;
   margin: 0;
@@ -566,8 +608,11 @@ onBeforeUnmount(() => {
     display: none;
   }
 
-  .fold-viewer-bar h2 {
+  .fold-viewer-name {
     flex: 1;
+  }
+
+  .fold-viewer-bar h2 {
     overflow: hidden;
     min-width: 0;
     text-overflow: ellipsis;

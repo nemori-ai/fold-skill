@@ -19,6 +19,12 @@
 // 10. 第五节六块是实时嵌入的原型（site/.vitepress/theme/live.mjs）：组成与顺序是定下的六个；首屏载入后还没有任何 iframe；
 //    滚进来后，显示着的原型都在时钟的那一帧、显示静帧的块也是那一帧（抽样多次）；iframe 不接收指针与焦点，手指在块上
 //    滑动滚的是页面；手机上同时活着的 iframe 不超过 2 个；减弱动态时不建 iframe，停在最后一帧。
+// 11. 不出白块（spec.md「第五轮」）：第五节每块与画廊每块底下都有内联的占位缩略图（site/landing/placeholders.json，与它取自的
+//    静帧和预览图一致）；滚过第五节的每一帧里，屏幕上的块要么静帧已载入、要么有占位，原型页面只在发来 shown 之后才叠上去；
+// 12. 手机上缩得看不清的块（实际缩放 < landing.mjs LEGIBLE.scale）才写“在电脑上看更清楚”，平板与桌面不写；查看弹框在手机上
+//    打开按桌面排版的原型时也写这一句，窄的不写；手机上点画廊里的“桌面”块，说明卡里也有这一句；
+// 13. 旧版入口：整站只有入口页首屏一个链接（同一标签页打开 /legacy/，那里的内容另外构建，本地没有时是 404），375 / 390 / 768 /
+//    1440 下不滚动就看得见、不压导航、标题、表盘与小字，绝对定位不挤动首屏；构建出的页面里没有写死 fold-v2 的地址。
 //
 //   npm run site:build && node scripts/check-landing.mjs            # 自己起服务读 dist/
 //   node scripts/check-landing.mjs --base http://127.0.0.1:4174      # 或检查已在跑的站点
@@ -26,13 +32,14 @@
 //
 // 只用 Node 22 内置的 WebSocket 驱动本机 Chrome（CHROME 可指定路径），不装依赖。任一项不过时退出码为 1。
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { prototypes } from '../site/.vitepress/theme/prototypes.mjs';
-import { LADDER, LIVE, TOP, WHY, galleryOf } from '../site/.vitepress/theme/landing.mjs';
+import { DESK_ONLY, LADDER, LEGACY, LEGIBLE, LIVE, TOP, WHY, galleryOf } from '../site/.vitepress/theme/landing.mjs';
 import { serve } from './serve-static.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -175,6 +182,21 @@ async function sampleLive(page) {
   if (off.length) { await wait(300); st = await page.evaluate(liveState); off = offFrame(st); }
   return { st, off };
 }
+// Every animation frame while a block of the fifth section is on screen: it must have something under any page (its
+// still loaded, or its inline thumbnail), and a page may be visible only once it has posted {fold: 'shown'}.
+const coverWatch = `(() => { const shown = new WeakSet(); window.__cover = { frames: 0, checks: 0, empty: [], early: [] };
+  addEventListener('message', e => { if (e.data && e.data.fold === 'shown' && e.source) shown.add(e.source); });
+  const loop = () => { let any = false;
+    for (const el of document.querySelectorAll('#forms [data-live]')) { const r = el.getBoundingClientRect(); if (r.bottom <= 0 || r.top >= innerHeight) continue;
+      any = true; window.__cover.checks += 1;
+      const img = el.querySelector('img'), f = el.querySelector('.lv-live');
+      if (!(img.complete && img.naturalWidth) && getComputedStyle(el).backgroundImage === 'none') window.__cover.empty.push(el.dataset.live);
+      if (f && Number(getComputedStyle(f).opacity) > 0 && !shown.has(f.contentWindow)) window.__cover.early.push(el.dataset.live); }
+    if (any) window.__cover.frames += 1;
+    requestAnimationFrame(loop); };
+  requestAnimationFrame(loop); return 1; })()`;
+const coverOk = c => c.frames > 30 && !c.empty.length && !c.early.length;
+const coverSay = c => ({ frames: c.frames, checks: c.checks, empty: [...new Set(c.empty)], early: [...new Set(c.early)] });
 // Dots still to be seen on a stage (once absorbed they are at scale 0 or transparent): none may be left lying on the ruler.
 const dotsLeft = scope => `[...document.querySelectorAll('${scope} .dt')].filter(e => { const cs = getComputedStyle(e), m = new DOMMatrixReadOnly(cs.transform === 'none' ? undefined : cs.transform);
   return Number(cs.opacity) > 0.05 && Math.abs(m.a) > 0.05 && Math.abs(m.d) > 0.05; }).length`;
@@ -212,6 +234,40 @@ try {
   const stray = [...(await readdir(path.join(root, 'site/media'))).filter(f => /\.(mp4|webp)$/.test(f) && !expected.includes(f.replace(/\.(mp4|webp)$/, ''))),
     ...(await readdir(path.join(root, 'site/media/live'))).map(f => `live/${f}`).filter(f => !stills.includes(f))];
   check('site/media 里没有用不到的录像、封面或静帧', !stray.length, stray);
+
+  // ---- 11. no white blocks: an inline thumbnail under every block and tile, made from the file it stands in for ----
+  const thumbs = JSON.parse(await readFile(path.join(root, 'site/landing/placeholders.json'), 'utf8'));
+  const hashOf = async file => createHash('sha1').update(await readFile(path.join(root, 'site', file))).digest('hex').slice(0, 12);
+  const stale = [];
+  for (const [group, id, from] of [...TOP.map(t => ['live', t.id, `media/live/${t.id}-${LIVE.frames[0]}.webp`]), ...expected.map(id => ['gallery', id, prototypes.find(x => x.id === id).preview.slice(1)])]) {
+    const source = thumbs.sources[`${group}.${id}`];
+    if (!thumbs[group][id] || !source) stale.push(`缺 ${group}.${id}`);
+    else if (source.from !== from || source.sha !== await hashOf(from)) stale.push(`${group}.${id} 与 ${from} 不一致`);
+  }
+  check('占位缩略图：第五节六块与画廊每块都有，且与取自的静帧、预览图一致（不一致时运行 node scripts/record-landing.mjs --placeholders）', !stale.length, stale);
+  const under = await page.evaluate(`Promise.all([...document.querySelectorAll('#forms [data-live], .fl-tile .im')].map(async el => {
+    const url = (getComputedStyle(el).backgroundImage.match(/url\\("?(data:image\\/webp;base64,[^")]+)/) || [])[1];
+    let w = 0;
+    if (url) { const im = new Image(); im.src = url; try { await im.decode(); w = im.naturalWidth; } catch {} }
+    return { id: el.dataset.live || el.closest('.fl-tile').querySelector('.tn').textContent, w }; }))`);
+  const bare = under.filter(x => !x.w);
+  check(`第五节 6 块与画廊 ${under.length - 6} 块（轮播的两份）底下都有能解码的内联占位，图还没到时块里也不是空白`, under.length === 6 + 2 * expected.length && !bare.length, bare.map(x => x.id));
+
+  // ---- 12. on a phone, the blocks shown too small to read say so in one line; the others do not ----
+  const legible = await page.evaluate(`[...document.querySelectorAll('.lv-card')].map(c => { const f = c.querySelector('[data-live]'), h = c.querySelector('.lv-small'), r = h.getBoundingClientRect();
+    return { id: f.dataset.live, scale: Math.round(f.clientWidth / Number(f.dataset.w) * 1000) / 1000, shown: getComputedStyle(h).display !== 'none' && r.width > 0,
+      text: h.textContent.trim(), inside: r.right <= c.querySelector('.lv-at').getBoundingClientRect().right + 0.5, color: getComputedStyle(h).color }; })`);
+  const wrongHint = legible.filter(x => x.shown !== x.scale < LEGIBLE.scale || x.text !== LEGIBLE.hint || (x.shown && !x.inside));
+  const ver = await page.evaluate(`getComputedStyle(document.querySelector('.fl-card .tag')).color`);
+  check(`390 × 844：缩放低于 ${LEGIBLE.scale} 的块才写“${LEGIBLE.hint}”（${legible.filter(x => x.shown).map(x => `${x.id} ${x.scale}`).join('、')}），其余不写（${legible.filter(x => !x.shown).map(x => `${x.id} ${x.scale}`).join('、')}）；不用朱红`,
+    legible.length === 6 && legible.some(x => x.shown) && legible.some(x => !x.shown) && !wrongHint.length && legible.every(x => x.color !== ver), wrongHint);
+  // a gallery tile laid out for a desk, tapped on a phone: its sheet says the same
+  const deskTile = expected.find(id => DESK_ONLY.has(id));
+  await page.evaluate(`document.querySelector('.fl-tile[data-id="${deskTile}"]').click(), 1`);
+  await wait(300);
+  const sheetText = await page.evaluate(`document.querySelector('.fl-sheet')?.textContent || ''`);
+  await page.evaluate(`document.querySelector('.fl-sheet .ghost')?.click(), 1`);
+  check(`390 × 844：点画廊里按电脑排版的块（${deskTile}），说明卡里也写“${LEGIBLE.hint}”`, sheetText.includes(LEGIBLE.hint), sheetText);
 
   // ---- 5. the beats follow the reading line; the demo card answers and takes it back ----
   const goTo = k => page.evaluate(`(() => { const s = document.querySelector('.fl-sticky'); const el = document.querySelector('[data-step-block="${k}"]');
@@ -422,11 +478,88 @@ try {
   await wait(700);
   const fromCard = await desk.evaluate(`document.querySelector('dialog[open] iframe')?.getAttribute('src') || null`);
   check('桌面上点六张卡的“打开原型”：在同一个弹框里打开', Boolean(fromCard), fromCard);
+  await desk.evaluate(`document.querySelector('.fold-viewer [aria-label="关闭"]').click(), 1`);
+  await wait(400);
+  await desk.evaluate(`document.querySelector('.fold-menu-bar').click(), 1`);
+  await wait(400);
+  await desk.evaluate(`document.querySelector('#fold-prototype-panel a.fold-gallery-card[href*="/${deskTile}."]').click(), 1`);
+  await wait(3200);
+  const deskViewerHint = await desk.evaluate(`Boolean(document.querySelector('dialog[open] .fold-viewer-hint'))`);
+  check(`1440 × 900：弹框里打开按电脑排版的原型（${deskTile}），不写“${LEGIBLE.hint}”`, !deskViewerHint, deskViewerHint);
   check('1440 × 900：面板与弹框过程中没有报错', !desk.problems.length, desk.problems);
   await desk.close();
 
+  // ---- 13. the old site: one quiet link in a corner of the first screen; 12. no hint on a pad or a desk ----
+  for (const size of [[375, 667], [390, 844], [768, 1024], [1440, 900]]) {
+    const p = await open(size);
+    await wait(300);
+    const legacy = await p.evaluate(`(() => { const links = [...document.querySelectorAll('a[href="${LEGACY}"]')], a = links[0];
+      if (!a) return { count: 0 };
+      const box = e => { const r = e.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom }; };
+      const text = e => { const range = document.createRange(); range.selectNodeContents(e); return box(range); };
+      const hit = (x, y) => !(x.r <= y.l || y.r <= x.l || x.b <= y.t || y.b <= x.t);
+      const me = box(a), words = text(a), nav = box(document.querySelector('.VPNav'));
+      const others = { nav, title: text(document.querySelector('.fl-hero h1')), kicker: text(document.querySelector('.fl-hero .fl-kick')), stage: box(document.querySelector('.h2-stage')),
+        buttons: box(document.querySelector('.fl-ctas')), cue: text(document.querySelector('.fl-cue a')) };
+      const layout = () => ['.fl-hero h1', '.fl-hero .fl-kick', '.h2-stage', '.fl-cue', '#why'].map(s => JSON.stringify(box(document.querySelector(s)))).join();
+      const withLink = layout(); a.style.display = 'none'; const without = layout(); a.style.display = '';
+      return { count: links.length, text: a.textContent.replace(/\\s+/g, ''), href: a.getAttribute('href'), target: a.target, inNav: Boolean(a.closest('.VPNav, .VPNavScreen')), inHero: Boolean(a.closest('.fl-hero')),
+        seen: words.t >= nav.b - 0.5 && words.b <= innerHeight && words.l >= 0 && words.r <= innerWidth, overlaps: Object.entries(others).filter(([, o]) => o.r > o.l && hit(words, o)).map(([k]) => k),
+        target44: me.b - me.t >= 40, moved: withLink !== without, size: parseFloat(getComputedStyle(a).fontSize), at: [Math.round(words.l), Math.round(words.t)] }; })()`);
+    check(`${size.join(' × ')}：首屏一角有一个“旧版”链接（${legacy.at?.join(', ')}），同一标签页打开 ${LEGACY}（路由不拦截），不滚动就看得见，不压导航、标题、小字、表盘与按钮，不挤动首屏`,
+      legacy.count === 1 && legacy.text.startsWith('旧版') && legacy.href === LEGACY && legacy.target === '_self' && !legacy.inNav && legacy.inHero
+        && legacy.seen && !legacy.overlaps.length && legacy.target44 && !legacy.moved && legacy.size <= 12, legacy);
+    if (size[0] >= 700) {
+      const hints = await p.evaluate(`[...document.querySelectorAll('.lv-small')].filter(h => getComputedStyle(h).display !== 'none').length`);
+      check(`${size.join(' × ')}：平板与桌面上第五节不写“${LEGIBLE.hint}”`, hints === 0, hints);
+    }
+    if (shots) { await mkdir(shots, { recursive: true }); await wait(9000); await p.shot(path.join(shots, `legacy-${size.join('x')}.png`)); }
+    await p.close();
+  }
+  // a click goes to /legacy/ as a page of its own (a full load, not VitePress's router; locally there is nothing there yet)
+  const away = await open([390, 844]);
+  await away.evaluate(`(window.__landing = 1, document.querySelector('a.fl-legacy').click(), 1)`);
+  await wait(1500);
+  const went = await away.evaluate(`({ path: location.pathname, sameDocument: window.__landing === 1 })`);
+  check(`点“旧版”：同一个标签页整页打开 ${LEGACY}，不被站内路由接走`, went.path === LEGACY && !went.sameDocument, went);
+  await away.close();
+  // the viewer on a phone (the nav's “全部原型”): a page laid out for a desk says so under its name; a narrow one does not
+  const phoneViewer = await open([390, 844]);
+  await phoneViewer.evaluate(`document.querySelector('.VPNavBarHamburger').click(), 1`);
+  await wait(400);
+  await phoneViewer.evaluate(`document.querySelector('.fold-menu-screen').click(), 1`);
+  await wait(500);
+  const viewerHint = [];
+  for (const id of [deskTile, 'trays']) {
+    await phoneViewer.evaluate(`document.querySelector('#fold-prototype-panel a.fold-gallery-card[href*="/${id}."]').click(), 1`);
+    await wait(3200);
+    viewerHint.push(await phoneViewer.evaluate(`(() => { const h = document.querySelector('dialog[open] .fold-viewer-hint'), bar = document.querySelector('dialog[open] .fold-viewer-bar'), f = document.querySelector('dialog[open] iframe');
+      let wide = 0; try { wide = f.contentDocument.documentElement.scrollWidth; } catch {}
+      return { id: '${id}', hint: h ? h.textContent.trim() : null, bar: Math.round(bar.getBoundingClientRect().height), fit: Math.round(f.clientWidth / wide * 100) / 100 }; })()`));
+    await phoneViewer.evaluate(`document.querySelector('.fold-viewer [aria-label="关闭"]').click(), 1`);
+    await wait(400);
+  }
+  check(`390 × 844：弹框里打开按电脑排版的原型（${deskTile}，宽度只显示 ${viewerHint[0].fit}）写“${LEGIBLE.hint}”，窄的（trays ${viewerHint[1].fit}）不写，标题栏高度不变`,
+    viewerHint[0].hint === LEGIBLE.hint && viewerHint[0].fit < LEGIBLE.scale && viewerHint[1].hint === null && viewerHint[0].bar === viewerHint[1].bar, viewerHint);
+  if (phoneViewer.problems.length) check('390 × 844：手机上的查看弹框没有报错', false, phoneViewer.problems);
+  await phoneViewer.close();
+  // the built site: the old site is linked from the landing alone, and no page names the fold-v2 address
+  if (server) {
+    const pages = (await readdir(path.join(root, 'dist'), { recursive: true })).filter(f => f.endsWith('.html'));
+    const linking = [], v2 = [];
+    for (const f of pages) {
+      const html = await readFile(path.join(root, 'dist', f), 'utf8');
+      // links and meta only (href / src / content): the deployment notes may name both hosts in prose
+      const n = html.split(`href="${LEGACY}"`).length - 1;
+      if (n) linking.push(`${f} × ${n}`);
+      if (/(?:href|src|content)="[^"]*fold-v2/.test(html)) v2.push(f);
+    }
+    check(`构建出的 ${pages.length} 个页面里，只有入口页链到旧版（一处），没有页面的链接、canonical 或 og:url 写死 fold-v2`, linking.join() === 'index.html × 1' && !v2.length, { linking, v2 });
+  }
+
   // ---- 8. the six, live: nothing before the section, one frame on screen, no input, a phone keeps two pages ----
   const desk8 = await open([1440, 900]);
+  await desk8.evaluate(coverWatch);
   await wait(1500);
   const early = await desk8.evaluate(`({ frames: document.querySelectorAll('iframe').length, asked: performance.getEntriesByType('resource').filter(e => e.name.includes('/prototype/') || e.name.includes('/media/live/')).length })`);
   check('首屏载入后，第五节还没有任何 iframe，也没有请求原型或静帧', early.frames === 0 && early.asked === 0, early);
@@ -446,10 +579,13 @@ try {
   const tilesNow = await desk8.evaluate(`[...document.querySelectorAll('.fl-tile')].filter(t => { const r = t.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight; })
     .map(t => { const v = t.querySelector('video'); return { id: t.dataset.id || t.querySelector('.tn')?.textContent, playing: Boolean(v && !v.paused && v.readyState >= 2 && v.currentTime > 0) }; })`);
   check(`画廊：视口里的 ${tilesNow.length} 块都在自动播放录像`, tilesNow.length >= 6 && tilesNow.every(t => t.playing), tilesNow.filter(t => !t.playing));
+  const deskCover = await desk8.evaluate('window.__cover');
+  check(`1440 × 900：第五节在屏幕上的 ${deskCover.frames} 帧里，每块底下都有静帧或占位，原型页面都在发来 shown 之后才显示`, coverOk(deskCover), coverSay(deskCover));
   check('1440 × 900：第五节播放中没有报错', !desk8.problems.length, desk8.problems);
   await desk8.close();
 
   const phone8 = await open([390, 844]);
+  await phone8.evaluate(coverWatch);
   await wait(1200);
   await phone8.evaluate(`(() => { window.__live = 0; new MutationObserver(() => { window.__live = Math.max(window.__live, document.querySelectorAll('.lv-live').length); }).observe(document.body, { childList: true, subtree: true }); return 1; })()`);
   const top8 = await phone8.evaluate(`(() => { const r = document.querySelector('#forms').getBoundingClientRect(); return { top: r.top + scrollY, bottom: r.bottom + scrollY }; })()`);
@@ -474,6 +610,8 @@ try {
   const phoneMax = await phone8.evaluate('window.__live');
   check(`390 × 844：从头滚过第五节，同时活着的 iframe 最多 ${phoneMax} 个（≤ 2），显示的都在时钟的那一帧（走过 ${phoneClocks.size} 轮）`, phoneMax <= 2 && phoneMax >= 1 && phoneOn >= 1 && !phoneOff.length && phoneClocks.size >= 3, { phoneMax, phoneOn, off: phoneOff, clocks: [...phoneClocks] });
   check('390 × 844：手指在播放中的块上滑动，滚动的是页面', Boolean(swiped) && swiped.moved >= 150, swiped);
+  const phoneCover = await phone8.evaluate('window.__cover');
+  check(`390 × 844：第五节在屏幕上的 ${phoneCover.frames} 帧里，每块底下都有静帧或占位，原型页面都在发来 shown 之后才显示`, coverOk(phoneCover), coverSay(phoneCover));
   check('390 × 844：第五节播放中没有报错', !phone8.problems.length, phone8.problems);
   await phone8.close();
 
