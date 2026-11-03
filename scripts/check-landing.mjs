@@ -281,7 +281,7 @@ try {
     if (k === 2) beatDots = await page.evaluate(dotsLeft('.fl-beat-stage'));
   }
   check('三拍随阅读线依次切换：1 → 2 → 3', seen.join() === '1,2,3', seen);
-  check('第 2 拍演完：40 颗点都被吸收进各自的段，尺上没有残留的点', beatDots === 0, beatDots);
+  check(`第 2 拍演完：${data.beat2.adopted.value} 颗点都被吸收进各自的段，尺上没有残留的点`, beatDots === 0, beatDots);
   await page.evaluate(`document.querySelector('.fl-card .btns button').click()`);
   await wait(900);
   const answered = await page.evaluate(`({ ans: document.querySelector('.fl-round').classList.contains('ans'), receipt: getComputedStyle(document.querySelector('.fl-receipt')).visibility, text: document.querySelector('.fl-receipt .t').textContent })`);

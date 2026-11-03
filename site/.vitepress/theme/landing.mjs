@@ -384,8 +384,8 @@ export function stageModel(d) {
   const ticks = v(d.beat1.ticks).map(([m, stream, to, target], i) => ({
     i, m, x: m / WINDOW_MINUTES * 100, lane: LANES.findIndex(l => l[0] === stream), to, target,
   }))
-  // The 40 adopted inputs: each falls into its own item's segment, spread evenly across it in arrival order, and is
-  // absorbed there. One went to an item withdrawn this round: it drops to the ruler and fades.
+  // The adopted inputs (90 at founder f22): each falls into its own item's segment, spread evenly across it in arrival
+  // order, and is absorbed there. One that went to an item withdrawn this round drops to the ruler and fades.
   const adopted = ticks.filter(t => t.to !== 'fold')
   const byItem = new Map()
   for (const t of adopted) {
@@ -410,14 +410,15 @@ export function stageModel(d) {
  * When things happen on the beat stage (the fourth section), in ms from the moment a beat starts.
  * The CSS reads the per-element times from inline variables, so this table is their single source:
  *   sweep   the 12 hours pass left to right and the ticks appear as the playhead reaches them
- *   fold    the 118 unadopted ticks shrink to stubs (and the Agent's shorten), in their lane groups
+ *   fold    the unadopted ticks shrink to stubs (and the Agent's shorten), in their lane groups
  *   squeeze (beats) the lanes compress towards the ruler
- *   drop    the 40 adopted inputs fall one after another (start, gap); each falls for `fall` ms, lands inside its
- *           own item's segment and is absorbed in `absorb` ms
+ *   drop    the adopted inputs fall one after another (start, gap); each falls for `fall` ms, lands inside its
+ *           own item's segment and is absorbed in `absorb` ms. `span` caps the time from the first start to the last:
+ *           with many inputs the gap shrinks, so the beat ends when it did with 40 (founder f22 has 90: 10 ms apart)
  *   yield   the ruler re-divides on one curve while the dots arrive: an item grows as its inputs land in it
  */
 export const TIMING = {
-  beats: { sweep: [150, 1600], fold: 0, squeeze: [260, 600], drop: [900, 22], fall: 560, absorb: 190, yield: [1300, 1100] },
+  beats: { sweep: [150, 1600], fold: 0, squeeze: [260, 600], drop: [900, 22], span: 860, fall: 560, absorb: 190, yield: [1300, 1100] },
 }
 // The yield's curve (the CSS --e-yield), to know where a segment is when a dot reaches it.
 const YIELD_CURVE = [0.65, 0, 0.35, 1]
@@ -431,6 +432,23 @@ export function bezier([x1, y1, x2, y2], x) {
 }
 // The share of a dot's animation spent falling; the rest is it being absorbed into its segment (the CSS fl-drop).
 export const FALL_SHARE = 0.74
+
+// The names under the ruler on a tablet or desk sit centred under their segments (CSS: --x in % of the plot). Narrow
+// neighbours would overlap, so each row is laid out once for the narrowest plot those layouts get (456 px, a 960 px
+// window): left to right each name moves right of the one before, then right to left back inside the plot. A wider
+// plot only opens the gaps. Widths are estimated for the 10 px monospace face (CJK ≈ 10.3 px, Latin ≈ 6.1 px).
+const LABEL_PLOT = 456, LABEL_GAP = 10
+const labelWidth = text => [...text].reduce((w, c) => w + (/[\u3000-\u9fff\uff00-\uffef]/.test(c) ? 10.3 : 6.1), 0) / LABEL_PLOT * 100
+export function placeLabels(items) {
+  const list = items.map(t => ({ ...t, w: labelWidth(t.text) })).sort((a, b) => a.at - b.at)
+  const gap = LABEL_GAP / LABEL_PLOT * 100
+  list.forEach((t, i) => { t.at = Math.max(t.at, t.w / 2, i ? list[i - 1].at + (list[i - 1].w + t.w) / 2 + gap : -Infinity) })
+  for (let i = list.length - 1; i >= 0; i -= 1) {
+    const limit = i === list.length - 1 ? 100 - list[i].w / 2 : list[i + 1].at - (list[i].w + list[i + 1].w) / 2 - gap
+    list[i].at = Math.min(list[i].at, limit)
+  }
+  return list
+}
 
 /**
  * The beat stage's inner HTML (scroll-triggered: FoldLanding.vue sets the state classes); `mode` is 'beats'. Every position is a share of the plot's width
@@ -454,7 +472,8 @@ export function stageHTML(d, mode) {
     .map(([min, text]) => `<span style="--x:${r(min / WINDOW_MINUTES * 100)}">${text}</span>`).join('')
 
   // Where every dot lands: inside its own segment, where that segment is at the moment it arrives.
-  const [d0, gap] = T.drop
+  const [d0, most] = T.drop
+  const gap = Math.min(most, Math.round(T.span / Math.max(1, m.dots.length - 1)))
   const [y0, yd] = T.yield
   const dur = Math.round(T.fall / FALL_SHARE)
   const landAt = k => d0 + k * gap + T.fall
@@ -484,13 +503,21 @@ export function stageHTML(d, mode) {
   const times = `--yt:${y0}ms;--yd:${yd}ms;--dd:${dur}ms`
 
   // Who gave to whom, by name only (the widths show how much): the items that grew on one row, the ones that gave
-  // way (and the blank) on the row below. On a desk each sits under its segment; on a phone each row flows (CSS).
+  // way (and the blank, when it shrank too) on the row below. On a desk each sits under its segment; on a phone each
+  // row flows (CSS).
   const rank = id => v(d.beat2.segments).findIndex(s => s.id === id)
   const key = id => (id === 'withdrawn' ? 'beat2.withdrawn.plain' : `beat2.segments.${rank(id)}.plain`)
-  // Under where it is now when it grew, under where it was when it gave way (a withdrawn group is no longer anywhere).
-  const delta = x => `<span class="dl" data-id="${x.id}" style="--x:${r(x.delta < 0 ? x.bx + x.bw / 2 : x.x + x.w / 2)}" data-k="${key(x.id)}">${x.plain}</span>`
-  const deltas = `<div class="up">${m.deltas.filter(x => x.delta > 0).map(delta).join('')}</div>`
-    + `<div class="down">${m.deltas.filter(x => x.delta < 0).map(delta).join('')}<span class="dl blank" style="--x:100">空余</span></div>`
+  // Under where it is now when it grew, under where it was when it gave way (a withdrawn group is no longer anywhere),
+  // then nudged apart so neighbours under narrow segments do not run into each other (placeLabels).
+  const row = (list, blankToo) => {
+    const items = list.map(x => ({ x, text: x.plain, at: x.delta < 0 ? x.bx + x.bw / 2 : x.x + x.w / 2 }))
+    if (blankToo) items.push({ blank: true, text: '空余', at: 100 })
+    return placeLabels(items).map(t => t.blank
+      ? `<span class="dl blank" style="--x:${r(t.at)}">空余</span>`
+      : `<span class="dl" data-id="${t.x.id}" style="--x:${r(t.at)}" data-k="${key(t.x.id)}">${t.text}</span>`).join('')
+  }
+  const deltas = `<div class="up">${row(m.deltas.filter(x => x.delta > 0), false)}</div>`
+    + `<div class="down">${row(m.deltas.filter(x => x.delta < 0), m.blank.before > m.blank.now)}</div>`
   const lead = m.segments.find(s => s.lead)
   return `<div class="fl-gutter" aria-hidden="true" style="${times}">${lab}<span class="fl-lab-r">64 份</span><span class="fl-lab-d up">增</span><span class="fl-lab-d down">减</span></div>`
     + `<div class="fl-plot" style="${times};--lx:${r(lead.x)};--lw:${r(lead.w)}"><div class="fl-lanes">${lanes}${sweep}</div><div class="fl-axis" aria-hidden="true">${axis}</div>${ruler}<div class="fl-dots">${dots}</div>`

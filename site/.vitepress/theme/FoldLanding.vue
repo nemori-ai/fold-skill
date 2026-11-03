@@ -452,7 +452,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
     <header id="example" class="fl-ex" aria-labelledby="fl-ex-title">
       <p class="fl-kick">一种编码的例子</p>
       <h2 id="fl-ex-title" class="fl-h">把注意力切成固定的份数</h2>
-      <p class="fl-lede">原型里试的一种编码：把每一层的注意力切成固定的份数，演示里是 <span data-k="budget">{{ v(data.budget) }}</span> 份（份数可以配置）。Agent 每一轮把这些份数分给各件事，份数就是面积。有了面积，同样的轻重就能在手表、手机和桌面上分别画出来。下面是演示里的一轮。演示里的人物和消息都是编写的，Agent 的整理来自一次真实模型的运行，又经过人工修改。这一轮是 9 月 17 日周四中午到半夜；第二天上午，工作和家里的几件事挤在了一起。</p>
+      <p class="fl-lede">原型里试的一种编码：把每一层的注意力切成固定的份数，演示里是 <span data-k="budget">{{ v(data.budget) }}</span> 份（份数可以配置）。Agent 每一轮把这些份数分给各件事，份数就是面积。有了面积，同样的轻重就能在手表、手机和桌面上分别画出来。下面是演示里的一轮。演示讲的是一位创业者的两周，人物和消息都是编写的，Agent 的整理来自一次真实模型的运行，又经过人工修改。这一轮是 9 月 17 日周四中午到半夜；第二天上午，他工作和家里的几件事挤在了一起。</p>
     </header>
 
     <!-- 一轮整理：舞台钉住，文字滚过阅读线时演那一拍。 -->
@@ -1020,7 +1020,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 .fl-round.tx.s1:not(.s2) .fl-beat-stage .fl-head { animation: fl-head 1600ms linear 150ms both; }
 /* (the note under the ruler comes first: the grey allocation is last round's, before anything lands in it) */
 .fl-round.tx.s1:not(.s2) .fl-prev { transition: opacity 200ms ease-out 150ms; }
-/* beat 2: fold, squeeze towards the ruler, the 40 fall and are absorbed while the ruler re-divides (TIMING.beats) */
+/* beat 2: fold, squeeze towards the ruler, the adopted inputs fall and are absorbed while the ruler re-divides (TIMING.beats) */
 .fl-round.tx.s2:not(.s3) .fl-prev { transition: opacity 140ms ease-in; }
 .fl-round.tx.s2:not(.s3) .fl-beat-stage .fl-lane .a { animation: fl-agent 240ms var(--e-fold) both; }
 .fl-round.tx.s2:not(.s3) .fl-beat-stage .fl-lane .f { animation: fl-fold 240ms var(--e-fold) both; }
@@ -1163,7 +1163,6 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
   .fl-beat-stage { --gut: 60px; --rh: 32px; --cardH: 180px; }
   .fl-deltas > div { position: relative; display: block; }
   .dl { position: absolute; left: calc(var(--x) * 1%); top: 0; translate: -50% 0; }
-  .dl.blank { translate: -100% 0; }
   .fl-count .fl-num { font-size: 88px; }
   .fl-count { height: 84px; }
   .fl-step h3 { font-size: 26px; }
