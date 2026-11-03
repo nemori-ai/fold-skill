@@ -12,6 +12,7 @@
 import { createResponseStore, responseStatus, normalizeAsk, setTimeZone } from '../respond.mjs';
 import { familyPlace } from '../variants/shared.mjs?v=feedback-loop-1';
 import { withDataset } from '../data/select.mjs';
+import { formById, frameOf } from './catalog.mjs';
 import { shortAsk } from './watch.mjs';
 
 export const W = 576, H = 288, LH = 27, PAD = 24;
@@ -287,7 +288,9 @@ export function mount(stage, model, kit) {
   setTimeZone(zone);
   const F = formatter(zone), D = derive(kit), store = createResponseStore();
   const params = new URLSearchParams(location.search), still = params.get('still');
-  const formFrame = Number(params.get('frame')) || 26;
+  // The shell fills in the default frame (catalog.mjs: founder f21, the round worth lighting the glasses for; else f26);
+  // 讲一遍 ends on the last push at or before it.
+  const formFrame = Number(params.get('frame')) || frameOf(formById('glasses'));
   document.body.classList.add('gl-page');
   if (still) document.body.classList.add('gl-still', `gl-still-${still}`);
   const lit = D.calls.filter(c => c.lit);

@@ -237,7 +237,8 @@ const PAGES = {
   // 智能眼镜：显示面是 576 × 288 的容器页，流程见 runGlasses。expect 是这份数据上应得的数（规格 B 节）：甲亮几次、乙对上几次、
   // 通话几次，一次对上的通话、一次对不上的通话与一个早上；story 没有通话记录。
   glasses: { hook: 'foldGlasses', runner: runGlasses, page: 'forms/glasses.html',
-    expect: { founder: { pushes: 8, lit: 4, calls: 21, call: '2026-09-18T09:00:24+08:00', miss: '2026-09-20T20:12:41+08:00', morning: '2026-09-20T07:30:00+08:00' },
+    // home：不带帧号打开时停在哪一轮（catalog.mjs 的 frames / frame），讲一遍落在它之前最后一次亮的那一轮。
+    expect: { founder: { home: 21, pushes: 8, lit: 4, calls: 21, call: '2026-09-18T09:00:24+08:00', miss: '2026-09-20T20:12:41+08:00', morning: '2026-09-20T07:30:00+08:00' },
       composite: { pushes: 4, lit: 3, calls: 10, call: '2026-08-13T19:30:00+02:00', miss: '2026-08-14T08:02:00+02:00', morning: '2026-08-16T07:25:00+02:00' },
       story: { calls: 0, lit: 0 } } },
 };
@@ -1508,7 +1509,7 @@ async function runGlasses(cdp, base, data, name) {
   await wait(1200);
   await key('Escape'); await wait(600);
   const end = await ev(`({ telling: ${H}.telling(), frame: ${H}.model.snapshot().frame.id, screen: ${H}.screen(), records: ${H}.records().length, pending: ${H}.pending() })`);
-  const target = [...told.pushes].reverse().find(p => p.k <= 26) || told.pushes[0];
+  const target = [...told.pushes].reverse().find(p => p.k <= (X.home ?? 26)) || told.pushes[0];
   if (target) {
     check(`直接打开：讲一遍（从 ${target.frame} 的前一轮起）`, told.telling && told.frame !== target.frame, told);
     check(`讲一遍中按任意键：跳到终态（${target.frame}，打开那一件，不留记录、图片已送达）`, !end.telling && end.frame === target.frame && end.screen === 'item' && end.records === 0 && end.pending === 0, end);

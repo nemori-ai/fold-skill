@@ -3,6 +3,8 @@
 // chose to keep the wrist glance as well (see CONCEPTS.md).
 // Round two adds five pages (below) that began as single-frame sketches and are now full pages
 // with frame navigation, hover and detail; they carry no concept panel.
+import { currentDataset } from '../data/select.mjs';
+
 export const forms = [
   {
     id: 'watch', no: 1, name: '腕上一瞥', frame: 14, theme: 'light',
@@ -41,7 +43,10 @@ export const forms = [
     inspiration: 'Family 钱包的托盘（每一步高度不同）、Liquid Glass 两层并成一行',
   },
   {
-    id: 'glasses', no: 12, name: '智能眼镜', frame: 26, theme: 'dark', mobile: true,
+    // founder 打开在 f21（9/17 周四 12:00）：最前那件刚换成白鹭的问题“国庆前能不能答应转接”，明早 10 点见客户前要答，
+    // 年单就看它；眼镜只为它亮这一次，当晚 18:36 和第二天 9:00 郑婉两次来电也都是为它（乙对得上）。默认的 f26 亮的是
+    // 深圳大会的演讲邀请，当天回就行，不值得为它打断他。composite 与手写情境仍是 f26。
+    id: 'glasses', no: 12, name: '智能眼镜', frame: 26, frames: { founder: 21 }, theme: 'dark', mobile: true,
     tagline: '576 × 288 的单色绿显示面，平时一个像素都不亮。只给一件：要紧的问题里排第一的那件，最前那件换了才经手机通知亮一次，两周几十轮只亮几次；唯一的例外是你在和等你的人通话，那时亮对方在等的那一件。不画 64 份。',
     carrier: 'Even G2 那样的单色绿眼镜（576 × 288，4 位灰阶），镜腿或 R1 戒指', scene: '做饭、走路、开会间隙；打电话的时候', usage: '平时不亮；整理落地、最前那件换了时手机通知镜像上来，轻点打开、滑动换选、轻点确定；通话中亮对方在等的那件；H 抬头看一眼；[ ] 跳到下一个值得看的时刻；直接打开先讲一遍（任意键跳过，↺ 重演）',
     question: '现在有没有一件非我开口不可的事？是哪一件？',
@@ -230,6 +235,9 @@ export const motions = [
     inspiration: '视频 B（@francescoinweb3 的工作室仪表）：0.4 秒的第一个动作、一帧硬切、亮的极少',
   },
 ];
+
+/** The frame a form opens on in the current dataset: its `frames[dataset]` when it names one, else `frame`. */
+export const frameOf = form => form?.frames?.[currentDataset()] ?? form?.frame;
 
 export const formById = id => forms.find(form => form.id === id) || withdrawn.find(form => form.id === id) || motions.find(form => form.id === id);
 
