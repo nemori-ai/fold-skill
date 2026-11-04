@@ -1,14 +1,17 @@
 <script setup>
 import { useRoute } from 'vitepress'
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import DemoSwitch from './DemoSwitch.vue'
 import PrototypeGallery from './PrototypeGallery.vue'
 import { LEGIBLE } from './landing.mjs'
-import { closePrototype, combinedPage, datasetLabel, gallery, prototypes } from './prototypes.mjs'
+import { closePrototype, combinedOf, demo, gallery, prototypes } from './prototypes.mjs'
 
 // Mounted once in the layout: the gallery panel opened from the nav, and the viewer that loads a
-// prototype page in place. The viewer is a native modal <dialog>, so it sits above the panel and
-// the nav, keeps keyboard focus inside, and gives focus back when it closes.
+// prototype page in place. Both play the demo the site plays (prototypes.mjs `demo`), which the panel's
+// foot can switch. The viewer is a native modal <dialog>, so it sits above the panel and the nav,
+// keeps keyboard focus inside, and gives focus back when it closes.
 const route = useRoute()
+const combined = computed(() => combinedOf(demo.data))
 const panel = ref(null)
 const dialog = ref(null)
 const frame = ref(null)
@@ -167,14 +170,17 @@ onBeforeUnmount(() => {
             <p>{{ prototypes.length }} 个原型共用同一份回放。点卡片在本页打开，可以逐帧回放、悬停查看、就地回应。</p>
           </div>
           <div class="fold-panel-actions">
-            <a class="fold-panel-link" :href="combinedPage" target="_self">合页（全部形式一页）<span aria-hidden="true">↗</span></a>
+            <a class="fold-panel-link" :href="combined" target="_self">合页（全部形式一页）<span aria-hidden="true">↗</span></a>
             <button type="button" class="fold-icon-button fold-panel-close" aria-label="收起原型体验" @click="closeGallery()">
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
             </button>
           </div>
         </header>
         <PrototypeGallery v-if="rendered" />
-        <p class="fold-panel-note">默认数据：{{ datasetLabel }}。这些形式都没有选定。</p>
+        <div class="fold-panel-foot">
+          <DemoSwitch />
+          <p class="fold-panel-note">这些形式都没有选定。</p>
+        </div>
       </div>
     </div>
   </Transition>
@@ -340,8 +346,15 @@ onBeforeUnmount(() => {
   color: var(--vp-c-text-1);
 }
 
+/* the panel's foot: which demo the cards play (the same switch as on the landing), then the note */
+.fold-panel-foot {
+  margin-top: 22px;
+  padding-top: 4px;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
 .fold-panel-note {
-  margin: 18px 0 0;
+  margin: 10px 0 0;
   color: var(--vp-c-text-3);
   font-size: 12px;
   line-height: 1.7;

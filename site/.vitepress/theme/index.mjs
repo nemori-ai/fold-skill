@@ -6,6 +6,7 @@ import FoldLanding from './FoldLanding.vue'
 import MermaidDiagram from './MermaidDiagram.vue'
 import PrototypeLayer from './PrototypeLayer.vue'
 import PrototypeMenu from './PrototypeMenu.vue'
+import { restoreDemo } from './prototypes.mjs'
 import './style.css'
 import './why.css'
 
@@ -39,6 +40,9 @@ export default {
   Layout: {
     setup() {
       useLandingAppearance()
+      // The demo the prototypes play (the address's ?data=, else this browser's last choice), once the page is up so the
+      // server-rendered markup and hydration agree; the landing restores it first, from its own mounted hook.
+      onMounted(restoreDemo)
       return () => h(DefaultTheme.Layout, null, { 'layout-bottom': () => h(PrototypeLayer) })
     },
   },

@@ -1,5 +1,5 @@
 // 站点展示字体的子集：只给极少的字用网络字体，其余交给系统（规格见 site/landing/style.md「字体」）。
-// 收集入口页标题（FoldLanding.vue 里 class 含 fl-h 的元素、六张卡的名字）、各篇文档 h1 与 docs/why.md 的节名和引句用到的字，向 Google Fonts
+// 收集入口页标题（FoldLanding.vue 里 class 含 fl-h 的元素、六张卡的名字、两份演示数据各自的标题文字）、各篇文档 h1 与 docs/why.md 的节名和引句用到的字，向 Google Fonts
 // 的 css2 接口按 text= 取子集 woff2，存进 site/fonts/（自托管，运行时不请求第三方），并生成带 unicode-range 的
 // site/.vitepress/theme/fonts.css。入口页只用得到第一份中文子集；文档 h1 里入口页没有的字放进第二份，只在文档页下载。
 // 字体是 SIL Open Font License 1.1，许可全文与版权行一起写进 site/fonts/OFL.txt。
@@ -32,6 +32,9 @@ export async function landingText() {
   let text = '';
   for (const m of template.matchAll(/<(h[1-3]|p|span|div)\b[^>]*class="[^"]*\bfl-h\b[^"]*"[^>]*>([\s\S]*?)<\/\1>/g)) text += strip(m[2]);
   text += TOP.map(t => t.name).join('');
+  // Headings whose words come with the demo (data.json datasets.<name>.copy): every demo's, since the reader can switch.
+  const data = JSON.parse(await readFile(path.join(root, 'site/landing/data.json'), 'utf8'));
+  for (const d of Object.values(data.datasets)) text += [d.copy.value.beat1, d.copy.value.real.title].join('').replace(/\{\w+\}/g, '');
   return text;
 }
 

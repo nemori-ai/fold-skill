@@ -1,5 +1,6 @@
 // The landing page (FoldLanding.vue): which prototypes it shows and in what order, what each card says, and the
-// geometry of the first screen, the situations' glyphs and the beat stage, all computed from site/landing/data.json (the replay at f22).
+// geometry of the first screen, the situations' glyphs and the beat stage, all computed from site/landing/data.json (the
+// illustrative day, and the chosen demo's replay at f22).
 // No imports: the page, config.mts and the scripts (record-landing, check-landing) read the same tables.
 // Rationale and audit: site/landing/spec.md; story and timings: site/landing/story.md; look: site/landing/style.md.
 
@@ -53,11 +54,12 @@ export function liveSrc(prototype, frame) {
   url.searchParams.set('frame', String(frame))
   return `${url.pathname}${url.search}`
 }
-/** A block's still for a frame (scripts/record-landing.mjs shoots them): what shows before and between live pages. */
-export const stillOf = (id, frame) => `/media/live/${id}-${frame}.webp`
+/** A block's still for a frame (scripts/record-landing.mjs shoots them, a set per demo under its `media` folder,
+ *  prototypes.mjs DEMOS): what shows before and between live pages. */
+export const stillOf = (id, frame, media = '') => `/media/${media}live/${id}-${frame}.webp`
 
-/** The common progress line under the blocks: "9/15 零点 → 此刻", and "此刻" on the last frame played (the page's
- *  "now", f22). The replay sorts every 12 hours, so a frame's time is counted from the one data.json names
+/** The common progress line under the blocks: "9/15 零点 → 此刻" (composite: "8/13 中午 → 此刻"), and "此刻" on the
+ *  last frame played (the page's "now", f22). The replay sorts every 12 hours, so a frame's time is counted from the one data.json names
  *  (data.frame), on the replay's own clock. */
 export function liveLabel(d, frame) {
   if (frame === LIVE.frames.at(-1)) return '此刻'

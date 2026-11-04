@@ -1,5 +1,9 @@
 <script setup>
-import { openPrototype, prototypes } from './prototypes.mjs'
+import { computed } from 'vue'
+import { demo, openPrototype, prototypesOf } from './prototypes.mjs'
+
+// The prototypes as the chosen demo plays them (prototypes.mjs `demo`): its frames, ?data= and previews.
+const prototypes = computed(() => prototypesOf(demo.data))
 
 // A plain click opens the viewer in place; modified and middle clicks keep the link's own behaviour.
 function open(event, prototype) {
