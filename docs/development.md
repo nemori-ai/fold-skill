@@ -123,17 +123,18 @@ npm run site:preview
 站点首页是入口页（`site/index.md` 的 `layout: FoldLanding`，组件 `site/.vitepress/theme/FoldLanding.vue`，几何与选型表在同目录的 `landing.mjs`）；规格、故事与视觉在 [site/landing/](../site/landing/spec.md)，不随站点发布。入口页固定纸白浅色、藏起外观开关，文档页照旧可切换；整站换成同一套纸与墨的主题变量（`theme/style.css`），去掉 VitePress 自带的 Inter，标题与数字用自托管的字体子集。入口页相关的脚本：
 
 ```sh
-node scripts/landing-data.mjs           # 从演示回放重算 site/landing/data.json（入口页上每个数与出处）；--check 只核对
+node scripts/landing-data.mjs           # 从两份演示回放（founder、composite）重算 site/landing/data.json（入口页上每个数、出处与各自的文字）；--check 只核对
 node scripts/landing-fonts.mjs          # 标题文案改了字后重取字体子集（联网，写 site/fonts/ 与 theme/fonts.css）；--check 只核对
-node scripts/record-landing.mjs         # 重录入口页的录像到 site/media/（本机 Chrome、ffmpeg、cwebp；约 8 分钟）
+node scripts/record-landing.mjs         # 重录入口页的录像与静帧到 site/media/（默认的 founder；本机 Chrome、ffmpeg、cwebp；约 8 分钟）
+node scripts/record-landing.mjs --data composite     # composite 那一套，录到 site/media/composite/（结绳两份共用默认那一段）
 node scripts/record-landing.mjs --only duo,glasses   # 只录这几个；新原型不用改脚本，默认按桌面 1440 × 900 录 12 秒
-node scripts/record-landing.mjs --placeholders       # 重截预览图或静帧后，重写内联在块底下的占位缩略图（site/landing/placeholders.json，只要 cwebp）
+node scripts/record-landing.mjs --placeholders       # 重截预览图或静帧后，重写内联在块底下的占位缩略图（两份一起，site/landing/placeholders.json，只要 cwebp）
 npm run site:build && node scripts/check-landing.mjs # 入口页自动检查，自己起本地服务读 dist/；--base 指向在跑的站点，--shots <dir> 存七个尺寸的截图
 ```
 
 `npm run site:prepare`（开发与构建都先跑它）先做 `landing-data.mjs --check` 与 `landing-fonts.mjs --check`：演示回放改了而 `data.json` 没重算、或标题改了字而字体子集没重取时，构建直接失败。
 
-`check-landing.mjs` 核对：页面上每个带 `data-k` 的数等于 `data.json` 的出处；375×667、390×844、430×932、820×1180、1180×820、1440×900、1920×1080 七个尺寸从头滚到底没有报错、没有失败的请求、没有横向滚动；减弱动态时首屏一打开就是播放结束后的终态；画廊块数等于原型总数减六、第 3 节六个处境从窄到宽并各链到一张卡；首屏演完不留残渣、三个处境按钮按得动；三拍随阅读线切换、演示卡能作答与撤回；导航“全部原型”的面板与弹框照常可用；标题的字都在字体子集里、录像文件都在；第五节与画廊每块底下有与源文件一致的占位缩略图、滚动中屏幕上的块都有静帧或占位垫底、原型页面只在发来 shown 后叠上去；手机上缩放低于 0.5 的块与查看弹框才写“在电脑上看更清楚”；整站只有首屏一个“旧版”链接（指向 `/legacy/`），构建出的页面没有写死 fold-v2 的地址。原型清单（`prototypes.mjs`）加了新原型，画廊会自动把它排在末尾，录一段 `--only <id>` 的录像即可；没有录像时那一块显示预览图。
+`check-landing.mjs` 核对：页面上每个带 `data-k` 的数等于 `data.json` 的出处；375×667、390×844、430×932、820×1180、1180×820、1440×900、1920×1080 七个尺寸从头滚到底没有报错、没有失败的请求、没有横向滚动；减弱动态时首屏一打开就是播放结束后的终态；画廊块数等于原型总数减六、第 3 节六个处境从窄到宽并各链到一张卡；首屏演完不留残渣、三个处境按钮按得动；三拍随阅读线切换、演示卡能作答与撤回；导航“全部原型”的面板与弹框照常可用；标题的字都在字体子集里、录像文件都在；第五节与画廊每块底下有与源文件一致的占位缩略图、滚动中屏幕上的块都有静帧或占位垫底、原型页面只在发来 shown 后叠上去；手机上缩放低于 0.5 的块与查看弹框才写“在电脑上看更清楚”；整站只有首屏一个“旧版”链接（指向 `/legacy/`），构建出的页面没有写死 fold-v2 的地址；演示数据切换（第 4 节开头、第五节开头与导航面板底下）：上面这些对 founder（`/`）与 composite（`/?data=composite`）各核一遍，点一下地址、数与字、六块的页面与静帧、画廊、面板与弹框都换过去，重新载入与下次打开都记得，没有本地存储时照样能用。原型清单（`prototypes.mjs`）加了新原型，画廊会自动把它排在末尾，录一段 `--only <id>` 的录像即可；没有录像时那一块显示预览图。
 
 `npm run deploy` 先重新构建，再通过已登录的 Wrangler 发布 `dist/`。`npm run deploy:v2` 用 `wrangler.jsonc` 的 `env.v2` 把同一份 `dist/` 发布到另一个 Worker（`fold-experience-v2`，自定义域名 fold-v2.vibecoding.icu），第三轮入口页先在那里给人看；两者都只在用户指示时运行。
 
@@ -152,7 +153,7 @@ node scripts/check-ix.mjs --data story                            # 悬停与展
 
 每种形式写 `<out>/<form>.png`，另写 `report.json`（URL、页面报错、检查结果）；有报错时退出码为 1。`--eval "<js>"` 在截图前执行一段脚本，`--base` 改原型地址，`CHROME` 环境变量指定浏览器。默认关掉显卡，页面里的 WebGL 会退回 Canvas 2D；要截 WebGL 画面（整理脉冲的粒子与余辉）时加 `--gpu`。
 
-体验站导航的“全部原型”面板与入口页的画廊共用 `site/.vitepress/theme/prototypes.mjs` 列出的全部原型，面板顺序、默认帧与弹框里加的 `embed=1`、`card=0` 都照合页 `all.html`。卡片预览图是 `site/previews/<id>.webp`（640×400，共约 760 KB），原型界面明显变化后按同样的参数重截：原版与 A/B/C/D/E 隐藏方案切换栏，形式页收起概念卡，复盘图与回应组件页用各自的默认帧（批次记谱直接打开会先演开场，截图前跳到终态；回应时序直接打开会先讲一遍，所以带上它弹框里停的默认帧 f28），概念动画在弹框里不带帧（播各自的循环），预览图停在第三拍：份额拨盘取落定的 f21，整理脉冲加 `--gpu` 取 f20 朱红线打下的那一刻，再用 Homebrew 的 `cwebp` 缩到 640 像素宽：
+体验站导航的“全部原型”面板与入口页的画廊共用 `site/.vitepress/theme/prototypes.mjs` 列出的全部原型，面板顺序、默认帧与弹框里加的 `embed=1`、`card=0` 都照合页 `all.html`。读者可以切换演示数据（`DEMOS`：默认 founder，另有 composite），切到 composite 时链接带 `data=composite`、默认帧换成 composite 的那一栏。卡片预览图是 `site/previews/<id>.webp`（640×400，共约 760 KB；composite 的在 `site/previews/composite/`，结绳两份共用），原型界面明显变化后按同样的参数重截：原版与 A/B/C/D/E 隐藏方案切换栏，形式页收起概念卡，复盘图与回应组件页用各自的默认帧（批次记谱直接打开会先演开场，截图前跳到终态；回应时序直接打开会先讲一遍，所以带上它弹框里停的默认帧 f28），概念动画在弹框里不带帧（播各自的循环），预览图停在第三拍：份额拨盘取落定的 f21，整理脉冲加 `--gpu` 取 f20 朱红线打下的那一刻，再用 Homebrew 的 `cwebp` 缩到 640 像素宽：
 
 ```sh
 out=.local/previews
@@ -176,6 +177,8 @@ node scripts/shoot-forms.mjs --out $out/t4 --only trays --frame 22 --eval "docum
 node scripts/shoot-forms.mjs --out $out/gl --only glasses --frame 21 --eval "(async () => { document.querySelector('[data-card]').click(); foldGlasses.press('click'); await foldGlasses.settle(); })()"   # 智能眼镜带帧打开不讲一遍，预览取 f21 打开的那一件
 for f in $out/*.png $out/*/*.png; do cwebp -quiet -q 82 -m 6 -sharp_yuv -resize 640 0 "$f" -o "site/previews/$(basename "$f" .png).webp"; done
 ```
+
+composite 的预览图（入口页切到“开源作者的两周”时用）按同一组命令截，每条加 `--data composite`、结绳不截，帧号用 composite 的那一栏：原版与 A/B/D/E、腕上一瞥、两周小倍数、回应托盘、智能眼镜、回应时序、峰值保持、驻龄、拔河、份额拨盘 f26，C f25，让位图 f22，变形、等待链 f28，整理脉冲仍是 f20；最后一行写到 `site/previews/composite/`。截完运行 `node scripts/record-landing.mjs --placeholders`。
 
 全部原型合页（`prototype/all.html`）可以导出为一个自包含的 HTML 文件，在 Finder 里双击、用 Safari 或 Chrome 以 `file://` 打开就能用，不需要服务：
 
