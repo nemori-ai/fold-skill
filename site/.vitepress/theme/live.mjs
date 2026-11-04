@@ -98,11 +98,11 @@ export function playLive(section, { frames, dwell, hold, settle, phoneStill, src
     // A page that never says it has drawn (an error) gives its place back and stays a still.
     later(b, () => { if (b.iframe === iframe && !b.shown) { b.failed = true; unload(b); pump() } }, 20000)
   }
-  function unload(b) {
+  function unload(b, still = true) {
     if (!b.iframe) return
     b.timers.forEach(clearTimeout)
     b.timers = []
-    setStill(b, frames[k])
+    if (still) setStill(b, frames[k])
     b.iframe.remove()
     Object.assign(b, { iframe: null, at: null, shown: false, synced: false, retiring: false })
     if (loading === b) loading = null
@@ -250,7 +250,8 @@ export function playLive(section, { frames, dwell, hold, settle, phoneStill, src
       removeEventListener('scroll', onScroll); removeEventListener('resize', onScroll); removeEventListener('message', onMessage)
       document.removeEventListener('visibilitychange', onVisibility)
       clearTimeout(clock); clearTimeout(pumpTimer); cancelAnimationFrame(raf)
-      blocks.forEach(unload)
+      // (the blocks' stills are left as they are: a page stops the player when it goes, or to play another demo)
+      blocks.forEach(b => unload(b, false))
     },
     // The prototype viewer (or the gallery panel) is open over the page: the clock stops and the pages wait, paused.
     hold(on) { held = on; if (on) pause(); else resume() },

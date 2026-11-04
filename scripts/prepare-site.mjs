@@ -202,8 +202,9 @@ await write('conformance/cases/index.md', `# 一致性用例\n\n六组 YAML 是�
 }).join('\n')}\n`);
 
 // Which recordings exist, so the landing (theme/FoldLanding.vue) asks only for those: a prototype added without a
-// recording shows its preview image instead of a missing video.
-const media = [...assets.keys()].filter(file => file.startsWith('site/media/')).map(file => path.basename(file));
+// recording shows its preview image instead of a missing video. Paths under site/media/, since each demo keeps its
+// own set (composite/<id>.mp4 beside the default's <id>.mp4; theme/prototypes.mjs DEMOS).
+const media = [...assets.keys()].filter(file => file.startsWith('site/media/')).map(file => file.slice('site/media/'.length));
 await write('landing-media.json', `${JSON.stringify(media.sort())}\n`);
 
 console.log(`Prepared ${pages.size + sourcePages.size + 1} pages and ${assets.size} public files in site/.generated.`);

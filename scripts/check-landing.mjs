@@ -25,6 +25,11 @@
 //    打开按桌面排版的原型时也写这一句，窄的不写；手机上点画廊里的“桌面”块，说明卡里也有这一句；
 // 13. 旧版入口：整站只有入口页首屏一个链接（同一标签页打开 /legacy/，那里是 scripts/legacy-site.mjs 另外构建的旧站），375 / 390 / 768 /
 //    1440 下不滚动就看得见、不压导航、标题、表盘与小字，绝对定位不挤动首屏；构建出的页面里没有写死 fold-v2 的地址。
+// 14. 演示数据可以切换（spec.md「切换演示数据」）：第 1、4、5、7、8、9、11 项对 data.json 里的每一份数据（founder 打开 /，
+//    composite 打开 /?data=composite）各做一遍（两份的人名在哪一份的正文里都不许出现），数、白话、iframe 与链接上的 data=、静帧、录像、预览图与占位都是那一份的；
+//    第 4 节开头与第五节各有一个切换，说的是同一份，下面一行写这份数据从哪来；点一下：地址写上（或去掉）?data=、数与字换掉、
+//    重新载入仍是它、同一浏览器再打开首页时记得它；第五节播放中切换，屏幕上的块一直有那一份的静帧或占位垫底，不出现另一份的静帧；
+//    导航“全部原型”的面板与查看弹框、手机上点开的原型都带上这份数据；没有本地存储（读写都抛错）时页面照样显示、照样能切换。
 //
 //   npm run site:build && node scripts/check-landing.mjs            # 自己起服务读 dist/
 //   node scripts/check-landing.mjs --base http://127.0.0.1:4174      # 或检查已在跑的站点
@@ -38,7 +43,7 @@ import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { prototypes } from '../site/.vitepress/theme/prototypes.mjs';
+import { DEFAULT_DEMO, DEMOS, prototypes, prototypesOf } from '../site/.vitepress/theme/prototypes.mjs';
 import { DESK_ONLY, LADDER, LEGACY, LEGIBLE, LIVE, TOP, WHY, galleryOf } from '../site/.vitepress/theme/landing.mjs';
 import { serve } from './serve-static.mjs';
 
@@ -61,6 +66,11 @@ if (!option('--base')) {
 }
 const base = (option('--base') || server.url).replace(/\/$/, '');
 const data = JSON.parse(await readFile(path.join(root, 'site/landing/data.json'), 'utf8'));
+// Every demo the reader can switch to, the default first; what a data-k path walks is the shared day plus that demo.
+const NAMES = [DEFAULT_DEMO, ...Object.keys(data.datasets).filter(n => n !== DEFAULT_DEMO)];
+const viewOf = name => ({ ...data, ...data.datasets[name] });
+const pathOf = name => (name === DEFAULT_DEMO ? '/' : `/?data=${name}`);
+const OTHER = NAMES.find(n => n !== DEFAULT_DEMO);
 
 const results = [];
 function check(name, ok, detail) {
@@ -68,10 +78,10 @@ function check(name, ok, detail) {
   console.log(`${ok ? '✓' : '✗'} ${name}${ok || detail === undefined ? '' : `\n    ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`}`);
 }
 
-// A data-k path walks data.json, stepping into `.value` where a field keeps its number with its source.
-function resolve(key) {
-  if (key === 'gallery.count') return prototypes.length - TOP.length;
-  let at = data;
+// A data-k path walks data.json (the shared day and one demo), stepping into `.value` where a field keeps its number with its source.
+function resolve(key, name = DEFAULT_DEMO) {
+  if (key === 'gallery.count') return prototypesOf(name).length - TOP.length;
+  let at = viewOf(name);
   for (const part of key.split('.')) {
     if (at && typeof at === 'object' && part in at) at = at[part];
     else if (at && typeof at === 'object' && at.value != null && (part in Object(at.value))) at = at.value[part];
@@ -102,8 +112,10 @@ socket.onmessage = event => {
 };
 const send = (method, params = {}, sessionId) => new Promise((done, fail) => { const m = { id: ++nextId, method, params, ...(sessionId ? { sessionId } : {}) }; pending.set(m.id, { done, fail }); socket.send(JSON.stringify(m)); });
 
-async function open([width, height], { reduced = false } = {}) {
-  const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
+// `path` is what to open (a demo's address); `context` an isolated browser context (its own storage); `noStorage`
+// makes the page's localStorage throw on every read and write, as when a browser keeps no site data.
+async function open([width, height], { reduced = false, path: at = '/', context = null, noStorage = false } = {}) {
+  const { targetId } = await send('Target.createTarget', { url: 'about:blank', ...(context ? { browserContextId: context } : {}) });
   const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
   const s = (m, p) => send(m, p, sessionId);
   const problems = [];
@@ -124,12 +136,13 @@ async function open([width, height], { reduced = false } = {}) {
     await s('Emulation.setUserAgentOverride', { userAgent: width < 700 ? IPHONE : IPAD });
   }
   await s('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: reduced ? 'reduce' : 'no-preference' }] });
+  if (noStorage) await s('Page.addScriptToEvaluateOnNewDocument', { source: `for (const k of ['getItem', 'setItem', 'removeItem', 'clear', 'key']) Storage.prototype[k] = () => { throw new DOMException('no site data', 'SecurityError'); };` });
   const evaluate = async expression => {
     const { result, exceptionDetails } = await s('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
     if (exceptionDetails) throw new Error(exceptionDetails.exception?.description || exceptionDetails.text);
     return result.value;
   };
-  await s('Page.navigate', { url: `${base}/` });
+  await s('Page.navigate', { url: `${base}${at}` });
   for (let i = 0; i < 100; i += 1) { if (await evaluate('document.readyState') === 'complete') break; await wait(100); }
   await evaluate('document.fonts.ready.then(() => 1)');
   return {
@@ -143,6 +156,7 @@ async function open([width, height], { reduced = false } = {}) {
     },
     async key(key) { for (const type of ['keyDown', 'keyUp']) await s('Input.dispatchKeyEvent', { type, key, code: key, windowsVirtualKeyCode: key === 'Escape' ? 27 : 0 }); },
     send: s,
+    async reload() { await s('Page.reload'); await wait(300); for (let i = 0; i < 100; i += 1) { if (await evaluate('document.readyState') === 'complete') break; await wait(100); } },
     async close() { listeners.delete(listen); await send('Target.closeTarget', { targetId }); },
   };
 }
@@ -173,7 +187,14 @@ const liveState = `(() => { const sec = document.querySelector('#forms'), vh = i
   return { clock: Number(sec.dataset.frame), frames: document.querySelectorAll('iframe').length, blocks: [...sec.querySelectorAll('[data-live]')].map(el => {
     const r = el.getBoundingClientRect(), f = el.querySelector('.lv-live'), m = f && (f.contentWindow.foldLab || f.contentWindow.foldForm)?.model;
     return { id: el.dataset.live, onScreen: r.bottom > 0 && r.top < vh, live: Boolean(f), on: Boolean(f?.classList.contains('on')), at: m ? m.snapshot().index : null,
-      still: Number((el.querySelector('img').currentSrc.match(/-(\\d+)\\.webp/) || [])[1]) }; }) }; })()`;
+      still: Number((el.querySelector('img').currentSrc.match(/-(\\d+)\\.webp/) || [])[1]), stillSrc: el.querySelector('img').currentSrc.replace(location.origin, ''),
+      src: f ? f.getAttribute('src') : null }; }) }; })()`;
+// Blocks showing another demo than `name`: a page without (or with another) ?data=, or a still from another demo's folder.
+const demoOf = src => new URL(src, 'https://fold.invalid').searchParams.get('data') || DEFAULT_DEMO;
+const stillDemo = src => NAMES.find(n => n !== DEFAULT_DEMO && src.includes(`/media/${DEMOS[n].media}`)) || DEFAULT_DEMO;
+const offDemo = (st, name) => st.blocks.flatMap(b => [
+  ...(b.src && demoOf(b.src) !== name ? [`${b.id} 页面 ${b.src}`] : []),
+  ...(b.onScreen && b.stillSrc && stillDemo(b.stillSrc) !== name ? [`${b.id} 静帧 ${b.stillSrc}`] : [])]);
 const offFrame = st => st.blocks.filter(b => b.onScreen && (b.on ? b.at !== st.clock : b.still !== st.clock)).map(b => `${b.id} ${b.on ? '页面' : '静帧'} ${b.on ? b.at : b.still} ≠ ${st.clock}`);
 // One sample: what is on screen must be the clock's frame. A mismatch is looked at again 300 ms later (a sample can land
 // between the clock moving on and the pages hearing of it); only one that stays counts.
@@ -184,123 +205,165 @@ async function sampleLive(page) {
 }
 // Every animation frame while a block of the fifth section is on screen: it must have something under any page (its
 // still loaded, or its inline thumbnail), and a page may be visible only once it has posted {fold: 'shown'}.
-const coverWatch = `(() => { const shown = new WeakSet(); window.__cover = { frames: 0, checks: 0, empty: [], early: [] };
+// It also watches the demo: a still loaded under a block must be from the demo the switch shows, and so must a page on top
+// (no other demo's still under a live page, none left over after a switch).
+const coverWatch = `(() => { const shown = new WeakSet(); window.__cover = { frames: 0, checks: 0, empty: [], early: [], mixed: [] };
   addEventListener('message', e => { if (e.data && e.data.fold === 'shown' && e.source) shown.add(e.source); });
+  const folders = ${JSON.stringify(Object.fromEntries(NAMES.map(n => [n, DEMOS[n].media])))}, fallback = ${JSON.stringify(DEFAULT_DEMO)};
+  const stillOf = src => Object.keys(folders).find(n => folders[n] && src.includes('/media/' + folders[n])) || fallback;
+  const pageOf = src => new URL(src, location.href).searchParams.get('data') || fallback;
   const loop = () => { let any = false;
+    const demo = document.querySelector('.fl .fold-demo button[aria-pressed="true"]')?.dataset.demo;
     for (const el of document.querySelectorAll('#forms [data-live]')) { const r = el.getBoundingClientRect(); if (r.bottom <= 0 || r.top >= innerHeight) continue;
       any = true; window.__cover.checks += 1;
       const img = el.querySelector('img'), f = el.querySelector('.lv-live');
       if (!(img.complete && img.naturalWidth) && getComputedStyle(el).backgroundImage === 'none') window.__cover.empty.push(el.dataset.live);
-      if (f && Number(getComputedStyle(f).opacity) > 0 && !shown.has(f.contentWindow)) window.__cover.early.push(el.dataset.live); }
+      if (f && Number(getComputedStyle(f).opacity) > 0 && !shown.has(f.contentWindow)) window.__cover.early.push(el.dataset.live);
+      if (img.complete && img.naturalWidth && stillOf(img.currentSrc) !== demo) window.__cover.mixed.push(el.dataset.live + ' 静帧 ' + img.currentSrc.split('/media/')[1]);
+      if (f && Number(getComputedStyle(f).opacity) > 0 && pageOf(f.getAttribute('src')) !== demo) window.__cover.mixed.push(el.dataset.live + ' 页面 ' + f.getAttribute('src')); }
     if (any) window.__cover.frames += 1;
     requestAnimationFrame(loop); };
   requestAnimationFrame(loop); return 1; })()`;
-const coverOk = c => c.frames > 30 && !c.empty.length && !c.early.length;
-const coverSay = c => ({ frames: c.frames, checks: c.checks, empty: [...new Set(c.empty)], early: [...new Set(c.early)] });
+const coverOk = c => c.frames > 30 && !c.empty.length && !c.early.length && !c.mixed.length;
+const coverSay = c => ({ frames: c.frames, checks: c.checks, empty: [...new Set(c.empty)], early: [...new Set(c.early)], mixed: [...new Set(c.mixed)].slice(0, 6) });
 // Dots still to be seen on a stage (once absorbed they are at scale 0 or transparent): none may be left lying on the ruler.
 const dotsLeft = scope => `[...document.querySelectorAll('${scope} .dt')].filter(e => { const cs = getComputedStyle(e), m = new DOMMatrixReadOnly(cs.transform === 'none' ? undefined : cs.transform);
   return Number(cs.opacity) > 0.05 && Math.abs(m.a) > 0.05 && Math.abs(m.d) > 0.05; }).length`;
 
 try {
-  // ---- 1. numbers, 4. gallery, 7. fonts and media (at a phone size) ----
-  const page = await open([390, 844]);
-  await wait(500);
-  const shown = await page.evaluate(`[...document.querySelectorAll('.fl [data-k]')].map(e => ({ k: e.dataset.k, text: e.textContent.trim() }))`);
-  const wrong = shown.filter(({ k, text }) => String(resolve(k)) !== text);
-  check(`页面上 ${shown.length} 处数字（${new Set(shown.map(x => x.k)).size} 个出处）都等于 data.json`, shown.length > 30 && !wrong.length, wrong.map(w => `${w.k}: 页面 ${w.text} ≠ 数据 ${resolve(w.k)}`).join('；'));
-  const expected = galleryOf(prototypes).map(p => p.id);
-  const tiles = await page.evaluate(`[...document.querySelectorAll('.fl-tile[data-id]')].map(e => e.dataset.id)`);
-  const heading = await page.evaluate(`document.querySelector('#fl-gal-title').textContent`);
-  check(`画廊 ${tiles.length} 块 = 原型 ${prototypes.length} 个 − 6，标题也写 ${prototypes.length - 6}`, tiles.length === prototypes.length - 6 && heading.includes(String(prototypes.length - 6))
-    && [...tiles].sort().join() === [...expected].sort().join() && !TOP.some(t => tiles.includes(t.id)), { tiles: tiles.length, heading, missing: expected.filter(id => !tiles.includes(id)) });
-  const cards = await page.evaluate(`[...document.querySelectorAll('.lv-card')].map(e => e.id.replace('form-', ''))`);
-  check(`第五节六块按定下的组成与顺序：${SIX.join(' → ')}`, cards.join() === SIX.join() && TOP.map(t => t.id).join() === SIX.join(), { cards, top: TOP.map(t => t.id) });
-  // Each row of the third section scrolls to its block in the fifth section (all six are there, A included).
-  const rungs = await page.evaluate(`[...document.querySelectorAll('.fl-ladder a')].map(e => ({ id: e.className.replace('g-', ''), href: e.getAttribute('href'),
-    card: e.getAttribute('href').startsWith('#form-') ? Boolean(document.querySelector(e.getAttribute('href'))) : null }))`);
-  const rungOk = r => r.href === `#form-${r.id}` && r.card;
-  check(`第 3 节六个处境从窄到宽（${LADDER.map(l => l.id).join(' → ')}），各滚到第五节它的那一块`, rungs.map(r => r.id).join() === LADDER.map(l => l.id).join() && rungs.every(rungOk), rungs.filter(r => !rungOk(r)));
-  const headings = await page.evaluate(`[...document.querySelectorAll('.fl .fl-h')].map(e => e.textContent).concat([...document.querySelectorAll('.lv-txt h3')].map(e => e.firstChild.textContent)).join('')`);
-  const subset = JSON.parse(await readFile(path.join(root, 'site/fonts/subset.json'), 'utf8'));
-  const uncovered = [...new Set([...headings])].filter(c => /[　-鿿＀-￯]/.test(c) && !subset.landing.includes(c));
-  check('标题用到的中文字都在字体子集里（否则重跑 node scripts/landing-fonts.mjs）', !uncovered.length, uncovered.join(''));
-  // The six play live over a still of each frame they play; every gallery tile plays its recording.
-  const stills = TOP.flatMap(t => LIVE.frames.map(f => `live/${t.id}-${f}.webp`));
-  const absent = stills.filter(f => !existsSync(path.join(root, 'site/media', f)));
-  check(`六块的静帧都在 site/media/live（${TOP.length} × ${LIVE.frames.length} 张；缺的用 node scripts/record-landing.mjs --only <id> 重截）`, !absent.length, absent.join(' '));
-  const unrecorded = expected.filter(id => !existsSync(path.join(root, 'site/media', `${id}.mp4`)));
-  const videos = await page.evaluate(`[...document.querySelectorAll('.fl-tile[data-id]')].filter(e => !e.querySelector('video[data-src]')).map(e => e.dataset.id)`);
-  check(`画廊每一块都有录像（缺的用 node scripts/record-landing.mjs --only <id> 补录）`, !unrecorded.length && !videos.length, { unrecorded, videos });
-  const stray = [...(await readdir(path.join(root, 'site/media'))).filter(f => /\.(mp4|webp)$/.test(f) && !expected.includes(f.replace(/\.(mp4|webp)$/, ''))),
-    ...(await readdir(path.join(root, 'site/media/live'))).map(f => `live/${f}`).filter(f => !stills.includes(f))];
-  check('site/media 里没有用不到的录像、封面或静帧', !stray.length, stray);
+  // The media files on disk, all demos: what the page may use, to find files nothing uses.
+  const mediaUsed = new Set();
+  const deskTile = galleryOf(prototypes).map(p => p.id).find(id => DESK_ONLY.has(id));
+  for (const name of NAMES) {
+    const list = prototypesOf(name), folder = DEMOS[name].media;
+    const tag = `${name}：`;
+    // ---- 1. numbers, 4. gallery, 7. fonts and media (at a phone size) ----
+    const page = await open([390, 844], { path: pathOf(name) });
+    await wait(500);
+    // ---- 14. the page plays this demo: both switches say so, with the line on where its data comes from ----
+    const playing = await page.evaluate(`({ switches: [...document.querySelectorAll('.fl .fold-demo')].map(e => e.closest('section, header')?.id), pressed: [...document.querySelectorAll('.fl .fold-demo button[aria-pressed="true"]')].map(b => b.dataset.demo),
+      labels: [...document.querySelectorAll('.fl-ex .fold-demo button')].map(b => [b.dataset.demo, b.textContent.trim()]), from: [...document.querySelectorAll('.fl .fold-demo-from')].map(e => e.textContent.trim()), url: location.pathname + location.search })`);
+    const copy = data.datasets[name].copy.value;
+    check(`${tag}第 4 节开头与第五节各有一个切换，都选着这一份；按钮是两份的名字，下面一行写“${copy.provenance.slice(0, 12)}…”；地址是 ${pathOf(name)}`,
+      playing.switches.join() === 'example,forms' && playing.pressed.every(n => n === name) && playing.pressed.length === 2
+        && playing.labels.map(([n, t]) => `${n}=${t}`).join() === NAMES.map(n => `${n}=${data.datasets[n].copy.value.label}`).join()
+        && playing.from.every(t => t === copy.provenance) && playing.url === pathOf(name), playing);
+    const shown = await page.evaluate(`[...document.querySelectorAll('.fl [data-k]')].map(e => ({ k: e.dataset.k, text: e.textContent.trim() }))`);
+    const wrong = shown.filter(({ k, text }) => String(resolve(k, name)) !== text);
+    check(`${tag}页面上 ${shown.length} 处数字与白话（${new Set(shown.map(x => x.k)).size} 个出处）都等于 data.json 里这一份`, shown.length > 30 && !wrong.length, wrong.map(w => `${w.k}: 页面 ${w.text} ≠ 数据 ${resolve(w.k, name)}`).join('；'));
+    const expected = galleryOf(list).map(p => p.id);
+    const tiles = await page.evaluate(`[...document.querySelectorAll('.fl-tile[data-id]')].map(e => e.dataset.id)`);
+    const heading = await page.evaluate(`document.querySelector('#fl-gal-title').textContent`);
+    check(`${tag}画廊 ${tiles.length} 块 = 原型 ${list.length} 个 − 6，标题也写 ${list.length - 6}`, tiles.length === list.length - 6 && heading.includes(String(list.length - 6))
+      && [...tiles].sort().join() === [...expected].sort().join() && !TOP.some(t => tiles.includes(t.id)), { tiles: tiles.length, heading, missing: expected.filter(id => !tiles.includes(id)) });
+    const cards = await page.evaluate(`[...document.querySelectorAll('.lv-card')].map(e => e.id.replace('form-', ''))`);
+    check(`${tag}第五节六块按定下的组成与顺序：${SIX.join(' → ')}`, cards.join() === SIX.join() && TOP.map(t => t.id).join() === SIX.join(), { cards, top: TOP.map(t => t.id) });
+    // Each row of the third section scrolls to its block in the fifth section (all six are there, A included).
+    const rungs = await page.evaluate(`[...document.querySelectorAll('.fl-ladder a')].map(e => ({ id: e.className.replace('g-', ''), href: e.getAttribute('href'),
+      card: e.getAttribute('href').startsWith('#form-') ? Boolean(document.querySelector(e.getAttribute('href'))) : null }))`);
+    const rungOk = r => r.href === `#form-${r.id}` && r.card;
+    check(`${tag}第 3 节六个处境从窄到宽（${LADDER.map(l => l.id).join(' → ')}），各滚到第五节它的那一块`, rungs.map(r => r.id).join() === LADDER.map(l => l.id).join() && rungs.every(rungOk), rungs.filter(r => !rungOk(r)));
+    const headings = await page.evaluate(`[...document.querySelectorAll('.fl .fl-h')].map(e => e.textContent).concat([...document.querySelectorAll('.lv-txt h3')].map(e => e.firstChild.textContent)).join('')`);
+    const subset = JSON.parse(await readFile(path.join(root, 'site/fonts/subset.json'), 'utf8'));
+    const uncovered = [...new Set([...headings])].filter(c => /[　-鿿＀-￯]/.test(c) && !subset.landing.includes(c));
+    check(`${tag}标题用到的中文字都在字体子集里（否则重跑 node scripts/landing-fonts.mjs）`, !uncovered.length, uncovered.join(''));
+    // The six play live over a still of each frame they play; every gallery tile plays its recording: this demo's files,
+    // in its folder (a prototype that plays its own data, 结绳, uses the default's).
+    const stills = TOP.flatMap(t => LIVE.frames.map(f => `${folder}live/${t.id}-${f}.webp`));
+    stills.forEach(f => mediaUsed.add(f));
+    const absent = stills.filter(f => !existsSync(path.join(root, 'site/media', f)));
+    check(`${tag}六块的静帧都在 site/media/${folder}live（${TOP.length} × ${LIVE.frames.length} 张；缺的用 node scripts/record-landing.mjs${name === DEFAULT_DEMO ? '' : ` --data ${name}`} --only <id> 重截）`, !absent.length, absent.join(' '));
+    const clips = galleryOf(list).map(p => `${p.media}${p.id}.mp4`);
+    clips.forEach(f => mediaUsed.add(f));
+    const unrecorded = clips.filter(f => !existsSync(path.join(root, 'site/media', f)));
+    const links = await page.evaluate(`[...document.querySelectorAll('.fl-tile[data-id]')].map(e => ({ id: e.dataset.id, href: e.getAttribute('href'), img: e.querySelector('img').getAttribute('src'), clip: e.querySelector('video[data-src]')?.dataset.src || null }))`);
+    const offLinks = links.filter(t => { const p = list.find(x => x.id === t.id); return t.clip !== `/media/${p.media}${p.id}.mp4` || t.img !== p.preview || !existsSync(path.join(root, 'site', p.preview))
+      || (NAMES.includes(demoOf(t.href)) && demoOf(t.href) !== name); });   // (结绳 plays its own sample, ?data=story, in both)
+    check(`${tag}画廊每一块都有这一份的录像与预览图，链接带上这一份数据（缺的录像用 node scripts/record-landing.mjs${name === DEFAULT_DEMO ? '' : ` --data ${name}`} --only <id> 补录）`, !unrecorded.length && !offLinks.length, { unrecorded, offLinks });
+    const blocks = await page.evaluate(`[...document.querySelectorAll('#forms [data-live]')].map(e => ({ id: e.dataset.live, href: e.getAttribute('href'), img: e.querySelector('img').getAttribute('src'), reduced: e.querySelector('source').getAttribute('srcset') }))`);
+    const offBlocks = blocks.filter(b => demoOf(b.href) !== name || b.img !== `/media/${folder}live/${b.id}-${LIVE.frames[0]}.webp` || b.reduced !== `/media/${folder}live/${b.id}-${LIVE.frames.at(-1)}.webp`);
+    check(`${tag}第五节六块链到这一份数据的原型，底下垫的是它自己的静帧`, blocks.length === 6 && !offBlocks.length, offBlocks);
 
-  // ---- 11. no white blocks: an inline thumbnail under every block and tile, made from the file it stands in for ----
-  const thumbs = JSON.parse(await readFile(path.join(root, 'site/landing/placeholders.json'), 'utf8'));
-  const hashOf = async file => createHash('sha1').update(await readFile(path.join(root, 'site', file))).digest('hex').slice(0, 12);
-  const stale = [];
-  for (const [group, id, from] of [...TOP.map(t => ['live', t.id, `media/live/${t.id}-${LIVE.frames[0]}.webp`]), ...expected.map(id => ['gallery', id, prototypes.find(x => x.id === id).preview.slice(1)])]) {
-    const source = thumbs.sources[`${group}.${id}`];
-    if (!thumbs[group][id] || !source) stale.push(`缺 ${group}.${id}`);
-    else if (source.from !== from || source.sha !== await hashOf(from)) stale.push(`${group}.${id} 与 ${from} 不一致`);
+    // ---- 11. no white blocks: an inline thumbnail under every block and tile, made from the file it stands in for ----
+    const thumbs = JSON.parse(await readFile(path.join(root, 'site/landing/placeholders.json'), 'utf8'));
+    const hashOf = async file => createHash('sha1').update(await readFile(path.join(root, 'site', file))).digest('hex').slice(0, 12);
+    const stale = [];
+    for (const [group, id, from] of [...TOP.map(t => ['live', t.id, `media/${folder}live/${t.id}-${LIVE.frames[0]}.webp`]), ...expected.map(id => ['gallery', id, list.find(x => x.id === id).preview.slice(1)])]) {
+      const source = thumbs.sources[`${name}.${group}.${id}`];
+      if (!thumbs.datasets[name]?.[group]?.[id] || !source) stale.push(`缺 ${name}.${group}.${id}`);
+      else if (source.from !== from || source.sha !== await hashOf(from)) stale.push(`${name}.${group}.${id} 与 ${from} 不一致`);
+    }
+    check(`${tag}占位缩略图：第五节六块与画廊每块都有，且与取自的静帧、预览图一致（不一致时运行 node scripts/record-landing.mjs --placeholders）`, !stale.length, stale);
+    const under = await page.evaluate(`Promise.all([...document.querySelectorAll('#forms [data-live], .fl-tile .im')].map(async el => {
+      const url = (getComputedStyle(el).backgroundImage.match(/url\\("?(data:image\\/webp;base64,[^")]+)/) || [])[1];
+      let w = 0;
+      if (url) { const im = new Image(); im.src = url; try { await im.decode(); w = im.naturalWidth; } catch {} }
+      return { id: el.dataset.live || el.closest('.fl-tile').querySelector('.tn').textContent, group: el.dataset.live ? 'live' : 'gallery', key: el.dataset.live || el.closest('.fl-tile').dataset.id, url, w }; }))`);
+    const bare = under.filter(x => !x.w);
+    const foreign = under.filter(x => x.key && x.url !== thumbs.datasets[name][x.group][x.key]);
+    check(`${tag}第五节 6 块与画廊 ${under.length - 6} 块（轮播的两份）底下都有能解码的内联占位，是这一份数据的，图还没到时块里也不是空白`, under.length === 6 + 2 * expected.length && !bare.length && !foreign.length, { bare: bare.map(x => x.id), foreign: foreign.map(x => x.id) });
+
+    // ---- 12. on a phone, the blocks shown too small to read say so in one line; the others do not ----
+    if (name === DEFAULT_DEMO) {
+      const legible = await page.evaluate(`[...document.querySelectorAll('.lv-card')].map(c => { const f = c.querySelector('[data-live]'), h = c.querySelector('.lv-small'), r = h.getBoundingClientRect();
+        return { id: f.dataset.live, scale: Math.round(f.clientWidth / Number(f.dataset.w) * 1000) / 1000, shown: getComputedStyle(h).display !== 'none' && r.width > 0,
+          text: h.textContent.trim(), inside: r.right <= c.querySelector('.lv-at').getBoundingClientRect().right + 0.5, color: getComputedStyle(h).color }; })`);
+      const wrongHint = legible.filter(x => x.shown !== x.scale < LEGIBLE.scale || x.text !== LEGIBLE.hint || (x.shown && !x.inside));
+      const ver = await page.evaluate(`getComputedStyle(document.querySelector('.fl-card .tag')).color`);
+      check(`390 × 844：缩放低于 ${LEGIBLE.scale} 的块才写“${LEGIBLE.hint}”（${legible.filter(x => x.shown).map(x => `${x.id} ${x.scale}`).join('、')}），其余不写（${legible.filter(x => !x.shown).map(x => `${x.id} ${x.scale}`).join('、')}）；不用朱红`,
+        legible.length === 6 && legible.some(x => x.shown) && legible.some(x => !x.shown) && !wrongHint.length && legible.every(x => x.color !== ver), wrongHint);
+      // a gallery tile laid out for a desk, tapped on a phone: its sheet says the same
+      await page.evaluate(`document.querySelector('.fl-tile[data-id="${deskTile}"]').click(), 1`);
+      await wait(300);
+      const sheetText = await page.evaluate(`document.querySelector('.fl-sheet')?.textContent || ''`);
+      await page.evaluate(`document.querySelector('.fl-sheet .ghost')?.click(), 1`);
+      check(`390 × 844：点画廊里按电脑排版的块（${deskTile}），说明卡里也写“${LEGIBLE.hint}”`, sheetText.includes(LEGIBLE.hint), sheetText);
+    }
+
+    // ---- 5. the beats follow the reading line; the demo card answers and takes it back ----
+    const goTo = k => page.evaluate(`(() => { const s = document.querySelector('.fl-sticky'); const el = document.querySelector('[data-step-block="${k}"]');
+      const wide = innerWidth >= 960, h = wide ? 0 : s.offsetHeight, line = wide ? innerHeight * 0.55 : h + (innerHeight - h) * 0.35;
+      window.scrollTo(0, el.getBoundingClientRect().top + scrollY - line + 24); return 1; })()`);
+    const stepNow = () => page.evaluate(`document.querySelector('.fl-round').dataset.step`);
+    const seen = [];
+    let beatDots = -1, dotsAll = -1;
+    for (const k of [1, 2, 3]) {
+      await goTo(k); await wait(k === 2 ? 3200 : 2200); seen.push(await stepNow());
+      if (k === 2) { beatDots = await page.evaluate(dotsLeft('.fl-beat-stage')); dotsAll = await page.evaluate(`document.querySelectorAll('.fl-beat-stage .dt').length`); }
+    }
+    const view = viewOf(name);
+    check(`${tag}三拍随阅读线依次切换：1 → 2 → 3`, seen.join() === '1,2,3', seen);
+    check(`${tag}第 2 拍演完：${view.beat2.adopted.value} 颗点都被吸收进各自的段，尺上没有残留的点`, beatDots === 0 && dotsAll === view.beat2.adopted.value, { beatDots, dotsAll });
+    await page.evaluate(`document.querySelector('.fl-card .btns button').click()`);
+    await wait(900);
+    const answered = await page.evaluate(`({ ans: document.querySelector('.fl-round').classList.contains('ans'), receipt: getComputedStyle(document.querySelector('.fl-receipt')).visibility, text: document.querySelector('.fl-receipt .t').textContent })`);
+    await page.evaluate(`document.querySelector('.fl-receipt .undo').click()`);
+    await wait(300);
+    const undone = await page.evaluate(`!document.querySelector('.fl-round').classList.contains('ans')`);
+    check(`${tag}演示卡：按钮真的作答（原地收成回执），撤回后卡回来`, answered.ans && answered.receipt === 'visible' && answered.text.includes(view.beat3.lead.value.plain.actions[0]) && undone, { answered, undone });
+    await goTo(4); await wait(1200);
+    const looped = await page.evaluate(`({ step: document.querySelector('.fl-round').dataset.step, ans: document.querySelector('.fl-round').classList.contains('ans'), text: document.querySelector('.fl-receipt .t').textContent })`);
+    await goTo(3); await wait(400);
+    const back = await page.evaluate(`document.querySelector('.fl-round').classList.contains('ans')`);
+    check(`${tag}滚到回流那一段：没按时自动收成回执（演示替你选了「${view.beat3.lead.value.plain.actions[0]}」）；滚回第三拍，演示的回答撤掉`, looped.step === '4' && looped.ans && looped.text.includes(view.beat3.lead.value.plain.actions[0]) && !back, { looped, back });
+    await page.evaluate(`setTimeout(() => document.querySelector('#form-trays .lv-txt .fl-btn').click(), 50), 1`);
+    await wait(2000);
+    const href = await page.evaluate('location.pathname + location.search');
+    // (the prototype then writes its own frame into the address)
+    const want = `/prototype/forms/trays.html?${name === DEFAULT_DEMO ? '' : `data=${name}&`}card=0`;
+    check(`${tag}手机上点“打开原型”：同一个标签页打开原型本身（形式页带 card=0${name === DEFAULT_DEMO ? '' : `，带上 data=${name}`}）`, href.startsWith(want), href);
+    check(`${tag}390 × 844：脚本过程中没有报错`, !page.problems.length, page.problems);
+    await page.close();
   }
-  check('占位缩略图：第五节六块与画廊每块都有，且与取自的静帧、预览图一致（不一致时运行 node scripts/record-landing.mjs --placeholders）', !stale.length, stale);
-  const under = await page.evaluate(`Promise.all([...document.querySelectorAll('#forms [data-live], .fl-tile .im')].map(async el => {
-    const url = (getComputedStyle(el).backgroundImage.match(/url\\("?(data:image\\/webp;base64,[^")]+)/) || [])[1];
-    let w = 0;
-    if (url) { const im = new Image(); im.src = url; try { await im.decode(); w = im.naturalWidth; } catch {} }
-    return { id: el.dataset.live || el.closest('.fl-tile').querySelector('.tn').textContent, w }; }))`);
-  const bare = under.filter(x => !x.w);
-  check(`第五节 6 块与画廊 ${under.length - 6} 块（轮播的两份）底下都有能解码的内联占位，图还没到时块里也不是空白`, under.length === 6 + 2 * expected.length && !bare.length, bare.map(x => x.id));
-
-  // ---- 12. on a phone, the blocks shown too small to read say so in one line; the others do not ----
-  const legible = await page.evaluate(`[...document.querySelectorAll('.lv-card')].map(c => { const f = c.querySelector('[data-live]'), h = c.querySelector('.lv-small'), r = h.getBoundingClientRect();
-    return { id: f.dataset.live, scale: Math.round(f.clientWidth / Number(f.dataset.w) * 1000) / 1000, shown: getComputedStyle(h).display !== 'none' && r.width > 0,
-      text: h.textContent.trim(), inside: r.right <= c.querySelector('.lv-at').getBoundingClientRect().right + 0.5, color: getComputedStyle(h).color }; })`);
-  const wrongHint = legible.filter(x => x.shown !== x.scale < LEGIBLE.scale || x.text !== LEGIBLE.hint || (x.shown && !x.inside));
-  const ver = await page.evaluate(`getComputedStyle(document.querySelector('.fl-card .tag')).color`);
-  check(`390 × 844：缩放低于 ${LEGIBLE.scale} 的块才写“${LEGIBLE.hint}”（${legible.filter(x => x.shown).map(x => `${x.id} ${x.scale}`).join('、')}），其余不写（${legible.filter(x => !x.shown).map(x => `${x.id} ${x.scale}`).join('、')}）；不用朱红`,
-    legible.length === 6 && legible.some(x => x.shown) && legible.some(x => !x.shown) && !wrongHint.length && legible.every(x => x.color !== ver), wrongHint);
-  // a gallery tile laid out for a desk, tapped on a phone: its sheet says the same
-  const deskTile = expected.find(id => DESK_ONLY.has(id));
-  await page.evaluate(`document.querySelector('.fl-tile[data-id="${deskTile}"]').click(), 1`);
-  await wait(300);
-  const sheetText = await page.evaluate(`document.querySelector('.fl-sheet')?.textContent || ''`);
-  await page.evaluate(`document.querySelector('.fl-sheet .ghost')?.click(), 1`);
-  check(`390 × 844：点画廊里按电脑排版的块（${deskTile}），说明卡里也写“${LEGIBLE.hint}”`, sheetText.includes(LEGIBLE.hint), sheetText);
-
-  // ---- 5. the beats follow the reading line; the demo card answers and takes it back ----
-  const goTo = k => page.evaluate(`(() => { const s = document.querySelector('.fl-sticky'); const el = document.querySelector('[data-step-block="${k}"]');
-    const wide = innerWidth >= 960, h = wide ? 0 : s.offsetHeight, line = wide ? innerHeight * 0.55 : h + (innerHeight - h) * 0.35;
-    window.scrollTo(0, el.getBoundingClientRect().top + scrollY - line + 24); return 1; })()`);
-  const stepNow = () => page.evaluate(`document.querySelector('.fl-round').dataset.step`);
-  const seen = [];
-  let beatDots = -1
-  for (const k of [1, 2, 3]) {
-    await goTo(k); await wait(k === 2 ? 3200 : 2200); seen.push(await stepNow());
-    if (k === 2) beatDots = await page.evaluate(dotsLeft('.fl-beat-stage'));
-  }
-  check('三拍随阅读线依次切换：1 → 2 → 3', seen.join() === '1,2,3', seen);
-  check(`第 2 拍演完：${data.beat2.adopted.value} 颗点都被吸收进各自的段，尺上没有残留的点`, beatDots === 0, beatDots);
-  await page.evaluate(`document.querySelector('.fl-card .btns button').click()`);
-  await wait(900);
-  const answered = await page.evaluate(`({ ans: document.querySelector('.fl-round').classList.contains('ans'), receipt: getComputedStyle(document.querySelector('.fl-receipt')).visibility, text: document.querySelector('.fl-receipt .t').textContent })`);
-  await page.evaluate(`document.querySelector('.fl-receipt .undo').click()`);
-  await wait(300);
-  const undone = await page.evaluate(`!document.querySelector('.fl-round').classList.contains('ans')`);
-  check('演示卡：按钮真的作答（原地收成回执），撤回后卡回来', answered.ans && answered.receipt === 'visible' && answered.text.includes(data.beat3.lead.value.plain.actions[0]) && undone, { answered, undone });
-  await goTo(4); await wait(1200);
-  const looped = await page.evaluate(`({ step: document.querySelector('.fl-round').dataset.step, ans: document.querySelector('.fl-round').classList.contains('ans') })`);
-  await goTo(3); await wait(400);
-  const back = await page.evaluate(`document.querySelector('.fl-round').classList.contains('ans')`);
-  check('滚到回流那一段：没按时自动收成回执（演示）；滚回第三拍，演示的回答撤掉', looped.step === '4' && looped.ans && !back, { looped, back });
-  await page.evaluate(`setTimeout(() => document.querySelector('#form-trays .lv-txt .fl-btn').click(), 50), 1`);
-  await wait(2000);
-  const href = await page.evaluate('location.pathname + location.search');
-  // (the prototype then writes its own frame into the address)
-  check('手机上点“打开原型”：同一个标签页打开原型本身（形式页带 card=0）', href.startsWith('/prototype/forms/trays.html?card=0'), href);
-  check('390 × 844：脚本过程中没有报错', !page.problems.length, page.problems);
-  await page.close();
+  // Every media file is some demo's: nothing left over in site/media or its demos' folders.
+  const files = async dir => existsSync(path.join(root, 'site/media', dir)) ? (await readdir(path.join(root, 'site/media', dir))).filter(f => /\.(mp4|webp)$/.test(f)).map(f => `${dir}${f}`) : [];
+  const onDisk = (await Promise.all(Object.values(DEMOS).flatMap(d => [files(d.media), files(`${d.media}live/`)]))).flat();
+  const stray = [...new Set(onDisk)].filter(f => !mediaUsed.has(f));
+  check('site/media 里没有用不到的录像、封面或静帧（各份数据的文件夹都算）', !stray.length, stray);
+  const previews = (await Promise.all(Object.values(DEMOS).map(async d => existsSync(path.join(root, 'site/previews', d.media)) ? (await readdir(path.join(root, 'site/previews', d.media))).filter(f => f.endsWith('.webp')).map(f => `/previews/${d.media}${f}`) : []))).flat();
+  const previewUsed = new Set(NAMES.flatMap(n => prototypesOf(n).map(p => p.preview)));
+  const strayPreviews = previews.filter(f => !previewUsed.has(f));
+  check('site/previews 里没有用不到的预览图，每个原型在每份数据里都有预览图', !strayPreviews.length && [...previewUsed].every(f => existsSync(path.join(root, 'site', f))), { strayPreviews, missing: [...previewUsed].filter(f => !existsSync(path.join(root, 'site', f))) });
 
   // ---- 3. reduced motion: the first screen is its end state at once; the situations switch ----
   const played = await open([390, 844]);
@@ -417,31 +480,131 @@ try {
     }
   }
 
-  // ---- 9. plain words: the body speaks plainly; the replay's own wording stays in the data ----
-  const plain = await open([390, 844]);
-  await wait(300);
-  const body = await plain.evaluate(`(() => { const c = document.querySelector('.fl').cloneNode(true);
-    // the fifth section's own words count too (its prototypes play inside iframes, whose text is not part of this page)
-    c.querySelectorAll('.fl-gal, .fl-sheet-back, dialog, style, script').forEach(e => e.remove());
-    return c.textContent.replace(/\s+/g, ' '); })()`);
-  // the replay's cast (founder, corpus/founder/OUTLINE.md §2: people, the pets, the companies and the open-source project are
-  // said by role on the page), plus the older corpus's (composite) Swedish names
-  const banned = [/#\d/, /\bPR\b/, /\bCI\b/, /master/i,
-    /陆晨|韩敏|可可|豆豆|土豆|郑婉|孟洁|何嘉|高翔|宋悦|罗晓雯|邓一凡|范志强|老范|姚佳|杨帆|王姐|小金|曹店长|沈律师|白鹭|铃语|听澜|云阶|声通云|曲声|剪约|燃力|禾木/,
-    /\b(?:saydone|Harborline|Mateo|Priya|Lucas|Cici)\b/i,
-    /\b(?:Jonas|Berglund|Smilla|Kajsa|Mamma|Ture|Signe|Ulrika|VAB|vab)\b/, /[åäöÅÄÖ]/];
-  const hits = banned.map(re => body.match(re)?.[0]).filter(Boolean);
-  const originals = [...data.beat2.segments.value.map(x => x.title), ...data.beat3.asks.value.map(x => x.short), data.beat3.lead.value.prompt, ...data.beat3.lead.value.actions,
-    data.beat3.loop.example.value.ask, data.beat3.loop.example.value.response.text]
-    // an original that is already plain (“不答应”) is its own plain words
-    .filter(t => body.includes(t) && !data.beat3.lead.value.plain.actions.includes(t));
-  check('白话：入口页正文（含第五节的文字，不含画廊、弹框）没有 #数字、PR、CI、master、演示里的人名、店名、公司名与开源项目名，也没有演示原文的标题、问题与选项', !hits.length && !originals.length, { hits, originals });
-  // Plain written Chinese (the user, 2026-11-03): the contrived phrasings that were rewritten stay out of the body and the description.
-  const description = await plain.evaluate(`document.querySelector('meta[name="description"]')?.content || ''`);
-  const stiff = ['接得住', '交出', '落进', '暗下', '舍掉', '让位', '让出', '一摊', '开口', '涌入', '摊开', '回话', '刻痕', '回流', '折掉']
-    .filter(w => body.includes(w) || description.includes(w));
-  check('平常的书面语：入口页正文与页面描述里没有“接得住、交出、落进、暗下、舍掉、让位、一摊”这类别扭的说法', description.length > 20 && !stiff.length, { stiff, description });
-  await plain.close();
+  // ---- 9. plain words: the body speaks plainly; the replay's own wording stays in the data (each demo) ----
+  // Each demo's cast: founder's (corpus/founder/OUTLINE.md §2: people, the pets, the companies and the open-source
+  // project are said by role on the page), composite's Swedish names. Neither shows on either demo's page.
+  const casts = {
+    founder: [/陆晨|韩敏|可可|豆豆|土豆|郑婉|孟洁|何嘉|高翔|宋悦|罗晓雯|邓一凡|范志强|老范|姚佳|杨帆|王姐|小金|曹店长|沈律师|白鹭|铃语|听澜|云阶|声通云|曲声|剪约|燃力|禾木/,
+      /\b(?:saydone|Harborline|Mateo|Priya|Lucas|Cici)\b/i],
+    composite: [/\b(?:Jonas|Berglund|Smilla|Kajsa|Mamma|Ture|Signe|Ulrika|VAB|vab)\b/, /[åäöÅÄÖ]/],
+  };
+  const banned = [/#\d/, /\bPR\b/, /\bCI\b/, /master/i, ...Object.values(casts).flat()];
+  for (const name of NAMES) {
+    const plain = await open([390, 844], { path: pathOf(name) });
+    await wait(300);
+    const body = await plain.evaluate(`(() => { const c = document.querySelector('.fl').cloneNode(true);
+      // the fifth section's own words count too (its prototypes play inside iframes, whose text is not part of this page)
+      c.querySelectorAll('.fl-gal, .fl-sheet-back, dialog, style, script').forEach(e => e.remove());
+      return c.textContent.replace(/\s+/g, ' '); })()`);
+    const hits = banned.map(re => body.match(re)?.[0]).filter(Boolean);
+    const d = viewOf(name);
+    const originals = [...d.beat2.segments.value.map(x => x.title), ...d.beat3.asks.value.map(x => x.short), d.beat3.lead.value.prompt, ...d.beat3.lead.value.actions,
+      d.beat3.loop.example.value.ask, d.beat3.loop.example.value.response.text]
+      // an original that is already plain (“不答应”“先观察”) is its own plain words
+      .filter(t => body.includes(t) && !d.beat3.lead.value.plain.actions.includes(t));
+    check(`${name}：白话：入口页正文（含第五节的文字，不含画廊、弹框）没有 #数字、PR、CI、master、两份演示里的人名、店名、公司名与开源项目名，也没有演示原文的标题、问题与选项`, !hits.length && !originals.length, { hits, originals });
+    // Plain written Chinese (the user, 2026-11-03): the contrived phrasings that were rewritten stay out of the body and the description.
+    const description = await plain.evaluate(`document.querySelector('meta[name="description"]')?.content || ''`);
+    const stiff = ['接得住', '交出', '落进', '暗下', '舍掉', '让位', '让出', '一摊', '开口', '涌入', '摊开', '回话', '刻痕', '回流', '折掉']
+      .filter(w => body.includes(w) || description.includes(w));
+    check(`${name}：平常的书面语：入口页正文与页面描述里没有“接得住、交出、落进、暗下、舍掉、让位、一摊”这类别扭的说法`, description.length > 20 && !stiff.length, { stiff, description });
+    await plain.close();
+  }
+
+  // ---- 14. switching: a click changes the numbers and words, the address, the six's pages and stills, the gallery and
+  //          the nav's panel; a reload keeps it, so does the next visit; without site storage the page still works ----
+  for (const size of [[390, 844], [1440, 900]]) {
+    const { browserContextId: context } = await send('Target.createBrowserContext');
+    const sw = await open(size, { context });
+    const tag = `${size.join(' × ')} 切换：`;
+    const shownOk = async name => {
+      const got = await sw.evaluate(`[...document.querySelectorAll('.fl [data-k]')].map(e => ({ k: e.dataset.k, text: e.textContent.trim() }))`);
+      return got.filter(({ k, text }) => String(resolve(k, name)) !== text).map(w => `${w.k}: ${w.text}`);
+    };
+    const pageState = () => sw.evaluate(`({ url: location.pathname + location.search, pressed: [...document.querySelectorAll('.fold-demo button[aria-pressed="true"]')].map(b => b.dataset.demo),
+      stills: [...document.querySelectorAll('#forms [data-live] img')].map(i => i.getAttribute('src')), blocks: [...document.querySelectorAll('#forms [data-live]')].map(a => a.getAttribute('href')),
+      tiles: [...document.querySelectorAll('.fl-tile[data-id]')].map(t => ({ id: t.dataset.id, href: t.getAttribute('href'), clip: t.querySelector('video')?.dataset.src || '', img: t.querySelector('img').getAttribute('src') })),
+      stored: (() => { try { return localStorage.getItem('fold-demo-data'); } catch { return 'throws'; } })() })`);
+    // the head of the example section, scrolled to and clicked as a reader would
+    await sw.evaluate(`(() => { const b = document.querySelector('#example .fold-demo button[data-demo="${OTHER}"]'); scrollTo(0, b.getBoundingClientRect().top + scrollY - innerHeight / 2); b.click(); return 1; })()`);
+    await wait(500);
+    const switched = await pageState();
+    const folder = DEMOS[OTHER].media;
+    const listOther = prototypesOf(OTHER);
+    const tileOff = t => { const p = listOther.find(x => x.id === t.id); return !p || t.img !== p.preview || (t.clip && t.clip !== `/media/${p.media}${p.id}.mp4`) || (NAMES.includes(demoOf(t.href)) && demoOf(t.href) !== OTHER); };
+    const wrongNow = await shownOk(OTHER);
+    check(`${tag}点“${data.datasets[OTHER].copy.value.label}”：地址成 ${pathOf(OTHER)}，三个切换都选着它，页上的数与字是它的（${wrongNow.length} 处不对）；六块与画廊链到它的原型、垫它的静帧、放它的录像与预览图`,
+      switched.url === pathOf(OTHER) && switched.pressed.every(n => n === OTHER) && !wrongNow.length
+        && switched.stills.every(src => src.startsWith(`/media/${folder}live/`)) && switched.blocks.every(h => demoOf(h) === OTHER)
+        && switched.tiles.length && !switched.tiles.some(tileOff), { ...switched, tiles: switched.tiles.filter(tileOff).slice(0, 4), wrongNow });
+    // the six play the chosen demo: scroll there and let the clock run a little
+    await sw.evaluate(coverWatch);
+    await sw.evaluate(`(() => { const el = document.querySelector('#forms .lv-grid'); scrollTo(0, el.getBoundingClientRect().top + scrollY - 40); return 1; })()`);
+    await wait(7000);
+    const live1 = await sw.evaluate(liveState);
+    check(`${tag}第五节播放它的原型（iframe 带 data=${OTHER}），屏幕上没有另一份的静帧或页面`, live1.blocks.some(b => b.live) && !offDemo(live1, OTHER).length, offDemo(live1, OTHER));
+    // switching back from the fifth section, while it plays
+    await sw.evaluate(`document.querySelector('#forms .fold-demo button[data-demo="${DEFAULT_DEMO}"]').click(), 1`);
+    await wait(6000);
+    const live2 = await sw.evaluate(liveState);
+    const cover = await sw.evaluate('window.__cover');
+    const back = await pageState();
+    check(`${tag}在第五节点回“${data.datasets[DEFAULT_DEMO].copy.value.label}”：地址去掉 data=，六块换回默认的页面与静帧`, back.url === '/' && back.pressed.every(n => n === DEFAULT_DEMO) && !offDemo(live2, DEFAULT_DEMO).length && !(await shownOk(DEFAULT_DEMO)).length,
+      { url: back.url, off: offDemo(live2, DEFAULT_DEMO) });
+    check(`${tag}切换前后屏幕上的块一直有静帧或占位垫底，不早叠页面，不混另一份的静帧或页面`, coverOk(cover), coverSay(cover));
+    // a reload keeps the address's demo; a later visit to the bare address keeps the last one chosen
+    await sw.evaluate(`document.querySelector('#forms .fold-demo button[data-demo="${OTHER}"]').click(), 1`);
+    await wait(300);
+    await sw.reload();
+    await wait(600);
+    const reloaded = await pageState();
+    const wrongReloaded = await shownOk(OTHER);
+    await sw.evaluate(`location.href = '/'`);
+    await wait(300);
+    for (let i = 0; i < 50 && await sw.evaluate('document.readyState') !== 'complete'; i += 1) await wait(100);
+    await wait(600);
+    const revisit = await pageState();
+    check(`${tag}重新载入仍是它（${reloaded.url}）；再打开不带参数的首页，记得上次选的（地址补上 data=），本机记的是 ${reloaded.stored}`,
+      reloaded.url === pathOf(OTHER) && reloaded.pressed.every(n => n === OTHER) && !wrongReloaded.length && revisit.url === pathOf(OTHER) && revisit.pressed.every(n => n === OTHER) && reloaded.stored === OTHER,
+      { reloaded: reloaded.url, revisit: revisit.url, stored: reloaded.stored, wrongReloaded });
+    // the nav's panel and its viewer play the same demo, and can switch it too
+    await sw.evaluate(`document.querySelector('.fold-menu-bar').click(), 1`);
+    await wait(500);
+    const panel = await sw.evaluate(`({ cards: [...document.querySelectorAll('#fold-prototype-panel .fold-gallery-card')].map(a => ({ href: a.getAttribute('href'), img: a.querySelector('img')?.getAttribute('src') || '' })),
+      pressed: document.querySelector('#fold-prototype-panel .fold-demo button[aria-pressed="true"]')?.dataset.demo, combined: document.querySelector('#fold-prototype-panel .fold-panel-link')?.getAttribute('href') })`);
+    await sw.evaluate(`document.querySelector('#fold-prototype-panel .fold-gallery-card').click(), 1`);
+    await wait(900);
+    const viewerSrc = await sw.evaluate(`document.querySelector('dialog[open] iframe')?.getAttribute('src') || null`);
+    await sw.key('Escape');
+    await wait(400);
+    check(`${tag}导航“全部原型”的面板也选着它：卡片链接、预览图与合页都带上它，弹框里打开的原型也是它的`,
+      panel.pressed === OTHER && panel.cards.length === listOther.length && panel.cards.every((c, i) => c.href === listOther[i].href && c.img === listOther[i].preview)
+        && panel.combined === `/prototype/all.html?data=${OTHER}` && viewerSrc && demoOf(viewerSrc) === OTHER, { pressed: panel.pressed, combined: panel.combined, viewerSrc, first: panel.cards[0] });
+    check(`${tag}整个过程中没有报错`, !sw.problems.length, sw.problems);
+    await sw.close();
+    await send('Target.disposeBrowserContext', { browserContextId: context });
+  }
+  // A browser that keeps no site data: the page shows the default, switching still works, nothing is thrown.
+  {
+    const { browserContextId: context } = await send('Target.createBrowserContext');
+    const bare = await open([390, 844], { context, noStorage: true });
+    const first = await bare.evaluate(`[...document.querySelectorAll('.fold-demo button[aria-pressed="true"]')].map(b => b.dataset.demo)`);
+    await bare.evaluate(`document.querySelector('#example .fold-demo button[data-demo="${OTHER}"]').click(), 1`);
+    await wait(500);
+    const after = await bare.evaluate(`({ url: location.pathname + location.search, pressed: [...document.querySelectorAll('.fold-demo button[aria-pressed="true"]')].map(b => b.dataset.demo), n: document.querySelector('[data-k="beat1.n"]').textContent })`);
+    await bare.reload();
+    await wait(600);
+    const kept = await bare.evaluate(`location.pathname + location.search`);
+    // VitePress's own appearance setting (VueUse useStorage, the docs' light / dark switch) catches the error and logs
+    // it with console.error: its behaviour, not the page's; anything else counts.
+    const theirs = bare.problems.filter(p => p === 'console.error：SecurityError: no site data');
+    const ours = bare.problems.filter(p => !theirs.includes(p));
+    check(`没有本地存储（读写都抛错）：页面照样显示默认那一份，照样能切换，地址照样写上，重新载入仍是它，没有报错（VitePress 外观设置自己记的 ${theirs.length} 条不算）`,
+      first.every(n => n === DEFAULT_DEMO) && after.url === pathOf(OTHER) && after.pressed.every(n => n === OTHER) && after.n === String(resolve('beat1.n', OTHER)) && kept === pathOf(OTHER) && !ours.length,
+      { first, after, kept, problems: ours });
+    await bare.close();
+    await send('Target.disposeBrowserContext', { browserContextId: context });
+  }
 
   // ---- 2. seven sizes: scroll top to bottom; no errors, no failed requests, no horizontal scroll ----
   for (const size of SIZES) {
@@ -564,62 +727,66 @@ try {
   }
 
   // ---- 8. the six, live: nothing before the section, one frame on screen, no input, a phone keeps two pages ----
-  const desk8 = await open([1440, 900]);
-  await desk8.evaluate(coverWatch);
-  await wait(1500);
-  const early = await desk8.evaluate(`({ frames: document.querySelectorAll('iframe').length, asked: performance.getEntriesByType('resource').filter(e => e.name.includes('/prototype/') || e.name.includes('/media/live/')).length })`);
-  check('首屏载入后，第五节还没有任何 iframe，也没有请求原型或静帧', early.frames === 0 && early.asked === 0, early);
-  await desk8.evaluate(`(() => { const el = document.querySelector('#forms .lv-grid'); scrollTo(0, el.getBoundingClientRect().top + scrollY - 40); return 1; })()`);
-  await wait(7000);
-  const deskSamples = [];
-  for (let i = 0; i < 10; i += 1) { await wait(1700 + Math.round(Math.random() * 1400)); deskSamples.push(await sampleLive(desk8)); }
-  const deskOff = deskSamples.flatMap(x => x.off), deskClocks = new Set(deskSamples.map(x => x.st.clock));
-  const deskLive = Math.max(...deskSamples.map(x => x.st.blocks.filter(b => b.on).length));
-  check(`1440 × 900：抽样 ${deskSamples.length} 次（走过 ${deskClocks.size} 轮），显示着的 ${deskLive} 个原型与静帧都在时钟的那一帧`, !deskOff.length && deskClocks.size >= 3 && deskLive >= 4, { off: deskOff, clocks: [...deskClocks], deskLive });
-  const inputs = await desk8.evaluate(`[...document.querySelectorAll('#forms .lv-live')].map(f => { const r = f.closest('[data-live]').getBoundingClientRect(), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-    return { id: f.closest('[data-live]').dataset.live, pointer: getComputedStyle(f).pointerEvents, inert: f.inert, tab: f.tabIndex, hit: hit ? hit.tagName : null }; })`);
-  check('iframe 不接收指针与焦点：pointer-events none、inert、tabindex −1，块上点到的是外面的链接', inputs.length >= 4 && inputs.every(x => x.pointer === 'none' && x.inert && x.tab === -1 && x.hit !== 'IFRAME'), inputs);
-  // the gallery below: every tile in view plays its recording
-  await desk8.evaluate(`(() => { const el = document.querySelector('#all .fl-row'); scrollTo(0, el.getBoundingClientRect().top + scrollY - 120); return 1; })()`);
-  await wait(3500);
-  const tilesNow = await desk8.evaluate(`[...document.querySelectorAll('.fl-tile')].filter(t => { const r = t.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight; })
-    .map(t => { const v = t.querySelector('video'); return { id: t.dataset.id || t.querySelector('.tn')?.textContent, playing: Boolean(v && !v.paused && v.readyState >= 2 && v.currentTime > 0) }; })`);
-  check(`画廊：视口里的 ${tilesNow.length} 块都在自动播放录像`, tilesNow.length >= 6 && tilesNow.every(t => t.playing), tilesNow.filter(t => !t.playing));
-  const deskCover = await desk8.evaluate('window.__cover');
-  check(`1440 × 900：第五节在屏幕上的 ${deskCover.frames} 帧里，每块底下都有静帧或占位，原型页面都在发来 shown 之后才显示`, coverOk(deskCover), coverSay(deskCover));
-  check('1440 × 900：第五节播放中没有报错', !desk8.problems.length, desk8.problems);
-  await desk8.close();
+  // Each demo plays its own pages over its own stills (coverWatch also catches the other demo's).
+  for (const name of NAMES) {
+    const tag = `${name}：`;
+    const desk8 = await open([1440, 900], { path: pathOf(name) });
+    await desk8.evaluate(coverWatch);
+    await wait(1500);
+    const early = await desk8.evaluate(`({ frames: document.querySelectorAll('iframe').length, asked: performance.getEntriesByType('resource').filter(e => e.name.includes('/prototype/') || (e.name.includes('/media/') && e.name.includes('/live/'))).length })`);
+    check(`${tag}首屏载入后，第五节还没有任何 iframe，也没有请求原型或静帧`, early.frames === 0 && early.asked === 0, early);
+    await desk8.evaluate(`(() => { const el = document.querySelector('#forms .lv-grid'); scrollTo(0, el.getBoundingClientRect().top + scrollY - 40); return 1; })()`);
+    await wait(7000);
+    const deskSamples = [];
+    for (let i = 0; i < 10; i += 1) { await wait(1700 + Math.round(Math.random() * 1400)); deskSamples.push(await sampleLive(desk8)); }
+    const deskOff = deskSamples.flatMap(x => x.off), deskClocks = new Set(deskSamples.map(x => x.st.clock));
+    const deskLive = Math.max(...deskSamples.map(x => x.st.blocks.filter(b => b.on).length));
+    check(`${tag}1440 × 900：抽样 ${deskSamples.length} 次（走过 ${deskClocks.size} 轮），显示着的 ${deskLive} 个原型与静帧都在时钟的那一帧`, !deskOff.length && deskClocks.size >= 3 && deskLive >= 4, { off: deskOff, clocks: [...deskClocks], deskLive });
+    const inputs = await desk8.evaluate(`[...document.querySelectorAll('#forms .lv-live')].map(f => { const r = f.closest('[data-live]').getBoundingClientRect(), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return { id: f.closest('[data-live]').dataset.live, pointer: getComputedStyle(f).pointerEvents, inert: f.inert, tab: f.tabIndex, hit: hit ? hit.tagName : null }; })`);
+    check(`${tag}iframe 不接收指针与焦点：pointer-events none、inert、tabindex −1，块上点到的是外面的链接`, inputs.length >= 4 && inputs.every(x => x.pointer === 'none' && x.inert && x.tab === -1 && x.hit !== 'IFRAME'), inputs);
+    // the gallery below: every tile in view plays its recording
+    await desk8.evaluate(`(() => { const el = document.querySelector('#all .fl-row'); scrollTo(0, el.getBoundingClientRect().top + scrollY - 120); return 1; })()`);
+    await wait(3500);
+    const tilesNow = await desk8.evaluate(`[...document.querySelectorAll('.fl-tile')].filter(t => { const r = t.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight; })
+      .map(t => { const v = t.querySelector('video'); return { id: t.dataset.id || t.querySelector('.tn')?.textContent, playing: Boolean(v && !v.paused && v.readyState >= 2 && v.currentTime > 0) }; })`);
+    check(`${tag}画廊：视口里的 ${tilesNow.length} 块都在自动播放录像`, tilesNow.length >= 6 && tilesNow.every(t => t.playing), tilesNow.filter(t => !t.playing));
+    const deskCover = await desk8.evaluate('window.__cover');
+    check(`${tag}1440 × 900：第五节在屏幕上的 ${deskCover.frames} 帧里，每块底下都有静帧或占位，原型页面都在发来 shown 之后才显示`, coverOk(deskCover), coverSay(deskCover));
+    check(`${tag}1440 × 900：第五节播放中没有报错`, !desk8.problems.length, desk8.problems);
+    await desk8.close();
 
-  const phone8 = await open([390, 844]);
-  await phone8.evaluate(coverWatch);
-  await wait(1200);
-  await phone8.evaluate(`(() => { window.__live = 0; new MutationObserver(() => { window.__live = Math.max(window.__live, document.querySelectorAll('.lv-live').length); }).observe(document.body, { childList: true, subtree: true }); return 1; })()`);
-  const top8 = await phone8.evaluate(`(() => { const r = document.querySelector('#forms').getBoundingClientRect(); return { top: r.top + scrollY, bottom: r.bottom + scrollY }; })()`);
-  const phoneOff = [], phoneClocks = new Set();
-  let phoneOn = 0, swiped = null;
-  for (let y = top8.top - 422; y < top8.bottom; y += 380) {
-    await phone8.evaluate(`scrollTo(0, ${Math.round(y)}), 1`);
-    await wait(4200);
-    const { st, off } = await sampleLive(phone8);
-    phoneOff.push(...off); phoneClocks.add(st.clock); phoneOn = Math.max(phoneOn, st.blocks.filter(b => b.on).length);
-    // a finger swiping on a block that plays: the page scrolls
-    if (!swiped) {
-      const at = await phone8.evaluate(`(() => { const f = document.querySelector('#forms .lv-live.on'); if (!f) return null; const r = f.closest('[data-live]').getBoundingClientRect(); return r.top > 60 && r.bottom < innerHeight - 20 ? { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2), id: f.closest('[data-live]').dataset.live } : null; })()`);
-      if (at) {
-        const from = await phone8.evaluate('scrollY');
-        await phone8.send('Input.synthesizeScrollGesture', { x: at.x, y: at.y, yDistance: -260, gestureSourceType: 'touch', speed: 900 });
-        await wait(500);
-        swiped = { id: at.id, moved: Math.round(await phone8.evaluate('scrollY') - from) };
+    const phone8 = await open([390, 844], { path: pathOf(name) });
+    await phone8.evaluate(coverWatch);
+    await wait(1200);
+    await phone8.evaluate(`(() => { window.__live = 0; new MutationObserver(() => { window.__live = Math.max(window.__live, document.querySelectorAll('.lv-live').length); }).observe(document.body, { childList: true, subtree: true }); return 1; })()`);
+    const top8 = await phone8.evaluate(`(() => { const r = document.querySelector('#forms').getBoundingClientRect(); return { top: r.top + scrollY, bottom: r.bottom + scrollY }; })()`);
+    const phoneOff = [], phoneClocks = new Set();
+    let phoneOn = 0, swiped = null;
+    for (let y = top8.top - 422; y < top8.bottom; y += 380) {
+      await phone8.evaluate(`scrollTo(0, ${Math.round(y)}), 1`);
+      await wait(4200);
+      const { st, off } = await sampleLive(phone8);
+      phoneOff.push(...off); phoneClocks.add(st.clock); phoneOn = Math.max(phoneOn, st.blocks.filter(b => b.on).length);
+      // a finger swiping on a block that plays: the page scrolls
+      if (!swiped) {
+        const at = await phone8.evaluate(`(() => { const f = document.querySelector('#forms .lv-live.on'); if (!f) return null; const r = f.closest('[data-live]').getBoundingClientRect(); return r.top > 60 && r.bottom < innerHeight - 20 ? { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2), id: f.closest('[data-live]').dataset.live } : null; })()`);
+        if (at) {
+          const from = await phone8.evaluate('scrollY');
+          await phone8.send('Input.synthesizeScrollGesture', { x: at.x, y: at.y, yDistance: -260, gestureSourceType: 'touch', speed: 900 });
+          await wait(500);
+          swiped = { id: at.id, moved: Math.round(await phone8.evaluate('scrollY') - from) };
+        }
       }
     }
+    const phoneMax = await phone8.evaluate('window.__live');
+    check(`${tag}390 × 844：从头滚过第五节，同时活着的 iframe 最多 ${phoneMax} 个（≤ 2），显示的都在时钟的那一帧（走过 ${phoneClocks.size} 轮）`, phoneMax <= 2 && phoneMax >= 1 && phoneOn >= 1 && !phoneOff.length && phoneClocks.size >= 3, { phoneMax, phoneOn, off: phoneOff, clocks: [...phoneClocks] });
+    check(`${tag}390 × 844：手指在播放中的块上滑动，滚动的是页面`, Boolean(swiped) && swiped.moved >= 150, swiped);
+    const phoneCover = await phone8.evaluate('window.__cover');
+    check(`${tag}390 × 844：第五节在屏幕上的 ${phoneCover.frames} 帧里，每块底下都有静帧或占位，原型页面都在发来 shown 之后才显示`, coverOk(phoneCover), coverSay(phoneCover));
+    check(`${tag}390 × 844：第五节播放中没有报错`, !phone8.problems.length, phone8.problems);
+    await phone8.close();
   }
-  const phoneMax = await phone8.evaluate('window.__live');
-  check(`390 × 844：从头滚过第五节，同时活着的 iframe 最多 ${phoneMax} 个（≤ 2），显示的都在时钟的那一帧（走过 ${phoneClocks.size} 轮）`, phoneMax <= 2 && phoneMax >= 1 && phoneOn >= 1 && !phoneOff.length && phoneClocks.size >= 3, { phoneMax, phoneOn, off: phoneOff, clocks: [...phoneClocks] });
-  check('390 × 844：手指在播放中的块上滑动，滚动的是页面', Boolean(swiped) && swiped.moved >= 150, swiped);
-  const phoneCover = await phone8.evaluate('window.__cover');
-  check(`390 × 844：第五节在屏幕上的 ${phoneCover.frames} 帧里，每块底下都有静帧或占位，原型页面都在发来 shown 之后才显示`, coverOk(phoneCover), coverSay(phoneCover));
-  check('390 × 844：第五节播放中没有报错', !phone8.problems.length, phone8.problems);
-  await phone8.close();
 
   const calm = await open([390, 844], { reduced: true });
   await calm.evaluate(`(() => { const el = document.querySelector('#forms .lv-grid'); scrollTo(0, el.getBoundingClientRect().top + scrollY - 40); return 1; })()`);

@@ -1,92 +1,153 @@
 <script setup>
 // The landing page (site/index.md, layout: FoldLanding). Story, numbers and look: site/landing/{story,style,spec}.md.
 // Every number comes from site/landing/data.json: the first screen and the second section are one illustrative day of a
-// programmer (hero, why; basis 示意), the third and fourth sections are the replay at f22 (founder: 陆晨的两周, people and
-// messages written by the author, the Agent's judgment from a real model's free run).
-// Elements that show one carry data-k="<path>" so scripts/check-landing.mjs can hold them to it.
+// programmer (hero, why; basis 示意), the third and fourth sections are a demo replay at f22, and the fifth section and
+// the gallery play the same demo. Which demo is the reader's choice (2026-11-04, spec.md「切换演示数据」): founder (the
+// default: 陆晨的两周, people and messages written by the author) or composite (Jonas 的两周, pseudonymised rewrites of
+// real public data); each brings its own numbers, words (data.json datasets.<name>.copy), prototype addresses and media.
+// Elements that show one carry data-k="<path>" so scripts/check-landing.mjs can hold them to it (the path walks the
+// shared day and the chosen demo as one object: `view`).
 //
 // Motion: the first screen plays once with CSS only (it starts on first paint, before any script; the times are
 // landing.mjs's MOMENT) and stops on its last situation; a tap on a situation switches it with transitions. The
 // three beats of the fourth section are static states with CSS motion that runs only under `tx`: this script only
 // sets the state classes on the round section (s1–s3, ans) as the reader scrolls, adds `tx` when one beat follows
 // the previous, and drops it to jump (a skipped or reversed beat lands on its end state). Their times are TIMING.
+// Switching the demo is a jump too: the beats show the new demo in the state they were in, with no motion.
 // prefers-reduced-motion: no motion at all.
-import { createStaticVNode, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, createStaticVNode, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import data from '../../landing/data.json'
-// Written by scripts/prepare-site.mjs: the recordings in site/media (a prototype without one shows its preview).
+// Written by scripts/prepare-site.mjs: the recordings in site/media, by path under it (a prototype without one shows its preview).
 import media from '../../.generated/landing-media.json'
-// Written by scripts/record-landing.mjs: a tiny thumbnail of each block's first still and each prototype's preview,
-// inlined under them, so a block is never an empty frame while its picture is on the way.
-import { gallery as tileThumbs, live as liveThumbs } from '../../landing/placeholders.json'
-import { combinedPage, datasetNotice, openPrototype, prototypes } from './prototypes.mjs'
+// Written by scripts/record-landing.mjs: per demo, a tiny thumbnail of each block's first still and each prototype's
+// preview, inlined under them, so a block is never an empty frame while its picture is on the way.
+import placeholders from '../../landing/placeholders.json'
+import { datasets } from '../../../prototype/data/select.mjs'
+import { DEFAULT_DEMO, DEMOS, combinedOf, demo, openPrototype, prototypesOf, restoreDemo } from './prototypes.mjs'
 import { gallery as overlay } from './prototypes.mjs'
 import { DESK_ONLY, DOC_GROUPS, LEGACY, LEGIBLE, LIVE, SITUATIONS, TIMING, deskHTML, directHref, fieldBox, fieldSVG, galleryOf, ladderOf, liveLabel, liveSrc, momentCSS, reviewSVG, showcaseOf, stageHTML, stageModel, stillOf, whyModel } from './landing.mjs'
 import { playLive } from './live.mjs'
+import DemoSwitch from './DemoSwitch.vue'
 
 const v = field => field.value
-// Only the numbers the page still shows (2026-11-03: “不要到处写满数字”): the rest stay in data.json.
-const n = { n: v(data.beat1.n), folded: v(data.beat2.folded), urgent: v(data.beat3.urgent).length, lead: v(data.beat3.lead), loop: data.beat3.loop }
-// The first screen's illustrative day: how many wait for you, how many are urgent (one), and the one on the watch.
-const day = { open: v(data.hero.open), urgent: v(data.hero.urgent), lead: v(data.hero.lead) }
-const segs = v(data.beat2.segments)
-const seg = id => segs.find(s => s.id === id)
-const rankOf = id => segs.findIndex(s => s.id === id)
-// Beat 2 in words: the item that grew most, and the ones that gave way to it (data.json beat2.yielded); the items
-// withdrawn this round are one group with its own name (beat2.withdrawn.plain).
-const grew = v(data.beat2.yielded).reduce((a, b) => (b.delta > a.delta ? b : a))
-const gave = v(data.beat2.yielded).filter(y => y.delta < 0)
-const nameOf = id => (id === 'withdrawn' ? v(data.beat2.withdrawn).plain : seg(id).plain)
-const keyOf = id => (id === 'withdrawn' ? 'beat2.withdrawn.plain' : `beat2.segments.${rankOf(id)}.plain`)
-// Beat 2 names the blank only when it gave way too.
-const blankGave = v(data.beat2.blank).before > v(data.beat2.blank).now
-// Beat 3: the urgent ones in the order their deadlines come, each as “几点前做什么” (beat3.asks[].due and .todo).
-const asks = v(data.beat3.asks).map((a, i) => ({ ...a, i }))
-const urgentAsks = asks.filter(a => a.urgent).sort((a, b) => Date.parse(a.at) - Date.parse(b.at))
-const model = stageModel(data)
 // The generated markup goes in as static vnodes, not v-html: Vue 3.5 re-applies a dynamic innerHTML while
 // hydrating, which rebuilt the hero's elements a beat after first paint and restarted its animations (and parsed
 // the two stages twice). A static vnode adopts the server-rendered node as it is. Each one holds exactly one
-// top-level element (a component is hydrated as one node), so a stage goes in as its gutter and its plot.
+// top-level element (a component is hydrated as one node), so a stage goes in as its gutter and its plot. A static
+// vnode is never patched, so one that changes with the demo is keyed by it (a new demo mounts new markup).
 const Raw = props => createStaticVNode(props.html, 1)
 Raw.props = ['html']
 const halves = html => { const at = html.indexOf('<div class="fl-plot"'); return [html.slice(0, at), html.slice(at)] }
-const beatStage = halves(stageHTML(data, 'beats'))
+
+// ---------- the illustrative day (the first screen and the second section): one, whatever the demo ----------
+
 // The first screen: the field of everything read so far (with the screen's motion, generated from MOMENT), and the
-// two windows that are drawn rather than written.
+// two windows that are drawn rather than written; how many wait for you, how many are urgent (one), the one on the watch.
 const field = `<div class="h2-field" style="aspect-ratio: ${fieldBox(data).join(' / ')}">${fieldSVG(data)}<i class="h2-cover"></i><style>${momentCSS()}</style></div>`
 const desk = deskHTML(data)
 const review = reviewSVG(data)
 const seen = v(data.hero.seen)
-// The demo card speaks in plain words (data.json beat3.lead.plain): the question, its choices, its deadline in
-// words. The replay's own wording (names, shop and company names, #numbers, PR, CI) stays in the data, not on the page.
-const lead = n.lead.plain
+const day = { open: v(data.hero.open), urgent: v(data.hero.urgent), lead: v(data.hero.lead) }
 // The second section: a day of one person (an order of magnitude, not the replay), against one app.
 const why = whyModel(data)
-const showcase = showcaseOf(prototypes).map(t => ({ ...t, href: directHref(t.prototype) }))
 const liveLast = LIVE.frames.at(-1)
-// Three to a row on a wide desk (each row's blocks share one height, widths by their shape), so all six are seen
-// moving together; two columns on a tablet, one on a phone.
-const showRows = [0, 3].map(i => showcase.slice(i, i + 3))
-// The third section's rows link to their block when the fifth section has one, else to the prototype itself.
-const cards = new Set(showcase.map(c => c.id))
-const ladder = ladderOf(data).map(l => {
-  const prototype = prototypes.find(p => p.id === l.id)
-  return { ...l, prototype, card: cards.has(l.id), href: cards.has(l.id) ? `#form-${l.id}` : directHref(prototype) }
-})
-const gallery = galleryOf(prototypes)
-// Three rows dealt round-robin, so every row mixes pages that open well on a phone with desk-only ones.
-const rows = [0, 1, 2].map(r => gallery.filter((_, i) => i % 3 === r))
 const recorded = new Set(media)
-const clip = id => recorded.has(`${id}.mp4`) ? `/media/${id}.mp4` : null
+
+// ---------- one demo: its numbers and words, its stage, its prototypes and their media ----------
+
+// A piece of copy with its {slots} filled: plain text, and the slots' parts — a value with its data-k (bold or not), or a
+// list of them. Neighbouring text is one part, so the server's HTML and the hydrated nodes line up.
+function fill(text, slots = {}) {
+  const out = []
+  const push = p => {
+    if (!p.k && !p.b && !p.t) return
+    const last = out.at(-1)
+    if (!p.k && !p.b && last && !last.k && !last.b) last.t += p.t
+    else out.push({ ...p })
+  }
+  for (const piece of text.split(/(\{\w+\})/)) {
+    const slot = piece.match(/^\{(\w+)\}$/)?.[1]
+    for (const p of [].concat(slot ? slots[slot] ?? '' : piece)) push(typeof p === 'string' ? { t: p } : p)
+  }
+  return out
+}
+const joined = (list, sep) => list.flatMap((p, i) => (i ? [sep, p] : [p]))
+
+function build(name) {
+  const d = { ...data, ...data.datasets[name] }   // what a data-k path walks: the shared day and this demo
+  const copy = v(d.copy)
+  const segs = v(d.beat2.segments)
+  const rankOf = id => segs.findIndex(s => s.id === id)
+  // Beat 2 in words: the item that grew most, and the ones that gave way to it (data.json beat2.yielded); the items
+  // withdrawn this round are one group with its own name (beat2.withdrawn.plain). The blank is named only when it gave way too.
+  const grew = v(d.beat2.yielded).reduce((a, b) => (b.delta > a.delta ? b : a))
+  const gave = v(d.beat2.yielded).filter(y => y.delta < 0)
+  const nameOf = id => (id === 'withdrawn' ? v(d.beat2.withdrawn).plain : segs[rankOf(id)].plain)
+  const keyOf = id => (id === 'withdrawn' ? 'beat2.withdrawn.plain' : `beat2.segments.${rankOf(id)}.plain`)
+  const blankGave = v(d.beat2.blank).before > v(d.beat2.blank).now
+  // Beat 3: the urgent ones, in the order the copy says (by deadline, or the card's one first), each written as the
+  // copy says (“几点前做什么”, or the item's name and when it is due).
+  const lead = v(d.beat3.lead)
+  const asks = v(d.beat3.asks).map((a, i) => ({ ...a, i }))
+  const urgent = asks.filter(a => a.urgent)
+  const ordered = copy.beat3.order === 'due' ? [...urgent].sort((a, b) => Date.parse(a.at) - Date.parse(b.at))
+    : [...urgent.filter(a => a.item === lead.item), ...urgent.filter(a => a.item !== lead.item)]
+  const beat3 = fill(`${copy.beat3.open}{items}。其余的可以晚一点；灰色的由 Agent 自己处理，不需要你做什么。`, {
+    items: joined(ordered.map(a => fill(copy.beat3.item, {
+      due: { t: a.due, k: `beat3.asks.${a.i}.due` }, todo: { t: a.todo, k: `beat3.asks.${a.i}.todo`, b: true }, name: { t: a.name, k: `beat3.asks.${a.i}.name`, b: true },
+    })), [{ t: copy.beat3.sep }]).flat(),
+  })
+  // What followed in the story: the answer given where the question came from, read by the next round.
+  const loop = d.beat3.loop
+  const example = v(loop.example)
+  const morning = v(loop.morning).map((m, i) => ({ t: m.plain, k: `beat3.loop.morning.${i}.plain` }))
+  const answeredIn = Object.entries(v(loop.byChannel)).sort((a, b) => b[1] - a[1]).map(([k]) => k)
+  const list = prototypesOf(name)
+  const showcase = showcaseOf(list).map(t => ({ ...t, href: directHref(t.prototype) }))
+  // The third section's rows link to their block when the fifth section has one, else to the prototype itself.
+  const cards = new Set(showcase.map(c => c.id))
+  const gallery = galleryOf(list)
+  const where = DEMOS[name].media
+  return {
+    name, d, copy, budget: v(d.budget), n: v(d.beat1.n), folded: v(d.beat2.folded), urgent: v(d.beat3.urgent).length,
+    model: stageModel(d), stage: halves(stageHTML(d, 'beats')),
+    grew: { name: nameOf(grew.id), k: keyOf(grew.id), words: grew.share === grew.before * 2 ? '占的份数翻了一倍' : grew.share >= grew.before * 3 ? '占的份数多了好几倍' : '占的份数变多了' },
+    gave: gave.map(y => ({ id: y.id, name: nameOf(y.id), k: keyOf(y.id) })), blankGave,
+    beat1: fill(copy.beat1, { n: { t: String(v(d.beat1.n)), k: 'beat1.n' } }),
+    beat3,
+    // The demo card speaks in plain words (beat3.lead.plain): the question, its choices, its deadline in words. The
+    // replay's own wording (names, shop and company names, #numbers, PR, CI) stays in the data, not on the page.
+    // Scrolled past unanswered, it folds as if you had picked what happened next in the story (landing-data.mjs checks
+    // that it is the first button).
+    lead: lead.plain, demoChoice: lead.plain.actions[0],
+    real: {
+      text: fill(copy.real.text, { ask: { t: example.plain.ask, k: 'beat3.loop.example.plain.ask' }, response: { t: example.plain.response, k: 'beat3.loop.example.plain.response' },
+        change: example.share[1] * 2 === example.share[0] ? '减少了一半' : '减少了' }),
+      note: fill(copy.real.note, { morning: joined(morning, '，'), apps: answeredIn.join('、') }),
+    },
+    ladder: ladderOf(d).map(l => {
+      const prototype = list.find(p => p.id === l.id)
+      return { ...l, prototype, card: cards.has(l.id), href: cards.has(l.id) ? `#form-${l.id}` : directHref(prototype) }
+    }),
+    // Three to a row on a wide desk (each row's blocks share one height, widths by their shape), so all six are seen
+    // moving together; two columns on a tablet, one on a phone.
+    showRows: [0, 3].map(i => showcase.slice(i, i + 3)),
+    showcase,
+    gallery,
+    // Three rows dealt round-robin, so every row mixes pages that open well on a phone with desk-only ones.
+    rows: [0, 1, 2].map(r => gallery.filter((_, i) => i % 3 === r)),
+    still: (id, frame) => stillOf(id, frame, where),
+    clip: p => (recorded.has(`${p.media}${p.id}.mp4`) ? `/media/${p.media}${p.id}.mp4` : null),
+    thumbs: placeholders.datasets[name],
+    combined: combinedOf(name),
+    notice: datasets[name].notice,
+  }
+}
+// The default demo is built for the server-rendered page; another one the first time it is chosen.
+const views = {}
+const viewOf = name => (views[name] ??= build(name))
+const x = computed(() => viewOf(demo.data))
 const thumb = (thumbs, id) => (thumbs[id] ? { '--ph': `url(${thumbs[id]})` } : null)
-const example = v(n.loop.example)
-// The rest of that morning's urgent answers, each given where it came from, and the apps the two weeks' answers were given in.
-const morning = v(n.loop.morning).map((m, i) => ({ ...m, i }))
-const answeredIn = Object.entries(v(n.loop.byChannel)).sort((a, b) => b[1] - a[1]).map(([k]) => k)
-const halved = example.share[1] * 2 === example.share[0]
-// Scrolled past unanswered, the card folds as if you had picked what happened next in the story: his reply on 微信
-// (beat3.loop; landing-data.mjs checks that it is the first button).
-const demoChoice = lead.actions[0]
 
 // ---------- the demo answer: the card's buttons really work, and fold it into a receipt in place ----------
 
@@ -114,7 +175,7 @@ const cleanups = []
 function countUp(el) {
   // Beat 1 counts the ticks as the playhead reaches them (the CSS sweep: TIMING.beats.sweep).
   const [from, span] = TIMING.beats.sweep
-  const times = model.ticks.map(t => from + t.x / 100 * span).sort((a, b) => a - b)
+  const times = x.value.model.ticks.map(t => from + t.x / 100 * span).sort((a, b) => a - b)
   const start = performance.now()
   cancelAnimationFrame(countFrame)
   const tick = now => {
@@ -137,12 +198,12 @@ function setStep(next) {
   el.dataset.step = String(next)
   // The fourth block is the response loop: if the reader has not pressed a button, the demo answers for them;
   // going back above it takes a demo answer back (a reader's own answer stays).
-  if (next >= 4 && !answer.value) choose(demoChoice, true)
+  if (next >= 4 && !answer.value) choose(x.value.demoChoice, true)
   if (next <= 3 && answer.value?.auto) undo()
   const counter = el.querySelector('[data-count]')
   cancelAnimationFrame(countFrame)
   if (forward && next === 1) countUp(counter)
-  else counter.textContent = String(model.ticks.length)
+  else counter.textContent = String(x.value.model.ticks.length)
   step = next
 }
 
@@ -199,14 +260,19 @@ function drawOnce(el, threshold) {
 // ---------- the six, live: one clock, the prototypes themselves as pictures (live.mjs) ----------
 
 const showEl = ref(null)
+let player = null
 function startLive() {
+  const { showcase, still, d } = x.value
   const byId = new Map(showcase.map(c => [c.id, c.prototype]))
-  const player = playLive(showEl.value, {
-    ...LIVE, srcOf: (id, frame) => liveSrc(byId.get(id), frame), stillOf, label: frame => liveLabel(data, frame),
+  player = playLive(showEl.value, {
+    ...LIVE, srcOf: (id, frame) => liveSrc(byId.get(id), frame), stillOf: still, label: frame => liveLabel(d, frame),
   })
-  // While the viewer or the gallery panel is open over the page, the six stop and wait.
-  const stopWatch = watch(() => Boolean(overlay.current || overlay.open), on => player.hold(on))
-  cleanups.push(() => { stopWatch(); player.stop() })
+  if (overlay.current || overlay.open) player.hold(true)
+}
+// While the viewer or the gallery panel is open over the page, the six stop and wait.
+function holdLive() {
+  const stop = watch(() => Boolean(overlay.current || overlay.open), on => player?.hold(on))
+  cleanups.push(() => { stop(); player?.stop(); player = null })
 }
 
 // A block shows its prototype at the scale its width allows. On a phone, the ones below LEGIBLE.scale (the wide
@@ -267,6 +333,7 @@ function watchGallery() {
   const sync = s => { if (!s.anim) return; if (running(s)) { if (s.anim.playState !== 'running') s.anim.play() } else if (s.anim.playState === 'running') s.anim.pause() }
 
   // Which tiles are in view: checked a few times a second for visible rows only (the tracks move on the compositor).
+  // The tiles are looked up each time: a new demo brings new ones.
   const vw = () => window.innerWidth
   let timer = 0
   const videos = () => {
@@ -356,17 +423,55 @@ async function share(prototype) {
   } catch { /* dismissed */ }
 }
 
-onMounted(() => {
+// ---------- switching the demo ----------
+// The address says which demo plays (?data=composite; the default has none), so a link or a reload keeps it: written
+// in place (replaceState), so switching adds no history entries.
+function keepAddress() {
+  const url = new URL(window.location.href)
+  if (demo.data === DEFAULT_DEMO) url.searchParams.delete('data')
+  else url.searchParams.set('data', demo.data)
+  if (url.href !== window.location.href) window.history.replaceState(window.history.state, '', url)
+}
+function watchDemo() {
+  // Before the new demo's markup goes in: the six let go of their pages, the beats stop moving and forget an answer
+  // given to the other demo's card.
+  const before = watch(() => demo.data, () => {
+    player?.stop()
+    player = null
+    cancelAnimationFrame(countFrame)
+    const el = round.value
+    el.classList.remove('tx')
+    if (answer.value) undo()
+  })
+  // Once it is in: the address, the six on the new demo's pages and stills (the clock starts over), the beats where they were.
+  const after = watch(() => demo.data, () => {
+    keepAddress()
+    startLive()
+    if (step >= 4) choose(x.value.demoChoice, true)
+    round.value.querySelector('[data-count]').textContent = String(x.value.model.ticks.length)
+  }, { flush: 'post' })
+  cleanups.push(before, after)
+}
+
+let gone = false
+onMounted(async () => {
   reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   document.querySelector('.fl').dataset.js = ''
+  // The demo the address or this browser asks for (the server-rendered page is the default's): in place before anything starts.
+  restoreDemo()
+  await nextTick()
+  if (gone) return
+  keepAddress()
   watchRound()
   drawOnce(whyEl.value, 0.3)
   drawOnce(ladderEl.value, 0.2)
   startLive()
+  holdLive()
   watchLegible()
   watchGallery()
+  watchDemo()
 })
-onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).forEach(fn => fn()) })
+onBeforeUnmount(() => { gone = true; cancelAnimationFrame(countFrame); cleanups.splice(0).forEach(fn => fn()) })
 </script>
 
 <template>
@@ -438,9 +543,9 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
       <h2 id="fl-band-title" class="fl-h">处境定了带宽，带宽定了编码。</h2>
       <p class="fl-lede">能看多久、屏幕多大、能不能当场回复，决定了 Agent 给你看什么、按什么顺序、用什么形式。下面六个原型用的是同一时刻的数据，按带宽从窄到宽排列；它们都是呈现方式上的尝试，点开一个可以看它的演示。</p>
       <ol ref="ladderEl" class="fl-ladder">
-        <li v-for="(l, i) in ladder" :key="l.id" :style="{ '--gi': i, '--size': l.size }">
+        <li v-for="(l, i) in x.ladder" :key="l.id" :style="{ '--gi': i, '--size': l.size }">
           <a :href="l.href" :class="`g-${l.id}`" :target="l.card ? null : '_self'" :rel="l.card ? null : 'noreferrer'" @click="l.card || open($event, l.prototype)">
-            <span class="art"><Raw :html="l.svg" /></span>
+            <span class="art"><Raw :key="x.name" :html="l.svg" /></span>
             <span class="tx"><span class="when">{{ l.when }}</span><b>{{ l.name }}</b><span class="room">{{ l.room }}</span></span>
             <span class="fig"><span v-if="l.figure[0] != null" class="fl-num" :class="{ ver: l.ver }" :data-k="l.figure[2]">{{ l.figure[0] }}</span>{{ l.figure[1] }}</span>
           </a>
@@ -448,11 +553,12 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
       </ol>
     </section>
 
-    <!-- 一种编码的例子：把注意力切成固定的份数；下面是一轮整理的三拍。 -->
+    <!-- 一种编码的例子：把注意力切成固定的份数；下面是一轮整理的三拍。演示数据可以切换（导语末句与下面的数、字都随它换，data.json datasets.<名字>.copy）。 -->
     <header id="example" class="fl-ex" aria-labelledby="fl-ex-title">
       <p class="fl-kick">一种编码的例子</p>
       <h2 id="fl-ex-title" class="fl-h">把注意力切成固定的份数</h2>
-      <p class="fl-lede">原型里试的一种编码：把每一层的注意力切成固定的份数，演示里是 <span data-k="budget">{{ v(data.budget) }}</span> 份（份数可以配置）。Agent 每一轮把这些份数分给各件事，份数就是面积。有了面积，同样的轻重就能在手表、手机和桌面上分别画出来。下面是演示里的一轮。演示讲的是一位创业者的两周，人物和消息都是编写的，Agent 的整理来自一次真实模型的运行，又经过人工修改。这一轮是 9 月 17 日周四中午到半夜；第二天上午，他工作和家里的几件事挤在了一起。</p>
+      <p class="fl-lede">原型里试的一种编码：把每一层的注意力切成固定的份数，演示里是 <span data-k="budget">{{ x.budget }}</span> 份（份数可以配置）。Agent 每一轮把这些份数分给各件事，份数就是面积。有了面积，同样的轻重就能在手表、手机和桌面上分别画出来。{{ x.copy.lede }}</p>
+      <DemoSwitch />
     </header>
 
     <!-- 一轮整理：舞台钉住，文字滚过阅读线时演那一拍。 -->
@@ -460,30 +566,30 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
       <h2 id="fl-round-title" class="fl-sr">一轮整理</h2>
       <div class="fl-sticky">
         <div class="fl-meta">
-          <span class="fl-kick k1"><b>1 收到</b> · 周四中午到半夜</span>
+          <span class="fl-kick k1"><b>1 收到</b> · {{ x.copy.window }}</span>
           <span class="fl-kick k2"><b>2 折叠</b> · Agent 整理这一轮</span>
           <span class="fl-kick k3"><b>3 提问</b> · 需要你回复的</span>
           <span class="fl-kick k4"><b>3 提问</b> · 你回复之后</span>
           <span class="fl-prog" aria-hidden="true"><i /><i /><i /></span>
         </div>
         <div class="fl-count" aria-live="polite">
-          <span class="c c1"><span class="fl-num" data-k="beat1.n" data-count>{{ n.n }}</span><span class="lbl">条进来</span><span class="alt">五个渠道<br>一条消息一道竖线</span></span>
-          <span class="c c2"><span class="fl-num dim" data-k="beat2.folded">{{ n.folded }}</span><span class="lbl">条折叠</span><span class="alt">噪音、重复和不急的<br>其余的归到各自所属的事</span></span>
-          <span class="c c3"><span class="fl-num ver" data-k="beat3.urgent.length">{{ n.urgent }}</span><span class="lbl">件要紧</span><span class="alt"><span class="ver">红色的几件等你回复</span><br>其余的由 Agent 处理</span></span>
-          <span class="c c4"><span class="fl-num">{{ n.urgent - 1 }}</span><span class="lbl">件要紧</span><span class="alt">你已经回复<br>下一轮读到后份数才减少</span></span>
+          <span class="c c1"><span class="fl-num" data-k="beat1.n" data-count>{{ x.n }}</span><span class="lbl">条进来</span><span class="alt">五个渠道<br>一条消息一道竖线</span></span>
+          <span class="c c2"><span class="fl-num dim" data-k="beat2.folded">{{ x.folded }}</span><span class="lbl">条折叠</span><span class="alt">噪音、重复和不急的<br>其余的归到各自所属的事</span></span>
+          <span class="c c3"><span class="fl-num ver" data-k="beat3.urgent.length">{{ x.urgent }}</span><span class="lbl">件要紧</span><span class="alt"><span class="ver">红色的几件等你回复</span><br>其余的由 Agent 处理</span></span>
+          <span class="c c4"><span class="fl-num">{{ x.urgent - 1 }}</span><span class="lbl">件要紧</span><span class="alt">你已经回复<br>下一轮读到后份数才减少</span></span>
         </div>
         <div class="fl-stage fl-beat-stage" data-mode="beats">
-          <div class="fl-stage-art" aria-hidden="true"><Raw :html="beatStage[0]" /><Raw :html="beatStage[1]" /></div>
+          <div class="fl-stage-art" aria-hidden="true"><Raw :key="`${x.name}-gutter`" :html="x.stage[0]" /><Raw :key="`${x.name}-plot`" :html="x.stage[1]" /></div>
           <div class="fl-card-zone">
             <div class="fl-card" :inert="Boolean(answer)">
-              <p class="tag">要紧 · <span data-k="beat3.lead.plain.due">{{ lead.due }}</span>要定</p>
-              <p class="q" data-k="beat3.lead.plain.prompt">{{ lead.prompt }}</p>
-              <p class="btns"><button v-for="(label, i) in lead.actions" :key="label" type="button" :data-k="`beat3.lead.plain.actions.${i}`" @click="choose(label)">{{ label }}</button></p>
+              <p class="tag">要紧 · <span data-k="beat3.lead.plain.due">{{ x.lead.due }}</span>要定</p>
+              <p class="q" data-k="beat3.lead.plain.prompt">{{ x.lead.prompt }}</p>
+              <p class="btns"><button v-for="(label, i) in x.lead.actions" :key="label" type="button" :data-k="`beat3.lead.plain.actions.${i}`" @click="choose(label)">{{ label }}</button></p>
               <p class="foot"><span class="demo">演示 · 可以点</span></p>
             </div>
             <div class="fl-receipt" :inert="!answer">
               <span class="check" aria-hidden="true">✓</span>
-              <span class="t">{{ answer?.auto ? '演示替你选了' : '你选了' }}「{{ answer?.label || demoChoice }}」<small>已保存 · 等 Agent 下一轮整理，份数还没变</small></span>
+              <span class="t">{{ answer?.auto ? '演示替你选了' : '你选了' }}「{{ answer?.label || x.demoChoice }}」<small>已保存 · 等 Agent 下一轮整理，份数还没变</small></span>
               <button type="button" class="undo" @click="undo">撤回</button>
             </div>
           </div>
@@ -493,18 +599,18 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
       <div class="fl-steps">
         <article class="fl-step" data-step-block="1">
           <p class="no">01 / 03 · 收到</p>
-          <h3 class="fl-h">周四中午到半夜，五个渠道进来 <span data-k="beat1.n">{{ n.n }}</span> 条。</h3>
+          <h3 class="fl-h"><template v-for="(p, i) in x.beat1" :key="i"><span v-if="p.k" :data-k="p.k">{{ p.t }}</span><template v-else>{{ p.t }}</template></template></h3>
           <p>一条消息一道竖线，按到达时间排在各自的渠道上。下面这把尺代表你的注意力，在这种编码里是 <b data-k="budget">64</b> 份，一轮里不会增加。</p>
         </article>
         <article class="fl-step" data-step-block="2">
           <p class="no">02 / 03 · 折叠</p>
-          <h3 class="fl-h">折叠 <span data-k="beat2.folded">{{ n.folded }}</span> 条，其余的按轻重分配份数。</h3>
-          <p>其余的消息归到各自所属的事。<b :data-k="keyOf(grew.id)">{{ nameOf(grew.id) }}</b>这件事{{ grew.share === grew.before * 2 ? '占的份数翻了一倍' : grew.share >= grew.before * 3 ? '占的份数多了好几倍' : '占的份数变多了' }}，份数变少的是<template v-for="(y, i) in gave" :key="y.id">{{ i ? (i === gave.length - 1 && !blankGave ? '和' : '、') : '' }}<span :data-k="keyOf(y.id)">{{ nameOf(y.id) }}</span></template>{{ blankGave ? '和空余部分' : '' }}。</p>
+          <h3 class="fl-h">折叠 <span data-k="beat2.folded">{{ x.folded }}</span> 条，其余的按轻重分配份数。</h3>
+          <p>其余的消息归到各自所属的事。<b :data-k="x.grew.k">{{ x.grew.name }}</b>这件事{{ x.grew.words }}，份数变少的是<template v-for="(y, i) in x.gave" :key="y.id">{{ i ? (i === x.gave.length - 1 && !x.blankGave ? '和' : '、') : '' }}<span :data-k="y.k">{{ y.name }}</span></template>{{ x.blankGave ? '和空余部分' : '' }}。</p>
         </article>
         <article class="fl-step" data-step-block="3">
           <p class="no">03 / 03 · 提问</p>
-          <h3 class="fl-h"><span data-k="beat1.n">{{ n.n }}</span> 条里，真正要紧的只有 <span data-k="beat3.urgent.length">{{ n.urgent }}</span> 件。</h3>
-          <p>等你回复的几件标成红色，工作和家里的事挤在了一起：<template v-for="(a, k) in urgentAsks" :key="a.item">{{ k ? '，' : '' }}<span :data-k="`beat3.asks.${a.i}.due`">{{ a.due }}</span><b :data-k="`beat3.asks.${a.i}.todo`">{{ a.todo }}</b></template>。其余的可以晚一点；灰色的由 Agent 自己处理，不需要你做什么。</p>
+          <h3 class="fl-h"><span data-k="beat1.n">{{ x.n }}</span> 条里，真正要紧的只有 <span data-k="beat3.urgent.length">{{ x.urgent }}</span> 件。</h3>
+          <p><template v-for="(p, i) in x.beat3" :key="i"><b v-if="p.b" :data-k="p.k">{{ p.t }}</b><span v-else-if="p.k" :data-k="p.k">{{ p.t }}</span><template v-else>{{ p.t }}</template></template></p>
         </article>
         <article class="fl-step" data-step-block="4">
           <p class="no">你回复之后 · 演示</p>
@@ -512,10 +618,10 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
           <p>点按钮只是记下你的回答；这件事占的份数，要等 Agent 下一轮整理时读到回答，才会减少。</p>
         </article>
         <article class="fl-step fl-real">
-          <p class="no">故事里他是怎么答的</p>
-          <h3 class="fl-h">一条微信，下一轮就读到了。</h3>
-          <p>Agent 问的就是上面那张卡：「<span data-k="beat3.loop.example.plain.ask">{{ example.plain.ask }}</span>」故事里，他没有点按钮。上午见完客户，他在微信上回了对方：「<span data-k="beat3.loop.example.plain.response">{{ example.plain.response }}</span>」。下一轮 Agent 读到这条微信，这件事占的份数就{{ halved ? '减少了一半' : '减少了' }}。</p>
-          <p class="fl-note">那天上午另外几件也是这样答的：<template v-for="(m, k) in morning" :key="m.item">{{ k ? '，' : '' }}<span :data-k="`beat3.loop.morning.${m.i}.plain`">{{ m.plain }}</span></template>。两周里的回答都发生在原来的地方（{{ answeredIn.join('、') }}），Agent 在下一轮整理时自己读到。</p>
+          <p class="no">{{ x.copy.real.kick }}</p>
+          <h3 class="fl-h">{{ x.copy.real.title }}</h3>
+          <p><template v-for="(p, i) in x.real.text" :key="i"><span v-if="p.k" :data-k="p.k">{{ p.t }}</span><template v-else>{{ p.t }}</template></template></p>
+          <p class="fl-note"><template v-for="(p, i) in x.real.note" :key="i"><span v-if="p.k" :data-k="p.k">{{ p.t }}</span><template v-else>{{ p.t }}</template></template></p>
         </article>
       </div>
     </section>
@@ -526,14 +632,15 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
         <p class="fl-kick">六个原型 · 同步播放</p>
         <h2 id="fl-show-title" class="fl-h">同一份状态，不同的交互呈现</h2>
         <p class="fl-lede">下面六个原型都在实时运行，不是录像。它们读取同一份回放数据，由同一个时钟驱动，逐轮同步播放到此刻。如需自己操作，请点“打开原型”。</p>
+        <DemoSwitch />
       </div>
       <div class="lv-grid">
-        <div v-for="(row, r) in showRows" :key="r" class="lv-row">
+        <div v-for="(row, r) in x.showRows" :key="r" class="lv-row">
         <article v-for="c in row" :id="`form-${c.id}`" :key="c.id" class="lv-card" :class="`lv-${c.id}`" :style="{ '--ar': (c.view[0] / c.view[1]).toFixed(4) }">
-          <a class="lv-frame" :href="c.href" target="_self" rel="noreferrer" tabindex="-1" aria-hidden="true" :style="thumb(liveThumbs, c.id)" :data-live="c.id" :data-w="c.view[0]" :data-h="c.view[1]" :data-title="`${c.name}（播放中）`" @click="open($event, c.prototype)">
-            <picture><source media="(prefers-reduced-motion: reduce)" :srcset="stillOf(c.id, liveLast)"><img :src="stillOf(c.id, LIVE.frames[0])" alt="" loading="lazy" decoding="async" :width="c.view[0]" :height="c.view[1]"></picture>
+          <a class="lv-frame" :href="c.href" target="_self" rel="noreferrer" tabindex="-1" aria-hidden="true" :style="thumb(x.thumbs.live, c.id)" :data-live="c.id" :data-w="c.view[0]" :data-h="c.view[1]" :data-title="`${c.name}（播放中）`" @click="open($event, c.prototype)">
+            <picture :key="x.name"><source media="(prefers-reduced-motion: reduce)" :srcset="x.still(c.id, liveLast)"><img :src="x.still(c.id, LIVE.frames[0])" alt="" loading="lazy" decoding="async" :width="c.view[0]" :height="c.view[1]"></picture>
           </a>
-          <p class="lv-at" aria-hidden="true"><span class="lv-ticks" data-live-ticks><i v-for="(f, i) in LIVE.frames" :key="f" :class="{ on: i === 0 }" /></span><span data-live-at>{{ liveLabel(data, LIVE.frames[0]) }}</span><span class="lv-small">{{ LEGIBLE.hint }}</span></p>
+          <p class="lv-at" aria-hidden="true"><span class="lv-ticks" data-live-ticks><i v-for="(f, i) in LIVE.frames" :key="f" :class="{ on: i === 0 }" /></span><span data-live-at>{{ liveLabel(x.d, LIVE.frames[0]) }}</span><span class="lv-small">{{ LEGIBLE.hint }}</span></p>
           <div class="lv-txt">
             <h3>{{ c.name }}<span class="where">{{ c.where }}</span></h3>
             <p class="line">{{ c.line }}</p>
@@ -547,17 +654,17 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
     <!-- 其余的：三行交错轮播，按住暂停、左右拖，点开。 -->
     <section id="all" class="fl-gal" aria-labelledby="fl-gal-title">
       <div class="fl-gal-hd">
-        <p class="fl-kick">其余 <span data-k="gallery.count">{{ gallery.length }}</span> 个原型 · 循环播放录像</p>
-        <h2 id="fl-gal-title" class="fl-h">还有 {{ gallery.length }} 种呈现方式</h2>
+        <p class="fl-kick">其余 <span data-k="gallery.count">{{ x.gallery.length }}</span> 个原型 · 循环播放录像</p>
+        <h2 id="fl-gal-title" class="fl-h">还有 {{ x.gallery.length }} 种呈现方式</h2>
         <p class="fl-lede">带“桌面”的按电脑宽度排版，手机上先看录像。按住暂停，左右拖动，点开试用。</p>
       </div>
-      <div v-for="(row, r) in rows" :key="r" class="fl-row" :class="r % 2 ? 'to-right' : 'to-left'">
+      <div v-for="(row, r) in x.rows" :key="r" class="fl-row" :class="r % 2 ? 'to-right' : 'to-left'">
         <div class="fl-track">
           <template v-for="copy in 2" :key="copy">
-            <a v-for="p in row" :key="`${copy}-${p.id}`" class="fl-tile" :href="directHref(p)" target="_self" rel="noreferrer" :aria-hidden="copy === 2 ? 'true' : null" :tabindex="copy === 2 ? -1 : null" :data-id="copy === 1 ? p.id : null" draggable="false" @click="open($event, p)">
-              <span class="im" :style="thumb(tileThumbs, p.id)">
+            <a v-for="p in row" :key="`${x.name}-${copy}-${p.id}`" class="fl-tile" :href="directHref(p)" target="_self" rel="noreferrer" :aria-hidden="copy === 2 ? 'true' : null" :tabindex="copy === 2 ? -1 : null" :data-id="copy === 1 ? p.id : null" draggable="false" @click="open($event, p)">
+              <span class="im" :style="thumb(x.thumbs.gallery, p.id)">
                 <img :src="p.preview" alt="" loading="lazy" decoding="async" draggable="false">
-                <video v-if="clip(p.id)" :data-src="clip(p.id)" :data-poster="p.preview" muted playsinline loop preload="none" />
+                <video v-if="x.clip(p)" :data-src="x.clip(p)" :data-poster="p.preview" muted playsinline loop preload="none" />
                 <span v-if="DESK_ONLY.has(p.id)" class="chip">桌面</span>
                 <span v-else-if="p.withdrawn" class="chip">第一轮</span>
               </span>
@@ -567,7 +674,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
           </template>
         </div>
       </div>
-      <p class="fl-gal-all"><a :href="combinedPage" target="_self">全部形式一页看（合页）↗</a></p>
+      <p class="fl-gal-all"><a :href="x.combined" target="_self">全部形式一页看（合页）↗</a></p>
     </section>
 
     <!-- 文档：按读者分组。 -->
@@ -587,8 +694,8 @@ onBeforeUnmount(() => { cancelAnimationFrame(countFrame); cleanups.splice(0).for
 
     <footer class="fl-foot">
       <p><b>当前阶段</b> 设计基线已完成，原型可体验；产品 CLI 与可安装 skill 尚未实现。</p>
-      <p>{{ datasetNotice }}</p>
-      <p class="links"><a :href="combinedPage" target="_self">合页</a><a href="https://github.com/nemori-ai/fold-skill">GitHub</a><a href="/fonts/OFL.txt" target="_self">字体许可（OFL）</a></p>
+      <p>{{ x.notice }}</p>
+      <p class="links"><a :href="x.combined" target="_self">合页</a><a href="https://github.com/nemori-ai/fold-skill">GitHub</a><a href="/fonts/OFL.txt" target="_self">字体许可（OFL）</a></p>
     </footer>
 
     <div v-if="sheet" class="fl-sheet-back" @click.self="sheet = null">
