@@ -34,7 +34,10 @@ const INK = '#1a251d', INK2 = '#555d56', INK3 = '#8e948d', PAPER = '#f8f7f2', FA
 // composite：f01 半速，f02–f21 快放（f13 底层涂实多停 0.5 秒，f21 多停 0.6 秒）；f22 半速、f23 全速再停 0.8 秒；
 //   f24、f25 半速，f26 全速再停 1.5 秒。story：cold-01 半速，快放到 f14（f11 涂实多停 0.5，f14 多停 0.6）；f15 全速再停
 //   0.8 秒；f16–f18 半速；f19 全速再停 1.5 秒。
+// founder：f01 半速，快放到 f13（白鹭上线的 24 格待满 12 轮、涂实，多停 0.5 秒），f16 多停 0.6 秒；f17 切换日交回 12 格半速；
+//   f20 周三晚的故障认领 24 个新格，全速再停 0.8 秒；f21 半速；f22 全速再停 1.5 秒。
 const PLAN = {
+  founder: { from: 'f00', end: 'f22', beats: { f01: ['half'], f13: ['quick', 0.5], f16: ['quick', 0.6], f17: ['half'], f20: ['full', 0.8], f21: ['half'], f22: ['full', 1.5] } },
   composite: { from: 'f00', end: 'f26', beats: { f01: ['half'], f13: ['quick', 0.5], f21: ['quick', 0.6], f22: ['half'], f23: ['full', 0.8], f24: ['half'], f25: ['half'], f26: ['full', 1.5] } },
   story: { from: 'cold-00', end: 'f19', beats: { 'cold-01': ['half'], f11: ['quick', 0.5], f14: ['quick', 0.6], f15: ['full', 0.8], f16: ['half'], f17: ['half'], f18: ['half'], f19: ['full', 1.5] } },
 };

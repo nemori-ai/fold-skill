@@ -37,6 +37,9 @@ const DEFAULT_ACTIONS = {
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const HOUR = 3600000;
+// Only the starting value: every page that uses these controls calls setTimeZone(scenario.timeZone) when it loads
+// (spatial-kit, temporal, d-view, trays, watch, glasses, forms/respond.html), so times follow the dataset's zone.
+// This module stays free of the dataset loader on purpose.
 const zone = 'Asia/Shanghai';
 let offsetZone = zone;
 let clockFormat = new Intl.DateTimeFormat('zh-CN', { timeZone: zone, hour: '2-digit', minute: '2-digit', hour12: false });

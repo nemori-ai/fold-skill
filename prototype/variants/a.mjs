@@ -5,7 +5,7 @@ import { TAIL_ID, foldLayer, openAsks, dueText, createAnswerBook, answerWords, a
   markdownHTML, plainText, itemVersions, createFlipBoard } from './spatial-kit.mjs';
 import { createIx, detailHTML as ixDetailHTML } from '../forms/motion/ix.mjs';
 import { itemFacts } from '../forms/motion/dial-model.mjs';
-import { currentDataset } from '../data/select.mjs';
+import { currentDataset, defaultDataset } from '../data/select.mjs';
 import { BEATS, STAGGER, STAGGER_MAX, EASE_IN_OUT, createBeat, play, beatList, fly, traces, flipHTML } from './a-motion.mjs';
 
 // A · 空间排布. Scene: at the desk, a few things in life need a choice right now.
@@ -40,6 +40,8 @@ const shortName = id => scenario.categories?.[id]?.short || id;
 
 // 自动讲一遍的样张：换轮到 at，替你按下真实数据里的那个回答，再换到下一轮整理（a-motion.md 3.6）。
 const TELL = {
+  // f22: who takes the dog to its 9:30 jab, half an hour before the customer meeting; he asks his father.
+  founder: { from: 'f21', at: 'f22', item: 'tudou-ear', action: 'dad', to: 'f23' },
   composite: { from: 'f21', at: 'f22', item: 'smilla-vet', action: 'call', to: 'f23' },
   story: { from: 'f13', at: 'f14', item: 'family', action: 'change', to: 'f15' },
 };
@@ -815,7 +817,7 @@ export function mount(host, model) {
   const tellPlan = (() => {
     const at = id => scenario.frames.findIndex(frame => frame.id === id);
     const named = TELL[loadedWith.searchParams.get('data') || currentDataset()];
-    for (const plan of [named, ...Object.values(TELL)]) {
+    for (const plan of [named, TELL[defaultDataset]]) {
       if (!plan) continue;
       const out = { ...plan, from: at(plan.from), at: at(plan.at), to: at(plan.to) };
       if (![out.from, out.at, out.to].every(i => i >= 0)) continue;

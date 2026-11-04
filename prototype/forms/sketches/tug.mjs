@@ -146,7 +146,11 @@ const closedWords = (a, c) => (c.how === 'answered' ? `${frames[c.j].id} 答掉�
 
 // ---------- the story: three beats per dataset (frame ids are page constants, not data) ----------
 // composite：f01–f08 手在工作上，f09–f20 坠下，f21–f26 弹回（约 23 秒）。story：cold-01–f14 工作占大头，f15 翻过中线，f16–f19 周一退回。
+// founder：工作一直领先。f07 最偏（58 : 6），f11 周六份额在工作、手在家里，f17 家里涨到 19 份，f20 周三晚的故障把它拉回，
+//   停在 f28。
 const PLAN = {
+  founder: { from: 'f00', beats: [['f01', 'half'], ['f02..f06', 'quick'], ['f07', 'full', 1.5], ['f08..f10', 'quick'], ['f11', 'full', 1.0],
+    ['f12..f16', 'quick'], ['f17', 'full'], ['f18..f19', 'quick'], ['f20', 'full', 1.5], ['f21..f27', 'quick'], ['f28', 'full', 1.5]] },
   composite: { from: 'f00', beats: [['f01', 'half'], ['f02..f07', 'quick'], ['f08', 'full', 1.5], ['f09..f17', 'quick'], ['f18', 'full'], ['f19', 'half'],
     ['f20', 'full', 1.5], ['f21..f22', 'quick'], ['f23', 'full', 0.6], ['f24..f25', 'quick'], ['f26', 'full', 1.5]] },
   story: { from: 'cold-00', beats: [['cold-01', 'half'], ['cold-02..f13', 'quick'], ['f14', 'full', 1.0], ['f15', 'full', 1.5], ['f16..f18', 'quick'], ['f19', 'full', 1.5]] },

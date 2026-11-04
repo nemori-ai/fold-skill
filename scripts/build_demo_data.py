@@ -1,12 +1,13 @@
 """把自由运行的结果打磨成原型演示数据：prototype/data/<name>/scenario.mjs。
 
 输入（前两项只在本机，第三、四项入库）：
-  corpus/<name>/frames.json                 语料原文（化名改写后的版本；composite 含作者编写的家庭流）
+  corpus/<name>/frames.json                 语料原文（composite：化名改写后的版本，含作者编写的家庭流；founder：作者编写）
   prototype/data/<name>/agent-batches.json  自由运行里 Agent 每帧被接受的批次与处置（由 --import-run 从运行目录导出）
   prototype/data/<name>/edits.json          打磨：对 Agent 批次的修正、处置更正、旁白、信号、回应路径与反馈
 修正只改批次，再用内存内核从空状态逐帧重放；任何一帧被拒绝就停下并报出原因，不手改最终状态。
+数据集之间不同的设置（不进演示的输入、不推导反馈的线程、来源处的动作、文件头）写在 DATASETS 里。
 
-用法：
+用法（数据集也可以写成 --dataset composite|founder）：
   .venv/bin/python scripts/build_demo_data.py composite --import-run .local/eval/free-20261015-161501
   .venv/bin/python scripts/build_demo_data.py composite            # 重放并写出 scenario.mjs，再用原型引擎回放核对
   .venv/bin/python scripts/build_demo_data.py composite --report   # 另打印每帧根层与修正清单，供写 POLISH.md
@@ -31,8 +32,6 @@ sys.path.insert(0, str(ROOT))
 from fold import MemoryStore  # noqa: E402
 
 TEXT_LIMIT = 500
-# Enron 营销群发只用于评测时的噪音，不进演示数据（见 POLISH.md）：输入删去，Agent 对它的引用一并去掉。
-DROPPED_PREFIXES = ("promo:",)
 QUOTE_LIMIT = 280
 STREAM_NAMES = {"work": "工作", "family": "家庭", "life": "生活", "community": "社区", "subscription": "订阅"}
 PALETTE = ["#2f7f6f", "#b8643a", "#c49a2c", "#86569c", "#3a78b0", "#c04f78", "#5b8c37", "#8a6a3c",
@@ -68,20 +67,60 @@ SOURCE_ACTIONS = [
     {"id": "react", "label": "回了表情", "meaning": "ack"},
     {"id": "pay", "label": "转账", "meaning": "act"},
 ]
+# founder（作者编写）另有收款：微信转账的 transfer.direction 为 in。
+FOUNDER_SOURCE_ACTIONS = SOURCE_ACTIONS + [{"id": "collect", "label": "收款", "meaning": "act"}]
 VERB_OF_KIND = {"comment": "comment", "discussion_comment": "comment", "qa_comment": "comment", "forum_post": "comment",
                 "list_post": "comment", "blog_comment": "comment", "mastodon_post": "comment",
                 "state_merged": "merge", "state_closed": "close",
-                "message": "comment", "call_log": "call", "reaction": "react", "swish_sent": "pay", "screen_time_approved": "approve"}
+                "message": "comment", "voice": "comment", "call_log": "call", "reaction": "react", "swish_sent": "pay",
+                "transfer": "pay", "screen_time_approved": "approve"}
 # 一条 ask 没有这个动作时，按它最接近的按钮记：合并算批准，关闭算处理完。
 VERB_FALLBACK = {"merge": ["approve", "done"], "close": ["done", "close"], "approve": ["done"], "request-changes": ["comment"],
-                 "pay": ["done"]}
-FEEDBACK = {
-    "defaults": [{"id": "ack", "meaning": "ack", "label": "已阅"}, {"id": "snooze", "meaning": "snooze", "label": "稍后提醒"}],
-    "sourceActions": SOURCE_ACTIONS,
-    "surfaces": [
-        {"id": "focus", "label": "近期重点", "policy": "关注事项的持续影响：已阅只说明你知道了，事项仍按 Agent 的份额保留。"},
-        {"id": "inbox", "label": "通知中心", "policy": "关注尚未告知的内容：已阅后这一条不再占位，事项本身仍在状态里。"},
-    ],
+                 "pay": ["done"], "collect": ["done"]}
+
+
+def feedback_policy(source_actions: list[dict]) -> dict:
+    return {
+        "defaults": [{"id": "ack", "meaning": "ack", "label": "已阅"}, {"id": "snooze", "meaning": "snooze", "label": "稍后提醒"}],
+        "sourceActions": source_actions,
+        "surfaces": [
+            {"id": "focus", "label": "近期重点", "policy": "关注事项的持续影响：已阅只说明你知道了，事项仍按 Agent 的份额保留。"},
+            {"id": "inbox", "label": "通知中心", "policy": "关注尚未告知的内容：已阅后这一条不再占位，事项本身仍在状态里。"},
+        ],
+    }
+
+
+# 各数据集不同的设置。时区先取语料的 timeZone，这里只是语料没写时的退路。
+DATASETS = {
+    "composite": {
+        # Enron 营销群发只用于评测时的噪音，不进演示数据（见 POLISH.md）：输入删去，Agent 对它的引用一并去掉。
+        "dropped_prefixes": ("promo:",),
+        "dropped_note": "（另有 {n} 封营销邮件未收入演示）",
+        "dropped_why": "引用了不进演示的 Enron 营销邮件",
+        # 不推导反馈的线程：家庭流里的杂事（浇番茄、收快递、照片），几件事都会顺带引用，回一句“好”不是对哪件事的回应。
+        "underived_threads": {"fam:hemmasysslor"},
+        # 只有家庭流里不是普通消息的事件带 kind；其余流的 kind 是 GitHub、论坛等来源的名字，形式不用。
+        "kind_streams": ("family",),
+        "source_actions": SOURCE_ACTIONS,
+        "time_zone": "Europe/Stockholm",
+        "rebuild": "corpus/composite/MIX.md",
+        "header": "// Texts are pseudonymised public data, clipped to 500 characters; see MIX.md and POLISH.md.",
+    },
+    "founder": {
+        "dropped_prefixes": (),
+        "dropped_note": "",
+        "dropped_why": "",
+        # 收纳零碎小事的事项写在这里（同 composite 的 fam:hemmasysslor）；节拍表定稿后再填。
+        "underived_threads": set(),
+        # 所有流里不是普通消息的事件都带 kind：通话、转账、语音、GitHub 的评审与关闭等，形式据此写本人的动作。
+        "kind_streams": None,
+        "source_actions": FOUNDER_SOURCE_ACTIONS,
+        # 微信、飞书里他转发的链接、发的图片与文件也是在来源处的回复（composite 的这几类事件不是本人的动作，不推导）。
+        "extra_verbs": {"forward": "comment", "image": "comment", "file": "comment"},
+        "time_zone": "Asia/Shanghai",
+        "rebuild": "scripts/founder_corpus.py build（见 corpus/founder/README.md）",
+        "header": "// Texts are authored fiction (corpus/founder), clipped to 500 characters; see corpus/founder/README.md and POLISH.md.",
+    },
 }
 
 
@@ -182,9 +221,16 @@ def apply_edits(batch: dict, ops: list[dict], frame_id: str) -> dict:
 # ---------- 构建 ----------
 
 def load(name: str):
-    corpus = json.loads((ROOT / "corpus" / name / "frames.json").read_text(encoding="utf-8"))
     data_dir = ROOT / "prototype" / "data" / name
-    agent = json.loads((data_dir / "agent-batches.json").read_text(encoding="utf-8"))
+    agent_path = data_dir / "agent-batches.json"
+    if not agent_path.exists():
+        raise SystemExit(f"{name}：还没有导入自由运行（no run imported yet）。先在语料上跑一次 eval_judgment.py --free-run，"
+                         f"再用 build_demo_data.py {name} --import-run .local/eval/<run-id> 导出 {agent_path.relative_to(ROOT)}")
+    corpus_path = ROOT / "corpus" / name / "frames.json"
+    if not corpus_path.exists():
+        raise SystemExit(f"{name}：找不到 {corpus_path.relative_to(ROOT)}，它只在本机重建，见 {DATASETS[name]['rebuild']}")
+    corpus = json.loads(corpus_path.read_text(encoding="utf-8"))
+    agent = json.loads(agent_path.read_text(encoding="utf-8"))
     edits_path = data_dir / "edits.json"
     edits = json.loads(edits_path.read_text(encoding="utf-8")) if edits_path.exists() else {}
     return corpus, agent, edits, data_dir
@@ -198,6 +244,8 @@ def shorten_sources(declarations):
 
 
 def build(name: str, report: bool = False) -> dict:
+    cfg = DATASETS[name]
+    dropped_prefixes = cfg["dropped_prefixes"]
     corpus, agent, edits, data_dir = load(name)
     agent_frames = {f["frame"]: f for f in agent["frames"]}
     frame_edits = edits.get("frames", {})
@@ -224,9 +272,9 @@ def build(name: str, report: bool = False) -> dict:
         batch = apply_edits(rename_refs(source["batch"], renames), fe.get("batch", []), fid)
         shorten_sources(batch["declarations"])
         for _, _, declaration, _ in walk(batch["declarations"]):
-            kept = [s for s in declaration.get("sources") or [] if not s.get("ref", "").startswith(tuple("event:" + p for p in DROPPED_PREFIXES))]
+            kept = [s for s in declaration.get("sources") or [] if not s.get("ref", "").startswith(tuple("event:" + p for p in dropped_prefixes))]
             if "sources" in declaration and len(kept) < len(declaration["sources"]):
-                log.append({"frame": fid, "op": "drop-source", "id": declaration["id"], "why": "引用了不进演示的 Enron 营销邮件"})
+                log.append({"frame": fid, "op": "drop-source", "id": declaration["id"], "why": cfg["dropped_why"]})
                 declaration["sources"] = kept
         for op in fe.get("batch", []):
             log.append({"frame": fid, "op": op["op"], "id": op.get("id") or op.get("declaration", {}).get("id"), "why": op.get("why", "")})
@@ -247,13 +295,16 @@ def build(name: str, report: bool = False) -> dict:
             log.append({"frame": fid, "op": "disposition", "id": event_id, "why": change.get("why", "")})
         events = []
         for e in frame["events"]:
-            if e["id"].startswith(DROPPED_PREFIXES):
+            if e["id"].startswith(dropped_prefixes):
                 continue
             d = dispositions.get(e["id"], {})
             text = (e.get("text") or "").replace("\r\n", "\n")
             event = {"id": e["id"], "channel": e["channel"], "from": e["from"], "at": e["at"], "stream": e.get("stream")}
-            if e.get("stream") == "family" and e.get("kind") != "message":
+            if e.get("kind") not in (None, "message") and (cfg["kind_streams"] is None or e.get("stream") in cfg["kind_streams"]):
                 event["kind"] = e["kind"]
+                for key in ("call", "transfer"):  # 结构化的通话与转账：形式从这里取人和时长，不再解析正文
+                    if e.get(key):
+                        event[key] = e[key]
             if e.get("author_kind") == "self":
                 event["self"] = True
             elif e.get("author_kind") not in (None, "human"):
@@ -272,9 +323,9 @@ def build(name: str, report: bool = False) -> dict:
         signal = copy.deepcopy(frame.get("signal") or {})
         names = STREAM_NAMES
         counts = collections.Counter(e["stream"] for e in events)
-        dropped = sum(1 for e in frame["events"] if e["id"].startswith(DROPPED_PREFIXES))
+        dropped = sum(1 for e in frame["events"] if e["id"].startswith(dropped_prefixes))
         signal["coverage"] = " · ".join(f"{names.get(k, k)} {counts[k]}" for k in names if counts[k]) + (
-            f"（另有 {dropped} 封营销邮件未收入演示）" if dropped else "")
+            cfg["dropped_note"].format(n=dropped) if dropped else "")
         signal.update(fe.get("signal", {}))
         out = {"id": fid, "at": frame["at"], "chapter": None, "title": fe.get("title") or auto_title(state, receipt),
                "narrative": fe.get("narrative") or auto_narrative(events), "events": events,
@@ -286,7 +337,7 @@ def build(name: str, report: bool = False) -> dict:
             print(f"{fid} {receipt['type']:<11} r={state['revision']:<4} used={state['root']['used']:>2} "
                   f"items={len(state['root']['items']):>2} " + " | ".join(f"{i['share']}:{i['title']}" for i in state['root']['items']))
     registry = attach_asks(frames_out, edits, versions)
-    derive_feedback(frames_out, corpus, edits, items_before, registry, log)
+    derive_feedback(frames_out, corpus, edits, items_before, registry, log, cfg)
     for chapter in edits.get("chapters", []):
         for f in frames_out:
             if chapter["from"] <= f["id"] <= chapter["to"]:
@@ -300,9 +351,9 @@ def build(name: str, report: bool = False) -> dict:
     scenario = {
         "id": f"{name}-demo", "title": edits.get("title", corpus.get("title")), "subtitle": edits.get("subtitle", corpus.get("subtitle")),
         "persona": edits.get("persona", corpus.get("persona")),
-        "startAt": frames_out[0]["at"], "endAt": frames_out[-1]["at"], "timeZone": corpus.get("timeZone", "Europe/Stockholm"),
+        "startAt": frames_out[0]["at"], "endAt": frames_out[-1]["at"], "timeZone": corpus.get("timeZone") or cfg["time_zone"],
         "categories": categories, "chapters": [{"id": c["id"], "title": c["title"]} for c in edits.get("chapters", [])],
-        "publicSources": [], "feedback": edits.get("feedback_policy", FEEDBACK),
+        "publicSources": [], "feedback": edits.get("feedback_policy", feedback_policy(cfg["source_actions"])),
         "source": {**edits.get("source", {}), "agent_run": agent["run_id"], "model": agent["model"]},
         "sketchFrames": edits.get("sketchFrames", {}), "sketchNotes": edits.get("sketchNotes", {}),
         "frames": frames_out,
@@ -357,8 +408,6 @@ def auto_narrative(events: list[dict]) -> str:
 
 
 UNLINKED: set = set()
-# 不推导反馈的线程：家庭流里的杂事（浇番茄、收快递、照片），几件事都会顺带引用，回一句“好”不是对哪件事的回应。
-UNDERIVED_THREADS = {"fam:hemmasysslor"}
 # ask id → 能回答它的线程。批准某个 PR 的 ask 默认只认那个 PR 上的动作（条目引用了别的线程时，那边的回复只记在事项上）；
 # 也可以在 edits 里用 answer_threads 显式写。
 ANSWER_THREADS: dict = {}
@@ -420,21 +469,29 @@ def attach_asks(frames: list[dict], edits: dict, versions: list[dict]) -> list[d
     return registry
 
 
-def source_verb(event: dict) -> str | None:
-    if event.get("kind") == "review":
+def source_verb(event: dict, extra: dict | None = None) -> str | None:
+    kind = event.get("kind")
+    if kind == "review":
         return {"APPROVED": "approve", "CHANGES_REQUESTED": "request-changes"}.get(event.get("review_state"), "comment")
-    if event.get("kind") == "state_closed" and re.search(r"closed this in [0-9a-f]{7,}", event.get("text") or ""):
+    if kind == "state_closed" and re.search(r"closed this in [0-9a-f]{7,}", event.get("text") or ""):
         return "merge"
-    return VERB_OF_KIND.get(event.get("kind"))
+    # 结构化的通话与转账（founder）：他打出去（没接通也算打了）或接起的电话是 call，别人打来没接上不是他的动作；
+    # 转出是 pay，收下别人的转账是 collect。composite 的事件没有这两个字段，照 kind 查表。
+    if kind in ("call_log", "missed_call") and event.get("call"):
+        return "call" if kind == "call_log" or event["call"].get("direction") == "out" else None
+    if kind == "transfer" and event.get("transfer"):
+        return "pay" if event["transfer"].get("direction") == "out" else "collect"
+    return VERB_OF_KIND.get(kind) or (extra or {}).get(kind)
 
 
-def derive_feedback(frames: list[dict], corpus: dict, edits: dict, items_before: list[dict], registry: list[dict], log: list) -> None:
+def derive_feedback(frames: list[dict], corpus: dict, edits: dict, items_before: list[dict], registry: list[dict], log: list,
+                    cfg: dict) -> None:
     """本人在来源处的回复、评审、合并与关闭，按线程挂到当时 active 的条目上；那件事登记着 ask 就挂到 ask。
 
     edits.feedback 可以按事件覆盖：{event_id: [links]} 换成手写的链接，{event_id: []} 去掉推导结果。
     """
     raw = {e["id"]: e for f in corpus["frames"] for e in f["events"]}
-    labels = {a["id"]: a for a in SOURCE_ACTIONS}
+    labels = {a["id"]: a for a in cfg["source_actions"]}
     overrides = edits.get("feedback", {})
     for i, frame in enumerate(frames):
         if i == 0:
@@ -456,11 +513,11 @@ def derive_feedback(frames: list[dict], corpus: dict, edits: dict, items_before:
             if not event.get("self"):
                 continue
             source = raw[event["id"]]
-            verb = source_verb(source)
+            verb = source_verb(source, cfg.get("extra_verbs"))
             thread = source.get("thread")
             if not verb or not thread:
                 continue
-            if thread in UNDERIVED_THREADS:
+            if thread in cfg["underived_threads"]:
                 continue
             # 同一线程被几件事引用时：Agent 在处置里把这条输入关联到其中哪几件，就挂到哪几件；
             # 没有关联的，先挂到以它为主线程（引用最多）的那件，再看引用次数，并列都挂。
@@ -492,7 +549,7 @@ def write(name: str, scenario: dict, data_dir: Path) -> Path:
     body = json.dumps(scenario, ensure_ascii=False, separators=(",", ":"))
     path.write_text(
         "// Generated by scripts/build_demo_data.py from the free run and edits.json; do not edit by hand.\n"
-        "// Texts are pseudonymised public data, clipped to 500 characters; see MIX.md and POLISH.md.\n"
+        f"{DATASETS[name]['header']}\n"
         f"export const scenario = {body};\nexport default scenario;\n", encoding="utf-8")
     return path
 
@@ -508,17 +565,23 @@ def verify_in_engine(path: Path) -> None:
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("name")
+    parser.add_argument("name", nargs="?", choices=sorted(DATASETS), help="数据集，同 --dataset")
+    parser.add_argument("--dataset", choices=sorted(DATASETS))
     parser.add_argument("--import-run", metavar="RUN_DIR")
     parser.add_argument("--report", action="store_true")
     args = parser.parse_args(argv)
-    data_dir = ROOT / "prototype" / "data" / args.name
-    data_dir.mkdir(parents=True, exist_ok=True)
+    if args.name and args.dataset and args.name != args.dataset:
+        parser.error(f"数据集写了两个：{args.name} 与 {args.dataset}")
+    name = args.dataset or args.name
+    if not name:
+        parser.error(f"要指定数据集：{' 或 '.join(sorted(DATASETS))}")
+    data_dir = ROOT / "prototype" / "data" / name
     if args.import_run:
+        data_dir.mkdir(parents=True, exist_ok=True)
         import_run(Path(args.import_run), data_dir / "agent-batches.json")
         return 0
-    result = build(args.name, report=args.report)
-    path = write(args.name, result["scenario"], result["data_dir"])
+    result = build(name, report=args.report)
+    path = write(name, result["scenario"], result["data_dir"])
     print(f"写出 {path.relative_to(ROOT)}（{path.stat().st_size // 1024} KB），修正 {len(result['log'])} 处")
     if args.report:
         for entry in result["log"]:

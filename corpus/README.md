@@ -1,10 +1,12 @@
-# 真实语料：第二个判断基准
+# 语料：手写情境之外的判断基准
 
-状态：评测原料与方法说明。语料来自公开渠道，原文只在本机重建；仓库里保存来源调查、抓取与构建脚本、输入 ID 清单、噪音统计和弱标注。它不改变[信息契约](../docs/information-contract.md)。
+状态：评测原料与方法说明。有两类：curl-bagder、enron-steffes-j 与 composite 来自公开渠道，原文只在本机重建，仓库里保存来源调查、抓取与构建脚本、输入 ID 清单、噪音统计和弱标注；[founder](#作者编写founder) 整份由作者编写，节拍表、成品与作者标注入库，2026-11-04 起是原型的默认演示数据所依据的语料。它们都不改变[信息契约](../docs/information-contract.md)。
 
 [原型情境](../prototype/data/story/scenario.mjs)的 37 帧、112 条输入由作者手写：每条都有信息量，没有重复、机器人、半截话或互相矛盾，时间也整齐。真实世界里替一个人工作的 Agent 收到的是另一种东西：机器人通知、“谢谢”和“有进展吗”、重复报告、迟到的回复、几个渠道对同一件事的不同说法，以及其中少数真正要紧的事。这里收集一份这样的输入，不清洗，量化它和手写情境差在哪里，并用这个人后来实际做了什么推出弱标注。
 
 手写情境继续保留：它有逐帧的完整批次，适合 teacher-forced 对比；真实语料是第二个基准，检验 Agent 在噪音里的取舍。只有工作还不够像一个人的收件箱，[composite](#混合人物composite) 把 curl-bagder 的工作流与几位真实的人公开的社区、生活与订阅数据拼成一个化名人物的两周，再加上作者编写的家庭往来。
+
+拼出来的人不像一个人：瑞典的开源维护者、家里的事太多也太特别、中瑞英混杂，第一次来看演示的人读不进去。[founder](#作者编写founder) 换一条路：人物与每一条消息都由作者编写，有一条主线，工作与生活约 3 : 1；噪音的量与形态照 curl-bagder 与 composite 的实测定目标，留住“写得认真却和你无关”的难度。代价是标注也出自作者，只能检验 Agent 与作者是否一致。
 
 ## 来源调查与选择
 
@@ -59,7 +61,20 @@
 | 改写 | 项目、仓库、账号、人名、邮件列表、域名与各类编号按一张本机化名表一致替换，只用规则，不用模型；每条输入带原始记录 ID 的加盐摘要 `origin`。化名不是匿名，正文仍可被搜索到。 |
 | 跨流的事 | 6 件，挑选时间或话题真实重合的线程得到，不手写。 |
 | 家庭流 | 2026-10-15 用户决定：参考真实数据仿写，不用真实内容，形式不限于邮件。人物、事件与文字都是原创，Enron 私人往来只作语气参考，与它没有共同的专名、没有 8 词以上的重合；节拍表、成品与标注入库，见 [family/README.md](composite/family/README.md)。 |
-| 用到哪里 | 第一次自由运行见[自由运行评测](../docs/evaluations/free-run-composite-2026-10-15.md)，那时还没有家庭流；运行结果经人工打磨成原型的默认演示数据，见 [POLISH.md](../prototype/data/composite/POLISH.md)。含家庭流的自由运行已于 2026-10-15 重跑，见[第二次自由运行](../docs/evaluations/free-run-composite-v2-2026-10-15.md)。 |
+| 用到哪里 | 第一次自由运行见[自由运行评测](../docs/evaluations/free-run-composite-2026-10-15.md)，那时还没有家庭流；含家庭流的自由运行于 2026-10-15 重跑，见[第二次自由运行](../docs/evaluations/free-run-composite-v2-2026-10-15.md)，结果经人工打磨成原型的演示数据（[POLISH.md](../prototype/data/composite/POLISH.md)）。2026-11-04 起默认演示数据换成 founder，composite 仍可用 `?data=composite` 切换。 |
+
+## 作者编写：founder
+
+| 项 | 内容 |
+| --- | --- |
+| 人 | 虚构人物陆晨，杭州一家 7 人 AI 小公司铃语的联合创始人、产品技术负责人；妻子韩敏、女儿可可、儿子豆豆、柯基土豆，父母住在附近。设定见[大纲](founder/OUTLINE.md)。 |
+| 窗口 | 2026-09-07 至 09-21（Asia/Shanghai），28 帧、2532 条；f22 = 9/18 00:00，第二天上午见客户、狗打疫苗、女儿的秋游回执撞在一起。 |
+| 主线与副线 | 主线是第一个大客户白鹭口腔九家店改由 AI 接电话（9/15 切换、9/16 晚故障、9/18 开会谈下年单与国庆前加转接）；副线是他业余维护的开源库 saydone 的新版本与合办的开发者小聚；家里只写采买、看病、出游、孩子上学与课外班。 |
+| 各流 | 工作、社区、订阅、家里、生活五条，含义按这个人重新定义；工作侧与生活侧 1904 : 628（3.03 : 1）。逐渠道的条数见 [founder/README.md](founder/README.md#规模)。 |
+| 噪音 | 群里的附和、重复的告警、广告与推送、订阅号的长文，别人发来的 2129 条里 1365 条（64%）作者写定为应忽略；低信息量、重复、连发、长度与作者分布与真实语料实测并排在 [founder/NOISE.md](founder/NOISE.md)。 |
+| 标注 | 作者写定，不是弱标注：每条输入该不该忽略、每帧每件事的关注档、27 个问题从哪帧登记到哪帧了结，见 [founder/LABELS.md](founder/LABELS.md)。他的回复也是作者写的，所以评测只检验 Agent 与作者是否一致。 |
+| 许可 | 没有第三方内容，也不取任何真实的人的数据，节拍表、成品 `messages.json` 与演示数据都随仓库公开，见[演示数据的来源](../prototype/data/founder/SOURCES.md)。`frames.json` 不入库，只因为它可由 `scripts/founder_corpus.py build` 从入库文件重建。 |
+| 用到哪里 | 2026-11-03 的[自由运行](../docs/evaluations/free-run-founder-2026-11-03.md)；结果经人工打磨成原型的默认演示数据，见 [founder 的 POLISH.md](../prototype/data/founder/POLISH.md)。 |
 
 ## 许可与入库范围
 
@@ -72,13 +87,19 @@ GitHub 上的 issue 与评论、Mastodon 帖子、邮件列表与博客评论的
 | `noise.json`、`labels.json`：只含统计、ID 与依据 | `.local/cache/`：Enron 压缩包缓存 |
 | composite 的 `ids.json` 只含化名 ID 与 `origin`，不含来源 URL | `.local/composite/`：化名表、随机盐与挑选，营销邮件缓存 |
 
-例外是原型的演示数据：[prototype/data/composite/scenario.mjs](../prototype/data/composite/scenario.mjs) 收入了截到 500 字的化名改写正文，随本分支入库，各流的引用长度、许可与已知的署名缺口见 [SOURCES.md](../prototype/data/composite/SOURCES.md)。2026-10-15 用户决定它随站点照现状公开。
+例外是原型的演示数据：[prototype/data/composite/scenario.mjs](../prototype/data/composite/scenario.mjs) 收入了截到 500 字的化名改写正文，随本分支入库，各流的引用长度、许可与已知的署名缺口见 [SOURCES.md](../prototype/data/composite/SOURCES.md)。2026-10-15 用户决定它随站点照现状公开。founder 全部由作者编写，不受这一节的限制，见上文[作者编写：founder](#作者编写founder)。
 
 composite 另用到 Stack Exchange（CC BY-SA 4.0）、SMHI 观测（CC BY 4.0）、iNaturalist 论坛与 Substack 的公开文章（版权归作者），处理方式相同；许可逐项列在 [MIX.md](composite/MIX.md#许可与入库)。文档只引用极短的通用片段（如“Thanks!”）说明噪音形态，不转录成段原文。抓取时把电话号码样式替换为 `[phone]` 并计数，不保存邮箱地址以外的个人联系方式；Enron 的邮箱地址保留，用于识别本人与回复关系。只抓公开数据，遵守 robots.txt，顺序请求并限速。
 
 ## 怎样重建
 
-需要已登录的 `gh`、Python 3.11+ 与 Node.js（只用于导出原型情境作对比），只用标准库：
+founder 只需要 Python 3.11+，从入库的节拍表重建成品、帧、标注与噪音画像并检查，写法与检查规则见 [founder/README.md](founder/README.md)：
+
+```sh
+.venv/bin/python scripts/founder_corpus.py all
+```
+
+真实语料需要已登录的 `gh`、Python 3.11+ 与 Node.js（只用于导出原型情境作对比），只用标准库：
 
 ```sh
 .venv/bin/python scripts/fetch_corpus.py curl-bagder       # 一千余次 GitHub 请求与数百次网页请求，二三十分钟
@@ -113,7 +134,7 @@ composite 另用到 Stack Exchange（CC BY-SA 4.0）、SMHI 观测（CC BY 4.0�
 
 本人的发言（评论、评审、关闭、帖子、发出的邮件）也作为输入保留，标 `author_kind: self`，与情境里“用户消息”的地位相同。Mastodon 回复的 `subject` 取被回复帖子的前 80 字，标 `subject_origin: parent_excerpt`。`author_kind` 中的 `automation` 来自公开资料或发件地址的推断，评测时不宜原样交给被测模型。
 
-`scripts/eval_judgment.py --free-run --corpus <frames.json>` 用真实语料做自由运行：Agent 从空状态开始逐帧维护自己的状态，模型看到 `id / channel / from / at / subject / url / text` 与是否本人（`self`），看不到 `author_kind` 等构建标注；结果与弱标注做三项对照，用法见[工作环境说明](../docs/development.md#真实语料)。两种金标签怎样衔接仍是[决策记录](../docs/decisions.md#推迟到后续切片)里的未决问题。
+`scripts/eval_judgment.py --free-run --corpus <frames.json>` 用真实语料做自由运行：Agent 从空状态开始逐帧维护自己的状态，模型看到 `id / channel / from / at / subject / url / text` 与是否本人（`self`），看不到 `author_kind` 等构建标注；结果与弱标注做三项对照，用法见[工作环境说明](../docs/development.md#语料)。founder 没有弱标注，`labels.json` 只有 `authored` 一节，覆盖全部五条流。两种金标签怎样衔接仍是[决策记录](../docs/decisions.md#推迟到后续切片)里的未决问题。
 
 ## 弱标注
 
@@ -125,6 +146,7 @@ composite 另用到 Stack Exchange（CC BY-SA 4.0）、SMHI 观测（CC BY 4.0�
 | enron-steffes-j | 28（24 帧有标注） | 399 | 36 | 504 封中 337 封（其中删除 322） | 无 |
 | composite | 28 | 934 | 76 | 2324 条中 501 条（强依据 354，其中订阅 89） | 47 组，另列跨流的事 6 件 |
 | composite 家庭流（作者写定） | 28 | 144 | 20 | 310 条中 185 条 | 1 组；另列问题 19 个 |
+| founder（全部作者写定） | 28 | 999 | 7 | 2129 条中 1365 条 | 另列问题 27 个 |
 
 ## 文件
 
@@ -143,4 +165,6 @@ composite 另用到 Stack Exchange（CC BY-SA 4.0）、SMHI 观测（CC BY 4.0�
 | [composite/LABELS.md](composite/LABELS.md) | 混合人物各流的弱标注规则、覆盖与跨流的事 |
 | [composite/family/](composite/family/README.md) | 作者编写的家庭流：节拍表、成品、不可回溯检查与合成方法 |
 | [scripts/family_stream.py](../scripts/family_stream.py) | 家庭流的渲染、标注与不可回溯检查 |
+| [founder/](founder/README.md) | 作者编写的陆晨两周：[大纲](founder/OUTLINE.md)、[写作指引](founder/WRITING.md)、节拍表、成品、[噪音画像](founder/NOISE.md)与[作者标注](founder/LABELS.md) |
+| [scripts/founder_corpus.py](../scripts/founder_corpus.py) | founder 的成品、帧、标注、噪音画像与检查；`selftest` 用小样例自测 |
 | `<source>/ids.json`、`noise.json`、`labels.json` | 可入库的输入清单、统计与弱标注 |

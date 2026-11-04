@@ -126,14 +126,18 @@ def render(doc: dict) -> list[dict]:
 
 # ---------- 作者标注 ----------
 
-def labels(doc: dict, frames: list[dict]) -> dict:
+def labels(doc: dict, frames: list[dict], events: list[dict] | None = None, self_who: str = "jonas",
+           method: dict | None = None, zh: bool = False) -> dict:
     """由节拍表生成 labels.json 的 family 一节：每帧的事项、作者给的关注档、行为档、应忽略的输入与问题的登记和去向。
 
     行为档（tier）与其他流同一口径，只是“本人后来的行动”来自合成的 Jonas 消息与通话记录：24 小时内有行动为 engaged，
     7 天内为 later，输入全是应忽略的为 noise，否则 untouched。作者档（level）是节拍表里写定的 Fold 应给的关注。
+
+    其他作者编写的语料（scripts/founder_corpus.py）复用这里：传入已渲染的 events（节拍表里每条消息的 id 与事件 id 一致）、
+    本人在 people 里的键、method 的说明，以及低信息量规则是否认中文（zh）。
     """
     horizon, soon = dt.timedelta(days=7), dt.timedelta(hours=24)
-    events = {e["id"]: e for e in render(doc)}
+    events = {e["id"]: e for e in (render(doc) if events is None else events)}
     meta = {x["id"]: (x, parent, origin) for x, parent, origin in messages_of(doc)}
     frame_of, bounds = {}, []
     for f in frames:
@@ -157,7 +161,7 @@ def labels(doc: dict, frames: list[dict]) -> dict:
         msgs = sorted(b["messages"], key=lambda x: x["at"])
         if b.get("ask"):
             ask = dict(b["ask"])
-            posed = next((x for x in msgs if x["who"] != "jonas"), msgs[0])
+            posed = next((x for x in msgs if x["who"] != self_who), msgs[0])
             ask.update({"item": b["item"], "beat": b["id"], "registered": {"event": posed["id"], "frame": frame_of[posed["id"]],
                                                                           "at": posed["at"]}, "resolved": None})
             asks.append(ask)
@@ -165,7 +169,7 @@ def labels(doc: dict, frames: list[dict]) -> dict:
     for b in doc["beats"]:
         msgs = sorted(b["messages"], key=lambda x: x["at"])
         if b.get("answers"):
-            done = next((x for x in msgs if x["who"] == "jonas"), msgs[-1])
+            done = next((x for x in msgs if x["who"] == self_who), msgs[-1])
             by_ask[b["answers"]]["resolved"] = {"how": "answered", "event": done["id"], "frame": frame_of[done["id"]],
                                                 "at": done["at"], "beat": b["id"]}
         if b.get("voids"):
@@ -214,7 +218,7 @@ def labels(doc: dict, frames: list[dict]) -> dict:
             for e in inputs:
                 reason = meta[e["id"]][0].get("ignore")
                 if reason:
-                    info = info_class({**e, "_core": core_text(e["text"])})
+                    info = info_class({**e, "_core": core_text(e["text"])}, zh)
                     ignore.append({"event": e["id"], "basis": ["authored", reason] + ([f"low_info:{info}"] if info else [])})
         # 同一件事被拆成几个线程（母亲的 BankID 并入换水管，托邻居喂猫并入看兽医）：同帧出现时并成一组。
         present = {i["thread"] for i in items}
@@ -240,12 +244,13 @@ def labels(doc: dict, frames: list[dict]) -> dict:
     totals["asks_void"] = sum(1 for a in asks if a["resolved"] and a["resolved"]["how"] == "void")
     totals["asks_open"] = sum(1 for a in asks if not a["resolved"])
     return {
-        "method": {"basis": "authored", "source": "corpus/composite/family/beats.json",
-                   "level": "节拍表里作者写定的 Fold 关注档（critical / high / normal / low / trace / none），帧末取该事项最后一拍的档位",
-                   "tier": "与其他流同一口径的行为档；“本人后来的行动”是合成的 Jonas 消息与通话记录，所以它检验一致，不检验真实",
-                   "ignore": "节拍表里标了 ignore 的输入（表情、附和、群聊闲聊、照片、通知、诈骗短信、重复催促等），依据前缀 authored",
-                   "asks": "节拍表登记的问题：登记的输入与帧、被回答（answered）或失效（void）的输入与帧；到窗口结束仍开着的 resolved 为 null",
-                   "doc": "corpus/composite/LABELS.md"},
+        "method": method or {
+            "basis": "authored", "source": "corpus/composite/family/beats.json",
+            "level": "节拍表里作者写定的 Fold 关注档（critical / high / normal / low / trace / none），帧末取该事项最后一拍的档位",
+            "tier": "与其他流同一口径的行为档；“本人后来的行动”是合成的 Jonas 消息与通话记录，所以它检验一致，不检验真实",
+            "ignore": "节拍表里标了 ignore 的输入（表情、附和、群聊闲聊、照片、通知、诈骗短信、重复催促等），依据前缀 authored",
+            "asks": "节拍表登记的问题：登记的输入与帧、被回答（answered）或失效（void）的输入与帧；到窗口结束仍开着的 resolved 为 null",
+            "doc": "corpus/composite/LABELS.md"},
         "summary": dict(sorted(totals.items())),
         "items": doc["items"],
         "asks": asks,

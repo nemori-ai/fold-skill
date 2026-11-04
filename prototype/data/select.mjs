@@ -3,8 +3,13 @@
 // Datasets share one shape: see prototype/README.md「演示数据」. `notice` is the one-line provenance
 // every page shows next to the data.
 export const datasets = {
+  founder: {
+    label: '作者编写 · 陆晨的两周',
+    module: './founder/scenario.mjs',
+    notice: '人物和每一条消息都是作者编写的，不来自真实的人；Agent 判断来自一次真实模型的自由运行（claude-opus-5-5，16.38 美元），再经人工打磨（见 POLISH.md）。',
+  },
   composite: {
-    label: '真实语料 · Jonas Berglund 的两周',
+    label: '旧语料 · Jonas Berglund 的两周（化名改写的真实公开数据）',
     module: './composite/scenario.mjs',
     notice: '人物是化名拼成的；输入是化名改写后的真实公开数据，家人往来由作者编写，正文截到 500 字；Agent 判断来自一次真实模型的自由运行，再经人工打磨（见 POLISH.md）。',
   },
@@ -14,7 +19,7 @@ export const datasets = {
     notice: '人物、私人消息与 Agent 判断均为演示创作，假设 Agent 已经作出了合适的整理判断；它检验状态演变与阅读体验，不评估真实模型能力。',
   },
 };
-export const defaultDataset = 'composite';
+export const defaultDataset = 'founder';
 export const datasetNotice = () => datasets[currentDataset()].notice;
 
 const params = () => new URLSearchParams(globalThis.location?.search || '');

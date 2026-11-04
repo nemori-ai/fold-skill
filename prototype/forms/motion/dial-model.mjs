@@ -14,6 +14,9 @@ const DAY = 86400000;
 
 // ---------- hero: three beats, frame ids per dataset (story.md) ----------
 const HERO = {
+  // founder: the first round; then up to the night of the outage; the third beat is 9/17 noon, saydone 1 → 12 while the
+  // meetup gives back 6, and the cursor lands on the customer's question.
+  founder: { b1: 'f01', b2: ['f02', 'f20'], b3: 'f21' },
   composite: { b1: 'f01', b2: ['f02', 'f25'], b3: 'f26' },
   story: { b1: 'cold-01', b2: ['cold-02', 'f14'], b3: 'f15' },
 };

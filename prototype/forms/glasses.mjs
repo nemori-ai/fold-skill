@@ -12,6 +12,7 @@
 import { createResponseStore, responseStatus, normalizeAsk, setTimeZone } from '../respond.mjs';
 import { familyPlace } from '../variants/shared.mjs?v=feedback-loop-1';
 import { withDataset } from '../data/select.mjs';
+import { formById, frameOf } from './catalog.mjs';
 import { shortAsk } from './watch.mjs';
 
 export const W = 576, H = 288, LH = 27, PAD = 24;
@@ -88,20 +89,24 @@ export function derive(kit) {
   });
   const pushes = [];
   tops.forEach((a, k) => { if (a && a.id !== tops[k - 1]?.id) pushes.push({ k, t: stamps[k], id: a.id, short: a.short }); });
-  // 乙: calls, missed calls and voicemails in the family stream; lit when the other side is among an open ask's waiters.
+  // 乙: calls, missed calls and voicemails; lit when the other side is among an open ask's waiters. The other side and
+  // the length come from the structured `call` ({direction, peer, seconds}, corpus/founder) when an event carries it,
+  // otherwise from composite's Swedish call-log and voicemail text.
   const calls = [];
   for (const f of frames) for (const e of f.events || []) {
     if (!['call_log', 'missed_call', 'voicemail'].includes(e.kind)) continue;
-    const text = String(e.text || '');
-    const raw = e.kind === 'call_log' ? text.match(/till (.+?) ·/)?.[1] : text.match(/från (.+?)(?: \(|\n|$)/)?.[1];
+    const text = String(e.text || ''), call = e.call;
+    const raw = call?.peer || (e.kind === 'call_log' ? text.match(/till (.+?) ·/)?.[1] : text.match(/från (.+?)(?: \(|\n|$)/)?.[1]);
     if (!raw) continue;
     const who = familyPlace({ stream: 'family', from: raw, channel: '' })?.who || raw;
     const t = Date.parse(e.at), k = frameAt(t), open = openAt(k, t);
-    const minutes = Number(text.match(/· (\d+) min/)?.[1] || 0), seconds = Number(text.match(/\((\d+) s\)/)?.[1] || 0);
+    const minutes = call ? Math.round((call.seconds || 0) / 60) : Number(text.match(/· (\d+) min/)?.[1] || 0);
+    const seconds = call ? Number(call.seconds || 0) : Number(text.match(/\((\d+) s\)/)?.[1] || 0);
     const matched = open.filter(a => a.waiters.some(w => w.who === who));
     const held = open.filter(a => a.urgent && !matched.includes(a));
     calls.push({ id: e.id, kind: e.kind, t, end: t + (e.kind === 'call_log' ? Math.max(1, minutes) : 1) * MIN, who, minutes, seconds, k,
-      matched: matched.map(a => a.id), held: held.map(a => a.id), lit: matched.length > 0, open: open.length });
+      matched: matched.map(a => a.id), held: held.map(a => a.id), lit: matched.length > 0, open: open.length,
+      ...(call ? { structured: true } : {}) });
   }
   calls.sort((a, b) => a.t - b.t);
   const moments = [
@@ -283,7 +288,9 @@ export function mount(stage, model, kit) {
   setTimeZone(zone);
   const F = formatter(zone), D = derive(kit), store = createResponseStore();
   const params = new URLSearchParams(location.search), still = params.get('still');
-  const formFrame = Number(params.get('frame')) || 26;
+  // The shell fills in the default frame (catalog.mjs: founder f21, the round worth lighting the glasses for; else f26);
+  // 讲一遍 ends on the last push at or before it.
+  const formFrame = Number(params.get('frame')) || frameOf(formById('glasses'));
   document.body.classList.add('gl-page');
   if (still) document.body.classList.add('gl-still', `gl-still-${still}`);
   const lit = D.calls.filter(c => c.lit);
@@ -417,7 +424,8 @@ export function mount(stage, model, kit) {
       if (c.kind === 'call_log') {
         out.push(T('head', PAD, row(0), 300, LH, `${c.who} · ${what}`, 2));
         const m = minutes({ total: c.minutes, elapsed: Math.floor((s.cursor - c.t) / MIN) });
-        out.push(I('minutes', W - PAD - m.w, 14, m, '通话记录：时长（Utgående samtal … · N min），亮格是已通话的分钟'));
+        out.push(I('minutes', W - PAD - m.w, 14, m, c.structured ? '通话记录：时长（来自通话记录的秒数），亮格是已通话的分钟'
+          : '通话记录：时长（Utgående samtal … · N min），亮格是已通话的分钟'));
       } else out.push(T('head', PAD, row(0), W - 2 * PAD, LH, `${c.who} · ${what} · ${F.clock(s.cursor)}`, 2));
       if (!a) return out;
       if (statusOf(a)) out.push(T('title', PAD, row(1) + 5, W - 2 * PAD, LH, a.short, 2), ...receiptRows(a, 92));

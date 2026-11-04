@@ -5,7 +5,7 @@
 //   3. history   the versions of one item across the replay
 //   4. answers   a page-local answer book over respond.mjs (saved → acknowledged after the next 整理)
 //   5. motion    a keyed board whose tiles keep their DOM node across frames and move with FLIP
-import { scenario, records, getItem, currentAsk, personName, formatDate, formatTime, escapeHTML as esc, familyMove } from './shared.mjs?v=feedback-loop-1';
+import { scenario, records, getItem, currentAsk, personName, formatDate, formatTime, escapeHTML as esc, familyMove, appMove, FOUNDER_APPS } from './shared.mjs?v=feedback-loop-1';
 import { normalizeAsk, createResponseStore, responseStatus, setTimeZone } from '../respond.mjs?v=respond-1';
 
 setTimeZone(scenario.timeZone || 'Asia/Shanghai');
@@ -93,6 +93,9 @@ export function eventRef(event) {
   if (channel.startsWith('邮件列表')) return { platform: '邮件列表', site, kind, type: 'mail', title: subject, label: '' };
   if (channel.startsWith('博客')) return { platform: '博客', site, kind, type: 'comment', title: subject, label: '' };
   if (channel === 'Mastodon') return { platform: 'Mastodon', site: '', kind, type: 'post', title: subject, label: '' };
+  // founder: “应用 · 会话” (飞书 · 郑婉, 微信 · 白鹭口腔×铃语, Discord · saydone #help); a bare “电话” is the call log.
+  const app = channel.split(' · ')[0];
+  if (FOUNDER_APPS[app]) return { platform: app, site, kind, type: null, title: subject, label: '' };
   return { platform: channel || '来源', site, kind, type: null, title: subject, label: '' };
 }
 
@@ -103,10 +106,16 @@ const short = (text, max = 34) => { const value = String(text || '').trim(); ret
 export function actionText(event) {
   const family = familyMove(event);
   if (family) return { verb: family, object: '', title: '', platform: '家里', sentence: family };
+  const own = appMove(event);
+  if (own) return { verb: own, object: '', title: '', platform: String(event.channel || '').split(' · ')[0], sentence: own };
   const ref = eventRef(event), text = event.text || '', mention = mentionOf(text);
   let verb, object = ref.label;
   if (ref.platform === 'GitHub') {
-    if (/approved this pull request/.test(text)) verb = '批准了';
+    // founder's GitHub events name what happened in `kind` (“Merged #59 into main.”, a review that says LGTM).
+    const byKind = { state_merged: '合并了', state_closed: '关闭了', state_reopened: '重新打开了', review: '评审了', review_comment: '评审了',
+      release: '发布了', issue_opened: '开了', pr_opened: '提交了改动' }[event.kind];
+    if (byKind) verb = byKind;
+    else if (/approved this pull request/.test(text)) verb = '批准了';
     else if (/requested changes/.test(text)) verb = '要求修改';
     else if (/ merged this\b/.test(text) || (ref.type === 'pr' && /closed this in [0-9a-f]{6,}/.test(text))) verb = '合并了';
     else if (/closed this in [0-9a-f]{6,}/.test(text)) verb = '用提交关闭了';

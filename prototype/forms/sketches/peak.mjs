@@ -59,7 +59,7 @@ const sourceMoves = (a, now) => {
 };
 
 // ---------- the story: the default frame per dataset (a page constant), the anchor and rounds read off the replay ----------
-const DEFAULT = { composite: 'f26', story: 'f20' };
+const DEFAULT = { founder: 'f22', composite: 'f26', story: 'f20' };
 const defaultIndex = (() => { const k = indexOfId(DEFAULT[currentDataset()] || ''); return k >= 0 ? k : LAST; })();
 const plan = (() => {
   const rule = anchorOf(defaultIndex), n = defaultIndex - rule.a;

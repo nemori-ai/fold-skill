@@ -44,7 +44,7 @@ git diff --check
 阶段 1 的内存内核（`fold/`）已经实现。两类验证分开运行：
 
 ```sh
-make test                                                    # 用内存内核运行 conformance/cases
+make test                                                    # 用内存内核运行 conformance/cases，再用小样例自测 founder 语料的流水线
 node scripts/export-scenario.mjs > .local/scenario.json      # 导出原型演示情境（只读，不改原型）
 python3 scripts/eval_judgment.py --dry-run --frames f01      # 只生成提示，不调用模型
 python3 scripts/eval_judgment.py --frames f01,f05 --report   # 用真实模型逐帧评测，产生调用费用
@@ -53,17 +53,17 @@ python3 scripts/eval_judgment.py --skill <SKILL.md 路径> ...               # �
 python3 scripts/eval_judgment.py --rescore .local/eval/<run-id> --report   # 用已保存响应重新计分
 ```
 
-`make test` 运行 `scripts/run_cases.py`，即 `.venv/bin/python -B scripts/run_cases.py`。它只验证内存层：故障注入、重启恢复与概览渲染的断言标为 skipped，通过不代表文件存储或 CLI 已完成。
+`make test` 运行 `scripts/run_cases.py`，即 `.venv/bin/python -B scripts/run_cases.py`。它只验证内存层：故障注入、重启恢复与概览渲染的断言标为 skipped，通过不代表文件存储或 CLI 已完成。之后运行 `scripts/founder_corpus.py selftest`：在临时目录里用小样例跑完 founder 语料的各步，再把小样例拆成 `_cast.json` 加四份重跑、确认成品逐字节相同，然后逐条注入错误，确认检查的每条规则都会报出；不读写仓库里的语料。
 
 `scripts/eval_judgment.py` 以 teacher-forced 方式逐帧评测 [skill/SKILL.md](../skill/SKILL.md)：第 n 帧的起始状态是内核回放作者前 n−1 帧批次的结果，被测模型看不到作者的处置与批次。它调用 `claude -p`，默认模型 `claude-opus-5-5`（`--model` 可覆盖），`--jobs` 控制并行帧数。设置了 `ANTHROPIC_API_KEY` 时加 `--bare`；`--bare` 不读登录态，没有 API key 时改用登录态，并以 `--setting-sources ''`、`--strict-mcp-config`、`--disable-slash-commands`、`--tools ''` 和空工作目录隔离用户设置、hooks、MCP 与项目说明。每帧结果、`summary.json` 与 `report.md` 写到 `.local/eval/<run-id>/`，该目录不提交。真实调用有费用，全量 36 帧按 Opus 约数美元；先用 `--dry-run` 和少量帧确认提示。
 
 `--runner codex` 改用 `codex exec`，默认模型 `gpt-6.1-sol`，消耗登录账号的额度而不按次计费。codex 没有与 `--system-prompt` 对应的命令行参数，脚本默认把同一份系统提示与用户提示原文用分节标题合成一条消息；codex 自带的基础指令仍在，这是与 `claude -p` 的已知差异。codex 是带工具的 Agent，每次调用在 `run_dir/codex/` 下新建空工作目录，并以 `-s read-only`、`--ephemeral`、`--skip-git-repo-check`、`--ignore-user-config` 隔离；另外关掉项目说明加载（否则会沿目录向上读到仓库根的 `AGENTS.md`）、环境上下文（否则注入真实日期与路径）、网页搜索以及 shell、code mode 等工具。完整参数记在 `meta.json` 的 `invocation`。每次调用的事件流、最后消息与 stderr 留在 `run_dir/codex/`，token 用量写进每帧结果与 `summary.json`；遇到速率或额度限制、登录失效时立即停止，已完成的帧照常计分，之后用同一 `--run-id` 加 `--resume` 续跑其余帧。`--skill` 指定被测的 SKILL.md，用于新旧版本对照；`--codex-system instructions` 改用 `model_instructions_file` 传系统提示（替换 codex 自带的基础指令），用来检验合成方式的影响。
 
-五份评测报告各是什么、用了多少费用，见[评测索引](evaluations/README.md)：[判断评测报告](evaluations/judgment-run-2026-10-14.md)、[换用 Codex 的对照评测](evaluations/judgment-run-codex-2026-10-15.md)、[混合语料自由运行](evaluations/free-run-composite-2026-10-15.md)、[含家庭流的第二次自由运行](evaluations/free-run-composite-v2-2026-10-15.md)与[换回第一次背景的第三次自由运行](evaluations/free-run-composite-v3-2026-10-15.md)。teacher-forced 评测只比较判断与作者的编排，自由运行只与弱标注对照，都不是正确答案；指标分别列出，不合成总分。
+六份评测报告各是什么、用了多少费用，见[评测索引](evaluations/README.md)：[判断评测报告](evaluations/judgment-run-2026-10-14.md)、[换用 Codex 的对照评测](evaluations/judgment-run-codex-2026-10-15.md)、[混合语料自由运行](evaluations/free-run-composite-2026-10-15.md)、[含家庭流的第二次自由运行](evaluations/free-run-composite-v2-2026-10-15.md)、[换回第一次背景的第三次自由运行](evaluations/free-run-composite-v3-2026-10-15.md)与[founder 语料上的自由运行](evaluations/free-run-founder-2026-11-03.md)。teacher-forced 评测只比较判断与作者的编排，自由运行只与弱标注或作者标注对照，都不是正确答案；指标分别列出，不合成总分。
 
-## 真实语料
+## 语料
 
-[corpus/](../corpus/README.md) 收集公开来源的真实输入，作为手写情境之外的第二个判断基准。原文版权归作者，只在本机重建，`raw/` 与 `frames.json` 不入库：
+[corpus/](../corpus/README.md) 放手写情境之外的判断基准。默认的 founder 整份由作者编写，节拍表、成品与标注入库，`frames.json` 由 `scripts/founder_corpus.py` 在本机生成；curl-bagder、enron-steffes-j 与 composite 收集公开来源的真实输入，原文版权归作者，只在本机重建，`raw/` 与 `frames.json` 不入库：
 
 ```sh
 .venv/bin/python scripts/fetch_corpus.py curl-bagder       # 主来源：GitHub、CI、邮件列表、Mastodon、博客；需已登录 gh
@@ -73,6 +73,8 @@ python3 scripts/eval_judgment.py --rescore .local/eval/<run-id> --report   # 用
 .venv/bin/python scripts/fetch_corpus.py composite         # 混合人物的社区、生活问答、newsletter 与天气
 .venv/bin/python scripts/compose_corpus.py build           # 拼出化名人物的两周；还有 labels、noise、audit
 .venv/bin/python scripts/compose_corpus.py family          # 追加作者编写的家庭流（节拍表入库，见 corpus/composite/family/）
+.venv/bin/python scripts/founder_corpus.py all             # 作者编写的 founder 语料：节拍表 → 成品、帧、标注、噪音与检查（见 corpus/founder/README.md）
+.venv/bin/python scripts/founder_corpus.py check --part home --strict   # 拆开的节拍表只查一份，并与预算对照（写法见 corpus/founder/WRITING.md）
 ```
 
 `scripts/fetch_corpus.py` 只用标准库与 `gh api` 子进程，顺序请求并限速、遵守 robots.txt，输出 `corpus/<source>/raw/`。主来源约需一千余次 GitHub 请求与数百次网页请求，二三十分钟；`--only` 只重抓部分流，`--start/--end` 改变窗口。抓取不调用任何模型，也不清洗或去重；唯一的改动是把电话号码样式替换为 `[phone]`。
@@ -87,20 +89,21 @@ python3 scripts/eval_judgment.py --free-run --corpus <frames.json> --rescore .lo
 python3 scripts/eval_judgment.py --free-run --corpus corpus/composite/frames.json --persona-context "<人物设定>" --text-cap 1000 --dry-run
 ```
 
-每帧把 SKILL.md、用户背景（附输出语言与“本人事件”的说明）、上一帧提交后的状态、本帧输入与宿主信号交给模型。输入只交 `id / channel / from / at / subject / url / text`、`self`（是否本人）与语料带有时的 `stream`（work / community / life / family / subscription，用户背景里附一句说明；语料含家庭流时，输出语言的说明另加一句瑞典语往来也用中文整理），不交由公开资料推断的作者类别与 `origin`；每帧超过 60 条或 2 万字符时把单条正文截到 1500 字符并记原长，不删条目，`--text-cap` 把这个长度收紧（估算超出预算时用）。`--persona-context` 换掉语料自带的人物背景。批次经内存内核提交，被拒绝时带回执重试，最多 3 次，仍被拒绝则该帧记 skipped、沿用上一帧状态。因为状态逐帧前传，帧只能顺序运行；`--frames` 只决定跑到哪一帧为止，`--resume` 先按记录重放已接受的批次再继续。每帧落盘提示、原始响应、回执、提交后的 state、token 与费用；累计费用达到 `--max-cost`（默认 40 美元）后不再开始新的一帧。`--dry-run` 按上次全量运行拟合的单价估算费用，状态增长用写明的假设。
+每帧把 SKILL.md、用户背景（附输出语言与“本人事件”的说明）、上一帧提交后的状态、本帧输入与宿主信号交给模型。输入只交 `id / channel / from / at / subject / url / text`、`self`（是否本人）与语料带有时的 `stream`（work / community / life / family / subscription，用户背景里附一句说明）。输出语言的说明取语料的 `persona.language`，`stream` 的说明取语料顶层的 `streams`，没有时用默认的英文工作语言与五条流；语料声明家庭流是瑞典语时（`source.stream_languages`，或 composite 的 `source.family`），另加一句瑞典语往来也用中文整理。不交由公开资料推断的作者类别、`origin` 与结构化的通话、转账字段；每帧超过 60 条或 2 万字符时把单条正文截到 1500 字符并记原长，不删条目，`--text-cap` 把这个长度收紧（估算超出预算时用）。`--persona-context` 换掉语料自带的人物背景。批次经内存内核提交，被拒绝时带回执重试，最多 3 次，仍被拒绝则该帧记 skipped、沿用上一帧状态。因为状态逐帧前传，帧只能顺序运行；`--frames` 只决定跑到哪一帧为止，`--resume` 先按记录重放已接受的批次再继续。每帧落盘提示、原始响应、回执、提交后的 state、token 与费用；累计费用达到 `--max-cost`（默认 40 美元）后不再开始新的一帧。`--dry-run` 按上次全量运行拟合的单价估算费用，状态增长用写明的假设。
 
 自由运行不做作者对比，改与语料旁的 `labels.json` 做三项对照：被处置为 noise / duplicate 的输入相对强依据忽略列表的召回与精确率（弱依据单列）；同组输入被引用进同一条目、同一根层事项的比例（跨线程组单列）；同帧事项按弱档位的成对排序与 Agent 根层份额的一致率。衔接方式的取舍见[决策记录](decisions.md#推迟到后续切片)。语料带 `stream` 时，报告另列各流的处置分布，以及根层 64 份平均有多少来自每条流（按事项引用的输入分摊，`summary.json` 另记逐帧的值）。
 
-`labels.json` 有 `family` 一节（作者编写的家庭流，依据 `authored`）时，它单独计分，不与前四条流由真实行为推出的指标混算：前四条流的三项对照只看前四条流的输入，口径与加入家庭流之前相同；家庭流另列忽略的召回与精确率、作者事项与并入关系的同组一致、按作者档（critical > high > normal > low > trace > none）的成对排序与作者档 × 份额表，分流召回表加 family 几行。家庭流只在这一帧确实交给了模型时计分，用不含家庭流的语料跑出的旧记录复算结果不变。作者登记的问题（`family.asks`）在契约的状态里没有可对照的字段，脚本不计分，报告里人工对照。
+`labels.json` 有 `family` 一节（作者编写的家庭流，依据 `authored`）时，它单独计分，不与前四条流由真实行为推出的指标混算：前四条流的三项对照只看前四条流的输入，口径与加入家庭流之前相同；家庭流另列忽略的召回与精确率、作者事项与并入关系的同组一致、按作者档（critical > high > normal > low > trace > none）的成对排序与作者档 × 份额表，分流召回表加 family 几行。家庭流只在这一帧确实交给了模型时计分，用不含家庭流的语料跑出的旧记录复算结果不变。作者登记的问题（`family.asks`）在契约的状态里没有可对照的字段，脚本不计分，报告里人工对照。整份由作者编写的语料（[corpus/founder](../corpus/founder/README.md)）没有弱标注，`labels.json` 只有同形的 `authored` 一节，范围是全部五条流（`scope.streams`）：报告省去弱标注那几项，只列作者标注的对照，分流召回按输入所在的流。
 
 自由运行的结果可以打磨成原型的演示数据：
 
 ```sh
-.venv/bin/python scripts/build_demo_data.py composite --import-run .local/eval/<id>   # 导出 Agent 批次到 prototype/data/composite/agent-batches.json
-.venv/bin/python scripts/build_demo_data.py composite --report                        # 按 edits.json 修正、重放并写 scenario.mjs
+.venv/bin/python scripts/build_demo_data.py founder --import-run .local/eval/<id>     # 导出 Agent 批次到 prototype/data/founder/agent-batches.json
+.venv/bin/python scripts/build_demo_data.py founder --report                          # 按 edits.json 修正、重放并写 scenario.mjs（默认演示数据）
+.venv/bin/python scripts/build_demo_data.py composite --report                        # 旧演示数据 composite，同上
 ```
 
-修正只写在 `prototype/data/<name>/edits.json`：对 Agent 批次的增删改、处置更正、旁白、回应路径与手写反馈。脚本从空状态用内存内核逐帧重放，任何一帧被拒绝就停下；写出后再用原型引擎回放核对。演示数据的正文截到 500 字符并保留链接，不收 Enron 营销邮件；本人在来源处的回复、评审、合并与关闭按线程挂到当时的事项与回应路径上。每处修正与理由记在同目录的 POLISH.md。
+修正只写在 `prototype/data/<name>/edits.json`：对 Agent 批次的增删改、处置更正、旁白、回应路径与手写反馈。脚本从空状态用内存内核逐帧重放，任何一帧被拒绝就停下；写出后再用原型引擎回放核对。演示数据的正文截到 500 字符并保留链接，不收 Enron 营销邮件；本人在来源处的回复、评审、合并与关闭按线程挂到当时的事项与回应路径上。每处修正与理由记在同目录的 POLISH.md。数据集也可以写成 `--dataset composite|founder`；两者不同的设置（不进演示的输入、不推导反馈的线程、哪些流保留 `kind`、来源处的动作、时区的退路）写在脚本的 `DATASETS` 里。founder 的批次来自 `free-20261103-225347`，导入后入库，重建不需要本机的运行记录。原型不带 `?data=` 时读 founder（`prototype/data/select.mjs` 的 `defaultDataset`）。
 
 ## 体验站构建与发布
 
@@ -149,28 +152,28 @@ node scripts/check-ix.mjs --data story                            # 悬停与展
 
 每种形式写 `<out>/<form>.png`，另写 `report.json`（URL、页面报错、检查结果）；有报错时退出码为 1。`--eval "<js>"` 在截图前执行一段脚本，`--base` 改原型地址，`CHROME` 环境变量指定浏览器。默认关掉显卡，页面里的 WebGL 会退回 Canvas 2D；要截 WebGL 画面（整理脉冲的粒子与余辉）时加 `--gpu`。
 
-体验站导航的“全部原型”面板与入口页的画廊共用 `site/.vitepress/theme/prototypes.mjs` 列出的全部原型，面板顺序、默认帧与弹框里加的 `embed=1`、`card=0` 都照合页 `all.html`。卡片预览图是 `site/previews/<id>.webp`（640×400，共约 560 KB），原型界面明显变化后按同样的参数重截：原版与 A/B/C/D/E 隐藏方案切换栏，形式页收起概念卡，复盘图与回应组件页用各自的默认帧（批次记谱直接打开会先演开场，截图前跳到终态；回应时序直接打开会先讲一遍，所以带上它弹框里停的默认帧 f26），概念动画在弹框里不带帧（播各自的循环），预览图停在第三拍：份额拨盘取落定的 f26，整理脉冲加 `--gpu` 取 f20 朱红线打下的那一刻，再用 Homebrew 的 `cwebp` 缩到 640 像素宽：
+体验站导航的“全部原型”面板与入口页的画廊共用 `site/.vitepress/theme/prototypes.mjs` 列出的全部原型，面板顺序、默认帧与弹框里加的 `embed=1`、`card=0` 都照合页 `all.html`。卡片预览图是 `site/previews/<id>.webp`（640×400，共约 760 KB），原型界面明显变化后按同样的参数重截：原版与 A/B/C/D/E 隐藏方案切换栏，形式页收起概念卡，复盘图与回应组件页用各自的默认帧（批次记谱直接打开会先演开场，截图前跳到终态；回应时序直接打开会先讲一遍，所以带上它弹框里停的默认帧 f28），概念动画在弹框里不带帧（播各自的循环），预览图停在第三拍：份额拨盘取落定的 f21，整理脉冲加 `--gpu` 取 f20 朱红线打下的那一刻，再用 Homebrew 的 `cwebp` 缩到 640 像素宽：
 
 ```sh
 out=.local/previews
-node scripts/shoot-forms.mjs --out $out --only original,a,b,d,duo --frame 26 --eval "document.documentElement.classList.add('is-embedded')"
-node scripts/shoot-forms.mjs --out $out/c --only c --frame 25 --eval "document.documentElement.classList.add('is-embedded')"
-node scripts/shoot-forms.mjs --out $out/w --only watch,multiples --frame 26 --eval "document.querySelector('[data-card]').click()"
+node scripts/shoot-forms.mjs --out $out --only original,a,b,d,duo --frame 22 --eval "document.documentElement.classList.add('is-embedded')"
+node scripts/shoot-forms.mjs --out $out/c --only c --frame 22 --eval "document.documentElement.classList.add('is-embedded')"
+node scripts/shoot-forms.mjs --out $out/w --only watch,multiples --frame 22 --eval "document.querySelector('[data-card]').click()"
 node scripts/shoot-forms.mjs --out $out/r --only radio,strips,frontpage,receipt,orb,departures,blame,chat --eval "document.querySelector('[data-card]').click()"
 node scripts/shoot-forms.mjs --out $out/s --only lineage,provenance,respond
 node scripts/shoot-forms.mjs --out $out/n --only notation --eval "foldNotation.skip()"
-node scripts/shoot-forms.mjs --out $out/t --only timing --frame 26
-node scripts/shoot-forms.mjs --out $out/y --only yield --frame 22     # 让位图不带帧直接打开会讲一遍，预览取静止的默认帧
+node scripts/shoot-forms.mjs --out $out/t --only timing --frame 28
+node scripts/shoot-forms.mjs --out $out/y --only yield --frame 20     # 让位图不带帧直接打开会讲一遍，预览取静止的默认帧
 node scripts/shoot-forms.mjs --out $out/v --only morph --frame 28     # 变形同理，静止时停在最后一帧
-node scripts/shoot-forms.mjs --out $out/k --only peak --frame 26      # 峰值保持同理，取 composite 的默认帧 f26
-node scripts/shoot-forms.mjs --out $out/g --only age --frame 26       # 驻龄同样：取弹框里停的默认帧 f26
+node scripts/shoot-forms.mjs --out $out/k --only peak --frame 22      # 峰值保持同理，取弹框里停的默认帧 f22
+node scripts/shoot-forms.mjs --out $out/g --only age --frame 22       # 驻龄同样：取弹框里停的默认帧 f22
 node scripts/shoot-forms.mjs --out $out/ch --only chain --frame 28    # 等待链同上，取弹框里停的最后一帧
-node scripts/shoot-forms.mjs --out $out/u --only tug --frame 26       # 拔河同样，预览取故事的末帧 f26
+node scripts/shoot-forms.mjs --out $out/u --only tug --frame 28       # 拔河同样，预览取两周的末帧 f28
 node scripts/shoot-forms.mjs --out $out/kh --only khipu --data story --frame f26   # 结绳的默认样张是手写情境；带帧打开不讲，取 f26 的根层
-node scripts/shoot-forms.mjs --out $out/m --only dial --frame 26 --eval "document.querySelector('[data-card]').click()"
+node scripts/shoot-forms.mjs --out $out/m --only dial --frame 21 --eval "document.querySelector('[data-card]').click()"
 node scripts/shoot-forms.mjs --out $out/p --only pulse --gpu --frame 20 --eval "(async () => { document.querySelector('[data-card]').click(); await new Promise(r => setTimeout(r, 400)); foldPulse.seek(20, 3.55); })()"
-node scripts/shoot-forms.mjs --out $out/t4 --only trays --frame 26 --eval "document.querySelector('[data-card]').click()"   # 回应托盘带帧打开不讲一遍
-node scripts/shoot-forms.mjs --out $out/gl --only glasses --frame 26 --eval "(async () => { document.querySelector('[data-card]').click(); foldGlasses.press('click'); await foldGlasses.settle(); })()"   # 智能眼镜带帧打开不讲一遍，预览取 f26 打开的那一件
+node scripts/shoot-forms.mjs --out $out/t4 --only trays --frame 22 --eval "document.querySelector('[data-card]').click()"   # 回应托盘带帧打开不讲一遍
+node scripts/shoot-forms.mjs --out $out/gl --only glasses --frame 21 --eval "(async () => { document.querySelector('[data-card]').click(); foldGlasses.press('click'); await foldGlasses.settle(); })()"   # 智能眼镜带帧打开不讲一遍，预览取 f21 打开的那一件
 for f in $out/*.png $out/*/*.png; do cwebp -quiet -q 82 -m 6 -sharp_yuv -resize 640 0 "$f" -o "site/previews/$(basename "$f" .png).webp"; done
 ```
 
@@ -186,15 +189,15 @@ node scripts/export-all.mjs --out .local/export/all.html && node scripts/shoot-f
 
 发布前运行 `make check` 和 `npm run site:build`，并核对文档链接、公式、流程图、搜索及原型交互。站点构建成功不等于产品 CLI 的持久化与完整验收已经完成。
 
-默认演示数据与站内的原型截图含化名改写的真实公开文本，`npm run site:build` 会把它们一起放进 `dist/`。2026-10-15 用户决定照现状公开，来源、许可与已知的署名缺口见[演示数据的来源与许可](../prototype/data/composite/SOURCES.md#公开与许可)；`npm run deploy` 只在用户指示时运行。
+默认演示数据 founder 的人物与消息都由作者编写，没有第三方内容（[来源](../prototype/data/founder/SOURCES.md)）。可切换的旧演示数据 composite 含化名改写的真实公开文本，`npm run site:build` 会把两份一起放进 `dist/`；2026-10-15 用户决定 composite 照现状公开，来源、许可与已知的署名缺口见[它的来源与许可](../prototype/data/composite/SOURCES.md#公开与许可)。`npm run deploy` 只在用户指示时运行。
 
 ## 为什么要做 Fold
 
-[why.md](why.md) 是给第一次了解的人从头读到尾的一篇，也是原来 16 页小册子的接替：十四段沿用小册子的故事线（有尽头的通知、一百多条里的两件、头版、Jonas 的两周、判得怎样、错在哪、同一场比赛、四种处境、按下之后、试一下、做到了哪），每段一到三段文字，至少一张图，只看图和图注也能顺下来。它讲道理，不是规范出处；入口页偏宣传、概念多一些，这一篇只讲为什么。
+[why.md](why.md) 是给第一次了解的人从头读到尾的一篇，也是原来 16 页小册子的接替：十四段沿用小册子的故事线（有尽头的通知、一百多条里的两件、头版、陆晨的两周、判得怎样、错在哪、同一场比赛、四种处境、按下之后、试一下、做到了哪），每段一到三段文字，至少一张图，只看图和图注也能顺下来。它讲道理，不是规范出处；入口页偏宣传、概念多一些，这一篇只讲为什么。
 
 - 站点：它是站点里的一页（frontmatter 里 `layout: page`、`pageClass: fold-why`），导航“从头读起”、侧栏与入口页文档区都链到 `/docs/why`。版式在 `site/.vitepress/theme/why.css`，与入口页同一张纸（[style.md](../site/landing/style.md)）；颜色取文档页的主题变量，所以深色外观下也能读。旧地址 `/docs/brief/` 由 `scripts/prepare-site.mjs` 生成一页跳转，旧的 `#page-N` 落到对应的段（第 14、15 页都落到“做到了哪”）。
 - 字体：节名、引句（`>` 开头的行）和标题用 Fold Serif SC 子集。`scripts/landing-fonts.mjs` 从这一篇的 `#`、`##` 与 `>` 行收字放进文档子集；改了这些字要重跑它，`--check` 漏字即失败。
-- 图：19 张，都在 `assets/why/`（webp，懒加载）。`d-*.webp` 是示意图，按入口页“印着刻度的纸”画（纸白、墨黑、灰，朱红只给等他回应的），数据由演示回放现算；其余是原型截图，停在 8 月 14 日零点（composite 的 f22），按手机宽度能读的大小裁切。每张图一个 `figure`、一句图注；手机上一张占满宽，iPad 起 `.fw-pair` 里的两张并排，`--a` 是图的宽高比、`--max` 是截图的 1 倍宽。重画与重拍：
+- 图：19 张，都在 `assets/why/`（webp，懒加载）。`d-*.webp` 是示意图，按入口页“印着刻度的纸”画（纸白、墨黑、灰，朱红只给等他回应的），数据由演示回放现算；其余是原型截图，停在 9 月 18 日零点（默认数据集 founder 的 f22，推后那张是 f23），按手机宽度能读的大小裁切。每张图一个 `figure`、一句图注；手机上一张占满宽，iPad 起 `.fw-pair` 里的两张并排，`--a` 是图的宽高比、`--max` 是截图的 1 倍宽。重画与重拍：
 
   ```sh
   make prototype                                   # 截图要原型服务；示意图不要
@@ -203,7 +206,7 @@ node scripts/export-all.mjs --out .local/export/all.html && node scripts/shoot-f
   node scripts/why-figures.mjs --only desk-f22 --out .local/why   # 单张，写到别处先比对
   ```
 
-  开头那张 `phone-f22.webp` 沿用上一版，不在脚本里。换图后核对 `why.md` 里 `<img>` 的宽高与 `--a`；原型或演示数据改动后，正文、图注与示意图里的例子（表里的几条输入、两处判错、诊所的回执）要一起核对。
+  脚本画图前先打印它从回放里取的数（这半天的条数、要紧几件、等你几件、各流的条数与问题数、两处判错的份额），正文与图注里的同一些数要对得上。换图后核对 `why.md` 里 `<img>` 的宽高与 `--a`；原型或演示数据改动后，正文、图注与示意图里的例子（表里的几条输入、两处判错、客户那件的回执）要一起核对。
 - 检查：`npm run site:build && node scripts/check-why.mjs`，七个尺寸无报错、无横向滚动，十四段与目录对得上，每张图都加载、是 webp、懒加载、有图注，并排的两张一样高，`assets/why/` 里没有用不到的文件，旧地址能跳过来；还会打印手机宽度下从头滚到底的传输体积。`--shots <目录>` 顺带存每个尺寸的整页截图。
 
 ## 实现时使用哪份规范
@@ -254,6 +257,7 @@ node scripts/export-all.mjs --out .local/export/all.html && node scripts/shoot-f
 | [scripts/label_corpus.py](../scripts/label_corpus.py) | 从真实后续行为推出弱标注 |
 | [scripts/compose_corpus.py](../scripts/compose_corpus.py) | 把几个真实来源拼成化名人物的两周，并生成弱标注与噪音统计 |
 | [scripts/family_stream.py](../scripts/family_stream.py) | 家庭流：由节拍表渲染成品、生成作者标注，并做不可回溯检查 |
+| [scripts/founder_corpus.py](../scripts/founder_corpus.py) | founder 语料：由节拍表生成成品、帧、作者标注与噪音画像并检查；[小样例](../scripts/fixtures/founder-mini/beats.json)供自测 |
 | [.editorconfig](../.editorconfig) | 编码、换行和缩进约定 |
 | [.gitattributes](../.gitattributes) | 文本文件统一使用 LF 换行 |
 | [.gitignore](../.gitignore) | 忽略环境、缓存和本地临时文件 |
@@ -277,7 +281,7 @@ node scripts/export-all.mjs --out .local/export/all.html && node scripts/shoot-f
 
 概览验收需要检查实际生成的 PNG 和 DOM：布局是否对应所选层级与份额，字体是否可读，长文本是否溢出，版本、范围和省略提示是否清楚，并与对应 JSON 核对。仅有 JSON 断言通过不足以证明视觉呈现正确；缺少浏览器或渲染失败时也不能把旧图片当成成功产物。
 
-`make check` 只检查材料；`make test` 运行内存层断言。本地存储、产品 CLI 与概览渲染器尚未实现，对应命令随实现补入。
+`make check` 只检查材料；`make test` 运行内存层断言与 founder 语料流水线的自测。本地存储、产品 CLI 与概览渲染器尚未实现，对应命令随实现补入。
 
 ## 提交署名
 

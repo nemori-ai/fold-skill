@@ -2,7 +2,7 @@ import { escapeHTML as esc, kindLabel, getItem, colorFor, currentAsk, scenario }
 import { createResponseStore, composerHTML, keypadHTML, deferHTML, scheduleHTML, bindResponses, normalizeAsk, responseStatus } from '../respond.mjs?v=respond-1';
 import { peekHTML } from '../forms/motion/ix.mjs';
 import { itemFacts } from '../forms/motion/dial-model.mjs';
-import { currentDataset } from '../data/select.mjs';
+import { currentDataset, defaultDataset } from '../data/select.mjs';
 import { EASE, EASE_IN, EASE_IN_OUT, BEATS, play, stepAt, makeBox, measureEl, ghostOf, morph, reveal, band, popKeys, lookOf } from './d-motion.mjs';
 import { RS, clock, stamp, dayLong, weekday, actionWords, createHomeView } from './d-view.mjs';
 import { G, HINGE, angleAt, FOLD, foldAt, SETTLE, UNSETTLE, SNAP, HAND, BOOK, DETAIL, UNDETAIL, TURN, BODY, BODY_PAD, FEED, TABLE,
@@ -33,9 +33,10 @@ const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const sum = list => list.reduce((n, it) => n + it.share, 0);
 const toNode = html => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
 /** The tell: which round it opens on, which it lands on (the same two rounds D's story uses). */
-const TELL = { composite: { start: 'f22', item: 'smilla-vet', action: 'call', next: 'f23' }, story: { start: 'f04', item: 'launch', action: 'fixed', next: 'f05' } };
-/** Where E opens when the address names no frame: composite f26 (as D), story f04 (four asks, one of them compact). */
-const HOME = { composite: 'f26', story: 'f04' };
+const TELL = { founder: { start: 'f22', item: 'tinglan-outage', action: 'yes928', next: 'f23' }, composite: { start: 'f22', item: 'smilla-vet', action: 'call', next: 'f23' }, story: { start: 'f04', item: 'launch', action: 'fixed', next: 'f05' } };
+/** Where E opens when the address names no frame: founder f22 (six asks the evening before the meeting), composite f26 (as D),
+ * story f04 (four asks, one of them compact). */
+const HOME = { founder: 'f22', composite: 'f26', story: 'f04' };
 let toldOnce = false; // the tell plays once per page load, not again when you come back to E from another variant
 
 export function mount(host, model) {
@@ -45,7 +46,7 @@ export function mount(host, model) {
   const opened = opening.get('variant')?.toLowerCase() === 'duo';
   const params = opened ? opening : new URLSearchParams();
   const askedData = opening.get('data') || currentDataset(); // the shell drops ?data= from the address too
-  const dataset = Object.hasOwn(TELL, askedData) ? askedData : 'composite';
+  const dataset = Object.hasOwn(TELL, askedData) ? askedData : defaultDataset;
   const embedded = (() => { try { return window.top !== window; } catch { return true; } })() || opening.get('embed') === '1';
   const frameIndex = id => Math.max(0, scenario.frames.findIndex(f => f.id === id));
   // The tell plays when E is opened by itself: at the top, no frame, posture or hinge in the address, no referrer.

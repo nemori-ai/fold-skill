@@ -1,5 +1,5 @@
 // The landing page (FoldLanding.vue): which prototypes it shows and in what order, what each card says, and the
-// geometry of the first screen, the situations' glyphs and the beat stage, all computed from site/landing/data.json (the f26 replay).
+// geometry of the first screen, the situations' glyphs and the beat stage, all computed from site/landing/data.json (the replay at f22).
 // No imports: the page, config.mts and the scripts (record-landing, check-landing) read the same tables.
 // Rationale and audit: site/landing/spec.md; story and timings: site/landing/story.md; look: site/landing/style.md.
 
@@ -56,7 +56,7 @@ export function liveSrc(prototype, frame) {
 /** A block's still for a frame (scripts/record-landing.mjs shoots them): what shows before and between live pages. */
 export const stillOf = (id, frame) => `/media/live/${id}-${frame}.webp`
 
-/** The common progress line under the blocks: "8/13 中午 → 此刻", and "此刻" on the last frame played (the page's
+/** The common progress line under the blocks: "9/15 零点 → 此刻", and "此刻" on the last frame played (the page's
  *  "now", f22). The replay sorts every 12 hours, so a frame's time is counted from the one data.json names
  *  (data.frame), on the replay's own clock. */
 export function liveLabel(d, frame) {
@@ -125,10 +125,11 @@ export const DOC_GROUPS = [
     ['Skill 设计', '/docs/skill-design', '何时调用、上下文视图与验证计划'],
     ['评测报告', '/docs/evaluations/README', '真实模型评测：设置、指标与结论'],
   ] },
-  { title: '关心数据从哪来', note: '真实语料', items: [
+  { title: '关心数据从哪来', note: '语料与演示数据', items: [
+    ['演示语料', '/corpus/founder/README', '一位创业者的两周：人物和消息都是编写的，两千多条，带噪音'],
+    ['演示数据打磨', '/prototype-notes/data/founder/POLISH', '一次真实模型的运行怎样打磨成演示数据'],
     ['真实语料', '/corpus/README', '来源调查、许可、重建方法与弱标注'],
-    ['混合人物语料', '/corpus/composite/MIX', 'Jonas 的两周：五条流的来源与改写'],
-    ['演示数据打磨', '/prototype-notes/data/composite/POLISH', '自由运行怎样打磨成演示数据'],
+    ['旧的演示语料', '/corpus/composite/MIX', '之前用的混合人物语料：化名改写的真实公开数据'],
   ] },
   { title: '想看形式怎么来的', note: '原型与形式', items: [
     ['原型说明', '/prototype-notes/README', '各种形式的场景、入口与共同操作'],
@@ -383,8 +384,8 @@ export function stageModel(d) {
   const ticks = v(d.beat1.ticks).map(([m, stream, to, target], i) => ({
     i, m, x: m / WINDOW_MINUTES * 100, lane: LANES.findIndex(l => l[0] === stream), to, target,
   }))
-  // The 40 adopted inputs: each falls into its own item's segment, spread evenly across it in arrival order, and is
-  // absorbed there. One went to an item withdrawn this round: it drops to the ruler and fades.
+  // The adopted inputs (90 at founder f22): each falls into its own item's segment, spread evenly across it in arrival
+  // order, and is absorbed there. One that went to an item withdrawn this round drops to the ruler and fades.
   const adopted = ticks.filter(t => t.to !== 'fold')
   const byItem = new Map()
   for (const t of adopted) {
@@ -409,14 +410,15 @@ export function stageModel(d) {
  * When things happen on the beat stage (the fourth section), in ms from the moment a beat starts.
  * The CSS reads the per-element times from inline variables, so this table is their single source:
  *   sweep   the 12 hours pass left to right and the ticks appear as the playhead reaches them
- *   fold    the 118 unadopted ticks shrink to stubs (and the Agent's shorten), in their lane groups
+ *   fold    the unadopted ticks shrink to stubs (and the Agent's shorten), in their lane groups
  *   squeeze (beats) the lanes compress towards the ruler
- *   drop    the 40 adopted inputs fall one after another (start, gap); each falls for `fall` ms, lands inside its
- *           own item's segment and is absorbed in `absorb` ms
+ *   drop    the adopted inputs fall one after another (start, gap); each falls for `fall` ms, lands inside its
+ *           own item's segment and is absorbed in `absorb` ms. `span` caps the time from the first start to the last:
+ *           with many inputs the gap shrinks, so the beat ends when it did with 40 (founder f22 has 90: 10 ms apart)
  *   yield   the ruler re-divides on one curve while the dots arrive: an item grows as its inputs land in it
  */
 export const TIMING = {
-  beats: { sweep: [150, 1600], fold: 0, squeeze: [260, 600], drop: [900, 22], fall: 560, absorb: 190, yield: [1300, 1100] },
+  beats: { sweep: [150, 1600], fold: 0, squeeze: [260, 600], drop: [900, 22], span: 860, fall: 560, absorb: 190, yield: [1300, 1100] },
 }
 // The yield's curve (the CSS --e-yield), to know where a segment is when a dot reaches it.
 const YIELD_CURVE = [0.65, 0, 0.35, 1]
@@ -430,6 +432,23 @@ export function bezier([x1, y1, x2, y2], x) {
 }
 // The share of a dot's animation spent falling; the rest is it being absorbed into its segment (the CSS fl-drop).
 export const FALL_SHARE = 0.74
+
+// The names under the ruler on a tablet or desk sit centred under their segments (CSS: --x in % of the plot). Narrow
+// neighbours would overlap, so each row is laid out once for the narrowest plot those layouts get (456 px, a 960 px
+// window): left to right each name moves right of the one before, then right to left back inside the plot. A wider
+// plot only opens the gaps. Widths are estimated for the 10 px monospace face (CJK ≈ 10.3 px, Latin ≈ 6.1 px).
+const LABEL_PLOT = 456, LABEL_GAP = 10
+const labelWidth = text => [...text].reduce((w, c) => w + (/[\u3000-\u9fff\uff00-\uffef]/.test(c) ? 10.3 : 6.1), 0) / LABEL_PLOT * 100
+export function placeLabels(items) {
+  const list = items.map(t => ({ ...t, w: labelWidth(t.text) })).sort((a, b) => a.at - b.at)
+  const gap = LABEL_GAP / LABEL_PLOT * 100
+  list.forEach((t, i) => { t.at = Math.max(t.at, t.w / 2, i ? list[i - 1].at + (list[i - 1].w + t.w) / 2 + gap : -Infinity) })
+  for (let i = list.length - 1; i >= 0; i -= 1) {
+    const limit = i === list.length - 1 ? 100 - list[i].w / 2 : list[i + 1].at - (list[i].w + list[i + 1].w) / 2 - gap
+    list[i].at = Math.min(list[i].at, limit)
+  }
+  return list
+}
 
 /**
  * The beat stage's inner HTML (scroll-triggered: FoldLanding.vue sets the state classes); `mode` is 'beats'. Every position is a share of the plot's width
@@ -453,7 +472,8 @@ export function stageHTML(d, mode) {
     .map(([min, text]) => `<span style="--x:${r(min / WINDOW_MINUTES * 100)}">${text}</span>`).join('')
 
   // Where every dot lands: inside its own segment, where that segment is at the moment it arrives.
-  const [d0, gap] = T.drop
+  const [d0, most] = T.drop
+  const gap = Math.min(most, Math.round(T.span / Math.max(1, m.dots.length - 1)))
   const [y0, yd] = T.yield
   const dur = Math.round(T.fall / FALL_SHARE)
   const landAt = k => d0 + k * gap + T.fall
@@ -483,13 +503,21 @@ export function stageHTML(d, mode) {
   const times = `--yt:${y0}ms;--yd:${yd}ms;--dd:${dur}ms`
 
   // Who gave to whom, by name only (the widths show how much): the items that grew on one row, the ones that gave
-  // way (and the blank) on the row below. On a desk each sits under its segment; on a phone each row flows (CSS).
+  // way (and the blank, when it shrank too) on the row below. On a desk each sits under its segment; on a phone each
+  // row flows (CSS).
   const rank = id => v(d.beat2.segments).findIndex(s => s.id === id)
   const key = id => (id === 'withdrawn' ? 'beat2.withdrawn.plain' : `beat2.segments.${rank(id)}.plain`)
-  // Under where it is now when it grew, under where it was when it gave way (a withdrawn group is no longer anywhere).
-  const delta = x => `<span class="dl" data-id="${x.id}" style="--x:${r(x.delta < 0 ? x.bx + x.bw / 2 : x.x + x.w / 2)}" data-k="${key(x.id)}">${x.plain}</span>`
-  const deltas = `<div class="up">${m.deltas.filter(x => x.delta > 0).map(delta).join('')}</div>`
-    + `<div class="down">${m.deltas.filter(x => x.delta < 0).map(delta).join('')}<span class="dl blank" style="--x:100">空余</span></div>`
+  // Under where it is now when it grew, under where it was when it gave way (a withdrawn group is no longer anywhere),
+  // then nudged apart so neighbours under narrow segments do not run into each other (placeLabels).
+  const row = (list, blankToo) => {
+    const items = list.map(x => ({ x, text: x.plain, at: x.delta < 0 ? x.bx + x.bw / 2 : x.x + x.w / 2 }))
+    if (blankToo) items.push({ blank: true, text: '空余', at: 100 })
+    return placeLabels(items).map(t => t.blank
+      ? `<span class="dl blank" style="--x:${r(t.at)}">空余</span>`
+      : `<span class="dl" data-id="${t.x.id}" style="--x:${r(t.at)}" data-k="${key(t.x.id)}">${t.text}</span>`).join('')
+  }
+  const deltas = `<div class="up">${row(m.deltas.filter(x => x.delta > 0), false)}</div>`
+    + `<div class="down">${row(m.deltas.filter(x => x.delta < 0), m.blank.before > m.blank.now)}</div>`
   const lead = m.segments.find(s => s.lead)
   return `<div class="fl-gutter" aria-hidden="true" style="${times}">${lab}<span class="fl-lab-r">64 份</span><span class="fl-lab-d up">增</span><span class="fl-lab-d down">减</span></div>`
     + `<div class="fl-plot" style="${times};--lx:${r(lead.x)};--lw:${r(lead.w)}"><div class="fl-lanes">${lanes}${sweep}</div><div class="fl-axis" aria-hidden="true">${axis}</div>${ruler}<div class="fl-dots">${dots}</div>`
@@ -499,7 +527,7 @@ export function stageHTML(d, mode) {
     + '</div>'
 }
 
-// ---------- the six glyphs of the third section: the same f26 state as each situation's prototype draws it ----------
+// ---------- the six glyphs of the third section: the same f22 state as each situation's prototype draws it ----------
 
 export function glyphs(d) {
   const segs = v(d.beat2.segments)
@@ -596,7 +624,7 @@ export function glyphs(d) {
 }
 
 // The third section's ladder: the six situations from the narrowest to the widest, each with its glyph and at most one
-// number its prototype shows for f26.
+// number its prototype shows for f22.
 export function ladderOf(d) {
   const g = glyphs(d)
   return LADDER.map(l => ({ ...l, svg: g[l.id], figure: l.fig(d) }))

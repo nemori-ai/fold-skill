@@ -58,6 +58,28 @@ a { color: var(--green); }
 .fs-inspector-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--line); }
 .fs-tabs { display: flex; gap: 4px; }
 .fs-tabs button, .fs-inspector-top > button { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 4px 10px; font-size: 12.5px; }
+
+/* A phone: the bar takes two rows (← ‹ date and title › tools, then the frame strip across the width), so the title
+   no longer runs into the strip. Forms made for a phone (catalog `mobile`, body.fs-mobile) fold the bar further in their
+   own CSS; the others put the concept card under the stage instead of beside it. */
+@media (max-width: 640px) {
+  .fs-page { --fs-bar-h: 84px; }
+  .fs-page.fs-mobile { --fs-bar-h: 48px; }
+  .fs-bar { height: var(--fs-bar-h); flex-wrap: wrap; align-content: center; gap: 6px 8px; padding: 6px 10px; }
+  .fs-home { font-size: 0; }
+  .fs-home::before { content: "←"; font-size: 16px; }
+  .fs-name { display: none; }
+  .fs-nav { flex: 1 1 0; }
+  .fs-when > span { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fs-ticks { order: 1; flex: 1 0 100%; }
+  .fs-ticks button { flex: 1 1 0; width: auto; min-width: 2px; }
+  .fs-tools button { padding: 0 8px; }
+  .fs-body { height: calc(100dvh - var(--fs-bar-h)); }
+  .fs-inspector { top: var(--fs-bar-h); }
+  .fs-page:not(.fs-mobile):not(.fs-show) .fs-body { display: block; height: auto; }
+  .fs-page:not(.fs-mobile):not(.fs-show) .fs-stage { height: calc(100dvh - var(--fs-bar-h)); }
+  .fs-page:not(.fs-mobile):not(.fs-show) .fs-card { border-left: 0; border-top: 1px solid var(--line); }
+}
 .fs-tabs button.is-on { background: var(--ink); color: var(--surface); }
 .fs-inspector-body { overflow: auto; padding: 12px 16px 40px; }
 .fs-inspector-body pre { margin: 0; font: 11.5px/1.5 var(--mono); white-space: pre-wrap; word-break: break-all; }

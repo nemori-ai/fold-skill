@@ -4,7 +4,7 @@
 //   · deadlinesOf     此刻之后的期限：登记的问题自己的 due_at，或条目的 due_at
 //   · createResponder respond.mjs 的控件按事项挂进阅读区；本页记录先“已保存”，下一轮整理回放后“已收到”，可撤回
 // 本页记录不写回 Fold 状态，只演示回路。
-import { escapeHTML as esc, formatDate, formatTime, getItem, currentAsk, records, scenario, personName, familyMove } from './shared.mjs?v=feedback-loop-1';
+import { escapeHTML as esc, formatDate, formatTime, getItem, currentAsk, records, scenario, personName, ownMove } from './shared.mjs?v=feedback-loop-1';
 import {
   normalizeAsk, responseHTML, composerHTML, keypadHTML, deferHTML, scheduleHTML, bindResponses,
   responseStatus, setTimeZone, deferOptions,
@@ -17,9 +17,9 @@ const frames = scenario.frames;
 
 /** “20 小时后”“3 天后”“已过 1 天 7 小时”. */
 export function relative(ms) {
-  const past = ms < 0, h = Math.abs(ms) / HOUR;
-  const text = h < 1 ? `${Math.max(1, Math.round(h * 60))} 分钟` : h < 48 ? `${Math.round(h)} 小时`
-    : `${Math.floor(h / 24)} 天${Math.round(h % 24) ? ` ${Math.round(h % 24)} 小时` : ''}`;
+  const past = ms < 0, h = Math.abs(ms) / HOUR, whole = Math.round(h);
+  const text = h < 1 ? `${Math.max(1, Math.round(h * 60))} 分钟` : h < 48 ? `${whole} 小时`
+    : `${Math.floor(whole / 24)} 天${whole % 24 ? ` ${whole % 24} 小时` : ''}`;
   return past ? `已过 ${text}` : `${text}后`;
 }
 
@@ -50,7 +50,7 @@ export function actionSentence(event, link, frameIndex) {
   const ask = link.ask ? askById.get(link.ask) : null;
   const chosen = ask?.actions?.find(action => action.id === link.action);
   let verb;
-  const family = link.via === 'source' && familyMove(event);
+  const family = link.via === 'source' && ownMove(event);
   if (family) verb = `你${family}${chosen && link.meaning === 'decide' ? `，选了「${chosen.label}」` : ''}`;
   else if (link.meaning === 'snooze') verb = `你要求 ${link.until ? stamp(link.until) : '稍后'} 再提醒`;
   else if (link.meaning === 'ack') verb = '你标为已阅';
@@ -60,7 +60,7 @@ export function actionSentence(event, link, frameIndex) {
   else if (link.action === 'close') verb = `你${where}关闭了 ${object || '这一项'}`;
   else if (link.action === 'approve') verb = `你${where}批准了 ${object || '这个 PR'}`;
   else if (link.action === 'request-changes') verb = `你${where}要求修改 ${object}`.trim();
-  else if (link.meaning === 'decide') verb = `你${where}${object ? `用 ${object} ` : ''}选了「${chosen?.label || link.action}」`;
+  else if (link.meaning === 'decide') verb = `你${where}${object ? `回复了 ${object}，` : ''}选了「${chosen?.label || link.action}」`;
   else if (to) verb = `你${where}回复了 ${to}`;
   else if (object) verb = `你${where}评论了 ${object}`;
   else verb = `你${where}留了一条评论`;

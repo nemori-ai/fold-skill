@@ -81,6 +81,13 @@ ACK = re.compile(
     r"谢谢|收到|好的|好|嗯|在看了|同上|"
     r"tack( så mycket| snälla)?|tusen tack|ok(ej)?|japp|ja|nej|toppen|kanon|perfekt|absolut|precis|skönt|puh|ha(ha)+)"
     r"( [!.?]*)?[!.?~:)( ]*$")
+# 中文聊天的低信息量（只在语料声明含中文时启用，见 info_class 的 zh）：接龙的“收到”“1”、带称呼的“好的陆老师”
+# “收到谢谢老师”，中文标点与微信复制出来的表情代码（[玫瑰] [抱拳]）。只有表情、只有“??”本来就算 empty。
+ZH_ACK_WORD = (r"(?:收到|好的|好嘞|好滴|好哒|好|嗯+|哦+|ok|1|\+1|谢谢|多谢|感谢|辛苦了?|同上|了解|明白|知道了|"
+               r"在看了?|来了)")
+ZH_ADDRESS = r"(?:[一-鿿]{0,2}(?:老师|总|哥|姐)|大家|各位|您|你)"
+ZH_ACK = re.compile(rf"^{ZH_ADDRESS}?(?:{ZH_ACK_WORD}{ZH_ADDRESS}?[\s,，、.。!！~～…]*)+$")
+EMOJI_CODE = re.compile(r"\[[一-鿿A-Za-z]{1,6}\]")
 
 
 def core_text(text: str | None) -> str:
@@ -99,16 +106,21 @@ def core_text(text: str | None) -> str:
     return re.sub(r"\s+", " ", core).strip().lower()
 
 
-def info_class(event: dict) -> str | None:
-    """低信息量分类：bot / template / empty / ack；有实质内容返回 None。"""
+def info_class(event: dict, zh: bool = False) -> str | None:
+    """低信息量分类：bot / template / empty / ack；有实质内容返回 None。
+
+    zh 为真时（语料的 source.languages 含 zh）另认中文的附和与表情代码；默认关闭，已有语料的数字不变。
+    """
     if event["author_kind"] in ("bot", "automation"):
         return "bot"
     if event.get("text_origin") == "template" and event.get("kind") in ("state_closed", "state_merged", "state_reopened"):
         return "template"  # 只说明状态变了；请求评审、批准等模板通知仍有信息量
     core = event.get("_core", core_text(event.get("text")))
+    if zh:
+        core = EMOJI_CODE.sub(" ", core).strip()
     if not re.sub(r"[\W_]+", "", core):
         return "empty"
-    if len(core) <= 40 and ACK.match(core):
+    if len(core) <= 40 and (ACK.match(core) or (zh and ZH_ACK.match(core))):
         return "ack"
     return None
 
@@ -476,11 +488,11 @@ def scenario_events() -> tuple[list[dict], dict]:
     return events, scenario
 
 
-def metrics(events: list[dict], frames: list[dict], zone: ZoneInfo) -> dict:
+def metrics(events: list[dict], frames: list[dict], zone: ZoneInfo, zh: bool = False) -> dict:
     n = len(events)
     for e in events:
         e["_core"] = core_text(e.get("text"))
-        e["_info"] = info_class(e)
+        e["_info"] = info_class(e, zh)
     by_kind = collections.Counter(e["author_kind"] for e in events)
     authors = collections.Counter(e["author"] for e in events)
     channels = collections.Counter(e["channel"].split(" · ")[0] for e in events)

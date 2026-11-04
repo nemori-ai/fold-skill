@@ -1,0 +1,571 @@
+{
+ "beats": [
+  {"id": "A01", "item": "fd:A-bailu", "level": "normal", "gist": "周会定了 15 号九家店一起切换；郑婉在全员群发了纪要，他说今天列切换清单。", "messages": [
+    {"at": "2026-09-07T11:04:37+08:00", "ch": "fs-bailu", "who": "zhengwan", "text": "@所有人 周会定了 15号周二 九家店一起切", "edited": true},
+    {"at": "2026-09-07T11:04:59+08:00", "ch": "fs-all", "who": "zhengwan", "text": "周会纪要 https://lingyu.feishu.example/docx/Wk0907\n白鹭15号切换 这两周大家优先白鹭"},
+    {"at": "2026-09-07T11:06:02+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "好", "ignore": "ack"},
+    {"at": "2026-09-07T11:09:51+08:00", "ch": "fs-bailu", "who": "luchen", "text": "收到 切换清单我今天列 下午发群里"}
+  ]},
+  {"id": "C01", "item": "fd:C-contract", "level": "normal", "gist": "郑婉说孟洁要求合同里写清楚 AI 接不起来怎么办，她今天出草稿，技术那段让他看。", "messages": [
+    {"at": "2026-09-07T11:18:40+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "那个陆晨，梦洁刚又打电话来，说合同里要写清楚AI接不起来怎么办，就是出故障那种。我今天先出个草稿，技术那段你帮我看一眼。", "kind": "voice"},
+    {"at": "2026-09-07T11:21:05+08:00", "ch": "fs-zhengwan", "who": "luchen", "text": "好 草稿发我"}
+  ]},
+  {"id": "A02", "item": "fd:A-bailu", "level": "normal", "gist": "孟洁在微信发来价目表，他转到白鹭上线群；何嘉开了导入的改动，排班等下午。", "note": "这份是旧版价目表，新版 9/8 晚上孟洁才用邮件发来", "messages": [
+    {"at": "2026-09-07T11:40:22+08:00", "ch": "wx-mengjie", "who": "mengjie", "text": "白鹭价目表_9月.xlsx（186 KB）", "kind": "file"},
+    {"at": "2026-09-07T11:42:10+08:00", "ch": "wx-mengjie", "who": "luchen", "text": "收到 孟总 我们今天导进去"},
+    {"at": "2026-09-07T11:42:31+08:00", "ch": "fs-bailu", "who": "luchen", "text": "白鹭价目表_9月.xlsx（186 KB）", "kind": "file"},
+    {"at": "2026-09-07T11:56:30+08:00", "ch": "gh-frontdesk", "who": "hejia", "text": "孟总刚在微信发的价目表，先导进来，排班下午到了再补。\n\n- 白鹭价目表_9月.xlsx → config/bailu/prices.yaml\n- 九家店共用一份价格，西溪、城西试用时的单独价格不再用\n\nDraft，先别合。", "kind": "pr_opened", "subject": "[lingyu-ai/frontdesk] feat(bailu): 导入白鹭价目表与医生排班 (PR #207)", "url": "https://github.com/lingyu-ai/frontdesk/pull/207"}
+  ]},
+  {"id": "A03", "item": "fd:A-bailu", "level": "normal", "gist": "他把切换清单发到白鹭上线群，各人认领自己那块。", "messages": [
+    {"at": "2026-09-07T14:12:40+08:00", "ch": "fs-bailu", "who": "luchen", "text": "切换清单 https://lingyu.feishu.example/docx/BailuCutover\n每人看下自己那块 漏了直接往里加", "edited": true},
+    {"at": "2026-09-07T14:15:03+08:00", "ch": "fs-bailu", "who": "hejia", "text": "价目表、排班、FAQ 我认领了。"},
+    {"at": "2026-09-07T14:21:55+08:00", "ch": "fs-bailu", "who": "songyue", "text": "店长小程序那块我来～"},
+    {"at": "2026-09-07T14:40:12+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "号码和转移 我"},
+    {"at": "2026-09-07T14:40:30+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "[OK]", "ignore": "emoji"}
+  ]},
+  {"id": "A04", "item": "fd:A-bailu", "level": "normal", "gist": "孟洁发来医生排班，把七位店长拉进对接群；小罗打招呼，余杭店长问两条线是不是都要设。", "messages": [
+    {"at": "2026-09-07T14:31:08+08:00", "ch": "wx-mengjie", "who": "mengjie", "text": "白鹭医生排班_9月第2-4周.xlsx（64 KB）", "kind": "file"},
+    {"at": "2026-09-07T15:02:11+08:00", "ch": "wx-bailu", "who": "mengjie", "kind": "system", "template": "wx_joined", "ignore": "system", "params": {"inviter": "孟洁（白鹭运营）", "who": "曹店长（滨江）”、“钟店长（下沙）”、“葛店长（萧山）"}},
+    {"at": "2026-09-07T15:02:40+08:00", "ch": "wx-bailu", "who": "mengjie", "kind": "system", "template": "wx_joined", "ignore": "system", "params": {"inviter": "孟洁（白鹭运营）", "who": "彭店长（拱墅）”、“田店长（余杭）”、“任店长（钱江新城）”、“傅店长（良渚）"}},
+    {"at": "2026-09-07T15:04:20+08:00", "ch": "wx-bailu", "who": "mengjie", "text": "各位店长，铃语的同事都在群里。15号起九家店的电话都由AI先接，有问题直接在群里说。"},
+    {"at": "2026-09-07T15:06:02+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "各位店长好 我是铃语的小罗 白鹭这边的事都可以找我"},
+    {"at": "2026-09-07T15:06:31+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "这两天我挨个加大家微信 发一下呼叫转移怎么设[抱拳]"},
+    {"at": "2026-09-07T15:06:58+08:00", "ch": "wx-bailu", "who": "mgr-qjxc", "text": "好的！辛苦了[玫瑰]", "ignore": "ack"},
+    {"at": "2026-09-07T15:09:40+08:00", "ch": "wx-bailu", "who": "luchen", "text": "各位店长好 我是铃语的陆晨 技术上的问题可以@我"},
+    {"at": "2026-09-07T15:12:33+08:00", "ch": "wx-bailu", "who": "mgr-yuhang", "text": "收到，我们店座机有两条线，两条都要设吗？晚上下班以后电话也转过去吗"},
+    {"at": "2026-09-07T15:20:07+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "@田店长（余杭） 两条都要设 晚上也转 下班时间AI会帮客人约第二天"},
+    {"at": "2026-09-07T15:33:26+08:00", "ch": "fs-all", "who": "luoxiaowen", "text": "白鹭的对接群拉好了 九家店长都在 要进群的跟我说"}
+  ]},
+  {"id": "A05", "item": "fd:A-bailu", "level": "normal", "gist": "小罗写了呼叫转移的设置说明给他看；他让把每家店转到哪个号码列成表，别让店长自己抄。", "messages": [
+    {"at": "2026-09-07T14:50:44+08:00", "ch": "fs-luoxiaowen", "who": "luoxiaowen", "text": "陆总 呼叫转移的说明我写了一版 七家店座机不太一样 有的是前台分机 你帮我看下对不对"},
+    {"at": "2026-09-07T14:50:52+08:00", "ch": "fs-luoxiaowen", "who": "luoxiaowen", "text": "白鹭呼叫转移设置说明v1.docx（1.2 MB）", "kind": "file"},
+    {"at": "2026-09-07T16:32:10+08:00", "ch": "fs-luoxiaowen", "who": "luchen", "text": "第三步 每家店转到哪个号码列个表放进去 别让店长自己抄"}
+  ]},
+  {"id": "C02", "item": "fd:C-contract", "level": "normal", "gist": "郑婉发来合同草稿，让他看第九条故障那段；他改了措辞，没写死分钟数。傍晚郑婉把草稿发给孟洁，抄送他。", "messages": [
+    {"at": "2026-09-07T16:05:13+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "合同草稿发你了 第九条你看下 就是那个故障的 怎么写比较稳 别把几分钟写死了", "kind": "voice"},
+    {"at": "2026-09-07T16:05:20+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "白鹭×铃语服务合同_草稿0907.docx（58 KB）", "kind": "file"},
+    {"at": "2026-09-07T17:02:48+08:00", "ch": "fs-zhengwan", "who": "luchen", "text": "第九条改了 写的是尽快恢复并通知 没写分钟数 原因写批注里了"},
+    {"at": "2026-09-07T17:31:26+08:00", "ch": "mail-work", "who": "zhengwan", "text": "孟总好：\n合同草稿见附件。第 9 条按您上午电话里说的，写了系统故障时的处理和通知。您和律师看完有意见，我们随时改。\n\n郑婉\n铃语科技\n\n[附件] 白鹭×铃语服务合同_草稿0907.docx", "subject": "白鹭×铃语 服务合同（草稿）"}
+  ]},
+  {"id": "A06", "item": "fd:A-bailu", "level": "normal", "gist": "何嘉在导入的改动里补上排班，西溪、城西周日下午没有医生，标成了不可约；他晚上提醒有两个王医生，要用工号。", "messages": [
+    {"at": "2026-09-07T16:18:09+08:00", "ch": "gh-frontdesk", "who": "hejia", "text": "排班加上了：九家店 31 位医生。\n西溪、城西周日下午没有医生，已经标成不可约。", "kind": "comment", "subject": "Re: [lingyu-ai/frontdesk] feat(bailu): 导入白鹭价目表与医生排班 (PR #207)", "url": "https://github.com/lingyu-ai/frontdesk/pull/207"},
+    {"at": "2026-09-07T22:41:37+08:00", "ch": "gh-frontdesk", "who": "luchen", "text": "排班里有两个王医生（下沙、余杭各一个） id 用工号吧 别用名字", "kind": "review_comment", "subject": "Re: [lingyu-ai/frontdesk] feat(bailu): 导入白鹭价目表与医生排班 (PR #207)", "url": "https://github.com/lingyu-ai/frontdesk/pull/207"}
+  ]},
+  {"id": "A07", "item": "fd:A-bailu", "level": "normal", "gist": "何嘉把价目表和排班都导好了，共 89 项；他看过让合进去，部署完成，小罗请两家试点店打电话问价。", "messages": [
+    {"at": "2026-09-08T10:41:15+08:00", "ch": "gh-frontdesk", "who": "hejia", "text": "价目表 89 项都导完了，排班也在里面，可以看了。", "kind": "comment", "subject": "Re: [lingyu-ai/frontdesk] feat(bailu): 导入白鹭价目表与医生排班 (PR #207)", "url": "https://github.com/lingyu-ai/frontdesk/pull/207"},
+    {"at": "2026-09-08T10:44:02+08:00", "ch": "fs-bailu", "who": "hejia", "text": "白鹭价目表导好了，89 项，排班也进去了。改动在 #207，@陆晨 有空看一下。", "edited": true},
+    {"at": "2026-09-08T10:52:47+08:00", "ch": "fs-hejia", "who": "hejia", "text": "价目表里有 3 项写的“面议”（全口种植、儿童早期矫正、颞下颌关节治疗），AI 现在会说“具体价格要医生面诊后定”，这样可以吗？"},
+    {"at": "2026-09-08T11:12:30+08:00", "ch": "gh-frontdesk", "who": "luchen", "text": "面议的就这么说 LGTM", "kind": "review", "subject": "Re: [lingyu-ai/frontdesk] feat(bailu): 导入白鹭价目表与医生排班 (PR #207)", "url": "https://github.com/lingyu-ai/frontdesk/pull/207"},
+    {"at": "2026-09-08T11:14:05+08:00", "ch": "fs-bailu", "who": "luchen", "text": "看了 合吧"},
+    {"at": "2026-09-08T11:33:51+08:00", "ch": "fs-deploy", "who": "bot-deploy", "kind": "notification", "subject": "部署完成 · frontdesk · prod", "template": "deploy_ok", "params": {"env": "prod", "version": "2026.09.08-2", "commit": "c71d0e4", "summary": "白鹭价目表与医生排班（89 项）", "who": "何嘉"}, "ignore": "bot"},
+    {"at": "2026-09-08T11:33:58+08:00", "ch": "fs-bailu", "who": "hejia", "text": "上了。", "ignore": "ack"},
+    {"at": "2026-09-08T11:38:44+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "好嘞 我让西溪城西先打几个电话试试"},
+    {"at": "2026-09-08T11:52:16+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "@郭店长（西溪） @邵店长（城西） 价目表更新了 方便的话让前台打几个电话问问价格试试～"},
+    {"at": "2026-09-08T11:55:03+08:00", "ch": "wx-bailu", "who": "mgr-xixi", "text": "好的", "ignore": "ack"},
+    {"at": "2026-09-08T11:58:39+08:00", "ch": "wx-bailu", "who": "mgr-chengxi", "text": "行 下午让阿May打", "kind": "voice"}
+  ]},
+  {"id": "A08", "item": "fd:A-bailu", "level": "normal", "gist": "导入的改动合进去了；城西前台打了三通测试电话，报价都对；小罗问 AI 报错了价钱算谁的。", "messages": [
+    {"at": "2026-09-08T14:02:11+08:00", "ch": "gh-frontdesk", "who": "hejia", "kind": "state_merged", "template": "gh_merged", "ignore": "notification", "params": {"number": 207, "base": "main"}, "subject": "Re: [lingyu-ai/frontdesk] feat(bailu): 导入白鹭价目表与医生排班 (PR #207)", "url": "https://github.com/lingyu-ai/frontdesk/pull/207"},
+    {"at": "2026-09-08T14:02:40+08:00", "ch": "gh-frontdesk", "who": "codecov", "kind": "comment", "template": "gh_codecov", "ignore": "bot", "params": {"direction": "increased", "delta": "0.4%", "base": "71.2", "head": "71.6", "files": 3, "missed": 6}, "subject": "Re: [lingyu-ai/frontdesk] feat(bailu): 导入白鹭价目表与医生排班 (PR #207)", "url": "https://github.com/lingyu-ai/frontdesk/pull/207"},
+    {"at": "2026-09-08T15:22:18+08:00", "ch": "gh-frontdesk", "who": "luchen", "text": "FAQ 还没进 孟总说这周给 先用通用的", "kind": "comment", "subject": "Re: [lingyu-ai/frontdesk] feat(bailu): 导入白鹭价目表与医生排班 (PR #207)", "url": "https://github.com/lingyu-ai/frontdesk/pull/207"},
+    {"at": "2026-09-08T15:40:05+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "城西阿May打了三个测试电话 问洗牙 补牙 拔智齿 AI报的都对"},
+    {"at": "2026-09-08T15:40:21+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "[图片] 阿May的测试记录，三通都写着“报价正确”", "kind": "image"},
+    {"at": "2026-09-08T16:05:33+08:00", "ch": "fs-bailu", "who": "luchen", "text": "好 让她明天再多打几个 挑贵的问"},
+    {"at": "2026-09-08T16:31:47+08:00", "ch": "fs-bailu", "who": "songyue", "text": "[图片] 店长小程序里的价目表页，和后台同步了", "kind": "image", "ignore": "chatter"},
+    {"at": "2026-09-08T16:52:30+08:00", "ch": "fs-all", "who": "hejia", "text": "白鹭的价目表今天上线了，有空的帮忙打一下测试号问问价格，号码在白鹭上线群的公告里。"},
+    {"at": "2026-09-08T17:20:31+08:00", "ch": "fs-luoxiaowen", "who": "luoxiaowen", "text": "陆总", "fragment": true, "ignore": "fragment"},
+    {"at": "2026-09-08T17:21:09+08:00", "ch": "fs-luoxiaowen", "who": "luoxiaowen", "text": "店长群里有人私下问我 AI要是报错价钱算谁的[捂脸] 我怎么回比较好"},
+    {"at": "2026-09-08T18:04:55+08:00", "ch": "fs-luoxiaowen", "who": "luchen", "text": "就说按白鹭给的价目表报 报错了我们马上改 价格以店里为准"}
+  ]},
+  {"id": "A09", "item": "fd:A-bailu", "level": "normal", "gist": "晚上八点四十孟洁用邮件发来新版价目表，说周一微信那份不要用了；六分钟后补了附件，正文里也贴了全表。没人回。", "misfit": "答案先到：新版价目表前一晚就在他邮箱里，第二天下午店长才说报价不对，大家还在问按哪份", "messages": [
+    {"at": "2026-09-08T20:40:15+08:00", "ch": "mail-work", "who": "mengjie", "text": "陆总：\n价目表有几项调了价，以这份为准，周一微信发的那份不要用了。\n孟洁", "subject": "价目表（更新）"},
+    {"at": "2026-09-08T20:46:51+08:00", "ch": "mail-work", "who": "mengjie", "text": "附件忘了，补上。手机上看不方便，表也贴在下面，标 * 的是这次改了的。\n\n[附件] 白鹭价目表_9月_更新.xlsx（192 KB）\n\n白鹭口腔 价目表（2026 年 9 月起执行，九店通用，单位：元）\n序号 项目 价格 备注\n1 初诊检查 0\n2 复诊 0\n3 口腔全景片 150\n4 小牙片 30 每张\n5 CBCT（单颌） 300\n6 CBCT（全口） 450\n7 牙周检查 80\n8 超声波洁牙* 268 原 238\n9 喷砂 120\n10 抛光 80\n11 龈下刮治 300 每象限\n12 牙周维护 280\n13 牙周翻瓣手术 1800 每象限\n14 窝沟封闭 120 每颗\n15 儿童涂氟* 120 每次，原每颗 98\n16 儿童牙齿检查 0\n17 乳牙拔除 100\n18 乳牙树脂充填 260\n19 乳牙牙髓治疗 600\n20 儿童预成冠 800\n21 间隙保持器 900\n22 恒牙拔除（简单） 300\n23 智齿拔除（简单） 500\n24 智齿拔除（复杂） 1200\n25 阻生齿拔除 1800 含拍片\n26 树脂充填（小） 300\n27 树脂充填（中） 450\n28 树脂充填（大） 600\n29 树脂嵌体 1500\n30 全瓷嵌体 2800\n31 根管治疗（前牙） 1000\n32 根管治疗（前磨牙） 1500\n33 根管治疗（磨牙） 2200\n34 根管再治疗 2800\n35 显微根管 800 加收\n36 纤维桩 600\n37 金属桩核 500\n38 烤瓷冠（钴铬） 1500\n39 烤瓷冠（贵金属） 3800\n40 全瓷冠（国产） 2800\n41 全瓷冠（进口） 4800\n42 种植牙（国产）* 7200 含基台、牙冠，原 6800\n43 种植牙（进口）* 13800 含基台、牙冠，原 12800\n44 种植牙冠（单做） 2800\n45 骨粉 1200 每 0.25g\n46 骨膜 1500\n47 上颌窦内提升 3000\n48 上颌窦外提升 8000\n49 即刻种植 2000 加收\n50 全口种植 面议 以面诊方案为准\n51 种植体周维护 300\n52 活动义齿（局部） 2000\n53 全口义齿（单颌） 4000\n54 隐形义齿 3200\n55 隐形矫正（国产）* 23800 原 22800\n56 隐形矫正（进口） 39800\n57 金属托槽矫正* 15800 原 14800\n58 陶瓷托槽矫正 19800\n59 自锁托槽矫正 22800\n60 儿童早期矫正 面议 以面诊方案为准\n61 保持器 800 单颌\n62 矫正复诊 0\n63 冷光美白 1980\n64 家庭美白套装 980\n65 树脂贴面 800 每颗\n66 瓷贴面 3800 每颗\n67 牙龈修整 500 每颗\n68 口腔黏膜检查 50\n69 颞下颌关节检查 100\n70 颞下颌关节治疗 面议\n71 咬合板 1800\n72 夜磨牙垫 1200\n73 拆线 30\n74 局部麻醉 50\n75 无痛麻醉 150\n76 脱敏治疗 100 每次\n77 松牙固定 600\n78 牙外伤处理 300 起\n79 急诊处理 100\n80 冠桥拆除 200 每颗\n81 临时冠 300\n82 取模 100\n83 口内扫描 200\n84 正畸拔牙 400 每颗\n85 种植导板 1500\n86 牙周植骨 3000\n87 根尖手术 2500\n88 牙槽骨修整 800\n89 洁牙年卡 498 一年洁牙 2 次加检查\n\n注：会员价、活动价以店里为准；正畸、全口种植以医生面诊方案为准。九家店价格一样，不再分店。\n\n另外把各店营业时间也贴一下，AI 约时间用得到：\n滨江店 周一至周日 9:00–20:00（周三下午 14:00–17:00 无种植医生）\n西溪店 周一至周六 9:00–20:00，周日 9:00–12:00\n城西店 周一至周六 9:00–20:00，周日 9:00–12:00\n下沙店 周一至周日 9:00–19:00\n萧山店 周一至周日 9:00–19:00（周一上午只看儿牙）\n拱墅店 周一至周日 9:00–20:00\n余杭店 周二至周日 9:00–19:00，周一休息\n钱江新城店 周一至周日 9:00–21:00\n良渚店 周一至周日 9:30–18:30\n种植、正畸首诊都要先约检查，不能直接约手术；儿童涂氟和窝沟封闭可以直接约。医生请假以排班表为准，排班表周日晚上更新。\n医保：滨江店、钱江新城店可以刷医保，只限检查、拍片、补牙、拔牙这些基础治疗，种植、正畸、美白都不能刷；其他七家店暂时不支持医保，客人问到就说可以去这两家。\n停车：滨江店地下车库免费停 2 小时，钱江新城店在商场 B2，凭小票免费 3 小时，良渚店门口可以停，其他店建议坐地铁。\n客人问优惠：九月洁牙年卡 498，老客带新客各送一次抛光，其他活动以店里海报为准，AI 不要自己说打折。\n\n孟洁\n白鹭口腔 运营部\n\n——————————\n发自我的手机", "subject": "Re: 价目表（更新）"}
+  ]},
+  {"id": "A10", "item": "fd:A-bailu", "level": "normal", "gist": "宋悦在店长小程序里加了“今日来电”页；他让切换前九个店长都装上。何嘉在改动下面放了常见问题的模板，等白鹭填。", "messages": [
+    {"at": "2026-09-09T09:41:22+08:00", "ch": "fs-bailu", "who": "songyue", "text": "[图片] 店长小程序新加的“今日来电”页，能看到AI接了哪些电话", "kind": "image"},
+    {"at": "2026-09-09T10:15:09+08:00", "ch": "fs-bailu", "who": "luchen", "text": "可以 切换前让九个店长都装上"},
+    {"at": "2026-09-09T10:20:41+08:00", "ch": "gh-frontdesk", "who": "hejia", "text": "FAQ 的模板放在 docs/bailu/faq.md 了，等白鹭那边填。", "kind": "comment", "subject": "Re: [lingyu-ai/frontdesk] feat(bailu): 导入白鹭价目表与医生排班 (PR #207)", "url": "https://github.com/lingyu-ai/frontdesk/pull/207"}
+  ]},
+  {"id": "C03", "item": "fd:C-contract", "level": "low", "gist": "白鹭的律师沈雅琴发来合同修改意见，十九条；第 9.2 条要 AI 不可用超过 15 分钟就转到店里指定的号码。郑婉让他先看第九条。", "messages": [
+    {"at": "2026-09-09T10:40:33+08:00", "ch": "mail-work", "who": "lawyer", "text": "郑总、陆总：\n\n按孟总的要求，对 9 月 7 日的合同草稿提以下修改意见。修订版见附件（修订模式），要点列在下面，方便手机上看。\n\n1. 第 1.2 条“服务范围”\n原文：“乙方为甲方提供电话、微信等渠道的客户接待服务。”\n意见：“等”字请删除，写明三项：来电接听、微信公众号消息回复、预约登记。三项以外的服务另行约定，不含在本合同年费内。\n\n2. 第 2.1 条“服务期限”\n意见：写明起止日期，自双方盖章之日起一年。到期前 30 日双方均未书面提出异议的，续约一年，年费另行商定，不自动沿用。\n\n3. 第 3.2 条“接听率”\n原文：“乙方保证 AI 接听率不低于 95%。”\n意见：请写明口径。建议改为：“接听率 = AI 接起的来电数 ÷ 门店来电总数，按自然月、按门店分别统计；不含 3 秒内来电方主动挂断的来电。”另请写明统计数据以乙方后台导出为准，甲方有权随时抽查通话记录。\n\n4. 第 3.3 条“报价与约诊”\n意见：AI 对外报价、约诊时间，以甲方书面提供的价目表和医生排班为准。甲方更新后，乙方应在 2 个工作日内完成更新。\n\n5. 第 4.1 条“数据归属”\n意见：通话录音、转写文字、来电号码属于甲方数据，乙方只能为提供本合同服务使用，不得用于训练模型，不得提供给任何第三方，包括乙方的供应商。合同终止后 30 日内删除，并书面确认。\n\n6. 第 4.3 条“保密”\n意见：保密期限改为合同终止后 3 年。\n\n7. 第 5.1 条“付款”\n原文：“年费分两期支付，每期于期初 10 个工作日内支付。”\n意见：孟总这边暂时没有意见，财务如有调整我另行告知。\n\n8. 第 5.3 条“服务费减免”\n原文：“服务未达标的，乙方酌情减免服务费。”\n意见：“酌情”请改为具体比例：某门店月度接听率低于 95% 的，该门店当月服务费减免 10%；低于 90% 的，减免 30%。\n\n9. 第 6.1 条“上线”\n原文：“乙方于双方约定的日期完成上线。”\n意见：请写明上线日期（孟总说是 9 月 15 日），以及上线的标准：九家门店的来电均由 AI 接听，价目表、医生排班、常见问题导入完毕，并经甲方书面确认。上线后一周内为试运行，试运行期间的接听率不计入第 3.2 条考核。\n\n10. 第 6.2 条“培训”\n意见：乙方在上线前及上线后一个月内，为甲方各门店店长、前台提供不少于两次的现场或线上培训，费用含在年费内。\n\n11. 第 7 条“甲方义务”\n意见：草稿要求甲方“配合乙方完成上线”，范围太宽。请改为列明：提供价目表、医生排班、常见问题，并在各门店完成呼叫转移设置。甲方按时提供上述资料后，上线延误的责任在乙方。\n\n12. 第 8 条“知识产权”\n意见：乙方系统的知识产权归乙方，没有问题；但甲方提供的价目表、话术、门店资料，以及根据甲方资料整理的问答内容，归甲方所有，合同终止后乙方不得继续使用，也不得用于其他客户。\n\n13. 第 9.2 条“系统故障”\n原文：“因系统故障导致服务中断的，乙方应尽快恢复并通知甲方。”\n意见：请列明故障情形，至少包括：语音识别或大模型服务不可用、电话线路中断、乙方系统升级或维护导致的中断。并补一句：AI 服务不可用超过 15 分钟时，乙方应将来电转接至甲方指定号码，直至恢复。\n\n14. 第 9.3 条“通知与说明”\n意见：故障发生后 30 分钟内，以电话或微信通知甲方运营负责人；24 小时内提供书面说明，写明起止时间、受影响的来电数和处理措施。\n\n15. 第 9.4 条“例行维护”\n意见：乙方及乙方供应商的例行维护，应避开每日 8:00–21:00，并提前 3 个工作日通知甲方。\n\n16. 第 10.1 条“违约责任”\n意见：草稿只约定了甲方逾期付款的违约金，请对等补充乙方的违约情形：连续两个月接听率低于 90%，或一年内发生三次以上第 9.2 条的故障，甲方有权解除合同，并按未履行期限退还已付年费。\n\n17. 第 11 条“合同解除”\n意见：草稿只写了“双方协商一致可以解除”。请补充：任何一方严重违约，经书面催告 15 日内仍未改正的，另一方可以书面通知解除；解除后乙方应配合甲方把来电恢复到门店原有号码，并导出全部通话记录交给甲方。\n\n18. 第 12 条“不可抗力”\n意见：“供应商原因”不属于不可抗力，请从列举中删除。乙方选用的语音识别、大模型、电话线路服务商出了问题，按第 9 条处理，不能按不可抗力免责。\n\n19. 第 13 条“争议解决”\n意见：改为甲方所在地人民法院管辖。\n\n以上第 3.2 条、第 9.2 条、第 9.3 条是孟总特别交代的，请重点看；第 12 条删掉“供应商原因”这一点，孟总也比较在意。有不同意见的地方，电话沟通更快。\n\n沈雅琴\n（白鹭口腔外聘律师）\n\n在 2026年9月7日 17:31，郑婉 写道：\n> 孟总好：\n> 合同草稿见附件。第 9 条按您上午电话里说的，写了系统故障时的处理和通知。", "subject": "Re: 白鹭×铃语 服务合同（草稿）"},
+    {"at": "2026-09-09T10:52:18+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "律师的意见来了 好长 你先看第九条 就是故障那块 别的我来弄", "kind": "voice"},
+    {"at": "2026-09-09T11:31:40+08:00", "ch": "fs-zhengwan", "who": "luchen", "text": "好 下午看"}
+  ]},
+  {"id": "A11", "item": "fd:A-bailu", "level": "normal", "ask": "a1", "gist": "西溪、城西两位店长说 AI 跟客人报种植牙 6800，店里现在是 7200；小罗转到白鹭上线群，何嘉问到底按哪份，小罗在对接群问孟洁，孟洁没回。", "messages": [
+    {"at": "2026-09-09T15:10:22+08:00", "ch": "wx-bailu", "who": "mgr-xixi", "text": "@铃语-小罗 刚有个客人说电话里AI报种植牙6800，我们现在是7200，价格是不是没更新？"},
+    {"at": "2026-09-09T15:11:12+08:00", "ch": "wx-bailu", "who": "mgr-chengxi", "text": "我们这边也有 上午一个客人问种植 AI也说的六千八 前台跟人家解释了半天", "kind": "voice"},
+    {"at": "2026-09-09T15:11:20+08:00", "ch": "wx-bailu", "who": "mgr-chengxi", "text": "[捂脸]", "ignore": "emoji"},
+    {"at": "2026-09-09T15:13:30+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "收到我去问", "ignore": "ack"},
+    {"at": "2026-09-09T15:20:14+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "[聊天记录] 白鹭口腔×铃语\n郭店长（西溪）：刚有个客人说电话里AI报种植牙6800，我们现在是7200，价格是不是没更新？\n邵店长（城西）：我们这边也有 上午一个客人问种植 AI也说的六千八 前台跟人家解释了半天", "kind": "forward", "ignore": "dup", "dup_of": "A11.1"},
+    {"at": "2026-09-09T15:22:45+08:00", "ch": "fs-bailu", "who": "hejia", "text": "我导的就是孟总周一微信发的那份，种植牙写的是 6800。"},
+    {"at": "2026-09-09T15:22:59+08:00", "ch": "fs-bailu", "who": "hejia", "text": "到底按哪份？是店里调价了还是表给错了？"},
+    {"at": "2026-09-09T15:41:36+08:00", "ch": "fs-bailu", "who": "luchen", "text": "小罗问下孟总 是不是有新的表"},
+    {"at": "2026-09-09T16:02:12+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "@孟洁（白鹭运营） 孟总 想跟您确认下价目表是不是有新版本？我们这边用的是周一微信收到的那份"},
+    {"at": "2026-09-09T16:04:50+08:00", "ch": "wx-bailu", "who": "luchen", "text": "郭店长 邵店长 不好意思 今天确认完价格马上改"},
+    {"at": "2026-09-09T16:47:19+08:00", "ch": "gh-frontdesk", "who": "hejia", "text": "西溪、城西说种植牙报价不对，我先核一下是不是价目表版本的问题。", "kind": "comment", "subject": "Re: [lingyu-ai/frontdesk] feat(bailu): 导入白鹭价目表与医生排班 (PR #207)", "url": "https://github.com/lingyu-ai/frontdesk/pull/207"}
+  ]},
+  {"id": "C04", "item": "fd:C-contract", "level": "low", "gist": "郑婉回律师的邮件，点成了孟洁价目表那封的回复，律师不在收件人里；他照律师那封补了技术那段。", "misfit": "郑婉的回复挂在了价目表那封邮件下面，引文里就是新版价目表；律师收到了他的补充，没收到郑婉的正文", "messages": [
+    {"at": "2026-09-09T16:20:37+08:00", "ch": "mail-work", "who": "zhengwan", "text": "孟总、沈律师：\n修改意见看过了，大部分没问题，几处想再商量：\n1. 第 3.2 条接听率的口径，按律师写的来。\n2. 第 9.2 条同意加转接，“15 分钟”我们想改成“30 分钟”，转接的号码请每家店提供一个。\n3. 第 9.3 条书面说明，24 小时有点紧，能不能改成 2 个工作日。\n4. 第 13 条管辖地没意见。\n付款还是按半年付。技术部分陆晨稍后补充。\n\n郑婉\n铃语科技\n\n在 2026年9月8日 20:46，孟洁 写道：\n> 附件忘了，补上。手机上看不方便，表也贴在下面，标 * 的是这次改了的。\n> [附件] 白鹭价目表_9月_更新.xlsx（192 KB）\n> ……", "subject": "Re: 价目表（更新）"},
+    {"at": "2026-09-09T16:24:11+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "回律师了 你补一下技术那段"},
+    {"at": "2026-09-09T17:05:29+08:00", "ch": "mail-work", "who": "luchen", "text": "沈律师好：\n补充一下郑婉邮件里的技术部分。AI 服务不可用时，我们可以在后台把来电直接转到每家店指定的号码，几分钟内能切完，转接的号码由白鹭每家店提供。具体写多少分钟，以郑婉邮件为准。\n\n陆晨\n铃语科技", "subject": "Re: 白鹭×铃语 服务合同（草稿）"},
+    {"at": "2026-09-09T17:06:40+08:00", "ch": "fs-zhengwan", "who": "luchen", "text": "补了"}
+  ]},
+  {"id": "A12", "item": "fd:A-bailu", "level": "normal", "gist": "郑婉在全员群通知周五上午十点白鹭演练。", "messages": [
+    {"at": "2026-09-09T17:36:08+08:00", "ch": "fs-all", "who": "zhengwan", "text": "@所有人 周五上午十点白鹭演练 陆晨高翔小罗在线就行 其他人该干嘛干嘛"}
+  ]},
+  {"id": "A13", "item": "fd:A-bailu", "level": "normal", "answers": "a1", "gist": "孟洁说新版周二晚上就发到他邮箱了；他找到邮件，定了按邮件里的新版。何嘉对出改了 6 项，重导上线，他在对接群跟两位店长道歉。", "note": "问题出来以前，答案已经在 9/8 晚的邮件里", "messages": [
+    {"at": "2026-09-10T09:12:44+08:00", "ch": "wx-bailu", "who": "mengjie", "text": "周二晚上发陆总邮箱了，以邮件那份为准。"},
+    {"at": "2026-09-10T09:24:05+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "孟总说周二晚上发过邮件了 新版 在陆总邮箱里"},
+    {"at": "2026-09-10T09:30:17+08:00", "ch": "fs-bailu", "who": "luchen", "text": "找到了 按邮件里的新版 种植牙7200 还有几项也改了 转何嘉了"},
+    {"at": "2026-09-10T09:30:40+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "[OK]", "ignore": "emoji"},
+    {"at": "2026-09-10T09:52:39+08:00", "ch": "fs-bailu", "who": "hejia", "text": "对了一下，差 6 项：种植牙两档、隐形矫正（国产）、金属托槽、超声波洁牙、儿童涂氟。涂氟的单位也变了，从每颗改成每次。重导中。", "edited": true},
+    {"at": "2026-09-10T10:13:20+08:00", "ch": "fs-hejia", "who": "hejia", "text": "新版表里标 * 的就是改过的，正好 6 个。旧版那份我从配置里删了，免得再用错。"},
+    {"at": "2026-09-10T10:24:51+08:00", "ch": "gh-frontdesk", "who": "hejia", "text": "#207 导的是 9/7 微信那份（旧版）。按孟总 9/8 晚邮件里的新版重导，改了 6 项：\n- 种植牙（国产）6800 → 7200\n- 种植牙（进口）12800 → 13800\n- 隐形矫正（国产）22800 → 23800\n- 金属托槽矫正 14800 → 15800\n- 超声波洁牙 238 → 268\n- 儿童涂氟 98/颗 → 120/次", "kind": "pr_opened", "edited": true, "subject": "[lingyu-ai/frontdesk] fix(bailu): 按 9/8 邮件的新版重导价目表 (PR #212)", "url": "https://github.com/lingyu-ai/frontdesk/pull/212"},
+    {"at": "2026-09-10T10:41:02+08:00", "ch": "gh-frontdesk", "who": "luchen", "text": "approve", "kind": "review", "subject": "Re: [lingyu-ai/frontdesk] fix(bailu): 按 9/8 邮件的新版重导价目表 (PR #212)", "url": "https://github.com/lingyu-ai/frontdesk/pull/212"},
+    {"at": "2026-09-10T11:02:33+08:00", "ch": "fs-deploy", "who": "bot-deploy", "kind": "notification", "subject": "部署完成 · frontdesk · prod", "template": "deploy_ok", "params": {"env": "prod", "version": "2026.09.10-1", "commit": "5e2a9b8", "summary": "白鹭价目表更新（9/8 邮件版，改 6 项）", "who": "何嘉"}, "ignore": "bot"},
+    {"at": "2026-09-10T11:14:26+08:00", "ch": "wx-bailu", "who": "luchen", "text": "@郭店长（西溪） @邵店长（城西） 价目表已经按孟总周二的新版改好了 种植牙现在报7200 这两天报错的客人麻烦前台再解释一下 不好意思"},
+    {"at": "2026-09-10T11:14:58+08:00", "ch": "wx-bailu", "who": "mgr-xixi", "text": "好的", "ignore": "ack"},
+    {"at": "2026-09-10T11:21:48+08:00", "ch": "wx-bailu", "who": "mgr-chengxi", "text": "[强]", "ignore": "emoji"}
+  ]},
+  {"id": "A14", "item": "fd:A-bailu", "level": "normal", "gist": "重导的改动合进去了，西溪前台再打一次，种植牙报 7200；小罗通知明天十点演练，在全员群发了拨测号码表。", "messages": [
+    {"at": "2026-09-10T14:11:36+08:00", "ch": "gh-frontdesk", "who": "hejia", "kind": "state_merged", "template": "gh_merged", "ignore": "notification", "params": {"number": 212, "base": "main"}, "subject": "Re: [lingyu-ai/frontdesk] fix(bailu): 按 9/8 邮件的新版重导价目表 (PR #212)", "url": "https://github.com/lingyu-ai/frontdesk/pull/212"},
+    {"at": "2026-09-10T14:20:58+08:00", "ch": "gh-frontdesk", "who": "luchen", "text": "以后白鹭的表以邮件为准 微信里发的先别导", "kind": "comment", "subject": "Re: [lingyu-ai/frontdesk] fix(bailu): 按 9/8 邮件的新版重导价目表 (PR #212)", "url": "https://github.com/lingyu-ai/frontdesk/pull/212"},
+    {"at": "2026-09-10T15:03:12+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "西溪婷婷又打了一遍 种植牙报7200了"},
+    {"at": "2026-09-10T15:05:40+08:00", "ch": "fs-bailu", "who": "songyue", "text": "小程序里的价目表也同步了", "ignore": "chatter"},
+    {"at": "2026-09-10T17:12:25+08:00", "ch": "fs-luoxiaowen", "who": "luoxiaowen", "text": "演练明天几点开始呀 店长在问"},
+    {"at": "2026-09-10T17:33:08+08:00", "ch": "fs-luoxiaowen", "who": "luchen", "text": "十点 我和高翔都在 让店长十点以后用手机打自己店的座机"},
+    {"at": "2026-09-10T17:41:19+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "各位店长 明天上午十点演练 麻烦大家十点以后用手机打一下自己店的座机 听到是AI接起来就行 有问题群里说"},
+    {"at": "2026-09-10T17:43:02+08:00", "ch": "wx-bailu", "who": "mgr-qjxc", "text": "收到！", "ignore": "ack"},
+    {"at": "2026-09-10T18:02:47+08:00", "ch": "fs-all", "who": "luoxiaowen", "text": "白鹭演练_拨测号码表.xlsx（22 KB）", "kind": "file"}
+  ]},
+  {"id": "A15", "item": "fd:A-bailu", "level": "normal", "gist": "上午十点演练：大多数店打进来是 AI 接的，余杭第二条线没设好，滨江店转过来的电话响一下就断。", "messages": [
+    {"at": "2026-09-11T09:45:03+08:00", "ch": "fs-calendar", "who": "bot-calendar", "kind": "notification", "subject": "日程提醒：白鹭演练", "template": "cal_remind", "params": {"title": "白鹭演练", "when": "10:00–11:00", "where": "白鹭上线群"}, "ignore": "notification"},
+    {"at": "2026-09-11T09:53:27+08:00", "ch": "wx-mengjie", "who": "mengjie", "text": "演练我让店长都在店里，有问题直接找小罗。"},
+    {"at": "2026-09-11T10:01:40+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "可以开始打了～"},
+    {"at": "2026-09-11T10:04:12+08:00", "ch": "wx-bailu", "who": "mgr-xiasha", "text": "下沙通了 AI接的"},
+    {"at": "2026-09-11T10:09:31+08:00", "ch": "wx-bailu", "who": "mgr-yuhang", "text": "余杭两条都打了，第一条是AI接的，第二条响了很久没人接，是不是第二条没设好？"},
+    {"at": "2026-09-11T10:13:08+08:00", "ch": "wx-bailu", "who": "mgr-xiaoshan", "text": "[图片] 手机通话界面，打萧山店座机，显示正在和AI前台通话", "kind": "image"},
+    {"at": "2026-09-11T10:21:44+08:00", "ch": "wx-bailu", "who": "fd-binjiang", "text": "滨江这边打过去响一下就断了 试了三次都这样 这样对吗[捂脸]"},
+    {"at": "2026-09-11T10:22:30+08:00", "ch": "wx-bailu", "who": "luchen", "text": "小俞 先别打了 我们这边看下"},
+    {"at": "2026-09-11T10:22:51+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "滨江的来电进来了 3秒就断 我看下"},
+    {"at": "2026-09-11T10:34:02+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "[图片] 滨江那通的信令，对方 3 秒就发了挂断", "kind": "image"},
+    {"at": "2026-09-11T10:35:20+08:00", "ch": "fs-bailu", "who": "luchen", "text": "其他几家呢"},
+    {"at": "2026-09-11T10:40:31+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "[聊天记录] 白鹭口腔×铃语\n田店长（余杭）：余杭两条都打了，第一条是AI接的，第二条响了很久没人接，是不是第二条没设好？\n滨江店前台-小俞：滨江这边打过去响一下就断了 试了三次都这样 这样对吗[捂脸]", "kind": "forward", "ignore": "dup", "dup_of": "A15.5"},
+    {"at": "2026-09-11T10:40:52+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "其他都通了 余杭第二条线没设 田店长说下午弄"},
+    {"at": "2026-09-11T11:14:30+08:00", "ch": "gh-frontdesk", "who": "gaoxiang", "text": "演练时滨江店座机转过来的 3 通，都是接通后 3 秒左右对端发 BYE。其他 8 家正常。\n下午查。", "kind": "issue_opened", "subject": "[lingyu-ai/frontdesk] 滨江店转过来的来电 3 秒后被对端挂断 (Issue #214)", "url": "https://github.com/lingyu-ai/frontdesk/issues/214"},
+    {"at": "2026-09-11T11:26:09+08:00", "ch": "fs-gaoxiang", "who": "gaoxiang", "text": "滨江那个应该不是我们这边 下午我打他们座机客服问问"}
+  ]},
+  {"id": "A16", "item": "fd:A-bailu", "level": "normal", "gist": "高翔查出滨江断线是店里座机的呼叫转移开得不对，要店里找座机客服重开；他让小罗跟曹店长说，周一中午前弄好。", "messages": [
+    {"at": "2026-09-11T15:31:12+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "滨江查到了"},
+    {"at": "2026-09-11T15:31:50+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "他们座机的转移是客服那边开的 开的不是无条件转移 转出来3秒就被那边拆了 要店里打座机客服重开"},
+    {"at": "2026-09-11T15:33:27+08:00", "ch": "gh-frontdesk", "who": "gaoxiang", "text": "对端主动挂的，不是我们这边。\n```\n10:21:07 INVITE from 0571-86xx-2210 (bl-03 binjiang) via fwd\n10:21:07 180 Ringing\n10:21:08 200 OK\n10:21:10 BYE from remote cause=16 (fwd timer)\n```\n店里座机的呼叫转移要找座机客服重开，改成无条件转移。", "kind": "comment", "subject": "Re: [lingyu-ai/frontdesk] 滨江店转过来的来电 3 秒后被对端挂断 (Issue #214)", "url": "https://github.com/lingyu-ai/frontdesk/issues/214"},
+    {"at": "2026-09-11T15:42:05+08:00", "ch": "fs-bailu", "who": "luchen", "text": "小罗跟曹店长说一下 周一中午前弄好"},
+    {"at": "2026-09-11T15:42:40+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "好嘞", "ignore": "ack"},
+    {"at": "2026-09-11T15:51:18+08:00", "ch": "gh-frontdesk", "who": "luchen", "text": "小罗在跟店里", "kind": "comment", "subject": "Re: [lingyu-ai/frontdesk] 滨江店转过来的来电 3 秒后被对端挂断 (Issue #214)", "url": "https://github.com/lingyu-ai/frontdesk/issues/214"},
+    {"at": "2026-09-11T16:07:44+08:00", "ch": "fs-bailu", "who": "hejia", "text": "演练的 9 段录音听了，有一家开场白把店名念错了（“良渚”念成“良者”），已改。", "edited": true},
+    {"at": "2026-09-11T16:12:09+08:00", "ch": "wx-bailu", "who": "luchen", "text": "@曹店长（滨江） 曹店长 滨江座机的呼叫转移要麻烦您找座机客服重新开一下 改成无条件转移 小罗会把步骤发您"},
+    {"at": "2026-09-11T16:20:31+08:00", "ch": "wx-bailu", "who": "mgr-binjiang", "text": "好的 我周一去弄"},
+    {"at": "2026-09-11T16:33:52+08:00", "ch": "wx-bailu", "who": "mgr-yuhang", "text": "余杭第二条线下午设好了，麻烦再帮忙打一下试试。"},
+    {"at": "2026-09-11T16:35:10+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "收到 我现在打", "ignore": "ack"},
+    {"at": "2026-09-11T16:48:27+08:00", "ch": "gh-frontdesk", "who": "gaoxiang", "text": "@luchen-hz 店里改完我再拨一次再关", "kind": "comment", "edited": true, "subject": "Re: [lingyu-ai/frontdesk] 滨江店转过来的来电 3 秒后被对端挂断 (Issue #214)", "url": "https://github.com/lingyu-ai/frontdesk/issues/214"},
+    {"at": "2026-09-11T17:21:40+08:00", "ch": "fs-luoxiaowen", "who": "luoxiaowen", "text": "陆总在吗", "fragment": true, "ignore": "fragment"},
+    {"at": "2026-09-11T17:21:58+08:00", "ch": "fs-luoxiaowen", "who": "luoxiaowen", "text": "曹店长说座机那个要她本人带营业执照去营业厅 她周末休息 周一上午去"},
+    {"at": "2026-09-11T17:40:03+08:00", "ch": "fs-luoxiaowen", "who": "luchen", "text": "行 周一中午前弄好就行 弄完让她群里说一声"},
+    {"at": "2026-09-11T17:45:39+08:00", "ch": "fs-all", "who": "zhengwan", "text": "演练辛苦大家 八家都通了 滨江高翔在跟 周末好好休息[抱拳]"}
+  ]},
+  {"id": "A17", "item": "fd:A-bailu", "level": "normal", "gist": "周日上午何嘉说白鹭的常见问题还没给，问切换先用通用版行不行。", "messages": [
+    {"at": "2026-09-13T10:22:47+08:00", "ch": "fs-hejia", "who": "hejia", "text": "白鹭的 FAQ 还没给，明天要是还没有，切换先用通用版？"}
+  ]},
+  {"id": "A18", "item": "fd:A-bailu", "level": "normal", "gist": "周日晚郑婉发语音：明天周会后把切换清单一条条对一遍，让小罗一早问滨江的座机弄好没有；高翔把九家店的号码映射推到了预发。", "messages": [
+    {"at": "2026-09-13T20:15:22+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "那个陆晨 明天周会完了咱们把切换清单对一遍 就是一条一条过 孟洁说周二九点准时 她要去西溪店盯着", "kind": "voice"},
+    {"at": "2026-09-13T20:15:49+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "还有滨江那个座机 店长到底弄好没 你让小罗明天一早问一下", "kind": "voice"},
+    {"at": "2026-09-13T21:04:38+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "九家店的号码映射推到预发了 明天对完清单上prod"},
+    {"at": "2026-09-13T22:41:50+08:00", "ch": "fs-zhengwan", "who": "luchen", "text": "好 明天十一点对"}
+  ]},
+  {"id": "A19", "item": "fd:A-bailu", "level": "normal", "gist": "小罗在对接群让设好的店回“已设置”，七位店长陆续回了，滨江的曹店长十点四十二最后一个回；孟洁说明天九点准时切。", "misfit": "曹店长回的“已设置”，其实把电话转到了前台以前用的旧手机上", "messages": [
+    {"at": "2026-09-14T08:31:20+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "各位店长早上好 明天上午九点切换 呼叫转移设好的店在群里回一下“已设置” 还没设的今天中午前设好 谢谢大家[抱拳]"},
+    {"at": "2026-09-14T08:44:37+08:00", "ch": "wx-bailu", "who": "mgr-xiasha", "text": "以设置"},
+    {"at": "2026-09-14T08:52:10+08:00", "ch": "wx-bailu", "who": "mgr-gongshu", "text": "已设置"},
+    {"at": "2026-09-14T08:52:51+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "我在对接群让店长回已设置了", "ignore": "chatter"},
+    {"at": "2026-09-14T09:13:05+08:00", "ch": "wx-bailu", "who": "mgr-qjxc", "text": "已设置！"},
+    {"at": "2026-09-14T09:20:46+08:00", "ch": "wx-bailu", "who": "mgr-liangzhu", "text": "已设置"},
+    {"at": "2026-09-14T09:34:18+08:00", "ch": "wx-bailu", "who": "mgr-xiaoshan", "text": "已设置 周五试过是AI接的"},
+    {"at": "2026-09-14T09:57:02+08:00", "ch": "wx-bailu", "who": "mgr-yuhang", "text": "两条线都已设置，第二条是周五下午设的。"},
+    {"at": "2026-09-14T10:42:29+08:00", "ch": "wx-bailu", "who": "mgr-binjiang", "text": "已设置"},
+    {"at": "2026-09-14T10:45:11+08:00", "ch": "fs-luoxiaowen", "who": "luoxiaowen", "text": "曹店长回已设置了 她说周六路过营业厅顺便弄的"},
+    {"at": "2026-09-14T10:47:33+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "七家都回了 滨江刚回的"},
+    {"at": "2026-09-14T11:02:18+08:00", "ch": "fs-bailu", "who": "luchen", "text": "好 下午对清单"},
+    {"at": "2026-09-14T11:08:55+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "号码映射下午上prod"},
+    {"at": "2026-09-14T11:12:40+08:00", "ch": "wx-bailu", "who": "luchen", "text": "收到 谢谢各位店长"},
+    {"at": "2026-09-14T11:16:30+08:00", "ch": "fs-bailu", "who": "hejia", "text": "FAQ 白鹭还是没给，我先用通用版，切完再换。"},
+    {"at": "2026-09-14T11:20:07+08:00", "ch": "wx-mengjie", "who": "mengjie", "text": "明天九点准时切，我在西溪店看着。"},
+    {"at": "2026-09-14T11:23:47+08:00", "ch": "fs-bailu", "who": "songyue", "text": "店长小程序的切换说明要发对接群吗？"},
+    {"at": "2026-09-14T11:24:30+08:00", "ch": "fs-bailu", "who": "luchen", "text": "你写好给小罗发"}
+  ]},
+  {"id": "A20", "item": "fd:A-bailu", "level": "normal", "gist": "高翔开了九店号码映射的改动，宋悦对了门店编号，他提了钱江新城店名不一致；郑婉发了明早切换的日程，在全员群请大家八点半前到。", "messages": [
+    {"at": "2026-09-14T11:30:15+08:00", "ch": "fs-calendar", "who": "bot-calendar", "kind": "notification", "subject": "郑婉 邀请你参加日程", "template": "cal_invite", "params": {"who": "郑婉", "title": "白鹭九店切换", "when": "9月15日（周二）08:30–12:00", "where": "公司 大会议室"}, "ignore": "notification"},
+    {"at": "2026-09-14T11:33:49+08:00", "ch": "fs-all", "who": "zhengwan", "text": "明天九点白鹭切换 能早到的八点半前到[抱拳]"},
+    {"at": "2026-09-14T11:38:22+08:00", "ch": "gh-frontdesk", "who": "gaoxiang", "text": "- 9 家店的来电号码 → 门店 id（bl-01…bl-09）\n- 滨江、下沙、萧山、拱墅、余杭、钱江新城、良渚走呼叫转移，西溪、城西不变\n- 预发验证过了", "kind": "pr_opened", "edited": true, "subject": "[lingyu-ai/frontdesk] feat(bailu): 九店号码映射与转接规则 (PR #216)", "url": "https://github.com/lingyu-ai/frontdesk/pull/216"},
+    {"at": "2026-09-14T11:44:10+08:00", "ch": "gh-frontdesk", "who": "songyue", "text": "小程序这边门店 id 也是 bl-01…bl-09，对上了～", "kind": "review_comment", "ignore": "ack", "subject": "Re: [lingyu-ai/frontdesk] feat(bailu): 九店号码映射与转接规则 (PR #216)", "url": "https://github.com/lingyu-ai/frontdesk/pull/216"},
+    {"at": "2026-09-14T11:51:36+08:00", "ch": "gh-frontdesk", "who": "luchen", "text": "钱江新城在小程序里叫“钱江新城店” 映射里写的“新城店” 统一一下", "kind": "review_comment", "subject": "Re: [lingyu-ai/frontdesk] feat(bailu): 九店号码映射与转接规则 (PR #216)", "url": "https://github.com/lingyu-ai/frontdesk/pull/216"}
+  ]},
+  {"id": "A21", "item": "fd:A-bailu", "level": "high", "gist": "下午对切换清单：价目表、排班、小程序都打了勾，常见问题先用通用版；号码映射的改动构建失败一次，改完合进去。宋悦在清单里问店长回的“已设置”要不要再打电话确认，没人接话。", "messages": [
+    {"at": "2026-09-14T14:03:27+08:00", "ch": "fs-bailu", "who": "luchen", "text": "清单对一遍 https://lingyu.feishu.example/docx/BailuCutover 认领的那块打勾"},
+    {"at": "2026-09-14T14:30:51+08:00", "ch": "fs-bailu", "who": "hejia", "text": "价目表 ✅ 排班 ✅ FAQ 先用通用版 ⚠️", "edited": true},
+    {"at": "2026-09-14T14:41:06+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "号码映射预发过了 五点上prod"},
+    {"at": "2026-09-14T14:52:33+08:00", "ch": "fs-songyue", "who": "songyue", "text": "现在方便吗～", "fragment": true, "ignore": "fragment"},
+    {"at": "2026-09-14T14:52:55+08:00", "ch": "fs-songyue", "who": "songyue", "text": "切换说明做了一页 你看下文字行不行"},
+    {"at": "2026-09-14T15:01:44+08:00", "ch": "fs-songyue", "who": "luchen", "text": "可以 第二条“有问题联系客服”改成联系小罗 写她手机"},
+    {"at": "2026-09-14T15:12:30+08:00", "ch": "fs-bailu", "who": "songyue", "text": "小程序 ✅ 店长都装了 良渚店长说手机内存满了 明天再装[捂脸]"},
+    {"at": "2026-09-14T15:24:12+08:00", "ch": "fs-docs", "who": "bot-docs", "kind": "notification", "subject": "宋悦 在文档《白鹭切换清单》中评论了你", "template": "doc_comment", "params": {"who": "宋悦", "doc": "白鹭切换清单", "quote": "七家店呼叫转移：已设置（店长群里回复）", "comment": "这条要不要让小罗挨个打电话确认一下呀？"}},
+    {"at": "2026-09-14T15:31:02+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "[图片] 店长小程序切换说明", "kind": "image"},
+    {"at": "2026-09-14T15:31:40+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "各位店长 明天切换以后 在小程序“今日来电”里能看到AI接的电话 有问题群里@我"},
+    {"at": "2026-09-14T15:43:18+08:00", "ch": "wx-bailu", "who": "mgr-qjxc", "text": "收到！", "ignore": "ack"},
+    {"at": "2026-09-14T15:55:07+08:00", "ch": "wx-bailu", "who": "mgr-gongshu", "text": "收到", "ignore": "ack"},
+    {"at": "2026-09-14T16:02:51+08:00", "ch": "gh-frontdesk", "who": "gha", "kind": "ci_failure", "template": "gh_ci_failure", "ignore": "bot", "subject": "[lingyu-ai/frontdesk] Run failed: CI - feat/bailu-mapping (9b3e7d2)", "url": "https://github.com/lingyu-ai/frontdesk/actions/runs/10822", "params": {"workflow": "CI", "branch": "feat/bailu-mapping", "repo": "lingyu-ai/frontdesk", "commit": "9b3e7d2", "title": "rename store bl-08 to qjxc", "jobs": "test (3.12)", "run": "10822"}},
+    {"at": "2026-09-14T16:20:35+08:00", "ch": "gh-frontdesk", "who": "gaoxiang", "text": "店名统一了 测试也改了", "kind": "comment", "ignore": "ack", "subject": "Re: [lingyu-ai/frontdesk] feat(bailu): 九店号码映射与转接规则 (PR #216)", "url": "https://github.com/lingyu-ai/frontdesk/pull/216"},
+    {"at": "2026-09-14T16:33:12+08:00", "ch": "gh-frontdesk", "who": "luchen", "text": "👍", "kind": "review", "subject": "Re: [lingyu-ai/frontdesk] feat(bailu): 九店号码映射与转接规则 (PR #216)", "url": "https://github.com/lingyu-ai/frontdesk/pull/216"},
+    {"at": "2026-09-14T16:41:48+08:00", "ch": "gh-frontdesk", "who": "gaoxiang", "kind": "state_merged", "template": "gh_merged", "ignore": "notification", "params": {"number": 216, "base": "main"}, "subject": "Re: [lingyu-ai/frontdesk] feat(bailu): 九店号码映射与转接规则 (PR #216)", "url": "https://github.com/lingyu-ai/frontdesk/pull/216"}
+  ]},
+  {"id": "A22", "item": "fd:A-bailu", "level": "high", "gist": "傍晚号码映射上了正式环境；郑婉说明早她直接去西溪店陪孟洁，公司这边他盯着；他在对接群说明早九点切。", "messages": [
+    {"at": "2026-09-14T17:24:09+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "明天我九点直接去西溪店陪孟洁 公司这边你盯着 有啥事打我电话", "kind": "voice"},
+    {"at": "2026-09-14T17:31:20+08:00", "ch": "fs-all", "who": "zhengwan", "text": "明天白鹭切换 大家手机别静音", "edited": true},
+    {"at": "2026-09-14T17:52:36+08:00", "ch": "fs-deploy", "who": "bot-deploy", "kind": "notification", "subject": "部署完成 · frontdesk · prod", "template": "deploy_ok", "params": {"env": "prod", "version": "2026.09.14-3", "commit": "e18f4c0", "summary": "九店号码映射与转接规则（#216）", "who": "高翔"}, "ignore": "bot"},
+    {"at": "2026-09-14T17:52:59+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "prod 好了", "ignore": "ack"},
+    {"at": "2026-09-14T18:03:41+08:00", "ch": "fs-bailu", "who": "luchen", "text": "明早八点二十我到 九点切"},
+    {"at": "2026-09-14T18:03:58+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "我八点半到[OK]"},
+    {"at": "2026-09-14T18:12:55+08:00", "ch": "wx-bailu", "who": "luchen", "text": "各位店长 明早九点切 九点以后的电话都是AI先接 前台不用动"}
+  ]},
+  {"id": "A23", "item": "fd:A-bailu", "level": "high", "gist": "切换前夜到早上：高翔半夜推完配置；钱江新城店长一早问要做什么；他八点多到公司，九点切换，部署完成，在全员群和对接群说了。", "messages": [
+    {"at": "2026-09-15T00:41:26+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "九家的开关配好了 明早开一下就行 我八点半到"},
+    {"at": "2026-09-15T06:48:52+08:00", "ch": "wx-bailu", "who": "mgr-qjxc", "text": "早上好！今天正式切换了吗？前台问要不要做什么"},
+    {"at": "2026-09-15T07:56:10+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "任店长早 九点切 前台不用动 电话响了AI会先接[OK]"},
+    {"at": "2026-09-15T08:15:02+08:00", "ch": "fs-calendar", "who": "bot-calendar", "kind": "notification", "subject": "日程提醒：白鹭九店切换", "template": "cal_remind", "params": {"title": "白鹭九店切换", "when": "08:30–12:00", "where": "公司 大会议室"}, "ignore": "notification"},
+    {"at": "2026-09-15T08:52:47+08:00", "ch": "fs-bailu", "who": "luchen", "text": "八点五十五推开关 九点生效"},
+    {"at": "2026-09-15T08:58:13+08:00", "ch": "fs-deploy", "who": "bot-deploy", "kind": "notification", "subject": "部署完成 · frontdesk · prod", "template": "deploy_ok", "params": {"env": "prod", "version": "2026.09.15-1", "commit": "a41c9e0", "summary": "白鹭九店转接配置上线", "who": "高翔"}},
+    {"at": "2026-09-15T09:01:05+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "切了"},
+    {"at": "2026-09-15T09:02:30+08:00", "ch": "fs-all", "who": "luchen", "text": "白鹭九家店切了"},
+    {"at": "2026-09-15T09:02:51+08:00", "ch": "fs-all", "who": "zhengwan", "text": "[强]", "ignore": "emoji"},
+    {"at": "2026-09-15T09:03:48+08:00", "ch": "wx-bailu", "who": "luchen", "text": "各位店长 九点已切换 现在九家店的电话都是AI先接 有问题群里说"},
+    {"at": "2026-09-15T09:04:20+08:00", "ch": "wx-bailu", "who": "mgr-xiasha", "text": "收到", "ignore": "ack"},
+    {"at": "2026-09-15T09:04:41+08:00", "ch": "wx-bailu", "who": "mgr-liangzhu", "text": "收到", "ignore": "ack"},
+    {"at": "2026-09-15T09:04:59+08:00", "ch": "wx-bailu", "who": "mgr-qjxc", "text": "收到！辛苦了[玫瑰]", "ignore": "ack"},
+    {"at": "2026-09-15T09:14:09+08:00", "ch": "wx-bailu", "who": "mgr-chengxi", "text": "城西刚来了一个 AI接的 约了下午洗牙 挺顺的", "kind": "voice", "ignore": "chatter"}
+  ]},
+  {"id": "A24", "item": "fd:A-bailu", "level": "critical", "gist": "九点二十监控报滨江店来电为 0，之后每 20 分钟一张，其他八家都有电话进来；何嘉拿手机打滨江座机，响很久没人接。孟洁打来电话他没接上，又在微信说滨江店电话一个都没响。", "messages": [
+    {"at": "2026-09-15T09:20:04+08:00", "ch": "fs-alert", "who": "bot-alert", "kind": "notification", "subject": "【告警】门店来电数为 0", "template": "alert", "params": {"title": "门店来电数为 0", "metric": "inbound_calls{store=binjiang}", "value": "0（过去 20 分钟）", "threshold": "营业时间内连续 20 分钟为 0", "duration": "20 分钟", "scope": "白鹭口腔 · 滨江店", "alert_id": "b2e017"}},
+    {"at": "2026-09-15T09:21:15+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "滨江报0了"},
+    {"at": "2026-09-15T09:21:22+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "我看下"},
+    {"at": "2026-09-15T09:22:41+08:00", "ch": "fs-bailu", "who": "luchen", "text": "其他八家呢"},
+    {"at": "2026-09-15T09:24:03+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "八家都有来电 就滨江没有"},
+    {"at": "2026-09-15T09:26:30+08:00", "ch": "fs-bailu", "who": "songyue", "text": "小程序里滨江的“今日来电”也是 0…"},
+    {"at": "2026-09-15T09:33:17+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "@曹店长（滨江） 曹店长 滨江店上午有电话进来吗？"},
+    {"at": "2026-09-15T09:40:06+08:00", "ch": "fs-alert", "who": "bot-alert", "kind": "notification", "subject": "【告警】门店来电数为 0", "template": "alert", "params": {"title": "门店来电数为 0", "metric": "inbound_calls{store=binjiang}", "value": "0（过去 40 分钟）", "threshold": "营业时间内连续 20 分钟为 0", "duration": "40 分钟", "scope": "白鹭口腔 · 滨江店", "alert_id": "b2e017"}, "ignore": "alert_repeat", "dup_of": "A24.1"},
+    {"at": "2026-09-15T09:41:52+08:00", "ch": "wx-bailu", "who": "luchen", "text": "滨江店的电话我们在查 其他八家正常"},
+    {"at": "2026-09-15T09:46:18+08:00", "ch": "phone", "who": "mengjie", "kind": "missed_call", "call": {"direction": "in", "peer": "孟洁"}},
+    {"at": "2026-09-15T09:48:35+08:00", "ch": "fs-bailu", "who": "hejia", "text": "我拿手机打了一下滨江的座机，响了很久没人接。"},
+    {"at": "2026-09-15T09:52:09+08:00", "ch": "wx-mengjie", "who": "mengjie", "text": "滨江店的电话打不进来，前台说一上午一个都没响。"},
+    {"at": "2026-09-15T09:53:02+08:00", "ch": "wx-mengjie", "who": "luchen", "text": "在查 马上回您"},
+    {"at": "2026-09-15T09:54:27+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "孟洁问我滨江是不是有问题 我在西溪 你那边看一下 有啥跟我说一声", "kind": "voice"},
+    {"at": "2026-09-15T09:56:10+08:00", "ch": "fs-zhengwan", "who": "luchen", "text": "在查 滨江一个电话都没进来"},
+    {"at": "2026-09-15T10:00:05+08:00", "ch": "fs-alert", "who": "bot-alert", "kind": "notification", "subject": "【告警】门店来电数为 0", "template": "alert", "params": {"title": "门店来电数为 0", "metric": "inbound_calls{store=binjiang}", "value": "0（过去 60 分钟）", "threshold": "营业时间内连续 20 分钟为 0", "duration": "60 分钟", "scope": "白鹭口腔 · 滨江店", "alert_id": "b2e017"}, "ignore": "alert_repeat", "dup_of": "A24.1"},
+    {"at": "2026-09-15T10:01:39+08:00", "ch": "wx-bailu", "who": "fd-binjiang", "text": "店里座机一上午都没响"},
+    {"at": "2026-09-15T10:01:52+08:00", "ch": "wx-bailu", "who": "fd-binjiang", "text": "是不是要我们这边做什么[捂脸]"}
+  ]},
+  {"id": "A25", "item": "fd:A-bailu", "level": "critical", "ask": "a2", "gist": "滨江前台拍了座机的转移设置，转去的号码是前台以前用的旧手机，手机在抽屉里静音；小罗在白鹭上线群说了，问要不要先把滨江从切换名单里拿掉。", "messages": [
+    {"at": "2026-09-15T10:03:22+08:00", "ch": "wx-bailu", "who": "fd-binjiang", "text": "[图片] 座机屏幕：呼叫转移 无条件转移到 139****0571", "kind": "image"},
+    {"at": "2026-09-15T10:03:58+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "小俞 这个139的号是谁的"},
+    {"at": "2026-09-15T10:04:31+08:00", "ch": "wx-bailu", "who": "fd-binjiang", "text": "好像是前台以前用的那个手机 在抽屉里"},
+    {"at": "2026-09-15T10:05:14+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "找到了 滨江的转移设到前台以前那个旧手机上了 手机在抽屉里静音的", "edited": true},
+    {"at": "2026-09-15T10:05:49+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "要不要先把滨江从切换名单里拿掉 让她们先自己接？"}
+  ]},
+  {"id": "A26", "item": "fd:A-bailu", "level": "critical", "answers": "a2", "gist": "他定了先让曹店长改，不撤滨江，他来盯；小罗打电话带曹店长改，座机上改不了，要等座机客服。高翔写了逐店拨测的脚本，他让先合。孟洁转来曹店长的话，说是照铃语的说明设的。十一点四十滨江的来电进来了，告警恢复，他给孟洁回了电话。", "messages": [
+    {"at": "2026-09-15T10:10:26+08:00", "ch": "fs-bailu", "who": "luchen", "text": "先让曹店长改 不撤 我来盯"},
+    {"at": "2026-09-15T10:11:09+08:00", "ch": "fs-bailu", "who": "luchen", "text": "小罗你给曹店长打电话 一步一步带她改 号码你念给她 别让她自己抄", "edited": true},
+    {"at": "2026-09-15T10:11:41+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "好嘞 我现在打", "ignore": "ack"},
+    {"at": "2026-09-15T10:12:07+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "@曹店长（滨江） 曹店长 我给您打个电话 转移的号码要改一下"},
+    {"at": "2026-09-15T10:13:44+08:00", "ch": "wx-bailu", "who": "mgr-binjiang", "text": "哦哦 我在门诊"},
+    {"at": "2026-09-15T10:13:51+08:00", "ch": "wx-bailu", "who": "mgr-binjiang", "text": "十分钟后"},
+    {"at": "2026-09-15T10:15:20+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "我跟孟洁说在改了 她说中午前要好 曹店长那边她去说了 你们快点", "kind": "voice"},
+    {"at": "2026-09-15T10:20:03+08:00", "ch": "fs-alert", "who": "bot-alert", "kind": "notification", "subject": "【告警】门店来电数为 0", "template": "alert", "params": {"title": "门店来电数为 0", "metric": "inbound_calls{store=binjiang}", "value": "0（过去 80 分钟）", "threshold": "营业时间内连续 20 分钟为 0", "duration": "80 分钟", "scope": "白鹭口腔 · 滨江店", "alert_id": "b2e017"}, "ignore": "alert_repeat", "dup_of": "A24.1"},
+    {"at": "2026-09-15T10:24:46+08:00", "ch": "wx-bailu", "who": "mgr-binjiang", "kind": "recalled", "template": "recalled", "params": {"who": "曹店长（滨江）"}, "ignore": "recalled"},
+    {"at": "2026-09-15T10:26:31+08:00", "ch": "fs-luoxiaowen", "who": "luoxiaowen", "text": "曹店长说她是照着说明设的 我回头看下说明是不是写得不清楚[捂脸]"},
+    {"at": "2026-09-15T10:31:55+08:00", "ch": "wx-mengjie", "who": "mengjie", "text": "曹店长说转移是按你们给的说明设的。"},
+    {"at": "2026-09-15T10:34:12+08:00", "ch": "gh-frontdesk", "who": "gaoxiang", "text": "scripts/dial_test.py：给每家店的座机打一通，看是不是 AI 接起来，30 秒超时，结果发白鹭上线群。\n切换前跑一遍，九点前就能看到滨江这种。", "kind": "pr_opened", "subject": "[lingyu-ai/frontdesk] feat: 切换后逐店拨测 (PR #218)", "url": "https://github.com/lingyu-ai/frontdesk/pull/218"},
+    {"at": "2026-09-15T10:38:20+08:00", "ch": "wx-bailu", "who": "mgr-binjiang", "text": "改了 你们看下"},
+    {"at": "2026-09-15T10:40:04+08:00", "ch": "fs-alert", "who": "bot-alert", "kind": "notification", "subject": "【告警】门店来电数为 0", "template": "alert", "params": {"title": "门店来电数为 0", "metric": "inbound_calls{store=binjiang}", "value": "0（过去 100 分钟）", "threshold": "营业时间内连续 20 分钟为 0", "duration": "100 分钟", "scope": "白鹭口腔 · 滨江店", "alert_id": "b2e017"}, "ignore": "alert_repeat", "dup_of": "A24.1"},
+    {"at": "2026-09-15T10:41:37+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "还是没进来"},
+    {"at": "2026-09-15T10:46:52+08:00", "ch": "gh-frontdesk", "who": "luchen", "text": "先合 下午九家跑一遍", "kind": "review", "subject": "Re: [lingyu-ai/frontdesk] feat: 切换后逐店拨测 (PR #218)", "url": "https://github.com/lingyu-ai/frontdesk/pull/218"},
+    {"at": "2026-09-15T10:49:15+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "曹店长说座机上改不了 要打座机客服 客服说一个小时内生效"},
+    {"at": "2026-09-15T10:54:02+08:00", "ch": "wx-bailu", "who": "mgr-xixi", "text": "西溪上午AI接了14个 都正常", "ignore": "chatter"},
+    {"at": "2026-09-15T10:55:09+08:00", "ch": "gh-frontdesk", "who": "gaoxiang", "kind": "state_merged", "template": "gh_merged", "ignore": "notification", "params": {"number": 218, "base": "main"}, "subject": "Re: [lingyu-ai/frontdesk] feat: 切换后逐店拨测 (PR #218)", "url": "https://github.com/lingyu-ai/frontdesk/pull/218"},
+    {"at": "2026-09-15T10:55:31+08:00", "ch": "gh-frontdesk", "who": "codecov", "kind": "comment", "template": "gh_codecov", "ignore": "bot", "params": {"direction": "increased", "delta": "0.2%", "base": "71.9", "head": "72.1", "files": 2, "missed": 4}, "subject": "Re: [lingyu-ai/frontdesk] feat: 切换后逐店拨测 (PR #218)", "url": "https://github.com/lingyu-ai/frontdesk/pull/218"},
+    {"at": "2026-09-15T11:00:06+08:00", "ch": "fs-alert", "who": "bot-alert", "kind": "notification", "subject": "【告警】门店来电数为 0", "template": "alert", "params": {"title": "门店来电数为 0", "metric": "inbound_calls{store=binjiang}", "value": "0（过去 120 分钟）", "threshold": "营业时间内连续 20 分钟为 0", "duration": "120 分钟", "scope": "白鹭口腔 · 滨江店", "alert_id": "b2e017"}, "ignore": "alert_repeat", "dup_of": "A24.1"},
+    {"at": "2026-09-15T11:02:48+08:00", "ch": "fs-bailu", "who": "zhengwan", "text": "@陆晨 滨江几点能好 孟洁又问了"},
+    {"at": "2026-09-15T11:20:02+08:00", "ch": "fs-alert", "who": "bot-alert", "kind": "notification", "subject": "【告警】门店来电数为 0", "template": "alert", "params": {"title": "门店来电数为 0", "metric": "inbound_calls{store=binjiang}", "value": "0（过去 140 分钟）", "threshold": "营业时间内连续 20 分钟为 0", "duration": "140 分钟", "scope": "白鹭口腔 · 滨江店", "alert_id": "b2e017"}, "ignore": "alert_repeat", "dup_of": "A24.1"},
+    {"at": "2026-09-15T11:40:11+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "滨江好了 来电进来了"},
+    {"at": "2026-09-15T11:40:39+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "[图片] 滨江 11:38 第一通，AI接的", "kind": "image"},
+    {"at": "2026-09-15T11:40:58+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "[强][强]", "ignore": "emoji"},
+    {"at": "2026-09-15T11:41:10+08:00", "ch": "fs-bailu", "who": "songyue", "text": "[撒花]", "ignore": "emoji"},
+    {"at": "2026-09-15T11:41:44+08:00", "ch": "gh-frontdesk", "who": "luchen", "text": "滨江拨测过了", "kind": "comment", "subject": "Re: [lingyu-ai/frontdesk] feat: 切换后逐店拨测 (PR #218)", "url": "https://github.com/lingyu-ai/frontdesk/pull/218"},
+    {"at": "2026-09-15T11:43:10+08:00", "ch": "fs-bailu", "who": "luchen", "text": "好 我给孟总回电话"},
+    {"at": "2026-09-15T11:44:29+08:00", "ch": "wx-bailu", "who": "mgr-binjiang", "text": "小俞说刚才有客人打进来是AI接的[OK]"},
+    {"at": "2026-09-15T11:45:08+08:00", "ch": "fs-alert", "who": "bot-alert", "kind": "notification", "subject": "【恢复】门店来电数为 0", "template": "alert_recover", "params": {"title": "门店来电数为 0", "metric": "inbound_calls{store=binjiang}", "value": "3（过去 10 分钟）", "duration": "2 小时 25 分钟", "scope": "白鹭口腔 · 滨江店"}, "ignore": "alert_repeat", "dup_of": "A24.1"},
+    {"at": "2026-09-15T11:46:02+08:00", "ch": "wx-bailu", "who": "luchen", "text": "滨江店好了 谢谢曹店长"},
+    {"at": "2026-09-15T11:47:20+08:00", "ch": "wx-mengjie", "who": "luchen", "text": "孟总 滨江好了 我给您打过去"},
+    {"at": "2026-09-15T11:50:14+08:00", "ch": "phone", "who": "luchen", "kind": "call_log", "call": {"direction": "out", "peer": "孟洁", "seconds": 263}},
+    {"at": "2026-09-15T11:55:37+08:00", "ch": "fs-zhengwan", "who": "luchen", "text": "滨江好了 刚给孟洁回了电话"},
+    {"at": "2026-09-15T11:56:50+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "好 那我中午陪她吃个饭", "kind": "voice", "ignore": "chatter"}
+  ]},
+  {"id": "A27", "item": "fd:A-bailu", "level": "normal", "gist": "下午九家店接通率 97%，没接起来的 3 通是客人很快自己挂了；拨测九家都过，他让以后每天早上八点自动跑。", "messages": [
+    {"at": "2026-09-15T13:42:18+08:00", "ch": "fs-bailu", "who": "hejia", "text": "中午抽听了 20 通。滨江上午没打进来的客人，有两个下午又打来了，AI 约上了。"},
+    {"at": "2026-09-15T14:03:51+08:00", "ch": "gh-frontdesk", "who": "gaoxiang", "text": "九家拨测都过了\n```\nbl-01 xixi      ok  ai_answered  1.8s\nbl-02 chengxi   ok  ai_answered  1.9s\nbl-03 binjiang  ok  ai_answered  2.1s\nbl-04 xiasha    ok  ai_answered  2.4s\nbl-05 xiaoshan  ok  ai_answered  2.0s\nbl-06 gongshu   ok  ai_answered  2.2s\nbl-07 yuhang    ok  ai_answered  2.6s / 2.3s\nbl-08 qjxc      ok  ai_answered  1.9s\nbl-09 liangzhu  ok  ai_answered  2.0s\n```", "kind": "comment", "subject": "Re: [lingyu-ai/frontdesk] feat: 切换后逐店拨测 (PR #218)", "url": "https://github.com/lingyu-ai/frontdesk/pull/218"},
+    {"at": "2026-09-15T14:12:30+08:00", "ch": "gh-frontdesk", "who": "luchen", "text": "加个定时 每天早上八点跑一次 结果发白鹭上线群", "kind": "comment", "subject": "Re: [lingyu-ai/frontdesk] feat: 切换后逐店拨测 (PR #218)", "url": "https://github.com/lingyu-ai/frontdesk/pull/218"},
+    {"at": "2026-09-15T15:02:44+08:00", "ch": "fs-bailu", "who": "hejia", "text": "下午 13:00–15:00 九店来电 118 通，AI 接起 115 通，接通率 97%。没接起来的 3 通都是客人两秒内自己挂的。", "edited": true},
+    {"at": "2026-09-15T15:04:10+08:00", "ch": "fs-bailu", "who": "luchen", "text": "好 辛苦"},
+    {"at": "2026-09-15T15:13:27+08:00", "ch": "fs-bailu", "who": "songyue", "text": "今天有 6 个店长登录小程序看了来电记录", "ignore": "chatter"}
+  ]},
+  {"id": "A28", "item": "fd:A-bailu", "level": "normal", "gist": "孟洁在对接群道谢，说滨江的问题解决了，以后各店每天下班前看一下来电记录；店长们回收到，郑婉在全员群请奶茶。", "messages": [
+    {"at": "2026-09-15T15:16:05+08:00", "ch": "wx-bailu", "who": "mengjie", "text": "今天切换辛苦铃语的各位，也辛苦各位店长。滨江上午的问题已经解决了。从明天开始，各店每天下班前看一下小程序里的来电记录。"},
+    {"at": "2026-09-15T15:17:12+08:00", "ch": "wx-bailu", "who": "mgr-qjxc", "text": "辛苦了！[玫瑰]", "ignore": "ack"},
+    {"at": "2026-09-15T15:17:40+08:00", "ch": "wx-bailu", "who": "mgr-xiasha", "text": "收到", "ignore": "ack"},
+    {"at": "2026-09-15T15:17:58+08:00", "ch": "wx-bailu", "who": "mgr-liangzhu", "text": "收到", "ignore": "ack"},
+    {"at": "2026-09-15T15:18:31+08:00", "ch": "wx-bailu", "who": "mgr-binjiang", "text": "收到", "ignore": "ack"},
+    {"at": "2026-09-15T15:19:09+08:00", "ch": "wx-bailu", "who": "mgr-gongshu", "text": "收到", "ignore": "ack"},
+    {"at": "2026-09-15T15:21:46+08:00", "ch": "wx-bailu", "who": "mgr-chengxi", "text": "[强][强]", "ignore": "emoji"},
+    {"at": "2026-09-15T15:24:20+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "[聊天记录] 白鹭口腔×铃语\n孟洁（白鹭运营）：今天切换辛苦铃语的各位，也辛苦各位店长。滨江上午的问题已经解决了。从明天开始，各店每天下班前看一下小程序里的来电记录。", "kind": "forward", "ignore": "dup", "dup_of": "A28.1"},
+    {"at": "2026-09-15T15:31:02+08:00", "ch": "wx-bailu", "who": "luchen", "text": "谢谢孟总 谢谢各位店长 有问题随时群里说"},
+    {"at": "2026-09-15T15:35:48+08:00", "ch": "fs-all", "who": "zhengwan", "text": "白鹭切完了 下午九家接通率97% 大家辛苦[抱拳] 奶茶我请"},
+    {"at": "2026-09-15T15:37:15+08:00", "ch": "fs-all", "who": "luchen", "text": "滨江明天我再盯一天"}
+  ]},
+  {"id": "A29", "item": "fd:A-bailu", "level": "normal", "gist": "下午的零碎：高翔想把滨江的告警调松，他说这周先别动；城西一位讲萧山话的阿姨 AI 没听懂，前台回拨了，何嘉说这周收集方言录音。", "messages": [
+    {"at": "2026-09-15T15:44:39+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "滨江那个告警 20 分钟报一次太吵了 我改成 30？"},
+    {"at": "2026-09-15T15:50:02+08:00", "ch": "fs-bailu", "who": "luchen", "text": "这周先别改"},
+    {"at": "2026-09-15T16:13:40+08:00", "ch": "wx-bailu", "who": "mgr-chengxi", "kind": "recalled", "template": "recalled", "params": {"who": "邵店长（城西）"}, "ignore": "recalled"},
+    {"at": "2026-09-15T16:13:58+08:00", "ch": "wx-bailu", "who": "mgr-chengxi", "text": "今天有个阿姨说的萧山话 AI一直说没听清 阿姨火了 后来阿May回拨的", "kind": "voice"},
+    {"at": "2026-09-15T16:16:51+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "城西说有个讲萧山话的阿姨AI没听懂 前台回拨了"},
+    {"at": "2026-09-15T16:25:33+08:00", "ch": "fs-bailu", "who": "hejia", "text": "方言的我这周收集一下录音。"},
+    {"at": "2026-09-15T16:31:09+08:00", "ch": "wx-bailu", "who": "luchen", "text": "邵店长 方言的我们记下了 这周调"},
+    {"at": "2026-09-15T16:40:08+08:00", "ch": "wx-bailu", "who": "mgr-xiaoshan", "text": "小程序里的来电记录怎么听录音？？"},
+    {"at": "2026-09-15T16:42:36+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "葛店长 点进去右上角有个播放 我私聊发您截图"},
+    {"at": "2026-09-15T17:01:20+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "拨测每天八点跑 结果发这个群"},
+    {"at": "2026-09-15T17:33:17+08:00", "ch": "fs-luoxiaowen", "who": "luoxiaowen", "text": "说明我改了一版 每家店的号码直接写在第三步里了 不放附件了"},
+    {"at": "2026-09-15T17:52:19+08:00", "ch": "fs-bailu", "who": "songyue", "text": "小程序明天加个“未接来电”提醒", "ignore": "chatter"},
+    {"at": "2026-09-15T18:00:47+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "[强]", "ignore": "emoji"},
+    {"at": "2026-09-15T18:21:30+08:00", "ch": "wx-mengjie", "who": "mengjie", "text": "滨江下午我让曹店长每两个小时看一次后台。"},
+    {"at": "2026-09-15T18:33:55+08:00", "ch": "fs-bailu", "who": "luchen", "text": "明天我再看一天滨江 没问题就算稳了"}
+  ]},
+  {"id": "C05", "item": "fd:C-contract", "level": "low", "gist": "郑婉说孟洁中午吃饭时讲，合同想等切完跑一周再谈，下周再说。", "messages": [
+    {"at": "2026-09-15T17:12:44+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "孟洁中午吃饭说 合同她想等切完跑一周再说 那就下周 不急", "kind": "voice"},
+    {"at": "2026-09-15T17:15:03+08:00", "ch": "fs-zhengwan", "who": "luchen", "text": "好"}
+  ]},
+  {"id": "A30", "item": "fd:A-bailu", "level": "normal", "gist": "早上八点拨测九家都过；他问滨江昨天下午正不正常，小罗说进了 23 通都是 AI 接的；曹店长问前台的旧手机能不能关了。何嘉改了念错医生姓的问题。", "messages": [
+    {"at": "2026-09-16T08:02:15+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "[图片] 早上八点拨测，九家都过", "kind": "image"},
+    {"at": "2026-09-16T08:31:40+08:00", "ch": "fs-bailu", "who": "luchen", "text": "滨江昨天下午正常吗"},
+    {"at": "2026-09-16T09:43:22+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "正常 昨天下午到晚上进了23通 AI都接了"},
+    {"at": "2026-09-16T10:21:05+08:00", "ch": "fs-luoxiaowen", "who": "luoxiaowen", "text": "曹店长问前台那个旧手机能不能关机了"},
+    {"at": "2026-09-16T10:44:37+08:00", "ch": "fs-luoxiaowen", "who": "luchen", "text": "可以关 转移已经改了 不影响"},
+    {"at": "2026-09-16T11:02:49+08:00", "ch": "fs-all", "who": "hejia", "text": "昨天白鹭的通话我抽了 50 通听，有 3 通 AI 把医生的姓念错了（“单医生”念成了“dān 医生”），提示词改了，下午上。", "edited": true}
+  ]},
+  {"id": "A31", "item": "fd:A-bailu", "level": "normal", "gist": "宋悦在全员群说店长小程序加了未接来电提醒。", "messages": [
+    {"at": "2026-09-16T14:22:31+08:00", "ch": "fs-all", "who": "songyue", "text": "白鹭店长小程序加了“未接来电”提醒，店长手机会弹～"}
+  ]},
+  {"id": "C06", "item": "fd:C-contract", "level": "high", "ask": "c1", "gist": "孟洁打来电话他没接上，九点半发微信：周五上午开会说清楚周三晚上的事，国庆期间 AI 接不了的电话能不能转到店里值班手机，做不到年单先放一放；他回了电话。郑婉说她也接到电话了，让他估转接要多久，她周五上午可能去不了。他让宋悦、高翔下午一起估，宋悦开了转接的问题单。", "messages": [
+    {"at": "2026-09-17T09:25:44+08:00", "ch": "phone", "who": "mengjie", "kind": "missed_call", "call": {"direction": "in", "peer": "孟洁"}},
+    {"at": "2026-09-17T09:30:12+08:00", "ch": "wx-mengjie", "who": "mengjie", "text": "陆总，周五上午开个会，把周三晚上的事说清楚。另外国庆期间AI接不了的电话，能不能转到店里值班的手机上？这个做不到的话，年单先放一放。"},
+    {"at": "2026-09-17T09:31:50+08:00", "ch": "wx-mengjie", "who": "luchen", "text": "好的孟总 我这边在开个短会 十分钟后给您打过去"},
+    {"at": "2026-09-17T09:40:21+08:00", "ch": "phone", "who": "luchen", "kind": "call_log", "call": {"direction": "out", "peer": "孟洁", "seconds": 412}},
+    {"at": "2026-09-17T09:51:36+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "孟洁给你打了吧 她刚也给我打了 说年单先放放 我听着有点气话 但是那个专接咱得认真答 你估一下多久能做出来", "kind": "voice"},
+    {"at": "2026-09-17T09:53:08+08:00", "ch": "fs-zhengwan", "who": "luchen", "text": "打了 周五上午开会 要转接 下午我跟宋悦高翔估"},
+    {"at": "2026-09-17T10:24:19+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "好 周五上午我约了萧山那个客户 可能过不去 你先顶着 有啥随时打我", "kind": "voice"},
+    {"at": "2026-09-17T10:32:47+08:00", "ch": "fs-songyue", "who": "luchen", "text": "下午有空吗 有个东西要估一下"},
+    {"at": "2026-09-17T10:35:02+08:00", "ch": "fs-songyue", "who": "songyue", "text": "有的～几点呀", "ignore": "ack"},
+    {"at": "2026-09-17T11:32:41+08:00", "ch": "fs-bailu", "who": "luchen", "text": "周五白鹭开会 孟洁要两样 一是周三晚上的说明 二是国庆期间AI接不了的电话转到店里值班手机\n转接下午宋悦高翔跟我估一下"},
+    {"at": "2026-09-17T11:33:02+08:00", "ch": "fs-bailu", "who": "songyue", "text": "好的～", "ignore": "ack"},
+    {"at": "2026-09-17T11:40:52+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "三点以后有空"},
+    {"at": "2026-09-17T11:52:17+08:00", "ch": "gh-frontdesk", "who": "songyue", "text": "孟总的要求，周五开会要答复。\n先列一下要动的：\n- 后端：识别失败 / 超时 / 服务不可用时转接\n- 小程序：每家店配值班手机号和时段\n- 通话记录里标出转接的\n下午一起估。", "kind": "issue_opened", "subject": "[lingyu-ai/frontdesk] 转接：AI 接不了的电话转到门店值班手机（白鹭） (Issue #223)", "url": "https://github.com/lingyu-ai/frontdesk/issues/223"}
+  ]},
+  {"id": "C07", "item": "fd:C-contract", "level": "high", "gist": "白鹭发来周五的会议邀请邮件，写的是下午 14:00–15:00，飞书日历也跟着收到了。", "messages": [
+    {"at": "2026-09-17T11:20:33+08:00", "ch": "mail-work", "who": "mengjie", "text": "孟洁 邀请您参加会议\n\n白鹭×铃语 沟通会\n时间：2026年9月18日（周五）14:00 – 15:00（北京时间）\n地点：白鹭口腔钱江新城店 三楼会议室\n参会人：孟洁、陆晨、郑婉\n会前请准备：9月16日晚来电情况的说明；国庆期间来电的处理办法。\n\n接受 · 暂定 · 拒绝", "kind": "notification", "subject": "邀请：白鹭×铃语 沟通会 @ 2026年9月18日（周五）14:00 - 15:00 (GMT+08:00)"},
+    {"at": "2026-09-17T11:20:51+08:00", "ch": "fs-calendar", "who": "bot-calendar", "kind": "notification", "subject": "孟洁（外部） 邀请你参加日程", "template": "cal_invite", "params": {"who": "孟洁（外部）", "title": "白鹭×铃语 沟通会", "when": "9月18日（周五）14:00–15:00", "where": "白鹭口腔钱江新城店 三楼会议室"}}
+  ]},
+  {"id": "C08", "item": "fd:C-contract", "level": "high", "gist": "孟洁说明天的会改到上午十点，她下午要去城西店，他回好的十点；郑婉问他一个人去行不行。", "misfit": "会改到了上午十点，邀请邮件和飞书日历里还是下午两点，没人去改", "messages": [
+    {"at": "2026-09-17T14:10:37+08:00", "ch": "wx-mengjie", "who": "mengjie", "text": "明天的会改到上午十点，我下午要去城西店。"},
+    {"at": "2026-09-17T14:11:20+08:00", "ch": "wx-mengjie", "who": "luchen", "text": "好的 十点"},
+    {"at": "2026-09-17T14:26:44+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "会改十点了是吧 孟洁那边的人跟我说了 萧山那个客户我真走不开 你一个人去能行吧", "kind": "voice"}
+  ]},
+  {"id": "A32", "item": "fd:A-bailu", "level": "low", "gist": "小罗贴出切换后两天的数：九家店来电 412 通，AI 接起 401 通，没接起来的 11 通都在周三晚上那阵。", "note": "九店在用", "messages": [
+    {"at": "2026-09-17T16:02:18+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "切换两天的数：15、16号九家店来电412通 AI接起401通 没接起来的11通都是周三晚上那阵", "edited": true},
+    {"at": "2026-09-17T16:02:51+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "[图片] 后台的来电统计，按店分", "kind": "image"},
+    {"at": "2026-09-17T16:08:30+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "各位店长 切换两天九家店来电412通 AI接起401通 辛苦大家[抱拳]"},
+    {"at": "2026-09-17T16:09:42+08:00", "ch": "wx-bailu", "who": "mgr-qjxc", "text": "辛苦了！[玫瑰]", "ignore": "ack"},
+    {"at": "2026-09-17T16:09:58+08:00", "ch": "wx-bailu", "who": "mgr-gongshu", "text": "收到", "ignore": "ack"}
+  ]},
+  {"id": "C09", "item": "fd:C-contract", "level": "high", "gist": "余杭店长问国庆轮休要不要报排班，他说要，值班手机号下周统一收。宋悦、高翔、何嘉估转接：小程序一天半加联调半天、后端两天、提示词半天，他定四个工作日、9 月 28 日前上线；郑婉要早点开工，他说周五下午开工。高翔说国庆 3 号他不行。", "messages": [
+    {"at": "2026-09-17T16:33:27+08:00", "ch": "wx-bailu", "who": "mgr-yuhang", "text": "国庆期间我们几家店有轮休，AI那边需要我们报排班吗？还有值班的话是打店里座机还是手机"},
+    {"at": "2026-09-17T16:36:02+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "[聊天记录] 白鹭口腔×铃语\n田店长（余杭）：国庆期间我们几家店有轮休，AI那边需要我们报排班吗？还有值班的话是打店里座机还是手机", "kind": "forward", "ignore": "dup", "dup_of": "C09.1"},
+    {"at": "2026-09-17T16:51:48+08:00", "ch": "wx-bailu", "who": "luchen", "text": "@田店长（余杭） 要报的 国庆排班和值班手机号下周小罗统一收"},
+    {"at": "2026-09-17T17:02:10+08:00", "ch": "fs-songyue", "who": "songyue", "text": "现在方便吗～", "fragment": true, "ignore": "fragment"},
+    {"at": "2026-09-17T17:02:39+08:00", "ch": "fs-songyue", "who": "songyue", "text": "值班手机是每家店一个，还是按时段换人？孟总有说吗"},
+    {"at": "2026-09-17T17:05:55+08:00", "ch": "fs-bailu", "who": "songyue", "text": "转接我这边估好了"},
+    {"at": "2026-09-17T17:06:08+08:00", "ch": "fs-bailu", "who": "songyue", "text": "配置页一天半 联调半天", "edited": true},
+    {"at": "2026-09-17T17:09:14+08:00", "ch": "fs-songyue", "who": "luchen", "text": "先按每家店一个 时段明天会上问"},
+    {"at": "2026-09-17T17:12:40+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "后端两天 识别失败超时都转 测试算进去了"},
+    {"at": "2026-09-17T17:16:03+08:00", "ch": "fs-bailu", "who": "hejia", "text": "提示词也要改，转之前 AI 要跟客人说一句，半天。", "edited": true},
+    {"at": "2026-09-17T17:21:37+08:00", "ch": "fs-bailu", "who": "luchen", "text": "那就四个工作日 下周一开工 周四提测 28号前上线", "edited": true},
+    {"at": "2026-09-17T17:24:55+08:00", "ch": "fs-bailu", "who": "zhengwan", "text": "@陆晨 能不能周五就开始 别等下周一"},
+    {"at": "2026-09-17T17:31:12+08:00", "ch": "fs-bailu", "who": "luchen", "text": "周五下午先开工 周末不加班"},
+    {"at": "2026-09-17T17:33:48+08:00", "ch": "gh-frontdesk", "who": "gaoxiang", "text": "后端：识别连续失败 2 次 / 超时 > 3s / 服务不可用 → 转值班手机。估 2 天。", "kind": "comment", "edited": true, "subject": "Re: [lingyu-ai/frontdesk] 转接：AI 接不了的电话转到门店值班手机（白鹭） (Issue #223)", "url": "https://github.com/lingyu-ai/frontdesk/issues/223"},
+    {"at": "2026-09-17T17:41:26+08:00", "ch": "gh-frontdesk", "who": "luchen", "text": "按 4 个工作日排 9/28 前上线 周五下午开工", "kind": "comment", "subject": "Re: [lingyu-ai/frontdesk] 转接：AI 接不了的电话转到门店值班手机（白鹭） (Issue #223)", "url": "https://github.com/lingyu-ai/frontdesk/issues/223"},
+    {"at": "2026-09-17T17:52:09+08:00", "ch": "fs-gaoxiang", "who": "gaoxiang", "text": "国庆值班要是排到我 3号不行 我回老家"},
+    {"at": "2026-09-17T18:02:33+08:00", "ch": "fs-bailu", "who": "songyue", "text": "好的～", "ignore": "ack"}
+  ]},
+  {"id": "C10", "item": "fd:C-contract", "level": "high", "gist": "郑婉打来没接上，他回电；郑婉让他今晚把转接方案发她，明早九点对。她晚上催了两次，他十点四十发了方案；郑婉说可以，第四条别写死他和高翔值班，约了明早九点的电话。", "messages": [
+    {"at": "2026-09-17T18:30:14+08:00", "ch": "phone", "who": "zhengwan", "kind": "missed_call", "call": {"direction": "in", "peer": "郑婉"}},
+    {"at": "2026-09-17T18:36:40+08:00", "ch": "phone", "who": "luchen", "kind": "call_log", "call": {"direction": "out", "peer": "郑婉", "seconds": 538}},
+    {"at": "2026-09-17T18:47:02+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "那个陆晨，你今晚把转接的方案发我，就写清楚几天能上，要几个人，国庆那几天谁盯着。我看完，明早九点咱们对一下。", "kind": "voice"},
+    {"at": "2026-09-17T18:48:15+08:00", "ch": "fs-zhengwan", "who": "luchen", "text": "好 晚点发你"},
+    {"at": "2026-09-17T21:58:30+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "方案几点能好 我十一点前都在"},
+    {"at": "2026-09-17T22:31:07+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "??", "ignore": "resend", "dup_of": "C10.5"},
+    {"at": "2026-09-17T22:40:12+08:00", "ch": "fs-zhengwan", "who": "luchen", "text": "白鹭转接方案_0917.docx（41 KB）", "kind": "file"},
+    {"at": "2026-09-17T22:42:31+08:00", "ch": "fs-zhengwan", "who": "luchen", "text": "方案发你了 几个要点\n1. AI接不了的电话（识别连续失败 超时 服务不可用）自动转到每家店的值班手机 号码和时段店长在小程序里自己填\n2. 宋悦高翔何嘉 四个工作日 周五下午开工 下周四提测 28号前上线 国庆前留两天\n3. 像周三晚上那种整片出问题的 除了自动转 值班的人可以在后台一键把九家都切回门店电话 周三晚上就是这么切的\n4. 国庆1号到7号我和高翔轮流值班 手机不静音\n明天会上我按这个讲"},
+    {"at": "2026-09-17T23:10:26+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "可以，写得挺清楚。就是第四条，国庆值班你别写死你俩，写公司安排专人值班。明早九点咱俩电话对一下，那会儿我在去萧山的路上。", "kind": "voice"},
+    {"at": "2026-09-17T23:14:50+08:00", "ch": "fs-calendar", "who": "bot-calendar", "kind": "notification", "subject": "郑婉 邀请你参加日程", "template": "cal_invite", "params": {"who": "郑婉", "title": "白鹭方案对一下", "when": "9月18日（周五）09:00–09:30", "where": "电话"}, "ignore": "notification"}
+  ]},
+  {"id": "C11", "item": "fd:C-contract", "level": "high", "gist": "半夜郑婉说方案第三页她直接改了几个字；早上飞书的今日日程里白鹭的会还排在下午两点。宋悦说配置页先按每家店一个号码做。九点他在去白鹭的车上和郑婉通了二十多分钟电话。", "misfit": "今日日程里的会还是下午两点，实际十点开", "messages": [
+    {"at": "2026-09-18T00:04:17+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "那个第三页国庆值班那块我直接在文档里改了几个字 你明早看一眼 我睡了", "kind": "voice"},
+    {"at": "2026-09-18T00:11:39+08:00", "ch": "fs-zhengwan", "who": "luchen", "text": "好"},
+    {"at": "2026-09-18T08:00:05+08:00", "ch": "fs-calendar", "who": "bot-calendar", "text": "今日日程 · 9月18日 周五\n09:00–09:30 白鹭方案对一下（电话）\n14:00–15:00 白鹭×铃语 沟通会（白鹭口腔钱江新城店 三楼会议室）", "kind": "notification", "subject": "今日日程", "ignore": "notification"},
+    {"at": "2026-09-18T08:12:44+08:00", "ch": "wx-bailu", "who": "luchen", "text": "各位店长早 我今天上午跟孟总开会 群里有事找小罗"},
+    {"at": "2026-09-18T08:22:31+08:00", "ch": "fs-songyue", "who": "songyue", "text": "配置页我先按每家店一个号码做 时段那块等你开完会再说～"},
+    {"at": "2026-09-18T08:36:05+08:00", "ch": "fs-songyue", "who": "luchen", "text": "行"},
+    {"at": "2026-09-18T08:41:50+08:00", "ch": "fs-bailu", "who": "songyue", "text": "转接的配置页今天先画个原型"},
+    {"at": "2026-09-18T08:45:02+08:00", "ch": "fs-calendar", "who": "bot-calendar", "kind": "notification", "subject": "日程提醒：白鹭方案对一下", "template": "cal_remind", "params": {"title": "白鹭方案对一下", "when": "09:00–09:30", "where": "电话"}, "ignore": "notification"},
+    {"at": "2026-09-18T08:49:30+08:00", "ch": "gh-frontdesk", "who": "songyue", "text": "配置页原型 ![配置页草图](https://github.com/user-attachments/assets/7c1e0a52)\n先按每家店一个值班号码做，时段等今天开完会再定。", "kind": "comment", "subject": "Re: [lingyu-ai/frontdesk] 转接：AI 接不了的电话转到门店值班手机（白鹭） (Issue #223)", "url": "https://github.com/lingyu-ai/frontdesk/issues/223"},
+    {"at": "2026-09-18T09:00:24+08:00", "ch": "phone", "who": "luchen", "kind": "call_log", "call": {"direction": "out", "peer": "郑婉", "seconds": 1586}}
+  ]},
+  {"id": "A33", "item": "fd:A-bailu", "level": "low", "gist": "早上八点拨测九家都过。", "messages": [
+    {"at": "2026-09-18T08:10:17+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "[图片] 八点拨测，九家都过", "kind": "image"}
+  ]},
+  {"id": "C12", "item": "fd:C-contract", "level": "normal", "answers": "c1", "gist": "开完会孟洁发微信：按今天说的，合同加一条 9 月 28 日前上线转接，下周一盖章；他回好的。郑婉打来问情况，他在全员群说了，把条款发给律师。", "messages": [
+    {"at": "2026-09-18T11:30:42+08:00", "ch": "wx-mengjie", "who": "mengjie", "text": "按今天说的，合同加一条9月28日前上线转接，下周一盖章。"},
+    {"at": "2026-09-18T11:31:55+08:00", "ch": "wx-mengjie", "who": "luchen", "text": "好的孟总 9/28前上线 条款我马上发沈律师"},
+    {"at": "2026-09-18T11:36:08+08:00", "ch": "phone", "who": "zhengwan", "kind": "call_log", "call": {"direction": "in", "peer": "郑婉", "seconds": 187}},
+    {"at": "2026-09-18T11:40:12+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "太好了 合同那边我下午跟律师过一遍 周一盖章我跟你一起去", "kind": "voice"},
+    {"at": "2026-09-18T11:53:06+08:00", "ch": "fs-all", "who": "luchen", "text": "白鹭谈下来了 年单签 下周一盖章 转接28号前上线"},
+    {"at": "2026-09-18T11:53:40+08:00", "ch": "fs-all", "who": "zhengwan", "text": "[强][强][强]", "ignore": "emoji"},
+    {"at": "2026-09-18T11:57:51+08:00", "ch": "mail-work", "who": "luchen", "text": "沈律师好：\n今天上午和孟总当面谈了，双方同意在合同里加一条，大意如下，措辞请您定：\n“乙方应于 2026 年 9 月 28 日前上线来电转接功能：AI 无法接听时，来电自动转接至甲方各门店指定的值班手机。”\n其他条款按上次的修订。孟总说下周一盖章。\n\n陆晨\n铃语科技", "subject": "Re: 白鹭×铃语 服务合同（草稿）"}
+  ]},
+  {"id": "A34", "item": "fd:A-bailu", "level": "low", "gist": "滨江的曹店长问 22 号能不能再来给前台培训一次后台，小罗说可以。", "note": "九店在用；滨江店 22 号再培训一次前台", "messages": [
+    {"at": "2026-09-18T11:40:40+08:00", "ch": "wx-bailu", "who": "mgr-binjiang", "text": "小罗", "fragment": true, "ignore": "fragment"},
+    {"at": "2026-09-18T11:40:59+08:00", "ch": "wx-bailu", "who": "mgr-binjiang", "text": "前台还不太会看后台 22号能不能再来培训一次"},
+    {"at": "2026-09-18T11:44:52+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "可以的曹店长 22号周二上午？"},
+    {"at": "2026-09-18T11:48:30+08:00", "ch": "wx-bailu", "who": "mgr-binjiang", "text": "[OK]", "ignore": "emoji"}
+  ]},
+  {"id": "C13", "item": "fd:C-transfer", "level": "normal", "gist": "他在白鹭上线群派活：转接 9 月 28 日前上线，宋悦、高翔下午排；何嘉写转接前 AI 说的那句话，小罗下周一收各店的值班号码。", "messages": [
+    {"at": "2026-09-18T11:43:27+08:00", "ch": "fs-bailu", "who": "luchen", "text": "白鹭谈下来了 年单签 合同加一条28号前上线转接 宋悦高翔下午排一下 按昨天估的四天"},
+    {"at": "2026-09-18T11:44:10+08:00", "ch": "fs-bailu", "who": "songyue", "text": "好的～", "ignore": "ack"},
+    {"at": "2026-09-18T11:44:36+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "好", "ignore": "ack"},
+    {"at": "2026-09-18T11:46:19+08:00", "ch": "fs-bailu", "who": "hejia", "text": "转接前那句话我下午写几个版本。"},
+    {"at": "2026-09-18T11:47:02+08:00", "ch": "gh-frontdesk", "who": "luchen", "text": "白鹭同意了 9/28前上线 今天下午开工", "kind": "comment", "subject": "Re: [lingyu-ai/frontdesk] 转接：AI 接不了的电话转到门店值班手机（白鹭） (Issue #223)", "url": "https://github.com/lingyu-ai/frontdesk/issues/223"},
+    {"at": "2026-09-18T11:49:55+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "国庆值班手机号我下周一找店长收"},
+    {"at": "2026-09-18T11:51:20+08:00", "ch": "fs-bailu", "who": "luchen", "text": "@罗晓雯 收的时候让店长打字发号码 别发截图"}
+  ]},
+  {"id": "C14", "item": "fd:C-transfer", "level": "normal", "gist": "下午转接开工：宋悦开了值班手机配置页的改动，高翔开了后端转接的改动，他让店长填完号码先打一通测试；何嘉写了转接前那句话的三个版本，大家选了第二个。", "messages": [
+    {"at": "2026-09-18T14:04:33+08:00", "ch": "fs-bailu", "who": "songyue", "text": "[图片] 值班手机配置页的原型", "kind": "image"},
+    {"at": "2026-09-18T14:12:09+08:00", "ch": "fs-bailu", "who": "luoxiaowen", "text": "这个店长应该能看懂", "ignore": "chatter"},
+    {"at": "2026-09-18T14:20:51+08:00", "ch": "gh-frontdesk", "who": "songyue", "text": "关联 #223。\n- 每家店一个值班手机号，可以设时段（默认全天）\n- 保存时校验 11 位手机号\n- 先不做按天排班", "kind": "pr_opened", "edited": true, "subject": "[lingyu-ai/frontdesk] feat(miniapp): 门店值班手机配置页 (PR #224)", "url": "https://github.com/lingyu-ai/frontdesk/pull/224"},
+    {"at": "2026-09-18T15:12:40+08:00", "ch": "gh-frontdesk", "who": "gaoxiang", "text": "关联 #223。\n- 连续 2 次识别失败 / 识别超时 > 3s / 健康检查失败 → 转接\n- 转接前放何嘉写的那句话\n- WIP，测试还没写", "kind": "pr_opened", "subject": "[lingyu-ai/frontdesk] feat: 识别失败或超时时转接门店值班手机 (PR #226)", "url": "https://github.com/lingyu-ai/frontdesk/pull/226"},
+    {"at": "2026-09-18T15:20:17+08:00", "ch": "fs-bailu", "who": "gaoxiang", "text": "后端分支开了 #226 WIP"},
+    {"at": "2026-09-18T16:31:55+08:00", "ch": "gh-frontdesk", "who": "luchen", "text": "店长填完号码让他点一下“测试呼叫” 打通了才算保存成功", "kind": "review", "subject": "Re: [lingyu-ai/frontdesk] feat(miniapp): 门店值班手机配置页 (PR #224)", "url": "https://github.com/lingyu-ai/frontdesk/pull/224"},
+    {"at": "2026-09-18T16:44:20+08:00", "ch": "fs-bailu", "who": "hejia", "text": "转接前那句话写了三个版本，放文档里了，大家选一下：https://lingyu.feishu.example/docx/TransferLine"},
+    {"at": "2026-09-18T17:02:36+08:00", "ch": "fs-bailu", "who": "luchen", "text": "第二个"},
+    {"at": "2026-09-18T17:02:52+08:00", "ch": "fs-bailu", "who": "songyue", "text": "我也第二个～", "ignore": "ack"}
+  ]},
+  {"id": "C15", "item": "fd:C-contract", "level": "normal", "gist": "郑婉在全员群说下周一白鹭盖章，盖完请吃饭；她跟他约周一上午十点一起去。", "messages": [
+    {"at": "2026-09-18T14:31:22+08:00", "ch": "fs-all", "who": "zhengwan", "text": "下周一白鹭盖章 盖完请大家吃饭[抱拳]"},
+    {"at": "2026-09-18T14:33:05+08:00", "ch": "fs-all", "who": "luchen", "text": "转接今天下午开工了 下周四提测"},
+    {"at": "2026-09-18T14:40:47+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "周一盖章我跟你一起去 上午十点 你那天上午别排别的", "kind": "voice"},
+    {"at": "2026-09-18T14:42:15+08:00", "ch": "fs-zhengwan", "who": "luchen", "text": "好"}
+  ]},
+  {"id": "C16", "item": "fd:C-contract", "level": "normal", "ask": "c2", "gist": "律师发来第二版修改：加进了他上午发的转接条款，另外白鹭财务要把半年付改成季度付，请他们确认。", "messages": [
+    {"at": "2026-09-18T17:20:44+08:00", "ch": "mail-work", "who": "lawyer", "text": "郑总、陆总：\n\n陆总上午发来的转接条款已经加进去了，见修订第二版第 9.5 条。另外孟总那边财务提了一处：付款方式由半年付改为季度付。修订第二版见附件，这次改动的地方列在下面，请确认。\n\n一、新增第 9.5 条“来电转接”\n“乙方应于 2026 年 9 月 28 日前上线来电转接功能：AI 无法接听来电时（包括语音识别连续失败、响应超时、服务不可用），来电自动转接至甲方各门店指定的值班手机。各门店的值班手机号码及时段，由甲方在乙方提供的后台中自行填写和修改，乙方应在甲方填写后 1 个工作日内完成测试。乙方未能按期上线的，每逾期一日，扣减当期服务费的千分之五，扣减总额不超过当期服务费的 10%。”\n说明：陆总原文写的是“AI 无法接听时”，我补了括号里的三种情形，和第 9.2 条的列举保持一致；测试的约定是孟总加的，她希望每家店填完号码以后有人打一通确认。另外“值班手机”孟总的意思是店里的工作手机，不是店长个人的手机，措辞上写成“指定的值班手机”，各店具体用哪一部由甲方自己定，乙方不用核实机主。\n\n二、第 5.1 条“付款”\n原文：“年费分两期支付，每期于期初 10 个工作日内支付。”\n改为：“年费分四期支付，每季度为一期，每期于该季度第一个月的 10 个工作日内支付；首期于合同盖章后 10 个工作日内支付。”\n说明：白鹭的预算是按季度批的，半年付的话第二期要单独走一次审批，财务希望改成季度付。总金额不变，按年费约 13 万元算，每期三万出头。发票也相应按季度开，每期一张，开票信息见附件四；之前说的半年开一次就不用了。\n\n三、第 9.2 条“系统故障”\n郑总 9 日的回复孟总转给我了，郑总提到想把“15 分钟”改成“30 分钟”。和孟总商量后，仍保留 15 分钟：第 9.5 条的转接上线以后，AI 接不了的来电会自动转走，15 分钟的要求是对“整体不可用、需要人工处理”的情形，实际影响不大。如果郑总这边还有顾虑，可以再电话聊。\n\n四、第 9.3 条“通知与说明”\n“24 小时内提供书面说明”改为“2 个工作日内”，这是郑总 9 日邮件里提的，孟总同意。另外通知的对象，孟总希望除了她本人，同时通知出问题门店的店长，免得店里不知道电话为什么都到了座机上。\n\n五、第 6.2 条“培训”\n上线后一个月内的培训，孟总希望其中一次放在国庆前，各店前台国庆期间人少，希望她们先熟悉后台。她说滨江店已经约了下周二，其他店国庆前排开。具体日期双方另行商定，不写进合同。\n\n六、附件\n附件一《服务内容与价格》按九家门店、年费约 13 万元填写，金额以郑总那边的报价单为准，我这边没有改动。附件二《门店清单与指定号码》：第 9.2 条故障时转接的号码、第 9.5 条各店的值班手机号码，都填在这一张表里；值班手机号码现在可以先空着，转接上线前补齐即可。附件三《数据处理说明》按 9 日的意见补了两处：通话录音保存一年，到期自动删除；合同终止后删除的方式和书面确认的格式。\n\n七、其余\n第 1.2、2.1、3.2、3.3、4.1、4.3、5.3、6.1、7、8、10.1、11、12、13 条，按 9 日的意见修改，郑总的回复里都没有异议，这次没有再动。另有几处措辞统一：全文“AI 前台”统一写作“智能接待服务”，“店长”统一写作“门店负责人”，个别标点和编号顺了一下，不影响意思，就不一一列了。附件里的修订模式只显示这一版新改的地方，上一版的修改已经接受。\n\n为方便核对，这次涉及的几条，修订后的全文如下：\n\n第 5.1 条　年费分四期支付，每季度为一期，每期于该季度第一个月的 10 个工作日内支付；首期于合同盖章后 10 个工作日内支付。乙方应在收款前开具等额增值税专用发票。\n\n第 9.2 条　以下情形属于系统故障：（一）语音识别或大模型服务不可用；（二）电话线路中断；（三）乙方系统升级或维护导致的服务中断。AI 服务不可用超过 15 分钟时，乙方应将来电转接至甲方指定号码，直至恢复。\n\n第 9.3 条　故障发生后 30 分钟内，乙方应以电话或微信通知甲方运营负责人；2 个工作日内提供书面说明，写明起止时间、受影响的来电数和处理措施。\n\n第 9.4 条　乙方及乙方供应商的例行维护，应避开每日 8:00–21:00，并提前 3 个工作日通知甲方。乙方供应商没有按此执行的，视为乙方没有执行。\n\n第 9.5 条　见上文第一点。\n\n如以上没有问题，请回复确认，我出终稿。孟总说下周一上午盖章，盖章时请带公司公章和合同专用章，一式四份，双方各执两份。我周一上午九点半先到，终稿我这边打印好带过去，你们不用再打。\n\n沈雅琴\n（白鹭口腔外聘律师）\n\n在 2026年9月18日 11:57，陆晨 写道：\n> 沈律师好：\n> 今天上午和孟总当面谈了，双方同意在合同里加一条，大意如下，措辞请您定：", "subject": "Re: 白鹭×铃语 服务合同（草稿）"}
+  ]},
+  {"id": "A35", "item": "fd:A-bailu", "level": "low", "gist": "孟洁发来一周的数：九家店 AI 接了 1286 个电话，漏接 3 个；他道谢，说下周再盯一下滨江。", "messages": [
+    {"at": "2026-09-19T10:02:44+08:00", "ch": "wx-mengjie", "who": "mengjie", "text": "这周九家店AI接了1286个电话，漏接3个。辛苦你们。"},
+    {"at": "2026-09-19T10:09:31+08:00", "ch": "wx-mengjie", "who": "luchen", "text": "谢谢孟总 下周我们再盯一下滨江 国庆的值班号码小罗周一来收"}
+  ]},
+  {"id": "C17", "item": "fd:C-contract", "level": "normal", "voids": "c2", "gist": "周六上午郑婉回律师：季度付可以，请出终稿，周一去盖章；律师回已更新。郑婉跟他说这事她回了，他不用管。", "messages": [
+    {"at": "2026-09-19T10:15:20+08:00", "ch": "mail-work", "who": "zhengwan", "text": "沈律师好：\n季度付可以，按您改的第 5.1 条。其他没有问题的话，麻烦出一版终稿，周一上午我们过去盖章。\n\n郑婉\n铃语科技", "subject": "Re: 白鹭×铃语 服务合同（草稿）"},
+    {"at": "2026-09-19T10:21:47+08:00", "ch": "fs-zhengwan", "who": "zhengwan", "text": "季度付我回律师了 你不用管了 周一十点盖章", "kind": "voice"},
+    {"at": "2026-09-19T10:46:09+08:00", "ch": "mail-work", "who": "lawyer", "text": "郑总：\n已更新，终稿见附件，周一见。\n沈雅琴\n\n[附件] 白鹭×铃语服务合同_终稿0919.docx", "subject": "Re: 白鹭×铃语 服务合同（草稿）"}
+  ]},
+  {"id": "C18", "item": "fd:C-transfer", "level": "normal", "gist": "孟洁在对接群发国庆门诊安排：1 日到 3 日各店只开上午，4 日起正常。", "messages": [
+    {"at": "2026-09-20T16:35:12+08:00", "ch": "wx-bailu", "who": "mengjie", "text": "国庆门诊安排：10月1日至3日各店只开上午，4日起正常。请各位店长通知前台。"}
+  ]}
+ ],
+ "noise": [
+  {"id": "Nc-dj-0907", "thread": "fd:n-dj-sunday", "topic": "城西店长说 AI 把客人约到了周日下午，那天没有医生", "messages": [
+    {"at": "2026-09-07T09:12:18+08:00", "ch": "wx-bailu", "who": "fd-chengxi", "text": "[图片] 今天上午的预约列表，AI约了6个", "kind": "image", "ignore": "chatter"},
+    {"at": "2026-09-07T09:14:02+08:00", "ch": "wx-bailu", "who": "mgr-chengxi", "text": "早上那个李先生AI给约到周日下午了 我们周日下午没有医生的呀 小罗你看一下", "kind": "voice"},
+    {"at": "2026-09-07T12:20:47+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "收到我去问", "ignore": "ack"}
+  ]},
+  {"id": "Nc-ph-0908", "thread": "fd:n-phone-spam", "topic": "陌生号码的推销电话", "messages": [
+    {"at": "2026-09-08T10:23:47+08:00", "ch": "phone", "who": "caller-spam", "kind": "missed_call", "call": {"direction": "in", "peer": "0571 8829 3316"}, "ignore": "scam"}
+  ]},
+  {"id": "Nc-dj-0908", "thread": "fd:n-dj-xiaoshan-phone", "topic": "萧山店长说店里的老座机找不到设置呼叫转移的菜单", "messages": [
+    {"at": "2026-09-08T19:12:40+08:00", "ch": "wx-bailu", "who": "mgr-xiaoshan", "text": "小罗 说明里第三步 我们座机是老的那种 找不到这个菜单？？"},
+    {"at": "2026-09-08T19:12:58+08:00", "ch": "wx-bailu", "who": "mgr-xiaoshan", "text": "[图片] 前台座机的照片", "kind": "image"},
+    {"at": "2026-09-09T08:52:10+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "葛店长 老座机是在话机上按#号键设的 我一会儿打给您一步步来"},
+    {"at": "2026-09-09T09:30:44+08:00", "ch": "wx-bailu", "who": "mgr-xiaoshan", "text": "好了 谢谢小罗", "ignore": "ack"}
+  ]},
+  {"id": "Nc-ph-0910", "thread": "fd:n-phone-loan", "topic": "陌生号码的贷款推销电话", "messages": [
+    {"at": "2026-09-10T14:36:20+08:00", "ch": "phone", "who": "caller-spam2", "kind": "missed_call", "call": {"direction": "in", "peer": "021 6157 4420"}, "ignore": "scam"}
+  ]},
+  {"id": "Nc-dj-0912", "thread": "fd:n-dj-holiday-article", "topic": "余杭店长转来一篇讲国庆排班的公众号文章", "messages": [
+    {"at": "2026-09-12T10:37:14+08:00", "ch": "wx-bailu", "who": "mgr-yuhang", "text": "[链接] 口腔诊所国庆假期怎么排班，这三点要提前想好 —— 齿科经营圈", "kind": "forward", "ignore": "forward"}
+  ]},
+  {"id": "Nc-dj-0912b", "thread": "fd:n-dj-xiaoshan-ask", "topic": "萧山店长周末问切换那天店里要做什么，隔天才有人回", "messages": [
+    {"at": "2026-09-12T16:48:55+08:00", "ch": "wx-bailu", "who": "mgr-xiaoshan", "text": "@铃语-小罗 周二切换那天我们店里要做什么吗？？"},
+    {"at": "2026-09-13T10:05:31+08:00", "ch": "wx-bailu", "who": "mgr-xiaoshan", "text": "？？", "ignore": "resend", "dup_of": "Nc-dj-0912b.1"},
+    {"at": "2026-09-13T19:30:12+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "葛店长不好意思周末没看手机 您店里不用做什么 呼叫转移设好就行 周一我再在群里说一遍"}
+  ]},
+  {"id": "Nc-dj-0916", "thread": "fd:n-dj-0916-chat", "topic": "切换第二天对接群的早安和小程序登录的闲聊", "messages": [
+    {"at": "2026-09-16T08:57:12+08:00", "ch": "wx-bailu", "who": "mgr-qjxc", "text": "早上好！第二天加油[玫瑰]", "ignore": "greeting"},
+    {"at": "2026-09-16T10:06:48+08:00", "ch": "wx-bailu", "who": "fd-xixi", "text": "小程序今天早上登不上 要重新输验证码吗", "ignore": "chatter"}
+  ]},
+  {"id": "Nc-dj-0917a", "thread": "fd:n-dj-xixi-schedule", "topic": "西溪店长问医生临时调班在小程序里怎么改", "messages": [
+    {"at": "2026-09-17T08:36:20+08:00", "ch": "wx-bailu", "who": "mgr-xixi", "text": "西溪今天上午医生临时调班 小程序里排班怎么改", "ignore": "chatter"},
+    {"at": "2026-09-17T08:41:05+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "郭店长 调班发我 我这边改", "ignore": "chatter"}
+  ]},
+  {"id": "Nc-dj-0917b", "thread": "fd:n-dj-export", "topic": "萧山店长问来电记录能不能导出做月报；城西前台发预约截图", "messages": [
+    {"at": "2026-09-17T10:47:51+08:00", "ch": "wx-bailu", "who": "mgr-xiaoshan", "kind": "recalled", "template": "recalled", "params": {"who": "葛店长（萧山）"}, "ignore": "recalled"},
+    {"at": "2026-09-17T10:48:33+08:00", "ch": "wx-bailu", "who": "mgr-xiaoshan", "text": "小程序里的来电记录能导出吗？？月底要做报表", "ignore": "chatter"},
+    {"at": "2026-09-17T11:06:12+08:00", "ch": "wx-bailu", "who": "fd-chengxi", "text": "[图片] 今天上午AI约的", "kind": "image", "ignore": "chatter"}
+  ]},
+  {"id": "Nc-dj-0918", "thread": "fd:n-dj-miniapp", "topic": "萧山店长说小程序打不开，小罗让退出重进", "messages": [
+    {"at": "2026-09-18T09:12:20+08:00", "ch": "wx-bailu", "who": "mgr-xiaoshan", "text": "小程序今天打不开？？", "ignore": "chatter"},
+    {"at": "2026-09-18T09:20:47+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "葛店长 我这边能打开 您退出重进试试", "ignore": "chatter"}
+  ]},
+  {"id": "Nc-dj-0918b", "thread": "fd:n-dj-holiday-notice", "topic": "钱江新城店长把白鹭内部的国庆门诊安排草稿转进了对接群", "messages": [
+    {"at": "2026-09-18T16:05:18+08:00", "ch": "wx-bailu", "who": "mgr-qjxc", "text": "[链接] 中秋国庆门诊安排（草稿）—— 白鹭口腔内部通知", "kind": "forward", "ignore": "forward"},
+    {"at": "2026-09-18T16:05:47+08:00", "ch": "wx-bailu", "who": "mgr-xiasha", "text": "收到", "ignore": "ack"},
+    {"at": "2026-09-18T16:06:10+08:00", "ch": "wx-bailu", "who": "mgr-gongshu", "text": "收到", "ignore": "ack"}
+  ]},
+  {"id": "Nc-dj-0919", "thread": "fd:n-dj-holiday-ask", "topic": "周六对接群：早安，前台说客人问国庆开不开门", "messages": [
+    {"at": "2026-09-19T09:14:30+08:00", "ch": "wx-bailu", "who": "mgr-qjxc", "text": "周末愉快[玫瑰]", "ignore": "greeting"},
+    {"at": "2026-09-19T09:32:18+08:00", "ch": "wx-bailu", "who": "fd-xixi", "text": "今天上午好几个客人问国庆开不开门 AI都说按店里通知 我们通知还没发呢", "ignore": "chatter"},
+    {"at": "2026-09-19T09:40:05+08:00", "ch": "wx-bailu", "who": "mgr-xixi", "text": "等孟总定", "ignore": "chatter"},
+    {"at": "2026-09-19T09:40:33+08:00", "ch": "wx-bailu", "who": "luoxiaowen", "text": "收到 国庆的话术等孟总通知了我们再改", "ignore": "ack"}
+  ]},
+  {"id": "Nc-dj-0919b", "thread": "fd:n-dj-0919-booking", "topic": "城西前台发周六下午约满的截图", "messages": [
+    {"at": "2026-09-19T15:22:10+08:00", "ch": "wx-bailu", "who": "fd-chengxi", "text": "[图片] 周六下午的预约，都约满了", "kind": "image", "ignore": "chatter"}
+  ]},
+  {"id": "Nc-ph-0919", "thread": "fd:n-phone-spam", "topic": "陌生号码的推销电话", "messages": [
+    {"at": "2026-09-19T14:07:33+08:00", "ch": "phone", "who": "caller-spam", "kind": "missed_call", "call": {"direction": "in", "peer": "0571 8829 3316"}, "ignore": "scam"}
+  ]},
+  {"id": "Nc-dj-0920", "thread": "fd:n-dj-article", "topic": "钱江新城店长转来白鹭公众号的口腔护理文章", "messages": [
+    {"at": "2026-09-20T09:48:26+08:00", "ch": "wx-bailu", "who": "mgr-qjxc", "text": "[链接] 国庆出游前，记得先看看牙 —— 白鹭口腔", "kind": "forward", "ignore": "forward"}
+  ]}
+ ]
+}

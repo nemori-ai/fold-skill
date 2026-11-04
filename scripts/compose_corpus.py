@@ -1372,6 +1372,7 @@ def family() -> dict:
                           f"（其中家庭流 {counts['family']} 条为作者编写）· {len(frames)} 帧")
     corpus["source"]["streams"] = {s: counts[s] for s in STREAMS if counts[s]}
     corpus["source"]["family"] = "corpus/composite/family/README.md"
+    corpus["source"]["stream_languages"] = {"family": "sv"}  # eval_judgment.py 据此在用户背景里说明家庭往来是瑞典语
     context = re.sub(r"家人通过 .*?不来自真实的人。", "", corpus["persona"]["context"])
     corpus["persona"]["context"] = context.replace("订阅了几份 newsletter", FAMILY_PERSONA + "订阅了几份 newsletter", 1)
     save(BASE / "frames.json", corpus)

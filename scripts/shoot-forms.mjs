@@ -31,7 +31,7 @@ export const FORMS = {
   chain: 'forms/sketches/chain.html',
   // 拔河不带 --frame 时页面在顶层会自己讲一遍，截到的是讲到约 2.5 秒的样子；静止的一帧要带 --frame。
   tug: 'forms/sketches/tug.html',
-  khipu: 'forms/sketches/khipu.html',   // 默认样张是手写情境（composite 两周没有子层），截预览时带 --data story
+  khipu: 'forms/sketches/khipu.html',   // 默认样张是手写情境（两层子层；陆晨的两周只有白鹭一件一层，composite 没有子层），截预览时带 --data story
   trays: 'forms/trays.html', // 手机 390 × 844 的一列，截图在 1440 × 900 下居中
   glasses: 'forms/glasses.html', // 单色绿眼镜：576 × 288 显示面按 1:1 像素放大；不带 --frame 时顶层打开会先讲一遍
   // 第一轮撤下后恢复的八个形式：只做了能在两个数据集下运行的最小适配，未打磨。

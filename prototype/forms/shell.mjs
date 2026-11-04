@@ -2,7 +2,7 @@ import {
   createModel, scenario, records, escapeHTML as esc, inputHTML, formatDate, formatTime,
   kindLabel, getItem, allItems, currentAsk, feedbackTrail, findEvent, notice, personName,
 } from '../variants/shared.mjs?v=feedback-loop-1';
-import { formById, notesHref } from './catalog.mjs';
+import { formById, frameOf, notesHref } from './catalog.mjs';
 import { followFrames, showing, shown } from '../embed.mjs';
 
 // One page frame for every form: frame stepper, concept card, data inspector.
@@ -61,11 +61,11 @@ function cardHTML(form) {
 export function boot(id) {
   const form = formById(id);
   const params = new URLSearchParams(location.search);
-  if (!params.has('frame')) { params.set('frame', form.frame); history.replaceState(null, '', `?${params}`); }
+  if (!params.has('frame')) { params.set('frame', frameOf(form)); history.replaceState(null, '', `?${params}`); }
   // ?embed=show (the site's landing page plays the form as a picture): no bar, no card, only the stage.
   const hideCard = params.get('card') === '0' || showing;
   document.title = `Fold · ${form.name}`;
-  document.body.className = `fs-page fs-theme-${form.theme}${hideCard ? ' fs-no-card' : ''}${showing ? ' fs-show' : ''}`;
+  document.body.className = `fs-page fs-theme-${form.theme}${form.mobile ? ' fs-mobile' : ''}${hideCard ? ' fs-no-card' : ''}${showing ? ' fs-show' : ''}`;
   document.body.innerHTML = `<header class="fs-bar">
       <a class="fs-home" href="index.html" title="全部形式">← 形式</a>
       <span class="fs-name"><b>${String(form.no).padStart(2, '0')}</b> ${esc(form.name)}</span>

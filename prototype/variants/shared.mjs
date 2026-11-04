@@ -153,16 +153,22 @@ export function feedbackTrail(s, id) {
   return trail;
 }
 
-// The person's own moves in the family stream (authored, Swedish): the channel reads “app · who”,
-// and call logs, reactions and payments carry `kind`. Returns the action without the subject
-// (“用 iMessage 回复 Kajsa”“给诊所打了电话”), or null for other streams.
+// The person's own moves in the family stream: the channel reads “app · who”, and call logs, reactions
+// and payments carry `kind`. Returns the action without the subject (“用 iMessage 回复 Kajsa”“给诊所打了电话”),
+// or null for other streams. composite's Swedish call logs are parsed from the text; founder's family moves are
+// worded by appMove below, the same way as its work chats.
 const FAMILY_APPS = { iMessage: ' iMessage ', SMS: '短信', WhatsApp: ' WhatsApp ', 'E-post': '邮件' };
-const FAMILY_GROUPS = { Familjen: '家庭群', Syskon: '兄妹群', 'Föräldrar 6B': '6B 家长群', 'Kräftskiva 22/8 🦞': '派对群', 'Grannar Tallstigen': '街坊群' };
+const FAMILY_GROUPS = { Familjen: '家庭群', Syskon: '兄妹群', 'Föräldrar 6B': '6B 家长群', 'Kräftskiva 22/8 🦞': '派对群', 'Grannar Tallstigen': '街坊群',
+  // founder (微信): groups whose names do not end in 群.
+  一家人: '一家人群', 豆豆游泳课: '游泳课群' };
 const FAMILY_NAMES = { Mamma: '母亲', 'Gunnel granne': '邻居 Gunnel', 'Djurkliniken Kvarnbacken': '诊所', 'Rörfixarna Söder': '水管工', Ekorren: '幼儿园老师' };
-const familyName = who => FAMILY_NAMES[who] || ` ${who} `;
+// Latin names and app names get spaces around them inside a Chinese sentence; Chinese ones do not.
+const spaced = value => (/^[㐀-鿿]/.test(value) ? value : ` ${value} `);
+const familyName = who => FAMILY_NAMES[who] || spaced(who);
 export function familyMove(event) {
   if (event?.stream !== 'family') return null;
   const [app, who = ''] = String(event.channel || '').split(' · ');
+  if (FOUNDER_APPS[app]) return appMove(event);
   const text = String(event.text || ''), group = FAMILY_GROUPS[who];
   const say = value => value.replace(/\s{2,}/g, ' ').trim();
   if (event.kind === 'call_log') return say(`给${familyName(text.match(/till (.+?) ·/)?.[1] || who)}打了电话`);
@@ -172,11 +178,54 @@ export function familyMove(event) {
   if (event.kind === 'list_update') return '在购物清单上勾掉了几样';
   if (group) return `在${group}里回复`;
   if (app === 'Förskoleappen') return '在幼儿园 App 里回复老师';
-  return say(`用${FAMILY_APPS[app] || ` ${app} `}回复${familyName(who)}`);
+  return say(`用${FAMILY_APPS[app] || spaced(app)}回复${familyName(who)}`);
 }
+// The founder dataset's apps, channels written “应用 · 会话” (飞书 · 郑婉, 微信 · 白鹭口腔×铃语, Discord · saydone #help;
+// a bare “电话” is the call log). A conversation is a direct chat when only one other sender ever writes in it
+// (飞书 · 郑婉, 微信 · 孟洁); otherwise it is a group (飞书 · 白鹭上线, 微信 · 三(2)班家长群).
+export const FOUNDER_APPS = { 飞书: 1, 微信: 1, 短信: 1, 邮件: 1, 电话: 1, 电话手表: 1, Discord: 1, X: 1, 携程: 1, '招聘 App': 1 };
+let senders = null;
+const isDirect = channel => {
+  if (!senders) {
+    senders = new Map();
+    for (const frame of scenario.frames) for (const e of frame.events) {
+      if (e.self) continue;
+      if (!senders.has(e.channel)) senders.set(e.channel, new Set());
+      senders.get(e.channel).add(e.from);
+    }
+  }
+  return (senders.get(channel)?.size || 0) <= 1;
+};
+const SHOWN = { image: '发了张图', file: '发了文件', forward: '转了一条消息', voice: '回了语音' };
+/**
+ * The person's own move in one of those apps, work or family, without the subject, so every form can put “你” in front:
+ * “在飞书上回复了郑婉”“在飞书群「白鹭上线」里回了消息”“在三(2)班家长群里回了消息”“给可可的电话手表回了消息”“接了孟洁的电话”.
+ * Null for other channels (composite and story never use these apps).
+ */
+export function appMove(event) {
+  const [app, chat = ''] = String(event?.channel || '').split(' · ');
+  if (!FOUNDER_APPS[app]) return null;
+  const peer = event.call?.peer || event.transfer?.peer || chat;
+  if ((event.kind === 'call_log' || event.kind === 'missed_call') && event.call) return event.call.direction === 'in' ? `接了${peer}的电话` : `给${peer}打了电话`;
+  if (event.kind === 'transfer' && event.transfer) return event.transfer.direction === 'in' ? `收了${peer}的转账` : `给${peer}转了账`;
+  if (app === '电话') return '打了电话';
+  if (app === '电话手表') return `给${chat}的电话手表回了消息`;
+  if (app === '短信') return `给${chat}回了短信`;
+  if (app === '邮件') return /^Re:/i.test(event.subject || '') ? '回了邮件' : '发了邮件';
+  if (app === 'Discord') { const room = chat.replace(/^saydone\s*/, '').trim(); return room ? `在 Discord 的 ${room} 频道里回了消息` : '在 Discord 上回了消息'; }
+  if (app === 'X') return '在 X 上回了一条';
+  if (app === '携程' || app === '招聘 App') return `在${app.replace(' App', '')}上回复了${chat}`;
+  const shown = SHOWN[event.kind];
+  if (isDirect(event.channel)) return shown ? `在${app}上给${chat}${shown}` : `在${app}上回复了${chat}`;
+  const group = FAMILY_GROUPS[chat] || (/群$/.test(chat) ? chat : '');
+  return `${group ? `在${group}里` : `在${app}群「${chat}」里`}${shown || '回了消息'}`;
+}
+/** Any own move worded by app: the family stream (familyMove) or a founder app (appMove); null otherwise. */
+export const ownMove = event => familyMove(event) || appMove(event);
 /** Who wrote a family-stream input and where, worded as above: {who: '母亲', where: '短信'}, {who: 'Ulrika', where: '兄妹群'}. */
 export function familyPlace(event) {
   if (event?.stream !== 'family') return null;
   const [app, chat = ''] = String(event.channel || '').split(' · ');
-  return { who: FAMILY_NAMES[event.from] || event.from || '', where: FAMILY_GROUPS[chat] || String(FAMILY_APPS[app] || app).trim() };
+  const group = FAMILY_GROUPS[chat] || (/群$/.test(chat) ? chat : '');
+  return { who: FAMILY_NAMES[event.from] || event.from || '', where: group || String(FAMILY_APPS[app] || app).trim() };
 }
